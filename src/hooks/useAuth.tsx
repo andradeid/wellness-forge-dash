@@ -15,6 +15,8 @@ export interface Profile {
   full_name: string | null;
   email: string;
   avatar_url: string | null;
+  phone: string | null;
+  is_blocked: boolean;
 }
 
 interface AuthContextValue {
@@ -38,7 +40,7 @@ async function fetchProfileAndRole(userId: string): Promise<{
   const [profileRes, roleRes] = await Promise.all([
     (supabase as any)
       .from("profiles")
-      .select("id, full_name, email, avatar_url")
+      .select("id, full_name, email, avatar_url, phone, is_blocked")
       .eq("id", userId)
       .maybeSingle(),
     (supabase as any)
@@ -70,6 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const { profile, role } = await fetchProfileAndRole(currentUser.id);
+    if (profile?.is_blocked) {
+      const { toast } = await import("sonner");
+      toast.error("Sua conta foi bloqueada. Entre em contato com o suporte.");
+      await supabase.auth.signOut();
+      setProfile(null);
+      setRole(null);
+      setSession(null);
+      setUser(null);
+      return;
+    }
     setProfile(profile);
     setRole(role);
   };
