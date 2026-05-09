@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
+import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 
 const LoginRoute = LoginRouteImport.update({
@@ -47,6 +48,11 @@ const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
   path: '/admin/nutritionists',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminIntegrationsRoute = AppAdminIntegrationsRouteImport.update({
+  id: '/admin/integrations',
+  path: '/admin/integrations',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
   id: '/admin/administrators',
   path: '/admin/administrators',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRoutesByTo {
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/app/patients': typeof AppPatientsRoute
   '/app': typeof AppIndexRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRoutesById {
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRouteTypes {
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/'
     | '/app/admin/administrators'
+    | '/app/admin/integrations'
     | '/app/admin/nutritionists'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app'
     | '/app/admin/administrators'
+    | '/app/admin/integrations'
     | '/app/admin/nutritionists'
   id:
     | '__root__'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/'
     | '/app/admin/administrators'
+    | '/app/admin/integrations'
     | '/app/admin/nutritionists'
   fileRoutesById: FileRoutesById
 }
@@ -159,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminNutritionistsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/integrations': {
+      id: '/app/admin/integrations'
+      path: '/admin/integrations'
+      fullPath: '/app/admin/integrations'
+      preLoaderRoute: typeof AppAdminIntegrationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/administrators': {
       id: '/app/admin/administrators'
       path: '/admin/administrators'
@@ -173,6 +192,7 @@ interface AppRouteChildren {
   AppPatientsRoute: typeof AppPatientsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
+  AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
 }
 
@@ -180,6 +200,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPatientsRoute: AppPatientsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
+  AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
 }
 
@@ -193,3 +214,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
