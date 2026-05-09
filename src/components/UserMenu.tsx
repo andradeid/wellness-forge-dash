@@ -35,13 +35,16 @@ export function UserMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1 hover:bg-muted/60 transition-colors">
+          <button className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-muted/60 transition-colors">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback className="bg-gradient-brand text-white text-xs font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
+            <span className="hidden sm:inline text-sm font-medium text-foreground max-w-[160px] truncate">
+              {profile?.full_name || email}
+            </span>
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
