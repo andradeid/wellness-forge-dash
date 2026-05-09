@@ -294,6 +294,9 @@ function AdministratorsPage() {
                       <TableCell className="text-muted-foreground">
                         {r.email}
                       </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {r.phone || "—"}
+                      </TableCell>
                       <TableCell>
                         {r.is_blocked ? (
                           <Badge
