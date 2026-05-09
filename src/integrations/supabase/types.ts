@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      integration_logs: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          message: string | null
+          payload: Json | null
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          source: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      integrations: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_secret: boolean
+          key: string
+          label: string | null
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_secret?: boolean
+          key: string
+          label?: string | null
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_secret?: boolean
+          key?: string
+          label?: string | null
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           birth_date: string | null
