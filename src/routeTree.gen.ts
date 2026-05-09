@@ -9,38 +9,111 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPatientsRoute = AppPatientsRouteImport.update({
+  id: '/patients',
+  path: '/patients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
+  id: '/admin/nutritionists',
+  path: '/admin/nutritionists',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/app/patients': typeof AppPatientsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/app/patients': typeof AppPatientsRoute
+  '/app': typeof AppIndexRoute
+  '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/app/patients': typeof AppPatientsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/app/patients'
+    | '/app/'
+    | '/app/admin/nutritionists'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/login' | '/app/patients' | '/app' | '/app/admin/nutritionists'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/app/patients'
+    | '/app/'
+    | '/app/admin/nutritionists'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +121,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/patients': {
+      id: '/app/patients'
+      path: '/patients'
+      fullPath: '/app/patients'
+      preLoaderRoute: typeof AppPatientsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/nutritionists': {
+      id: '/app/admin/nutritionists'
+      path: '/admin/nutritionists'
+      fullPath: '/app/admin/nutritionists'
+      preLoaderRoute: typeof AppAdminNutritionistsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppPatientsRoute: typeof AppPatientsRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppPatientsRoute: AppPatientsRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
