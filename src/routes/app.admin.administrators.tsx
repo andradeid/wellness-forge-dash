@@ -254,6 +254,9 @@ function AdministratorsPage() {
                     Email
                   </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Telefone
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                     Status
                   </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -290,6 +293,9 @@ function AdministratorsPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {r.email}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {r.phone || "—"}
                       </TableCell>
                       <TableCell>
                         {r.is_blocked ? (
