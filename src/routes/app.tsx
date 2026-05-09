@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -38,6 +39,9 @@ function AppLayout() {
             <SidebarTrigger />
             <div className="ml-2 text-sm font-medium text-muted-foreground">
               LUMMA
+            </div>
+            <div className="ml-auto">
+              <UserMenu />
             </div>
           </header>
           <main className="flex-1 p-6 overflow-auto">

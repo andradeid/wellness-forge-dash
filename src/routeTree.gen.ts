@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
+import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -46,6 +47,11 @@ const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
   path: '/admin/nutritionists',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
+  id: '/admin/administrators',
+  path: '/admin/administrators',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
+  '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRoutesByTo {
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/patients': typeof AppPatientsRoute
   '/app': typeof AppIndexRoute
+  '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRoutesById {
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
+  '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
 }
 export interface FileRouteTypes {
@@ -79,9 +88,16 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/patients'
     | '/app/'
+    | '/app/admin/administrators'
     | '/app/admin/nutritionists'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/app/patients' | '/app' | '/app/admin/nutritionists'
+  to:
+    | '/'
+    | '/login'
+    | '/app/patients'
+    | '/app'
+    | '/app/admin/administrators'
+    | '/app/admin/nutritionists'
   id:
     | '__root__'
     | '/'
@@ -89,6 +105,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/patients'
     | '/app/'
+    | '/app/admin/administrators'
     | '/app/admin/nutritionists'
   fileRoutesById: FileRoutesById
 }
@@ -142,18 +159,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminNutritionistsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/administrators': {
+      id: '/app/admin/administrators'
+      path: '/admin/administrators'
+      fullPath: '/app/admin/administrators'
+      preLoaderRoute: typeof AppAdminAdministratorsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppPatientsRoute: typeof AppPatientsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppPatientsRoute: AppPatientsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
 }
 
@@ -167,3 +193,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
