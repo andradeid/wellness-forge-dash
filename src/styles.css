@@ -132,6 +132,10 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+:root {
+  --gradient-brand: linear-gradient(135deg, #e8a04c, #e89bcf);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -140,5 +144,17 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+}
+
+@layer utilities {
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+  .text-gradient-brand {
+    background-image: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
