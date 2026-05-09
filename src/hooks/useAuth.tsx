@@ -92,11 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      await loadUserData(data.session?.user ?? null);
       setLoading(false);
+      // Load profile/role in background — don't block auth readiness
+      if (data.session?.user) {
+        loadUserData(data.session.user);
+      }
     });
 
     return () => {
