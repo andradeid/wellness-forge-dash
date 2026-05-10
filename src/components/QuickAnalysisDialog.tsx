@@ -30,27 +30,93 @@ interface Marker { [k: string]: unknown }
 
 function extractJsonBlocks(text: string): Array<Record<string, unknown>> {
   const out: Array<Record<string, unknown>> = [];
-  const re = /```(?:json)?\s*([\s\S]*?)```/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text))) {
+  const seen = new Set<string>();
+  const tryPush = (raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed || seen.has(trimmed)) return;
+    seen.add(trimmed);
     try {
-      const parsed = JSON.parse(m[1].trim());
+      const parsed = JSON.parse(trimmed);
       if (parsed && typeof parsed === "object") out.push(parsed);
     } catch { /* ignore */ }
+  };
+
+  // 1) Fenced ```json ... ``` blocks
+  const fence = /```(?:json)?\s*([\s\S]*?)```/gi;
+  let m: RegExpExecArray | null;
+  while ((m = fence.exec(text))) tryPush(m[1]);
+
+  // 2) Brace-matched JSON objects anywhere in text (handles "json { ... }" without fences)
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== "{") continue;
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    for (let j = i; j < text.length; j++) {
+      const ch = text[j];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === "\\") esc = true;
+        else if (ch === '"') inStr = false;
+      } else {
+        if (ch === '"') inStr = true;
+        else if (ch === "{") depth++;
+        else if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            tryPush(text.slice(i, j + 1));
+            i = j;
+            break;
+          }
+        }
+      }
+    }
   }
   return out;
+}
+
+function normalizeKeys<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) out[k.trim()] = v;
+  return out;
+}
+
+function normalizeDob(input?: string): string | undefined {
+  if (!input) return undefined;
+  const s = input.trim();
+  // Already ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // DD/MM/YYYY or DD-MM-YYYY
+  const br = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return undefined;
+}
+
+function normalizeGender(input?: string): "male" | "female" | "other" | undefined {
+  if (!input) return undefined;
+  const s = input.trim().toLowerCase();
+  if (["male", "m", "masculino", "homem"].includes(s)) return "male";
+  if (["female", "f", "feminino", "mulher"].includes(s)) return "female";
+  if (["other", "outro", "outros"].includes(s)) return "other";
+  return undefined;
 }
 
 function findPatientAndMarkers(text: string): { patient_data?: PatientData; markers?: Marker[] } {
   const blocks = extractJsonBlocks(text);
   let patient_data: PatientData | undefined;
   let markers: Marker[] | undefined;
-  for (const b of blocks) {
+  for (const raw of blocks) {
+    const b = normalizeKeys(raw);
     if (!patient_data && b.patient_data && typeof b.patient_data === "object") {
-      patient_data = b.patient_data as PatientData;
+      const pd = normalizeKeys(b.patient_data as Record<string, unknown>);
+      patient_data = {
+        name: typeof pd.name === "string" ? pd.name : undefined,
+        dob: normalizeDob(typeof pd.dob === "string" ? pd.dob : undefined),
+        gender: normalizeGender(typeof pd.gender === "string" ? pd.gender : undefined),
+      };
     }
-    if (!markers && Array.isArray((b as any).markers)) {
-      markers = (b as any).markers as Marker[];
+    if (!markers && Array.isArray(b.markers)) {
+      markers = b.markers as Marker[];
     }
   }
   return { patient_data, markers };
