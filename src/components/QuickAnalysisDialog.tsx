@@ -156,6 +156,18 @@ function findPatientAndMarkers(text: string): { patient_data?: PatientData; mark
   return { patient_data, markers };
 }
 
+function getDifyAnswer(evt: Record<string, unknown>): string {
+  const direct = evt.answer ?? evt.text ?? evt.content;
+  if (typeof direct === "string") return direct;
+  const data = evt.data;
+  if (data && typeof data === "object") {
+    const nested = data as Record<string, unknown>;
+    const value = nested.answer ?? nested.text ?? nested.content;
+    if (typeof value === "string") return value;
+  }
+  return "";
+}
+
 export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -259,7 +271,7 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
           try {
             const evt = JSON.parse(payload);
             if (evt.event === "message" || evt.event === "agent_message") {
-              assistantTextRef.current += evt.answer ?? "";
+              assistantTextRef.current += getDifyAnswer(evt);
             } else if (evt.event === "message_end" || evt.event === "agent_thought") {
               if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
             } else if (evt.event === "error") {
