@@ -13,8 +13,17 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/admin/playground")({
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login" });
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw redirect({ to: "/login" });
+
+    const { data: roleRow } = await (supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userRes.user.id)
+      .eq("role", "super_admin")
+      .maybeSingle();
+
+    if (!roleRow) throw redirect({ to: "/unauthorized" });
   },
   component: PlaygroundPage,
 });
