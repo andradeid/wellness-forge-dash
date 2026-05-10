@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          attachments: Json | null
+          chat_id: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          role: string
+          structured_data: Json | null
+        }
+        Insert: {
+          attachments?: Json | null
+          chat_id: string
+          content?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          role: string
+          structured_data?: Json | null
+        }
+        Update: {
+          attachments?: Json | null
+          chat_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          role?: string
+          structured_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "patient_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_logs: {
         Row: {
           created_at: string
@@ -79,6 +120,98 @@ export type Database = {
           value?: string | null
         }
         Relationships: []
+      }
+      patient_chats: {
+        Row: {
+          created_at: string
+          created_by: string
+          dify_conversation_id: string | null
+          id: string
+          patient_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          dify_conversation_id?: string | null
+          id?: string
+          patient_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          dify_conversation_id?: string | null
+          id?: string
+          patient_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_chats_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_exams: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          dify_file_id: string | null
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          patient_id: string
+          size_bytes: number | null
+          uploaded_by: string
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          dify_file_id?: string | null
+          file_name: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          patient_id: string
+          size_bytes?: number | null
+          uploaded_by: string
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          dify_file_id?: string | null
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          patient_id?: string
+          size_bytes?: number | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_exams_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "patient_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_exams_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       patients: {
         Row: {
