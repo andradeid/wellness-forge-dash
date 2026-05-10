@@ -61,6 +61,7 @@ interface PatientCtx {
   name: string;
   birth_date: string | null;
   gender: string | null;
+  avatar_url: string | null;
 }
 
 interface ResultRow {
