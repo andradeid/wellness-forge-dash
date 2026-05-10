@@ -85,7 +85,7 @@ const groups: NavGroup[] = [
     subtitle: "Usuários e permissões",
     icon: KeyRound,
     items: [
-      { title: "Usuários", url: "/app/admin/nutritionists", icon: Users },
+      { title: "Usuários", url: "/app/admin/users", icon: Users },
       { title: "Administradores", url: "/app/admin/administrators", icon: Shield, badge: "NOVO" },
     ],
   },
