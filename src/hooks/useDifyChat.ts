@@ -198,6 +198,7 @@ export function useDifyChat(patientId: string) {
           query: text || "Analise o exame anexado.",
           conversation_id: conversationIdRef.current || undefined,
           files: difyFiles,
+          meta: metaRef.current,
         }),
       });
       if (!res.ok || !res.body) {
