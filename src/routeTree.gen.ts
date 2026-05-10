@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
@@ -48,6 +49,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPatientsRoute = AppPatientsRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/unauthorized'
     | '/app/patients'
+    | '/app/settings'
     | '/app/'
     | '/api/dify/chat'
     | '/api/dify/test'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/unauthorized'
     | '/app/patients'
+    | '/app/settings'
     | '/app'
     | '/api/dify/chat'
     | '/api/dify/test'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/unauthorized'
     | '/app/patients'
+    | '/app/settings'
     | '/app/'
     | '/api/dify/chat'
     | '/api/dify/test'
@@ -250,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/patients': {
@@ -327,6 +346,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppPatientsRoute: typeof AppPatientsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
@@ -338,6 +358,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppPatientsRoute: AppPatientsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
@@ -361,3 +382,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
