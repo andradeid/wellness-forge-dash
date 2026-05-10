@@ -322,6 +322,29 @@ function UsersPage() {
     refreshAll();
   };
 
+  const createUser = async () => {
+    const f = createForm;
+    if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
+    if (f.password.length < 8) { toast.error("A senha precisa ter ao menos 8 caracteres"); return; }
+    setCreating(true);
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) { toast.error("Sessão expirada"); setCreating(false); return; }
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(f),
+    });
+    const json = await res.json().catch(() => ({}));
+    setCreating(false);
+    if (!res.ok || !json.ok) { toast.error(json.error ?? "Falha ao criar usuário"); return; }
+    toast.success("Nutricionista criada com sucesso");
+    nutriIdsRef.current = null; // invalida cache de ids
+    setCreateOpen(false);
+    refreshAll();
+  };
+
   return (
     <div className="space-y-10 max-w-7xl">
       {/* Breadcrumb */}
@@ -643,6 +666,66 @@ function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal: Novo Nutricionista */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-normal">Nova nutricionista</DialogTitle>
+            <DialogDescription>
+              A conta será criada já confirmada. Use uma senha inicial e oriente
+              a redefinir no primeiro acesso.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Nome completo</Label>
+              <Input
+                value={createForm.full_name}
+                onChange={(e) => setCreateForm((f) => ({ ...f, full_name: e.target.value }))}
+                placeholder="Maria Silva"
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>E-mail</Label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="maria@exemplo.com"
+                maxLength={255}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CPF / Registro profissional (CRN)</Label>
+              <Input
+                value={createForm.professional_id}
+                onChange={(e) => setCreateForm((f) => ({ ...f, professional_id: e.target.value }))}
+                placeholder="Opcional"
+                maxLength={50}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Senha inicial</Label>
+              <Input
+                type="text"
+                value={createForm.password}
+                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="Mínimo de 8 caracteres"
+                maxLength={72}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
+            <Button onClick={createUser} disabled={creating} className="bg-gradient-brand text-white">
+              {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Criar nutricionista
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
