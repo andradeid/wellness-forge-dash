@@ -101,7 +101,61 @@ function normalizeGender(input?: string): "male" | "female" | "other" | undefine
   return undefined;
 }
 
-function looksLikePatient(obj: Record<string, unknown>): boolean {
+function normalizeName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function nameTokens(s: string): string[] {
+  return normalizeName(s).split(" ").filter((t) => t.length >= 2);
+}
+
+function isPartialNameMatch(a: string, b: string): boolean {
+  const ta = new Set(nameTokens(a));
+  const tb = new Set(nameTokens(b));
+  if (!ta.size || !tb.size) return false;
+  let common = 0;
+  for (const t of ta) if (tb.has(t)) common++;
+  // At least 2 common tokens, or every token of the shorter set is contained in the other
+  const minSize = Math.min(ta.size, tb.size);
+  return common >= 2 || (minSize > 0 && common === minSize);
+}
+
+async function findExistingPatient(
+  userId: string,
+  detected: PatientData,
+): Promise<{ patient: { id: string; name: string; birth_date: string | null }; kind: "exact" | "suggestion" } | null> {
+  if (!detected.name) return null;
+  const dob = detected.dob || null;
+
+  // Restrict by created_by (RLS already enforces this, but explicit for safety)
+  let query = (supabase as any)
+    .from("patients")
+    .select("id, name, birth_date")
+    .eq("created_by", userId);
+
+  if (dob) query = query.eq("birth_date", dob);
+
+  const { data, error } = await query;
+  if (error || !Array.isArray(data)) return null;
+
+  const target = normalizeName(detected.name);
+  // Exact (case-insensitive) match with same dob
+  const exact = data.find((p: any) => normalizeName(p.name) === target);
+  if (exact) return { patient: exact, kind: "exact" };
+
+  // If dob matches, partial-name suggestion
+  if (dob) {
+    const partial = data.find((p: any) => isPartialNameMatch(p.name, detected.name!));
+    if (partial) return { patient: partial, kind: "suggestion" };
+  }
+
+  return null;
+}
   return typeof obj.name === "string" && (obj.dob !== undefined || obj.gender !== undefined || obj.birth_date !== undefined);
 }
 
