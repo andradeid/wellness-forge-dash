@@ -179,6 +179,24 @@ function EvolutionPage() {
     ? differenceInYears(new Date(), new Date(patient.birth_date))
     : null;
 
+  if (patient === null) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#f5f5f0] overflow-hidden">
+        <div className="flex flex-col items-center gap-4 px-6 text-center">
+          <img src={lummaSymbol} alt="Lumma" className="h-14 w-14 animate-spin" />
+          <div>
+            <p className="text-lg font-medium animate-pulse bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
+              Carregando dados do paciente…
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Aguarde um instante enquanto a Lumma prepara a evolução clínica.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen w-full bg-[#f5f5f0] overflow-hidden">
       {/* HEADER DEDICADO */}
@@ -192,23 +210,26 @@ function EvolutionPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar
           </Link>
 
-          <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] flex items-center justify-center text-white shrink-0">
-            <User className="h-6 w-6" />
-          </div>
+          <Avatar className="h-12 w-12 ring-2 ring-[#e89bcf]/30 shrink-0">
+            {patient.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
+            <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white font-medium">
+              {patient.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
 
           <div className="min-w-0 flex-1">
             <div className="text-lg font-semibold truncate">
-              {patient?.name ?? "Carregando…"}
+              {patient.name}
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-3 mt-0.5">
-              {patient?.birth_date && (
+              {patient.birth_date && (
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {format(new Date(patient.birth_date), "dd/MM/yyyy")}
                   {age !== null ? ` · ${age} anos` : ""}
                 </span>
               )}
-              {patient?.gender && <span>{patient.gender}</span>}
+              {patient.gender && <span>{patient.gender}</span>}
               <span>· {examDates.length} exame(s) · {groups.length} marcador(es)</span>
             </div>
           </div>
