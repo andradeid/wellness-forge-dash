@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Play, Upload, FileText, Type, Trash2, Clock } from "lucide-react";
+import { Play, Paperclip, FileText, Type, Trash2, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -251,22 +251,11 @@ function PlaygroundPage() {
         </TabsList>
 
         <TabsContent value="pdf" className="mt-4">
-          <Card className="p-4 rounded-lg space-y-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              hidden
-              accept=".pdf,image/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
-                <Upload className="h-4 w-4" /> Selecionar arquivo
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {file ? `📎 ${file.name} (${Math.round(file.size / 1024)} KB)` : "Nenhum arquivo (não persiste no bucket)."}
-              </span>
-            </div>
+          <Card className="p-3 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              No modo PDF, anexe o arquivo direto no campo do chat abaixo (ícone de clipe).
+              Os arquivos enviados aqui <strong>não</strong> são salvos no bucket — vão direto para a API do Dify.
+            </p>
           </Card>
         </TabsContent>
 
@@ -281,6 +270,14 @@ function PlaygroundPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        hidden
+        accept=".pdf,image/*"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chat */}
@@ -311,6 +308,25 @@ function PlaygroundPage() {
             {running && <ChatThinking />}
           </div>
           <div className="border-t p-3 space-y-2">
+            {file && (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-xs bg-muted rounded-full px-3 py-1 max-w-full">
+                  <Paperclip className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{file.name}</span>
+                  <span className="text-muted-foreground shrink-0">
+                    · {Math.round(file.size / 1024)} KB
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFile(null)}
+                    className="ml-1 text-muted-foreground hover:text-foreground"
+                    aria-label="Remover arquivo"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              </div>
+            )}
             <Textarea
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -318,7 +334,18 @@ function PlaygroundPage() {
               placeholder="Pergunta para a Lumma (opcional)…"
               className="resize-none text-sm"
             />
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-2">
+              {mode === "pdf" ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-full gap-1"
+                >
+                  <Paperclip className="h-4 w-4" /> Anexar arquivo
+                </Button>
+              ) : <span />}
               <Button
                 onClick={runTest}
                 disabled={running}
