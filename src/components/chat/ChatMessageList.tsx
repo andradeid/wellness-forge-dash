@@ -71,6 +71,19 @@ export function ChatMessageList({
                 <ExamResultCard markers={m.structured_data.markers} />
               </div>
             )}
+            {m.role === "assistant" && isAdmin && m.structured_data?.indexed && (
+              <div
+                className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-600/80"
+                title="Marcadores indexados em patient_exam_results"
+              >
+                <CheckCircle2 className="h-3 w-3" /> indexado
+              </div>
+            )}
+            {m.role === "assistant" && m.structured_data?.parse_error && (
+              <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-600">
+                <AlertTriangle className="h-3 w-3" /> Erro na estrutura de dados recebida
+              </div>
+            )}
           </div>
         </div>
       ))}
