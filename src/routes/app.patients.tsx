@@ -21,6 +21,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
 
 export const Route = createFileRoute("/app/patients")({
   component: PatientsPage,
@@ -134,6 +135,7 @@ function PatientsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <QuickAnalysisDialog onCreated={load} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
