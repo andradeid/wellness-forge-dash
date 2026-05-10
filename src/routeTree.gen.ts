@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
+import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
@@ -49,6 +50,11 @@ const AppPatientsRoute = AppPatientsRouteImport.update({
 const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
   id: '/chat/$patientId',
   path: '/chat/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminPlaygroundRoute = AppAdminPlaygroundRouteImport.update({
+  id: '/admin/playground',
+  path: '/admin/playground',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRoutesByTo {
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRoutesById {
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/admin/playground'
     | '/app/chat/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/admin/playground'
     | '/app/chat/$patientId'
   id:
     | '__root__'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/admin/playground'
     | '/app/chat/$patientId'
   fileRoutesById: FileRoutesById
 }
@@ -209,6 +221,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatPatientIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/playground': {
+      id: '/app/admin/playground'
+      path: '/admin/playground'
+      fullPath: '/app/admin/playground'
+      preLoaderRoute: typeof AppAdminPlaygroundRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/nutritionists': {
       id: '/app/admin/nutritionists'
       path: '/admin/nutritionists'
@@ -253,6 +272,7 @@ interface AppRouteChildren {
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
+  AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
 }
 
@@ -262,6 +282,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
+  AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
 }
 
@@ -277,3 +298,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
