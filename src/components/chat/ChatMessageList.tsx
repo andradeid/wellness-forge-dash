@@ -27,6 +27,8 @@ export function ChatMessageList({
   thinking: boolean;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
+  const { role } = useAuth();
+  const isAdmin = role === "super_admin" || role === "admin";
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, thinking]);
