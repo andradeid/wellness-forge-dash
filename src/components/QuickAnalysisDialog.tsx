@@ -235,7 +235,53 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
         }
       }
 
-      const { patient_data, markers: m } = findPatientAndMarkers(assistantTextRef.current);
+      const fullText = assistantTextRef.current;
+      console.groupCollapsed("[QuickAnalysis] Resposta do Dify");
+      console.log("Tamanho do texto:", fullText.length);
+      console.log("Texto completo:", fullText);
+      const fenced = fullText.match(/```(?:json)?[\s\S]*?```/gi);
+      console.log("Blocos com cercas ``` encontrados:", fenced?.length ?? 0, fenced);
+
+      const braceMatches: string[] = [];
+      for (let i = 0; i < fullText.length; i++) {
+        if (fullText[i] !== "{") continue;
+        let depth = 0, inStr = false, esc = false;
+        for (let j = i; j < fullText.length; j++) {
+          const ch = fullText[j];
+          if (inStr) {
+            if (esc) esc = false;
+            else if (ch === "\\") esc = true;
+            else if (ch === '"') inStr = false;
+          } else {
+            if (ch === '"') inStr = true;
+            else if (ch === "{") depth++;
+            else if (ch === "}") {
+              depth--;
+              if (depth === 0) { braceMatches.push(fullText.slice(i, j + 1)); i = j; break; }
+            }
+          }
+        }
+      }
+      console.log("Objetos JSON balanceados encontrados:", braceMatches.length);
+      braceMatches.forEach((b, idx) => {
+        try {
+          const parsed = JSON.parse(b);
+          console.log(`  [${idx}] OK — chaves:`, Object.keys(parsed), parsed);
+        } catch (err) {
+          console.warn(
+            `  [${idx}] FALHA no JSON.parse:`,
+            (err as Error).message,
+            "\n  conteúdo:",
+            b.slice(0, 500) + (b.length > 500 ? "…" : ""),
+          );
+        }
+      });
+
+      const { patient_data, markers: m } = findPatientAndMarkers(fullText);
+      console.log("patient_data extraído:", patient_data);
+      console.log("markers extraídos:", m?.length ?? 0, m);
+      console.groupEnd();
+
       setMarkers(m);
 
       if (patient_data?.name) {
@@ -248,10 +294,17 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
         setOpen(false);
         setConfirmOpen(true);
       } else {
-        toast.error("Não foi possível identificar o paciente neste documento.");
+        const reason = !braceMatches.length
+          ? "nenhum bloco JSON foi encontrado no texto"
+          : !patient_data
+            ? "JSON encontrado mas sem campo patient_data válido"
+            : "patient_data sem name";
+        console.error("[QuickAnalysis] Falha na extração:", reason);
+        toast.error(`Não consegui identificar o paciente (${reason}). Abra o console (F12) para ver o texto retornado.`);
         setProcessing(false);
       }
     } catch (e) {
+      console.error("[QuickAnalysis] Exceção:", e);
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       toast.error(msg);
       setProcessing(false);
