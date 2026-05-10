@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
@@ -43,6 +44,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppPatientsRoute = AppPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
+  id: '/chat/$patientId',
+  path: '/chat/$patientId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/chat/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/chat/$patientId'
   id:
     | '__root__'
     | '/'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/chat/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -190,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPatientsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/chat/$patientId': {
+      id: '/app/chat/$patientId'
+      path: '/chat/$patientId'
+      fullPath: '/app/chat/$patientId'
+      preLoaderRoute: typeof AppChatPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/nutritionists': {
       id: '/app/admin/nutritionists'
       path: '/admin/nutritionists'
@@ -234,6 +253,7 @@ interface AppRouteChildren {
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
+  AppChatPatientIdRoute: typeof AppChatPatientIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -242,6 +262,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
+  AppChatPatientIdRoute: AppChatPatientIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
