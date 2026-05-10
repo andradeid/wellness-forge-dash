@@ -219,6 +219,8 @@ export function useDifyChat(patientId: string) {
         throw new Error(`Dify ${res.status}: ${await res.text().catch(() => "")}`);
       }
 
+      console.groupCollapsed("[Chat Dify] Resposta do Dify");
+      console.log("Arquivos enviados:", difyFiles);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -235,6 +237,7 @@ export function useDifyChat(patientId: string) {
           if (!payload || payload === "[DONE]") continue;
           try {
             const evt = JSON.parse(payload);
+            console.log("Evento recebido:", evt.event, evt);
             if (evt.event === "message" || evt.event === "agent_message") {
               assistantText += getDifyAnswer(evt);
               setMessages((prev) =>
@@ -248,7 +251,10 @@ export function useDifyChat(patientId: string) {
           } catch { /* ignore non-JSON lines */ }
         }
       }
+      console.log("Texto final extraído:", assistantText);
+      console.groupEnd();
     } catch (e) {
+      console.groupEnd();
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       setError(msg);
       setMessages((prev) =>
