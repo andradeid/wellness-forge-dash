@@ -1,11 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, TrendingUp, User } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
@@ -22,6 +23,7 @@ interface PatientCtx {
   name: string;
   birth_date: string | null;
   gender: string | null;
+  avatar_url: string | null;
 }
 
 function ChatPage() {
@@ -34,7 +36,7 @@ function ChatPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("patients")
-        .select("id, name, birth_date, gender")
+        .select("id, name, birth_date, gender, avatar_url")
         .eq("id", patientId)
         .maybeSingle();
       setPatient(data as PatientCtx | null);
@@ -89,9 +91,12 @@ function ChatPage() {
             <ArrowLeft className="h-3 w-3" /> Pacientes
           </Link>
           <div className="mt-3 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] flex items-center justify-center text-white">
-              <User className="h-5 w-5" />
-            </div>
+            <Avatar className="h-10 w-10 ring-2 ring-[#e89bcf]/30">
+              {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
+              <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white text-sm font-medium">
+                {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <div className="font-medium truncate">{patient?.name ?? "…"}</div>
               <div className="text-xs text-muted-foreground">
@@ -126,20 +131,28 @@ function ChatPage() {
 
       {/* Main: chat */}
       <section className="flex-1 flex flex-col min-w-0 h-full">
-        <header className="px-6 py-4 border-b bg-white shrink-0">
-          <h1
-            className="text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
-          >
-            Chat com Lumma
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {patient?.name ? `Atendimento de ${patient.name}` : "Carregando paciente…"}
-            {chatId && ` · sessão iniciada em ${format(new Date(), "dd/MM/yyyy")}`}
-          </p>
-          {error && (
-            <p className="mt-2 text-xs text-rose-600">{error}</p>
-          )}
+        <header className="px-6 py-4 border-b bg-white shrink-0 flex items-center gap-4">
+          <Avatar className="h-12 w-12 ring-2 ring-[#e89bcf]/30 lg:hidden">
+            {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
+            <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white">
+              {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <h1
+              className="text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              Chat com Lumma
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {patient?.name ? `Atendimento de ${patient.name}` : "Carregando paciente…"}
+              {chatId && ` · sessão iniciada em ${format(new Date(), "dd/MM/yyyy")}`}
+            </p>
+            {error && (
+              <p className="mt-2 text-xs text-rose-600">{error}</p>
+            )}
+          </div>
         </header>
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
