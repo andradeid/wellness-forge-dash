@@ -138,6 +138,7 @@ export function useDifyChat(patientId: string) {
     // 1) Upload files to Dify + storage
     const difyFiles: DifyFileRef[] = [];
     const attachments: Array<{ name: string }> = [];
+    let lastExamId: string | null = null;
     for (const file of files) {
       // Storage
       const path = `${user.id}/${patientId}/${Date.now()}-${file.name}`;
@@ -160,7 +161,7 @@ export function useDifyChat(patientId: string) {
       const json = await res.json() as { id?: string; mime_type?: string };
       const difyId = json.id;
 
-      await (supabase as any).from("patient_exams").insert({
+      const { data: examIns } = await (supabase as any).from("patient_exams").insert({
         patient_id: patientId,
         chat_id: chatId,
         uploaded_by: user.id,
@@ -169,7 +170,8 @@ export function useDifyChat(patientId: string) {
         mime_type: file.type,
         size_bytes: file.size,
         dify_file_id: difyId,
-      });
+      }).select("id").single();
+      if (examIns?.id) lastExamId = examIns.id as string;
 
       if (difyId) {
         difyFiles.push({
