@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
@@ -61,6 +62,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppPatientsRoute = AppPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/unauthorized'
+    | '/app/dashboard'
     | '/app/patients'
     | '/app/settings'
     | '/app/'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/unauthorized'
+    | '/app/dashboard'
     | '/app/patients'
     | '/app/settings'
     | '/app'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/unauthorized'
+    | '/app/dashboard'
     | '/app/patients'
     | '/app/settings'
     | '/app/'
@@ -301,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/app/patients'
       preLoaderRoute: typeof AppPatientsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/evolution/$patientId': {
@@ -384,6 +403,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
   AppPatientsRoute: typeof AppPatientsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -397,6 +417,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
   AppPatientsRoute: AppPatientsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
@@ -424,3 +445,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
