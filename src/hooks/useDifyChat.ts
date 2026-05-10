@@ -34,6 +34,18 @@ function tryExtractMarkers(text: string): Marker[] | null {
   return null;
 }
 
+function getDifyAnswer(evt: Record<string, unknown>): string {
+  const direct = evt.answer ?? evt.text ?? evt.content;
+  if (typeof direct === "string") return direct;
+  const data = evt.data;
+  if (data && typeof data === "object") {
+    const nested = data as Record<string, unknown>;
+    const value = nested.answer ?? nested.text ?? nested.content;
+    if (typeof value === "string") return value;
+  }
+  return "";
+}
+
 export function useDifyChat(patientId: string) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -222,7 +234,7 @@ export function useDifyChat(patientId: string) {
           try {
             const evt = JSON.parse(payload);
             if (evt.event === "message" || evt.event === "agent_message") {
-              assistantText += evt.answer ?? "";
+              assistantText += getDifyAnswer(evt);
               setMessages((prev) =>
                 prev.map((m) => (m.id === assistantId ? { ...m, content: assistantText } : m))
               );
