@@ -306,6 +306,13 @@ function PatientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditPatientSheet
+        patient={editTarget}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={load}
+      />
     </div>
   );
 }
