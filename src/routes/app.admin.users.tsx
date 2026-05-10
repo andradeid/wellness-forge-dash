@@ -13,6 +13,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
+  UserPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -285,12 +286,17 @@ function UsersPage() {
 
   const toggleBlock = async (u: UserRow) => {
     const next = !u.is_blocked;
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({ is_blocked: next })
-      .eq("id", u.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(next ? "Usuária bloqueada" : "Usuária reativada");
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) { toast.error("Sessão expirada"); return; }
+    const res = await fetch("/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ user_id: u.id, blocked: next }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) { toast.error(json.error ?? "Falha ao atualizar status"); return; }
+    toast.success(next ? "Usuária bloqueada (login impedido)" : "Usuária reativada");
     refreshAll();
   };
 
