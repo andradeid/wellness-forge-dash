@@ -34,6 +34,18 @@ function tryExtractMarkers(text: string): Marker[] | null {
   return null;
 }
 
+function getDifyAnswer(evt: Record<string, unknown>): string {
+  const direct = evt.answer ?? evt.text ?? evt.content;
+  if (typeof direct === "string") return direct;
+  const data = evt.data;
+  if (data && typeof data === "object") {
+    const nested = data as Record<string, unknown>;
+    const value = nested.answer ?? nested.text ?? nested.content;
+    if (typeof value === "string") return value;
+  }
+  return "";
+}
+
 export function useDifyChat(patientId: string) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -196,7 +208,9 @@ export function useDifyChat(patientId: string) {
         },
         body: JSON.stringify({
           query: text || "Analise o exame anexado.",
-          conversation_id: conversationIdRef.current || undefined,
+          // Em conversas antigas, o Dify pode ter salvo o conversation_id com outro `user`.
+          // Ao anexar exame, abrimos uma nova conversa Dify com o UUID correto e mantemos o contexto via meta.
+          conversation_id: difyFiles.length ? undefined : conversationIdRef.current || undefined,
           files: difyFiles,
           meta: metaRef.current,
         }),
@@ -205,36 +219,44 @@ export function useDifyChat(patientId: string) {
         throw new Error(`Dify ${res.status}: ${await res.text().catch(() => "")}`);
       }
 
+      console.groupCollapsed("[Chat Dify] Resposta do Dify");
+      console.log("Arquivos enviados:", difyFiles);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      const processLine = (line: string) => {
+        const l = line.trim();
+        if (!l.startsWith("data:")) return;
+        const payload = l.slice(5).trim();
+        if (!payload || payload === "[DONE]") return;
+        try {
+          const evt = JSON.parse(payload);
+          console.log("Evento recebido:", evt.event, evt);
+          if (evt.event === "message" || evt.event === "agent_message") {
+            assistantText += getDifyAnswer(evt);
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantId ? { ...m, content: assistantText } : m))
+            );
+          } else if (evt.event === "message_end" || evt.event === "agent_thought") {
+            if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
+          } else if (evt.event === "error") {
+            throw new Error(evt.message ?? "Erro do Dify");
+          }
+        } catch { /* ignore non-JSON lines */ }
+      };
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const l = line.trim();
-          if (!l.startsWith("data:")) continue;
-          const payload = l.slice(5).trim();
-          if (!payload || payload === "[DONE]") continue;
-          try {
-            const evt = JSON.parse(payload);
-            if (evt.event === "message" || evt.event === "agent_message") {
-              assistantText += evt.answer ?? "";
-              setMessages((prev) =>
-                prev.map((m) => (m.id === assistantId ? { ...m, content: assistantText } : m))
-              );
-            } else if (evt.event === "message_end" || evt.event === "agent_thought") {
-              if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
-            } else if (evt.event === "error") {
-              throw new Error(evt.message ?? "Erro do Dify");
-            }
-          } catch { /* ignore non-JSON lines */ }
-        }
+        lines.forEach(processLine);
       }
+      if (buffer.trim()) processLine(buffer);
+      console.log("Texto final extraído:", assistantText);
+      console.groupEnd();
     } catch (e) {
+      console.groupEnd();
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       setError(msg);
       setMessages((prev) =>
@@ -247,6 +269,16 @@ export function useDifyChat(patientId: string) {
     }
 
     // 5) Detect structured markers + persist
+    if (!assistantText.trim()) {
+      const msg = "O Dify recebeu o arquivo, mas não retornou texto de análise. Tente reenviar o exame; os detalhes estão no console.";
+      setError(msg);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, content: `⚠️ ${msg}` } : m))
+      );
+      setThinking(false);
+      return;
+    }
+
     const markers = tryExtractMarkers(assistantText);
     const structured = markers ? { markers } : null;
     setMessages((prev) =>
