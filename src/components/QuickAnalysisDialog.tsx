@@ -184,6 +184,10 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
   const [detected, setDetected] = useState<PatientData>({});
   const [markers, setMarkers] = useState<Marker[] | undefined>(undefined);
   const [creating, setCreating] = useState(false);
+  const [matchOpen, setMatchOpen] = useState(false);
+  const [matchPatient, setMatchPatient] = useState<{ id: string; name: string; birth_date: string | null } | null>(null);
+  const [matchKind, setMatchKind] = useState<"exact" | "suggestion">("exact");
+  const [attaching, setAttaching] = useState(false);
 
   const reset = () => {
     setFile(null);
