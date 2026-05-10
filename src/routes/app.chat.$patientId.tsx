@@ -7,6 +7,7 @@ import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { format, differenceInYears } from "date-fns";
+import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/chat/$patientId")({
   beforeLoad: async () => {
