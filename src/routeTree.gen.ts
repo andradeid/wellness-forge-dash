@@ -24,6 +24,7 @@ import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.a
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
+import { Route as ApiAdminUsersRouteImport } from './routes/api/admin.users'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -100,6 +101,11 @@ const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
   path: '/api/dify/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
+  id: '/api/admin/users',
+  path: '/api/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/patients': typeof AppPatientsRoute
   '/app': typeof AppIndexRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/patients'
     | '/app/'
+    | '/api/admin/users'
     | '/api/dify/chat'
     | '/api/dify/test'
     | '/api/dify/upload'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/patients'
     | '/app'
+    | '/api/admin/users'
     | '/api/dify/chat'
     | '/api/dify/test'
     | '/api/dify/upload'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/patients'
     | '/app/'
+    | '/api/admin/users'
     | '/api/dify/chat'
     | '/api/dify/test'
     | '/api/dify/upload'
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  ApiAdminUsersRoute: typeof ApiAdminUsersRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
@@ -322,6 +335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDifyChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/users': {
+      id: '/api/admin/users'
+      path: '/api/admin/users'
+      fullPath: '/api/admin/users'
+      preLoaderRoute: typeof ApiAdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -354,6 +374,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  ApiAdminUsersRoute: ApiAdminUsersRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
@@ -361,3 +382,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
