@@ -337,14 +337,23 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       setMarkers(m);
 
       if (patient_data?.name) {
-        setDetected({
+        const detectedData: PatientData = {
           name: patient_data.name,
           dob: patient_data.dob,
           gender: patient_data.gender,
-        });
+        };
+        setDetected(detectedData);
         setProcessing(false);
         setOpen(false);
-        setConfirmOpen(true);
+
+        const existing = await findExistingPatient(user.id, detectedData);
+        if (existing) {
+          setMatchPatient({ id: existing.patient.id, name: existing.patient.name, birth_date: existing.patient.birth_date });
+          setMatchKind(existing.kind);
+          setMatchOpen(true);
+        } else {
+          setConfirmOpen(true);
+        }
       } else {
         const reason = !braceMatches.length
           ? "nenhum bloco JSON foi encontrado no texto"
