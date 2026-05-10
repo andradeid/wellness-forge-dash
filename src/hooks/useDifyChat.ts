@@ -208,7 +208,9 @@ export function useDifyChat(patientId: string) {
         },
         body: JSON.stringify({
           query: text || "Analise o exame anexado.",
-          conversation_id: conversationIdRef.current || undefined,
+          // Em conversas antigas, o Dify pode ter salvo o conversation_id com outro `user`.
+          // Ao anexar exame, abrimos uma nova conversa Dify com o UUID correto e mantemos o contexto via meta.
+          conversation_id: difyFiles.length ? undefined : conversationIdRef.current || undefined,
           files: difyFiles,
           meta: metaRef.current,
         }),
