@@ -269,6 +269,16 @@ export function useDifyChat(patientId: string) {
     }
 
     // 5) Detect structured markers + persist
+    if (!assistantText.trim()) {
+      const msg = "O Dify recebeu o arquivo, mas não retornou texto de análise. Tente reenviar o exame; os detalhes estão no console.";
+      setError(msg);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, content: `⚠️ ${msg}` } : m))
+      );
+      setThinking(false);
+      return;
+    }
+
     const markers = tryExtractMarkers(assistantText);
     const structured = markers ? { markers } : null;
     setMessages((prev) =>
