@@ -266,30 +266,42 @@ export type Database = {
       }
       patients: {
         Row: {
+          avatar_url: string | null
           birth_date: string | null
           created_at: string
           created_by: string
+          email: string | null
           gender: Database["public"]["Enums"]["gender_type"] | null
           id: string
           name: string
+          notes: string | null
+          phone: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
           created_by: string
+          email?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           name: string
+          notes?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
           created_by?: string
+          email?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           name?: string
+          notes?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []

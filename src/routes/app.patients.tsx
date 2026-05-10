@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { MessageSquare, Plus, Search, Trash2, Users } from "lucide-react";
+import { MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { EditPatientSheet, type EditablePatient } from "@/components/EditPatientSheet";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -33,6 +34,10 @@ interface Patient {
   birth_date: string | null;
   gender: "male" | "female" | "other" | null;
   created_at: string;
+  email: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  notes: string | null;
 }
 
 function PatientsPage() {
@@ -49,6 +54,8 @@ function PatientsPage() {
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditablePatient | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const askDelete = (p: Patient) => {
     setDeleteTarget(p);
@@ -84,7 +91,7 @@ function PatientsPage() {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("patients")
-      .select("id, name, birth_date, gender, created_at")
+      .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setPatients((data as Patient[]) ?? []);
@@ -234,6 +241,15 @@ function PatientsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          onClick={() => { setEditTarget(p); setEditOpen(true); }}
+                          className="rounded-full"
+                          aria-label="Editar paciente"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => askDelete(p)}
                           className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                           aria-label="Excluir chat"
@@ -290,6 +306,13 @@ function PatientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditPatientSheet
+        patient={editTarget}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={load}
+      />
     </div>
   );
 }
