@@ -41,6 +41,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/evolution/$patientId")({
