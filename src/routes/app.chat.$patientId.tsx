@@ -36,7 +36,7 @@ function ChatPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("patients")
-        .select("id, name, birth_date, gender")
+        .select("id, name, birth_date, gender, avatar_url")
         .eq("id", patientId)
         .maybeSingle();
       setPatient(data as PatientCtx | null);
