@@ -713,6 +713,49 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={matchOpen} onOpenChange={(o) => { if (!o && !attaching) { setMatchOpen(false); reset(); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {matchKind === "exact"
+                ? `Localizamos um paciente cadastrado com estes dados: ${matchPatient?.name}`
+                : `Encontramos um paciente parecido: ${matchPatient?.name}`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {matchKind === "exact"
+                ? "Deseja anexar este exame ao histórico dele?"
+                : `O nome extraído (${detected.name}) é uma variação do paciente acima e a data de nascimento confere. Deseja anexar este exame ao histórico dele ou cadastrar como um novo paciente?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+            <div><span className="text-muted-foreground">Paciente existente:</span> <strong>{matchPatient?.name}</strong></div>
+            {matchPatient?.birth_date && (
+              <div><span className="text-muted-foreground">Nascimento:</span> {new Date(matchPatient.birth_date + "T00:00:00").toLocaleDateString("pt-BR")}</div>
+            )}
+            <div className="pt-2 border-t mt-2"><span className="text-muted-foreground">Extraído do exame:</span> {detected.name} {detected.dob ? `· ${new Date(detected.dob + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}</div>
+          </div>
+
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={attaching}>Cancelar</AlertDialogCancel>
+            <Button
+              variant="outline"
+              disabled={attaching}
+              onClick={() => { setMatchOpen(false); setConfirmOpen(true); }}
+            >
+              Cadastrar como novo
+            </Button>
+            <AlertDialogAction
+              disabled={attaching}
+              onClick={(e) => { e.preventDefault(); handleAttachToExisting(); }}
+              className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90"
+            >
+              {attaching ? "Anexando…" : "Anexar ao histórico"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
