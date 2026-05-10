@@ -17,6 +17,7 @@ import {
   Users,
   Shield,
   Plug,
+  FlaskRound,
   ChevronLeft,
   ChevronDown,
 } from "lucide-react";
@@ -74,6 +75,7 @@ const groups: NavGroup[] = [
       { title: "Base de Conhecimento", url: "#kb", icon: BookOpen },
       { title: "Categorias", url: "#categorias", icon: Tag, badge: "NOVO" },
       { title: "Integrações & APIs", url: "/app/admin/integrations", icon: Plug, badge: "NOVO" },
+      { title: "Playground (Sandbox)", url: "/app/admin/playground", icon: FlaskRound, badge: "BETA" },
     ],
   },
   {
