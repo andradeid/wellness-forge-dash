@@ -253,6 +253,7 @@ export type Database = {
           id: string
           is_blocked: boolean
           phone: string | null
+          professional_id: string | null
           updated_at: string
         }
         Insert: {
@@ -264,6 +265,7 @@ export type Database = {
           id: string
           is_blocked?: boolean
           phone?: string | null
+          professional_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -275,6 +277,7 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           phone?: string | null
+          professional_id?: string | null
           updated_at?: string
         }
         Relationships: []
