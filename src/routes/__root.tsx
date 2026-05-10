@@ -17,7 +17,7 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-[#f5f5f0] px-4">
       <div className="max-w-lg w-full text-center">
         <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center">
-          <img src="/src/assets/lumma-symbol.svg" alt="Lumma" className="h-16 w-16 animate-pulse" />
+          <img src={lummaSymbol} alt="Lumma" className="h-16 w-16 animate-pulse" />
         </div>
         <h1
           className="text-8xl font-light bg-clip-text text-transparent"
