@@ -443,19 +443,33 @@ function IntegrationsPage() {
                       </div>
                     </div>
                     {c.category === "ai" && (
-                      <Button
-                        onClick={testDifyConnection}
-                        disabled={testingDify}
-                        variant="outline"
-                        className="rounded-full border-foreground/15 bg-white/80 backdrop-blur"
-                      >
-                        {testingDify ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Wifi className="h-4 w-4" />
-                        )}
-                        Testar Conexão Dify
-                      </Button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Button
+                          onClick={saveDifyConfig}
+                          disabled={savingDify}
+                          className="rounded-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                        >
+                          {savingDify ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                          Salvar Configurações
+                        </Button>
+                        <Button
+                          onClick={testDifyConnection}
+                          disabled={testingDify}
+                          variant="outline"
+                          className="rounded-full border-foreground/15 bg-white/80 backdrop-blur"
+                        >
+                          {testingDify ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Wifi className="h-4 w-4" />
+                          )}
+                          Testar Conexão Dify
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardHeader>
