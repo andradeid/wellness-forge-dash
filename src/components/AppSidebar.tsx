@@ -18,11 +18,14 @@ import {
   Shield,
   Plug,
   FlaskRound,
-  ChevronLeft,
   ChevronDown,
+  ChevronsUpDown,
   UserRound,
+  LogOut,
+  Settings as SettingsIcon,
+  User as UserIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -30,9 +33,21 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import lummaLockup from "@/assets/lumma-lockup.svg";
+
+const planLabel = (p?: string | null) =>
+  p === "pro" ? "Master" : p === "basic" ? "Essencial" : "Gratuito";
 
 type NavItem = {
   title: string;
@@ -106,7 +121,7 @@ const adminGroups: NavGroup[] = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { profile, role, signOut } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -115,6 +130,18 @@ export function AppSidebar() {
     produto: true,
     acesso: true,
   });
+
+  const [planType, setPlanType] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("subscriptions")
+      .select("plan_type")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: any) => setPlanType(data?.plan_type ?? null));
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -227,25 +254,69 @@ export function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="px-5 py-4 border-t">
-        {!collapsed ? (
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            title={profile?.email}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Voltar ao app</span>
-          </button>
-        ) : (
-          <button
-            onClick={handleSignOut}
-            className="mx-auto text-muted-foreground hover:text-foreground"
-            aria-label="Sair"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-        )}
+      <SidebarFooter className="border-t p-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "w-full flex items-center gap-3 rounded-xl p-2 hover:bg-muted/60 transition-colors",
+                collapsed && "justify-center",
+              )}
+              title={profile?.email}
+            >
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage src={profile?.avatar_url ?? undefined} />
+                <AvatarFallback className="bg-gradient-brand text-white text-xs font-semibold">
+                  {(profile?.full_name || profile?.email || "U").slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {!collapsed && (
+                <>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {profile?.full_name || profile?.email || "Usuário"}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      Plano {planLabel(planType)}
+                    </div>
+                  </div>
+                  <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-60 rounded-2xl p-2 shadow-lg">
+            <div className="px-3 pt-2 pb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                {role === "super_admin" ? "Super Admin" : role === "admin" ? "Administrador" : "Nutricionista"}
+              </p>
+              <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="rounded-lg gap-3 cursor-pointer py-2.5"
+              onClick={() => navigate({ to: "/app/settings", search: { tab: "identity" } as any })}
+            >
+              <UserIcon className="h-4 w-4" />
+              Meu perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="rounded-lg gap-3 cursor-pointer py-2.5"
+              onClick={() => navigate({ to: "/app/settings" })}
+            >
+              <SettingsIcon className="h-4 w-4" />
+              Configurações
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="rounded-lg gap-3 cursor-pointer py-2.5 text-destructive focus:text-destructive"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   );
