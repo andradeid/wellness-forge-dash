@@ -103,6 +103,9 @@ function UsersPage() {
   const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
   const [examCount, setExamCount] = useState<number | null>(null);
 
   if (role && role !== "super_admin") {
@@ -368,6 +371,12 @@ function UsersPage() {
                 Lista de nutricionistas ({total})
               </CardTitle>
             </div>
+            <Button
+              onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
+              className="bg-gradient-brand text-white rounded-full"
+            >
+              <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
+            </Button>
           </div>
           <div className="flex gap-3 flex-wrap">
             <div className="relative flex-1 min-w-64">
