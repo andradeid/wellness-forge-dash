@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { FilePlus2, Plus, Search, Users } from "lucide-react";
+import { FilePlus2, MessageSquare, Plus, Search, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -175,6 +175,7 @@ function PatientsPage() {
                   <TableHead>Nascimento</TableHead>
                   <TableHead>Gênero</TableHead>
                   <TableHead>Cadastrado em</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -184,6 +185,13 @@ function PatientsPage() {
                     <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell>{genderLabel(p.gender)}</TableCell>
                     <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
+                        <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                          <MessageSquare className="h-4 w-4" /> Chat
+                        </Link>
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

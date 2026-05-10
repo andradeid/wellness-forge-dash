@@ -14,9 +14,12 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
+import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
+import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -43,6 +46,11 @@ const AppPatientsRoute = AppPatientsRouteImport.update({
   path: '/patients',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
+  id: '/chat/$patientId',
+  path: '/chat/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
   id: '/admin/nutritionists',
   path: '/admin/nutritionists',
@@ -58,6 +66,16 @@ const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
   path: '/admin/administrators',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
+  id: '/api/dify/upload',
+  path: '/api/dify/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
+  id: '/api/dify/chat',
+  path: '/api/dify/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,18 +83,24 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
+  '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/patients': typeof AppPatientsRoute
   '/app': typeof AppIndexRoute
+  '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,9 +109,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
+  '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/chat/$patientId': typeof AppChatPatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,18 +124,24 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/patients'
     | '/app/'
+    | '/api/dify/chat'
+    | '/api/dify/upload'
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/chat/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/app/patients'
     | '/app'
+    | '/api/dify/chat'
+    | '/api/dify/upload'
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/chat/$patientId'
   id:
     | '__root__'
     | '/'
@@ -116,15 +149,20 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/patients'
     | '/app/'
+    | '/api/dify/chat'
+    | '/api/dify/upload'
     | '/app/admin/administrators'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/chat/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiDifyChatRoute: typeof ApiDifyChatRoute
+  ApiDifyUploadRoute: typeof ApiDifyUploadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPatientsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/chat/$patientId': {
+      id: '/app/chat/$patientId'
+      path: '/chat/$patientId'
+      fullPath: '/app/chat/$patientId'
+      preLoaderRoute: typeof AppChatPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/nutritionists': {
       id: '/app/admin/nutritionists'
       path: '/admin/nutritionists'
@@ -185,6 +230,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdministratorsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/dify/upload': {
+      id: '/api/dify/upload'
+      path: '/api/dify/upload'
+      fullPath: '/api/dify/upload'
+      preLoaderRoute: typeof ApiDifyUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/chat': {
+      id: '/api/dify/chat'
+      path: '/api/dify/chat'
+      fullPath: '/api/dify/chat'
+      preLoaderRoute: typeof ApiDifyChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -194,6 +253,7 @@ interface AppRouteChildren {
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
+  AppChatPatientIdRoute: typeof AppChatPatientIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -202,6 +262,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
+  AppChatPatientIdRoute: AppChatPatientIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -210,6 +271,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiDifyChatRoute: ApiDifyChatRoute,
+  ApiDifyUploadRoute: ApiDifyUploadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
