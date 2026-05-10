@@ -245,6 +245,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_tone: string
           avatar_url: string | null
           created_at: string
           deleted_at: string | null
@@ -257,6 +258,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_tone?: string
           avatar_url?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -269,6 +271,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_tone?: string
           avatar_url?: string | null
           created_at?: string
           deleted_at?: string | null

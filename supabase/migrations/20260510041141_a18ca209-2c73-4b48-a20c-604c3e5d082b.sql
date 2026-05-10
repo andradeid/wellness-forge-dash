@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS ai_tone text NOT NULL DEFAULT 'educational' CHECK (ai_tone IN ('technical','educational'));
