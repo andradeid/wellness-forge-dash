@@ -28,7 +28,33 @@ export const Route = createFileRoute("/api/dify/chat")({
         if (!apiKey) return new Response("Dify API key não configurada", { status: 500 });
 
         const body = await request.json();
-        const { query, conversation_id, inputs, files } = body ?? {};
+        const { query, conversation_id, inputs, files, meta } = body ?? {};
+
+        // Compose a friendly "user" identifier for Dify logs.
+        // IMPORTANT: Dify validates that conversation_id belongs to the same `user`.
+        // For existing conversations we keep the original UUID to avoid breaking them.
+        // Only NEW conversations adopt the friendly label.
+        const sanitize = (s: unknown) =>
+          String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
+        const nutriName = sanitize(meta?.nutritionist_name);
+        const patientName = sanitize(meta?.patient_name);
+        let displayUser = userId;
+        if (!conversation_id && (nutriName || patientName)) {
+          const label = [nutriName, patientName].filter(Boolean).join(" · ");
+          displayUser = label.length > 64 ? label.slice(0, 63) + "…" : label;
+        }
+
+        const mergedInputs = {
+          ...(inputs ?? {}),
+          ...(meta
+            ? {
+                nutritionist_name: nutriName,
+                nutritionist_email: sanitize(meta.nutritionist_email),
+                patient_name: patientName,
+                patient_id: sanitize(meta.patient_id),
+              }
+            : {}),
+        };
 
         const upstream = await fetch(`${baseUrl}/chat-messages`, {
           method: "POST",
@@ -38,10 +64,10 @@ export const Route = createFileRoute("/api/dify/chat")({
           },
           body: JSON.stringify({
             query: query ?? "",
-            inputs: inputs ?? {},
+            inputs: mergedInputs,
             response_mode: "streaming",
             conversation_id: conversation_id ?? "",
-            user: userId,
+            user: displayUser,
             files: files ?? [],
             auto_generate_name: true,
           }),
