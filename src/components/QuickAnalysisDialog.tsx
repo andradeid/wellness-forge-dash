@@ -562,11 +562,12 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       }
 
       // Move the exam from _quick to the patient's folder (best-effort) and persist reference
+      let examId: string | null = null;
       if (storagePathRef.current && file) {
         const newPath = `${user.id}/${matchPatient.id}/${Date.now()}-${file.name}`;
         const { error: mvErr } = await supabase.storage.from("exams").move(storagePathRef.current, newPath);
         const finalPath = mvErr ? storagePathRef.current : newPath;
-        await (supabase as any).from("patient_exams").insert({
+        const { data: examIns } = await (supabase as any).from("patient_exams").insert({
           patient_id: matchPatient.id,
           chat_id: chatId,
           uploaded_by: user.id,
@@ -575,7 +576,24 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
           mime_type: file.type,
           size_bytes: file.size,
           dify_file_id: difyFileIdRef.current,
+        }).select("id").single();
+        examId = (examIns?.id as string | undefined) ?? null;
+      }
+
+      // Persist markers individually + audit log
+      let indexed = false;
+      let parseError = false;
+      if (markers && markers.length) {
+        const result = await processAndPersistMarkers({
+          userId: user.id,
+          patientId: matchPatient.id,
+          examId,
+          chatId,
+          rawMarkers: markers as unknown as RawMarker[],
+          source: "quick-analysis-attach",
         });
+        indexed = result.inserted > 0 && result.invalid.length === 0;
+        parseError = result.invalid.length > 0;
       }
 
       // Persist user + assistant messages
@@ -591,7 +609,7 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
         created_by: user.id,
         role: "assistant",
         content: assistantTextRef.current,
-        structured_data: markers ? { markers } : null,
+        structured_data: markers ? { markers, indexed, parse_error: parseError } : null,
       });
 
       toast.success(`Exame anexado ao histórico de ${matchPatient.name}.`);
