@@ -101,24 +101,58 @@ function normalizeGender(input?: string): "male" | "female" | "other" | undefine
   return undefined;
 }
 
+function looksLikePatient(obj: Record<string, unknown>): boolean {
+  return typeof obj.name === "string" && (obj.dob !== undefined || obj.gender !== undefined || obj.birth_date !== undefined);
+}
+
+function looksLikeMarker(obj: Record<string, unknown>): boolean {
+  return (
+    (typeof obj.parameter === "string" || typeof obj.parametro === "string") &&
+    (obj.result !== undefined || obj.resultado !== undefined)
+  );
+}
+
 function findPatientAndMarkers(text: string): { patient_data?: PatientData; markers?: Marker[] } {
   const blocks = extractJsonBlocks(text);
   let patient_data: PatientData | undefined;
   let markers: Marker[] | undefined;
+  const collectedMarkers: Marker[] = [];
+
+  const setPatient = (pdRaw: Record<string, unknown>) => {
+    if (patient_data) return;
+    const pd = normalizeKeys(pdRaw);
+    const dob = typeof pd.dob === "string" ? pd.dob : (typeof pd.birth_date === "string" ? pd.birth_date : undefined);
+    patient_data = {
+      name: typeof pd.name === "string" ? pd.name : undefined,
+      dob: normalizeDob(dob),
+      gender: normalizeGender(typeof pd.gender === "string" ? pd.gender : undefined),
+    };
+  };
+
   for (const raw of blocks) {
     const b = normalizeKeys(raw);
-    if (!patient_data && b.patient_data && typeof b.patient_data === "object") {
-      const pd = normalizeKeys(b.patient_data as Record<string, unknown>);
-      patient_data = {
-        name: typeof pd.name === "string" ? pd.name : undefined,
-        dob: normalizeDob(typeof pd.dob === "string" ? pd.dob : undefined),
-        gender: normalizeGender(typeof pd.gender === "string" ? pd.gender : undefined),
-      };
+
+    // Wrapper with patient_data key
+    if (b.patient_data && typeof b.patient_data === "object") {
+      setPatient(b.patient_data as Record<string, unknown>);
     }
-    if (!markers && Array.isArray(b.markers)) {
-      markers = b.markers as Marker[];
+    // Standalone patient object
+    if (!patient_data && looksLikePatient(b)) {
+      setPatient(b);
+    }
+    // Wrapper with markers array
+    if (Array.isArray(b.markers)) {
+      for (const m of b.markers) {
+        if (m && typeof m === "object") collectedMarkers.push(m as Marker);
+      }
+    }
+    // Standalone marker object
+    if (looksLikeMarker(b)) {
+      collectedMarkers.push(b as Marker);
     }
   }
+
+  if (collectedMarkers.length) markers = collectedMarkers;
   return { patient_data, markers };
 }
 
