@@ -505,7 +505,88 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
     }
   };
 
-  return (
+  const handleAttachToExisting = async () => {
+    if (!user || !matchPatient) return;
+    setAttaching(true);
+    try {
+      // Reuse the latest existing chat for this patient (preserving its Dify conversation_id),
+      // or create a new chat if none exists.
+      const { data: existingChat } = await (supabase as any)
+        .from("patient_chats")
+        .select("id, dify_conversation_id")
+        .eq("patient_id", matchPatient.id)
+        .eq("created_by", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let chatId: string;
+      if (existingChat?.id) {
+        chatId = existingChat.id;
+        // Touch updated_at so the chat surfaces at the top
+        await (supabase as any)
+          .from("patient_chats")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", chatId);
+      } else {
+        const { data: chat, error: cErr } = await (supabase as any)
+          .from("patient_chats")
+          .insert({
+            patient_id: matchPatient.id,
+            created_by: user.id,
+            dify_conversation_id: conversationIdRef.current || null,
+          })
+          .select("id")
+          .single();
+        if (cErr) throw new Error(cErr.message);
+        chatId = chat.id;
+      }
+
+      // Move the exam from _quick to the patient's folder (best-effort) and persist reference
+      if (storagePathRef.current && file) {
+        const newPath = `${user.id}/${matchPatient.id}/${Date.now()}-${file.name}`;
+        const { error: mvErr } = await supabase.storage.from("exams").move(storagePathRef.current, newPath);
+        const finalPath = mvErr ? storagePathRef.current : newPath;
+        await (supabase as any).from("patient_exams").insert({
+          patient_id: matchPatient.id,
+          chat_id: chatId,
+          uploaded_by: user.id,
+          file_path: finalPath,
+          file_name: file.name,
+          mime_type: file.type,
+          size_bytes: file.size,
+          dify_file_id: difyFileIdRef.current,
+        });
+      }
+
+      // Persist user + assistant messages
+      await (supabase as any).from("chat_messages").insert({
+        chat_id: chatId,
+        created_by: user.id,
+        role: "user",
+        content: "Análise rápida do exame anexado.",
+        attachments: file ? [{ name: file.name }] : null,
+      });
+      await (supabase as any).from("chat_messages").insert({
+        chat_id: chatId,
+        created_by: user.id,
+        role: "assistant",
+        content: assistantTextRef.current,
+        structured_data: markers ? { markers } : null,
+      });
+
+      toast.success(`Exame anexado ao histórico de ${matchPatient.name}.`);
+      setMatchOpen(false);
+      reset();
+      onCreated?.();
+      navigate({ to: "/app/chat/$patientId", params: { patientId: matchPatient.id } });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao anexar";
+      toast.error(msg);
+    } finally {
+      setAttaching(false);
+    }
+  };
     <>
       <Dialog open={open} onOpenChange={(o) => { if (!processing) { setOpen(o); if (!o) reset(); } }}>
         <Button
