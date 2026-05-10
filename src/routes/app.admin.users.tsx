@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   Search,
@@ -85,10 +85,14 @@ function UsersPage() {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState({ total: 0, active: 0, trial: 0, blocked: 0 });
+
+  const nutriIdsRef = useRef<string[] | null>(null);
 
   // Modais
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
@@ -108,36 +112,113 @@ function UsersPage() {
     );
   }
 
-  const load = async () => {
-    setLoading(true);
-    // ids de nutricionistas
-    const { data: roleRows, error: rErr } = await (supabase as any)
+  // debounce da busca
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // reset da página ao alterar filtros
+  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter, planFilter]);
+
+  const ensureNutriIds = useCallback(async (): Promise<string[]> => {
+    if (nutriIdsRef.current) return nutriIdsRef.current;
+    const { data, error } = await (supabase as any)
       .from("user_roles")
       .select("user_id")
       .eq("role", "nutri");
-    if (rErr) { toast.error(rErr.message); setLoading(false); return; }
-    const ids = (roleRows ?? []).map((r: any) => r.user_id);
+    if (error) { toast.error(error.message); return []; }
+    const ids = (data ?? []).map((r: any) => r.user_id);
+    nutriIdsRef.current = ids;
+    return ids;
+  }, []);
+
+  // Estatísticas (head count) — atualizadas no mount e após escritas
+  const loadStats = useCallback(async () => {
+    const ids = await ensureNutriIds();
+    if (ids.length === 0) { setStats({ total: 0, active: 0, trial: 0, blocked: 0 }); return; }
+
+    const baseProfiles = () => (supabase as any)
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .in("id", ids)
+      .is("deleted_at", null);
+
+    const baseSubs = (status: SubStatus) => (supabase as any)
+      .from("subscriptions")
+      .select("user_id", { count: "exact", head: true })
+      .in("user_id", ids)
+      .eq("status", status);
+
+    const [totalRes, activeRes, trialRes, blockedRes] = await Promise.all([
+      baseProfiles(),
+      baseSubs("active"),
+      baseSubs("trial"),
+      baseProfiles().eq("is_blocked", true),
+    ]);
+
+    setStats({
+      total: totalRes.count ?? 0,
+      active: activeRes.count ?? 0,
+      trial: trialRes.count ?? 0,
+      blocked: blockedRes.count ?? 0,
+    });
+  }, [ensureNutriIds]);
+
+  // Página atual com filtros aplicados no servidor
+  const load = useCallback(async () => {
+    setLoading(true);
+    const ids = await ensureNutriIds();
     if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
 
-    const [profilesRes, subsRes] = await Promise.all([
-      (supabase as any)
-        .from("profiles")
-        .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at")
-        .in("id", ids)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false }),
-      (supabase as any)
+    // Restringe ids quando há filtro de plano/status (não-bloqueado) — feito em subscriptions
+    let scopedIds: string[] = ids;
+    const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
+    if (subStatusActive || planFilter !== "all") {
+      let q = (supabase as any)
+        .from("subscriptions")
+        .select("user_id")
+        .in("user_id", ids);
+      if (subStatusActive) q = q.eq("status", statusFilter);
+      if (planFilter !== "all") q = q.eq("plan_type", planFilter);
+      const { data, error } = await q;
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      scopedIds = (data ?? []).map((r: any) => r.user_id);
+      if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+    }
+
+    let pq = (supabase as any)
+      .from("profiles")
+      .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
+      .in("id", scopedIds)
+      .is("deleted_at", null);
+
+    if (statusFilter === "blocked") pq = pq.eq("is_blocked", true);
+
+    if (debouncedSearch) {
+      const term = debouncedSearch.replace(/[%,]/g, "");
+      pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+    }
+
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    pq = pq.order("created_at", { ascending: false }).range(from, to);
+
+    const { data: profiles, count, error: pErr } = await pq;
+    if (pErr) { toast.error(pErr.message); setLoading(false); return; }
+
+    const pageIds = (profiles ?? []).map((p: any) => p.id);
+    let subMap = new Map<string, any>();
+    if (pageIds.length > 0) {
+      const { data: subs, error: sErr } = await (supabase as any)
         .from("subscriptions")
         .select("user_id, status, plan_type, current_period_end")
-        .in("user_id", ids),
-    ]);
-    if (profilesRes.error) toast.error(profilesRes.error.message);
-    if (subsRes.error) toast.error(subsRes.error.message);
+        .in("user_id", pageIds);
+      if (sErr) toast.error(sErr.message);
+      (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
+    }
 
-    const subMap = new Map<string, any>();
-    (subsRes.data ?? []).forEach((s: any) => subMap.set(s.user_id, s));
-
-    const merged: UserRow[] = (profilesRes.data ?? []).map((p: any) => ({
+    const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
       email: p.email,
@@ -150,31 +231,18 @@ function UsersPage() {
       plan_type: subMap.get(p.id)?.plan_type ?? null,
       current_period_end: subMap.get(p.id)?.current_period_end ?? null,
     }));
+
     setRows(merged);
-    setTotal(merged.length);
+    setTotal(count ?? merged.length);
     setLoading(false);
-  };
+  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, page]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadStats(); }, [loadStats]);
 
-  const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      const matchesSearch = !search ||
-        (r.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
-        r.email.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "blocked" && r.is_blocked) ||
-        (!r.is_blocked && r.status === statusFilter);
-      const matchesPlan = planFilter === "all" || r.plan_type === planFilter;
-      return matchesSearch && matchesStatus && matchesPlan;
-    });
-  }, [rows, search, statusFilter, planFilter]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  useEffect(() => { setPage(0); }, [search, statusFilter, planFilter]);
+  const refreshAll = async () => { await Promise.all([load(), loadStats()]); };
 
   // ações
   const openDetails = async (u: UserRow) => {
@@ -206,7 +274,7 @@ function UsersPage() {
     if (error) { toast.error(error.message); return; }
     toast.success("Plano atualizado com sucesso");
     setPlanUser(null);
-    load();
+    refreshAll();
   };
 
   const sendWelcome = async (u: UserRow) => {
@@ -223,7 +291,7 @@ function UsersPage() {
       .eq("id", u.id);
     if (error) { toast.error(error.message); return; }
     toast.success(next ? "Usuária bloqueada" : "Usuária reativada");
-    load();
+    refreshAll();
   };
 
   const confirmDelete = async () => {
@@ -242,14 +310,7 @@ function UsersPage() {
     toast.success("Usuária excluída");
     setDeleteUser(null);
     setDeleteConfirm("");
-    load();
-  };
-
-  const stats = {
-    total: rows.length,
-    active: rows.filter((r) => !r.is_blocked && r.status === "active").length,
-    trial: rows.filter((r) => !r.is_blocked && r.status === "trial").length,
-    blocked: rows.filter((r) => r.is_blocked).length,
+    refreshAll();
   };
 
   return (
@@ -298,7 +359,7 @@ function UsersPage() {
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Acesso</p>
               <CardTitle className="text-lg font-serif font-normal mt-1">
-                Lista de nutricionistas ({filtered.length})
+                Lista de nutricionistas ({total})
               </CardTitle>
             </div>
           </div>
@@ -340,7 +401,7 @@ function UsersPage() {
             <div className="py-16 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
             </div>
-          ) : paged.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="py-16 text-center">
               <div className="h-12 w-12 mx-auto rounded-2xl bg-accent/60 flex items-center justify-center mb-4">
                 <UsersIcon className="h-6 w-6 text-accent-foreground" />
@@ -360,7 +421,7 @@ function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paged.map((r) => (
+                  {rows.map((r) => (
                     <TableRow key={r.id} className="border-b last:border-0">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
@@ -423,7 +484,7 @@ function UsersPage() {
               {/* Paginação */}
               <div className="flex items-center justify-between pt-6">
                 <p className="text-xs text-muted-foreground">
-                  Página {page + 1} de {totalPages} · {filtered.length} resultado(s)
+                  Página {page + 1} de {totalPages} · {total} resultado(s)
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
