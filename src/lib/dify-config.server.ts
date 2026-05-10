@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export interface DifyConfig {
   baseUrl: string;
@@ -19,14 +19,6 @@ function normalizeBaseUrl(url: string): string {
   return url.replace(/\/$/, "");
 }
 
-function getAdminClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
-
 /**
  * Loads Dify config from the `integrations` table (cached for 60s).
  * Falls back to process.env if a value is missing in the database.
@@ -39,8 +31,7 @@ export async function getDifyConfig(force = false): Promise<DifyConfig> {
   let apiKey = process.env.DIFY_API_KEY || "";
 
   try {
-    const admin = getAdminClient();
-    const { data } = await admin
+    const { data } = await supabaseAdmin
       .from("integrations")
       .select("key, value")
       .in("key", ["dify_endpoint", "dify_api_key"]);
