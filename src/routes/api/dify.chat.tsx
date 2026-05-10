@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getDifyConfig } from "@/lib/dify-config.server";
 
-async function authUserId(request: Request): Promise<string | null> {
+async function authUser(request: Request): Promise<{ userId: string; token: string } | null> {
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
@@ -13,17 +13,18 @@ async function authUserId(request: Request): Promise<string | null> {
   );
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) return null;
-  return data.claims.sub;
+  return { userId: data.claims.sub, token };
 }
 
 export const Route = createFileRoute("/api/dify/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await authUserId(request);
-        if (!userId) return new Response("Unauthorized", { status: 401 });
+        const auth = await authUser(request);
+        if (!auth) return new Response("Unauthorized", { status: 401 });
+        const { userId, token } = auth;
 
-        const { baseUrl, apiKey } = await getDifyConfig();
+        const { baseUrl, apiKey } = await getDifyConfig(token);
         if (!apiKey) return new Response("Dify API key não configurada", { status: 500 });
 
         const body = await request.json();

@@ -1,24 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
 import { getDifyConfig, invalidateDifyConfigCache } from "@/lib/dify-config.server";
 
-async function authSuperAdmin(request: Request): Promise<string | null> {
+async function authSuperAdmin(
+  request: Request,
+): Promise<{ userId: string; token: string } | null> {
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
 
-  const { data: userData, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !userData?.user?.id) return null;
-  const userId = userData.user.id;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return null;
 
-  const { data: roles } = await supabaseAdmin
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
+  if (claimsErr || !claimsData?.claims?.sub) return null;
+  const userId = claimsData.claims.sub;
+
+  // RLS on user_roles allows the user to read their own roles
+  const { data: roles } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .eq("role", "super_admin")
     .maybeSingle();
 
-  return roles ? userId : null;
+  return roles ? { userId, token } : null;
 }
 
 export const Route = createFileRoute("/api/dify/test")({
@@ -26,11 +38,11 @@ export const Route = createFileRoute("/api/dify/test")({
     handlers: {
       POST: async ({ request }) => {
         try {
-          const userId = await authSuperAdmin(request);
-          if (!userId) return new Response("Forbidden", { status: 403 });
+          const auth = await authSuperAdmin(request);
+          if (!auth) return new Response("Forbidden", { status: 403 });
 
           invalidateDifyConfigCache();
-          const { baseUrl, apiKey } = await getDifyConfig(true);
+          const { baseUrl, apiKey } = await getDifyConfig(auth.token, true);
           if (!apiKey) {
             return Response.json({
               ok: false,
