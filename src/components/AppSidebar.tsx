@@ -38,6 +38,7 @@ type NavItem = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
+  superAdminOnly?: boolean;
 };
 
 type NavGroup = {
@@ -75,7 +76,7 @@ const groups: NavGroup[] = [
       { title: "Base de Conhecimento", url: "#kb", icon: BookOpen },
       { title: "Categorias", url: "#categorias", icon: Tag, badge: "NOVO" },
       { title: "Integrações & APIs", url: "/app/admin/integrations", icon: Plug, badge: "NOVO" },
-      { title: "Playground (Sandbox)", url: "/app/admin/playground", icon: FlaskRound, badge: "BETA" },
+      { title: "Playground (Sandbox)", url: "/app/admin/playground", icon: FlaskRound, badge: "BETA", superAdminOnly: true },
     ],
   },
   {
@@ -93,7 +94,7 @@ const groups: NavGroup[] = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { profile, signOut } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -130,6 +131,10 @@ export function AppSidebar() {
       <SidebarContent className="px-3 gap-1">
         {groups.map((g) => {
           const isOpen = open[g.key];
+          const visibleItems = g.items.filter(
+            (item) => !item.superAdminOnly || role === "super_admin",
+          );
+          if (visibleItems.length === 0) return null;
           return (
             <div key={g.key} className="py-2">
               <button
@@ -163,7 +168,7 @@ export function AppSidebar() {
 
               {isOpen && (
                 <ul className="mt-1 space-y-0.5">
-                  {g.items.map((item) => {
+                  {visibleItems.map((item) => {
                     const active = isActive(item.url);
                     const content = (
                       <span
