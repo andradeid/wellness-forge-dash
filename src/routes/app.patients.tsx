@@ -45,6 +45,39 @@ function PatientsPage() {
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<Patient["gender"]>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
+  const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const askDelete = (p: Patient) => {
+    setDeleteTarget(p);
+    setDeleteStep(1);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { data: chats } = await (supabase as any)
+      .from("patient_chats")
+      .select("id")
+      .eq("patient_id", deleteTarget.id);
+    const chatIds = (chats ?? []).map((c: { id: string }) => c.id);
+    if (chatIds.length > 0) {
+      await (supabase as any).from("chat_messages").delete().in("chat_id", chatIds);
+      await (supabase as any).from("patient_exams").delete().in("chat_id", chatIds);
+      const { error } = await (supabase as any)
+        .from("patient_chats").delete().in("id", chatIds);
+      if (error) {
+        toast.error(error.message);
+        setDeleting(false);
+        return;
+      }
+    }
+    setDeleting(false);
+    setDeleteStep(0);
+    setDeleteTarget(null);
+    toast.success("Chat excluído com sucesso");
+  };
 
   const load = async () => {
     setLoading(true);
@@ -190,11 +223,22 @@ function PatientsPage() {
                     <TableCell>{genderLabel(p.gender)}</TableCell>
                     <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell className="text-right">
-                      <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
-                        <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
-                          <MessageSquare className="h-4 w-4" /> Chat
-                        </Link>
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
+                          <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                            <MessageSquare className="h-4 w-4" /> Chat
+                          </Link>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => askDelete(p)}
+                          className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          aria-label="Excluir chat"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
