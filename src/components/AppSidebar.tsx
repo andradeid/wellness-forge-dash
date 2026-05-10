@@ -50,7 +50,18 @@ type NavGroup = {
   items: NavItem[];
 };
 
-const groups: NavGroup[] = [
+const nutriGroup: NavGroup = {
+  key: "nutri",
+  label: "ATENDIMENTO",
+  subtitle: "Seus pacientes e análises",
+  icon: UserRound,
+  items: [
+    { title: "Pacientes", url: "/app/patients", icon: Users },
+    { title: "Chat", url: "/app/patients", icon: MessageSquare },
+  ],
+};
+
+const adminGroups: NavGroup[] = [
   {
     key: "operacao",
     label: "OPERAÇÃO",
