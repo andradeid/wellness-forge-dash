@@ -106,11 +106,73 @@ function IntegrationsPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [healthChecking, setHealthChecking] = useState(false);
   const [testingDify, setTestingDify] = useState(false);
+  const [savingDify, setSavingDify] = useState(false);
   const [health, setHealth] = useState<Record<string, boolean | null>>({
     supabase: null,
     dify: null,
     hubla: null,
   });
+
+  const saveDifyConfig = async () => {
+    const endpointItem = items.find((i) => i.key === "dify_endpoint");
+    const apiKeyItem = items.find((i) => i.key === "dify_api_key");
+    if (!endpointItem || !apiKeyItem) {
+      toast.error("Campos do Dify não encontrados na tabela integrations.");
+      return;
+    }
+    const endpointVal = (drafts[endpointItem.id] ?? "").trim();
+    const apiKeyVal = (drafts[apiKeyItem.id] ?? "").trim();
+
+    if (!endpointVal || !apiKeyVal) {
+      toast.error("Preencha a URL e a API Key do Dify antes de salvar.");
+      return;
+    }
+    try {
+      new URL(endpointVal);
+    } catch {
+      toast.error("DIFY_BASE_URL inválida. Use uma URL completa (https://...).");
+      return;
+    }
+
+    setSavingDify(true);
+    try {
+      const updates = await Promise.all([
+        (supabase as any)
+          .from("integrations")
+          .update({ value: endpointVal })
+          .eq("id", endpointItem.id),
+        (supabase as any)
+          .from("integrations")
+          .update({ value: apiKeyVal })
+          .eq("id", apiKeyItem.id),
+      ]);
+      const errs = updates.map((u) => u.error).filter(Boolean);
+      if (errs.length) {
+        toast.error("Falha ao salvar.", { description: errs[0]!.message });
+        return;
+      }
+      setItems((all) =>
+        all.map((i) => {
+          if (i.id === endpointItem.id) return { ...i, value: endpointVal };
+          if (i.id === apiKeyItem.id) return { ...i, value: apiKeyVal };
+          return i;
+        }),
+      );
+      toast.success("Configurações do Dify salvas com sucesso.");
+      await (supabase as any).from("integration_logs").insert({
+        source: "dify",
+        event: "config_save",
+        status: "success",
+        message: `endpoint=${endpointVal}`,
+      });
+      load();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao salvar configurações.", { description: message });
+    } finally {
+      setSavingDify(false);
+    }
+  };
 
   const testDifyConnection = async () => {
     setTestingDify(true);
