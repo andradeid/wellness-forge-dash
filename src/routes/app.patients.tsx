@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { EditPatientSheet, type EditablePatient } from "@/components/EditPatientSheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -227,7 +228,17 @@ function PatientsPage() {
               <TableBody>
                 {filtered.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
+                          <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                            {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{p.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell>{genderLabel(p.gender)}</TableCell>
                     <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
