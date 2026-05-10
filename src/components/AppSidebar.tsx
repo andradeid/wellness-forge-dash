@@ -83,7 +83,7 @@ const adminGroups: NavGroup[] = [
     subtitle: "Acompanhar o negócio",
     icon: Activity,
     items: [
-      { title: "Dashboard", url: "/app", icon: LayoutGrid },
+      { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Conversas", url: "#conversas", icon: MessageSquare },
       { title: "Erros", url: "#erros", icon: AlertCircle },
       { title: "Feedback", url: "#feedback", icon: Lightbulb },
