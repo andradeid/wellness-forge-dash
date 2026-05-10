@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { processAndPersistMarkers, type RawMarker } from "@/lib/exam-markers";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 interface PatientData {
