@@ -38,21 +38,25 @@ function AppLayout() {
 
   if (!session) return null;
 
+  const isChat = pathname.startsWith("/app/chat/");
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b bg-card px-4 gap-2">
-            <SidebarTrigger />
-            <div className="ml-2 text-sm font-medium text-muted-foreground">
-              LUMMA
-            </div>
-            <div className="ml-auto">
-              <UserMenu />
-            </div>
-          </header>
-          <main className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 flex flex-col min-w-0">
+          {!isChat && (
+            <header className="h-14 flex items-center border-b bg-card px-4 gap-2">
+              <SidebarTrigger />
+              <div className="ml-2 text-sm font-medium text-muted-foreground">
+                LUMMA
+              </div>
+              <div className="ml-auto">
+                <UserMenu />
+              </div>
+            </header>
+          )}
+          <main className={isChat ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
             <Outlet />
           </main>
         </div>
