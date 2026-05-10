@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { getDifyConfig } from "@/lib/dify-config.server";
 
 async function authUserId(request: Request): Promise<string | null> {
   const auth = request.headers.get("authorization");
@@ -22,9 +23,8 @@ export const Route = createFileRoute("/api/dify/chat")({
         const userId = await authUserId(request);
         if (!userId) return new Response("Unauthorized", { status: 401 });
 
-        const apiKey = process.env.DIFY_API_KEY;
-        const baseUrl = (process.env.DIFY_BASE_URL || "https://api.dify.ai/v1").replace(/\/$/, "");
-        if (!apiKey) return new Response("Missing DIFY_API_KEY", { status: 500 });
+        const { baseUrl, apiKey } = await getDifyConfig();
+        if (!apiKey) return new Response("Dify API key não configurada", { status: 500 });
 
         const body = await request.json();
         const { query, conversation_id, inputs, files } = body ?? {};

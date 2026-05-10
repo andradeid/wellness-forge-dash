@@ -21,6 +21,7 @@ import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nu
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
+import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
@@ -83,6 +84,11 @@ const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
   path: '/api/dify/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDifyTestRoute = ApiDifyTestRouteImport.update({
+  id: '/api/dify/test',
+  path: '/api/dify/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
   id: '/api/dify/chat',
   path: '/api/dify/chat',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/app/patients': typeof AppPatientsRoute
   '/app': typeof AppIndexRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/app/patients': typeof AppPatientsRoute
   '/app/': typeof AppIndexRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/'
     | '/api/dify/chat'
+    | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
     | '/app/admin/integrations'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app'
     | '/api/dify/chat'
+    | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
     | '/app/admin/integrations'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/'
     | '/api/dify/chat'
+    | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
     | '/app/admin/integrations'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
+  ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
 }
 
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDifyUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/dify/test': {
+      id: '/api/dify/test'
+      path: '/api/dify/test'
+      fullPath: '/api/dify/test'
+      preLoaderRoute: typeof ApiDifyTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dify/chat': {
       id: '/api/dify/chat'
       path: '/api/dify/chat'
@@ -314,6 +334,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
+  ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
 }
 export const routeTree = rootRouteImport

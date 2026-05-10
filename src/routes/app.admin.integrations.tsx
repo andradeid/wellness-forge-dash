@@ -105,11 +105,56 @@ function IntegrationsPage() {
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [healthChecking, setHealthChecking] = useState(false);
+  const [testingDify, setTestingDify] = useState(false);
   const [health, setHealth] = useState<Record<string, boolean | null>>({
     supabase: null,
     dify: null,
     hubla: null,
   });
+
+  const testDifyConnection = async () => {
+    setTestingDify(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const res = await fetch("/api/dify/test", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        baseUrl?: string;
+      };
+      if (json.ok) {
+        toast.success("Conexão com Dify estabelecida com sucesso.", {
+          description: json.baseUrl,
+        });
+        setHealth((h) => ({ ...h, dify: true }));
+      } else {
+        toast.error("Falha ao conectar com o Dify.", {
+          description: json.error ?? "Verifique a chave e a URL.",
+        });
+        setHealth((h) => ({ ...h, dify: false }));
+      }
+      await (supabase as any).from("integration_logs").insert({
+        source: "dify",
+        event: "connection_test",
+        status: json.ok ? "success" : "error",
+        message: json.ok ? `OK ${json.baseUrl}` : json.error?.slice(0, 240),
+      });
+      load();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao testar conexão.", { description: message });
+    } finally {
+      setTestingDify(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -321,18 +366,35 @@ function IntegrationsPage() {
             return (
               <Card key={c.category} className="rounded-2xl border bg-card shadow-sm overflow-hidden">
                 <CardHeader className={cn("border-b bg-gradient-to-r", c.accent)}>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-white/80 flex items-center justify-center backdrop-blur">
-                      <c.icon className="h-5 w-5 text-foreground" />
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-white/80 flex items-center justify-center backdrop-blur">
+                        <c.icon className="h-5 w-5 text-foreground" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg font-serif font-normal">
+                          {c.title}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {c.subtitle}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-lg font-serif font-normal">
-                        {c.title}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {c.subtitle}
-                      </p>
-                    </div>
+                    {c.category === "ai" && (
+                      <Button
+                        onClick={testDifyConnection}
+                        disabled={testingDify}
+                        variant="outline"
+                        className="rounded-full border-foreground/15 bg-white/80 backdrop-blur"
+                      >
+                        {testingDify ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Wifi className="h-4 w-4" />
+                        )}
+                        Testar Conexão Dify
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-5">
