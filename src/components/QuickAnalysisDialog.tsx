@@ -156,6 +156,8 @@ async function findExistingPatient(
 
   return null;
 }
+
+function looksLikePatient(obj: Record<string, unknown>): boolean {
   return typeof obj.name === "string" && (obj.dob !== undefined || obj.gender !== undefined || obj.birth_date !== undefined);
 }
 
