@@ -20,10 +20,11 @@ export const Route = createFileRoute("/api/dify/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const userId = await authUserId(request);
-        if (!userId) return new Response("Unauthorized", { status: 401 });
+        const auth = await authUser(request);
+        if (!auth) return new Response("Unauthorized", { status: 401 });
+        const { userId, token } = auth;
 
-        const { baseUrl, apiKey } = await getDifyConfig();
+        const { baseUrl, apiKey } = await getDifyConfig(token);
         if (!apiKey) return new Response("Dify API key não configurada", { status: 500 });
 
         const body = await request.json();
