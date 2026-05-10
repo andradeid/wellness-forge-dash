@@ -244,6 +244,75 @@ function UsersPage() {
 
   const refreshAll = async () => { await Promise.all([load(), loadStats()]); };
 
+  // ações
+  const openDetails = async (u: UserRow) => {
+    setDetailUser(u);
+    setExamCount(null);
+    const { count } = await (supabase as any)
+      .from("patient_exams")
+      .select("id", { count: "exact", head: true })
+      .eq("uploaded_by", u.id);
+    setExamCount(count ?? 0);
+  };
+
+  const openPlan = (u: UserRow) => {
+    setPlanUser(u);
+    setPlanForm({
+      plan_type: (u.plan_type as PlanType) ?? "free",
+      status: (u.status as SubStatus) ?? "trial",
+    });
+  };
+
+  const savePlan = async () => {
+    if (!planUser) return;
+    setSavingPlan(true);
+    const { error } = await (supabase as any)
+      .from("subscriptions")
+      .update({ plan_type: planForm.plan_type, status: planForm.status })
+      .eq("user_id", planUser.id);
+    setSavingPlan(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Plano atualizado com sucesso");
+    setPlanUser(null);
+    refreshAll();
+  };
+
+  const sendWelcome = async (u: UserRow) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(u.email);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`E-mail de boas-vindas enviado para ${u.email}`);
+  };
+
+  const toggleBlock = async (u: UserRow) => {
+    const next = !u.is_blocked;
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ is_blocked: next })
+      .eq("id", u.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? "Usuária bloqueada" : "Usuária reativada");
+    refreshAll();
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteUser) return;
+    if (deleteConfirm.trim().toLowerCase() !== deleteUser.email.toLowerCase()) {
+      toast.error("O e-mail digitado não confere");
+      return;
+    }
+    setDeleting(true);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ deleted_at: new Date().toISOString(), is_blocked: true })
+      .eq("id", deleteUser.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Usuária excluída");
+    setDeleteUser(null);
+    setDeleteConfirm("");
+    refreshAll();
+  };
+
   return (
     <div className="space-y-10 max-w-7xl">
       {/* Breadcrumb */}
@@ -290,7 +359,7 @@ function UsersPage() {
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Acesso</p>
               <CardTitle className="text-lg font-serif font-normal mt-1">
-                Lista de nutricionistas ({filtered.length})
+                Lista de nutricionistas ({total})
               </CardTitle>
             </div>
           </div>
