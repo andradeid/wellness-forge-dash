@@ -57,9 +57,9 @@ function ChatPage() {
     : null;
 
   return (
-    <div className="flex h-[calc(100vh-0px)] bg-[#f5f5f0]">
+    <div className="flex h-screen w-full bg-[#f5f5f0] overflow-hidden">
       {/* Left column: patient + exams */}
-      <aside className="hidden lg:flex w-72 flex-col border-r bg-white">
+      <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
         <div className="px-5 py-4 border-b">
           <Link
             to="/app/patients"
@@ -80,19 +80,19 @@ function ChatPage() {
             </div>
           </div>
         </div>
-        <div className="px-3 py-3 border-b">
+        <div className="px-3 py-3 border-b flex-1 min-h-0 flex flex-col">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-3 mb-2">
             Histórico de exames
           </div>
-          <div className="overflow-y-auto max-h-[60vh]">
+          <div className="overflow-y-auto flex-1">
             <ExamHistoryList exams={exams} />
           </div>
         </div>
       </aside>
 
       {/* Main: chat */}
-      <section className="flex-1 flex flex-col">
-        <header className="px-6 py-4 border-b bg-white">
+      <section className="flex-1 flex flex-col min-w-0 h-full">
+        <header className="px-6 py-4 border-b bg-white shrink-0">
           <h1
             className="text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
             style={{ fontFamily: "'Instrument Serif', serif" }}
@@ -108,8 +108,14 @@ function ChatPage() {
           )}
         </header>
 
-        <ChatMessageList messages={messages} thinking={thinking} />
-        <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <ChatMessageList messages={messages} thinking={thinking} />
+        </div>
+        <div className="shrink-0 px-3 pb-3 pt-2 bg-[#f5f5f0]">
+          <div className="rounded-2xl bg-white shadow-md border border-muted-foreground/10 overflow-hidden">
+            <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
+          </div>
+        </div>
       </section>
     </div>
   );
