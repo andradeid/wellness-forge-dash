@@ -1,11 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, TrendingUp, User } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
