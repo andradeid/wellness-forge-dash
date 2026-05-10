@@ -105,11 +105,56 @@ function IntegrationsPage() {
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [healthChecking, setHealthChecking] = useState(false);
+  const [testingDify, setTestingDify] = useState(false);
   const [health, setHealth] = useState<Record<string, boolean | null>>({
     supabase: null,
     dify: null,
     hubla: null,
   });
+
+  const testDifyConnection = async () => {
+    setTestingDify(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const res = await fetch("/api/dify/test", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        baseUrl?: string;
+      };
+      if (json.ok) {
+        toast.success("Conexão com Dify estabelecida com sucesso.", {
+          description: json.baseUrl,
+        });
+        setHealth((h) => ({ ...h, dify: true }));
+      } else {
+        toast.error("Falha ao conectar com o Dify.", {
+          description: json.error ?? "Verifique a chave e a URL.",
+        });
+        setHealth((h) => ({ ...h, dify: false }));
+      }
+      await (supabase as any).from("integration_logs").insert({
+        source: "dify",
+        event: "connection_test",
+        status: json.ok ? "success" : "error",
+        message: json.ok ? `OK ${json.baseUrl}` : json.error?.slice(0, 240),
+      });
+      load();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao testar conexão.", { description: message });
+    } finally {
+      setTestingDify(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
