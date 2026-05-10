@@ -28,7 +28,7 @@ export interface Marker {
   analysis?: string;
 }
 
-const stateStyles: Record<ClassificationVisualState, { badge: string; icon: JSX.Element }> = {
+const stateStyles: Record<ClassificationVisualState, { badge: string; icon: ReactNode }> = {
   otimo: {
     badge: "bg-emerald-600 text-white border-emerald-700",
     icon: <Sparkles className="h-3 w-3" />,
