@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
@@ -60,6 +61,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppPatientsRoute = AppPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
+  id: '/evolution/$patientId',
+  path: '/evolution/$patientId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
+  '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
+  '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
+  '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/app/admin/playground'
     | '/app/admin/users'
     | '/app/chat/$patientId'
+    | '/app/evolution/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/app/admin/playground'
     | '/app/admin/users'
     | '/app/chat/$patientId'
+    | '/app/evolution/$patientId'
   id:
     | '__root__'
     | '/'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/app/admin/playground'
     | '/app/admin/users'
     | '/app/chat/$patientId'
+    | '/app/evolution/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -289,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/app/patients'
       preLoaderRoute: typeof AppPatientsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/evolution/$patientId': {
+      id: '/app/evolution/$patientId'
+      path: '/evolution/$patientId'
+      fullPath: '/app/evolution/$patientId'
+      preLoaderRoute: typeof AppEvolutionPatientIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/chat/$patientId': {
@@ -374,6 +393,7 @@ interface AppRouteChildren {
   AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
+  AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -386,6 +406,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
+  AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -403,3 +424,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
