@@ -206,8 +206,8 @@ export function useDifyChat(patientId: string) {
 
     // 4) Stream from Dify proxy
     let assistantText = "";
-    try {
-      const res = await fetch("/api/dify/chat", {
+    const callDify = async (convId: string | undefined) =>
+      fetch("/api/dify/chat", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -215,13 +215,38 @@ export function useDifyChat(patientId: string) {
         },
         body: JSON.stringify({
           query: text || "Analise o exame anexado.",
-          // Em conversas antigas, o Dify pode ter salvo o conversation_id com outro `user`.
-          // Ao anexar exame, abrimos uma nova conversa Dify com o UUID correto e mantemos o contexto via meta.
-          conversation_id: difyFiles.length ? undefined : conversationIdRef.current || undefined,
+          conversation_id: convId,
           files: difyFiles,
           meta: metaRef.current,
         }),
       });
+
+    try {
+      // Em conversas antigas, o Dify pode ter salvo o conversation_id com outro `user`.
+      // Ao anexar exame, abrimos uma nova conversa Dify com o UUID correto e mantemos o contexto via meta.
+      const initialConv = difyFiles.length ? undefined : conversationIdRef.current || undefined;
+      let res = await callDify(initialConv);
+
+      // Se o Dify rejeitar o conversation_id (404 / "Conversation Not Exists"),
+      // limpamos a referência e abrimos uma nova conversa automaticamente.
+      if (!res.ok && initialConv) {
+        const errText = await res.text().catch(() => "");
+        const stale =
+          res.status === 404 ||
+          /Conversation Not Exists|not_found/i.test(errText);
+        if (stale) {
+          console.warn("[Chat Dify] conversation_id descartado (Dify 404). Reabrindo conversa.");
+          conversationIdRef.current = "";
+          await (supabase as any)
+            .from("patient_chats")
+            .update({ dify_conversation_id: null })
+            .eq("id", chatId);
+          res = await callDify(undefined);
+        } else {
+          throw new Error(`Dify ${res.status}: ${errText}`);
+        }
+      }
+
       if (!res.ok || !res.body) {
         throw new Error(`Dify ${res.status}: ${await res.text().catch(() => "")}`);
       }
