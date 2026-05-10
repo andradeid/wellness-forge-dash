@@ -1,15 +1,21 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef } from "react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
+import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  structured_data?: { markers?: Marker[] } | null;
+  structured_data?: {
+    markers?: Marker[];
+    indexed?: boolean;
+    parse_error?: boolean;
+  } | null;
   attachments?: Array<{ name: string }> | null;
 }
 
@@ -21,6 +27,8 @@ export function ChatMessageList({
   thinking: boolean;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
+  const { role } = useAuth();
+  const isAdmin = role === "super_admin" || role === "admin";
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, thinking]);
@@ -61,6 +69,19 @@ export function ChatMessageList({
             {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
               <div className="mt-3">
                 <ExamResultCard markers={m.structured_data.markers} />
+              </div>
+            )}
+            {m.role === "assistant" && isAdmin && m.structured_data?.indexed && (
+              <div
+                className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-600/80"
+                title="Marcadores indexados em patient_exam_results"
+              >
+                <CheckCircle2 className="h-3 w-3" /> indexado
+              </div>
+            )}
+            {m.role === "assistant" && m.structured_data?.parse_error && (
+              <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-600">
+                <AlertTriangle className="h-3 w-3" /> Erro na estrutura de dados recebida
               </div>
             )}
           </div>

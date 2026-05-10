@@ -25,6 +25,7 @@ import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.a
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
+import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -106,6 +107,11 @@ const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
   path: '/api/dify/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
+  id: '/api/audit/structured',
+  path: '/api/audit/structured',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/app/patients': typeof AppPatientsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
+  '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/app/patients': typeof AppPatientsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
+  '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/app/patients': typeof AppPatientsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
+  '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/settings'
     | '/app/'
+    | '/api/audit/structured'
     | '/api/dify/chat'
     | '/api/dify/test'
     | '/api/dify/upload'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/settings'
     | '/app'
+    | '/api/audit/structured'
     | '/api/dify/chat'
     | '/api/dify/test'
     | '/api/dify/upload'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/app/patients'
     | '/app/settings'
     | '/app/'
+    | '/api/audit/structured'
     | '/api/dify/chat'
     | '/api/dify/test'
     | '/api/dify/upload'
@@ -222,6 +234,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDifyChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/audit/structured': {
+      id: '/api/audit/structured'
+      path: '/api/audit/structured'
+      fullPath: '/api/audit/structured'
+      preLoaderRoute: typeof ApiAuditStructuredRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -375,6 +395,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,

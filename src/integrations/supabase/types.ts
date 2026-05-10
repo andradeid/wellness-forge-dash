@@ -159,6 +159,57 @@ export type Database = {
           },
         ]
       }
+      patient_exam_results: {
+        Row: {
+          analysis: string | null
+          chat_id: string | null
+          classification: string | null
+          created_at: string
+          created_by: string
+          exam_id: string | null
+          id: string
+          marker_name: string
+          marker_unit: string | null
+          marker_value: number | null
+          marker_value_raw: string | null
+          measured_at: string
+          patient_id: string
+          reference_value: string | null
+        }
+        Insert: {
+          analysis?: string | null
+          chat_id?: string | null
+          classification?: string | null
+          created_at?: string
+          created_by: string
+          exam_id?: string | null
+          id?: string
+          marker_name: string
+          marker_unit?: string | null
+          marker_value?: number | null
+          marker_value_raw?: string | null
+          measured_at?: string
+          patient_id: string
+          reference_value?: string | null
+        }
+        Update: {
+          analysis?: string | null
+          chat_id?: string | null
+          classification?: string | null
+          created_at?: string
+          created_by?: string
+          exam_id?: string | null
+          id?: string
+          marker_name?: string
+          marker_unit?: string | null
+          marker_value?: number | null
+          marker_value_raw?: string | null
+          measured_at?: string
+          patient_id?: string
+          reference_value?: string | null
+        }
+        Relationships: []
+      }
       patient_exams: {
         Row: {
           chat_id: string | null
