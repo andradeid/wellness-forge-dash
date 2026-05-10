@@ -464,8 +464,9 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       if (cErr) throw new Error(cErr.message);
 
       // 3) Persist exam reference
+      let examId: string | null = null;
       if (storagePathRef.current && file) {
-        await (supabase as any).from("patient_exams").insert({
+        const { data: examIns } = await (supabase as any).from("patient_exams").insert({
           patient_id: patient.id,
           chat_id: chat.id,
           uploaded_by: user.id,
@@ -474,10 +475,27 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
           mime_type: file.type,
           size_bytes: file.size,
           dify_file_id: difyFileIdRef.current,
-        });
+        }).select("id").single();
+        examId = (examIns?.id as string | undefined) ?? null;
       }
 
-      // 4) Persist user message + assistant response
+      // 4) Persist markers individually + audit log
+      let indexed = false;
+      let parseError = false;
+      if (markers && markers.length) {
+        const result = await processAndPersistMarkers({
+          userId: user.id,
+          patientId: patient.id,
+          examId,
+          chatId: chat.id,
+          rawMarkers: markers as unknown as RawMarker[],
+          source: "quick-analysis",
+        });
+        indexed = result.inserted > 0 && result.invalid.length === 0;
+        parseError = result.invalid.length > 0;
+      }
+
+      // 5) Persist user message + assistant response
       await (supabase as any).from("chat_messages").insert({
         chat_id: chat.id,
         created_by: user.id,
@@ -490,7 +508,7 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
         created_by: user.id,
         role: "assistant",
         content: assistantTextRef.current,
-        structured_data: markers ? { markers } : null,
+        structured_data: markers ? { markers, indexed, parse_error: parseError } : null,
       });
 
       toast.success(`Paciente ${patient.name} identificado e cadastrado com sucesso!`);
