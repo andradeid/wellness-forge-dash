@@ -401,7 +401,7 @@ function UsersPage() {
             <div className="py-16 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
             </div>
-          ) : paged.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="py-16 text-center">
               <div className="h-12 w-12 mx-auto rounded-2xl bg-accent/60 flex items-center justify-center mb-4">
                 <UsersIcon className="h-6 w-6 text-accent-foreground" />
@@ -421,7 +421,7 @@ function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paged.map((r) => (
+                  {rows.map((r) => (
                     <TableRow key={r.id} className="border-b last:border-0">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
@@ -484,7 +484,7 @@ function UsersPage() {
               {/* Paginação */}
               <div className="flex items-center justify-between pt-6">
                 <p className="text-xs text-muted-foreground">
-                  Página {page + 1} de {totalPages} · {filtered.length} resultado(s)
+                  Página {page + 1} de {totalPages} · {total} resultado(s)
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
