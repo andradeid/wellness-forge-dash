@@ -16,7 +16,7 @@ function AppIndex() {
     if (role === "super_admin") {
       navigate({ to: "/app/admin/nutritionists" });
     } else {
-      navigate({ to: "/app/patients" });
+      navigate({ to: "/app/dashboard" });
     }
   }, [role, loading, user, navigate]);
 
