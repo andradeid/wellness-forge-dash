@@ -54,6 +54,8 @@ function PatientsPage() {
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditablePatient | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const askDelete = (p: Patient) => {
     setDeleteTarget(p);
