@@ -40,6 +40,12 @@ export function useDifyChat(patientId: string) {
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const conversationIdRef = useRef<string>("");
+  const metaRef = useRef<{
+    nutritionist_name: string;
+    nutritionist_email: string;
+    patient_name: string;
+    patient_id: string;
+  }>({ nutritionist_name: "", nutritionist_email: "", patient_name: "", patient_id: patientId });
 
   // Load or create chat for this patient
   useEffect(() => {
@@ -48,14 +54,33 @@ export function useDifyChat(patientId: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: existing } = await (supabase as any)
-        .from("patient_chats")
-        .select("id, dify_conversation_id")
-        .eq("patient_id", patientId)
-        .eq("created_by", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [{ data: existing }, { data: profile }, { data: patient }] = await Promise.all([
+        (supabase as any)
+          .from("patient_chats")
+          .select("id, dify_conversation_id")
+          .eq("patient_id", patientId)
+          .eq("created_by", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        (supabase as any)
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .maybeSingle(),
+        (supabase as any)
+          .from("patients")
+          .select("name")
+          .eq("id", patientId)
+          .maybeSingle(),
+      ]);
+
+      metaRef.current = {
+        nutritionist_name: (profile?.full_name as string) || (profile?.email as string) || "Nutricionista",
+        nutritionist_email: (profile?.email as string) || "",
+        patient_name: (patient?.name as string) || "Paciente",
+        patient_id: patientId,
+      };
 
       let id = existing?.id as string | undefined;
       if (!id) {
@@ -173,6 +198,7 @@ export function useDifyChat(patientId: string) {
           query: text || "Analise o exame anexado.",
           conversation_id: conversationIdRef.current || undefined,
           files: difyFiles,
+          meta: metaRef.current,
         }),
       });
       if (!res.ok || !res.body) {
