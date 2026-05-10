@@ -134,7 +134,7 @@ export function AppSidebar() {
           <div className="flex items-end gap-2">
             <img src={lummaLockup} alt="Lumma" className="h-7" />
             <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground pb-[3px]">
-              Admin
+              {role === "nutri" ? "Nutri" : "Admin"}
             </span>
           </div>
         )}
