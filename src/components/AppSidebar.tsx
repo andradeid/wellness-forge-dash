@@ -131,6 +131,10 @@ export function AppSidebar() {
       <SidebarContent className="px-3 gap-1">
         {groups.map((g) => {
           const isOpen = open[g.key];
+          const visibleItems = g.items.filter(
+            (item) => !item.superAdminOnly || role === "super_admin",
+          );
+          if (visibleItems.length === 0) return null;
           return (
             <div key={g.key} className="py-2">
               <button
@@ -164,7 +168,7 @@ export function AppSidebar() {
 
               {isOpen && (
                 <ul className="mt-1 space-y-0.5">
-                  {g.items.map((item) => {
+                  {visibleItems.map((item) => {
                     const active = isActive(item.url);
                     const content = (
                       <span
