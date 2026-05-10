@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -11,14 +11,22 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading } = useAuth();
+  const { session, loading, role } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   useEffect(() => {
     if (!loading && !session) {
       navigate({ to: "/login" });
     }
   }, [session, loading, navigate]);
+
+  // RBAC: nutri não acessa rotas administrativas
+  useEffect(() => {
+    if (!loading && session && role && role === "nutri" && pathname.startsWith("/app/admin")) {
+      navigate({ to: "/app/patients", replace: true });
+    }
+  }, [loading, session, role, pathname, navigate]);
 
   if (loading) {
     return (
