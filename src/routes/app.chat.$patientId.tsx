@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, User } from "lucide-react";
+import { ArrowLeft, TrendingUp, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
