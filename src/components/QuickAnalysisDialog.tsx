@@ -257,29 +257,31 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      const processLine = (line: string) => {
+        const l = line.trim();
+        if (!l.startsWith("data:")) return;
+        const payload = l.slice(5).trim();
+        if (!payload || payload === "[DONE]") return;
+        try {
+          const evt = JSON.parse(payload);
+          if (evt.event === "message" || evt.event === "agent_message") {
+            assistantTextRef.current += getDifyAnswer(evt);
+          } else if (evt.event === "message_end" || evt.event === "agent_thought") {
+            if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
+          } else if (evt.event === "error") {
+            throw new Error(evt.message ?? "Erro do Dify");
+          }
+        } catch { /* ignore */ }
+      };
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const l = line.trim();
-          if (!l.startsWith("data:")) continue;
-          const payload = l.slice(5).trim();
-          if (!payload || payload === "[DONE]") continue;
-          try {
-            const evt = JSON.parse(payload);
-            if (evt.event === "message" || evt.event === "agent_message") {
-              assistantTextRef.current += getDifyAnswer(evt);
-            } else if (evt.event === "message_end" || evt.event === "agent_thought") {
-              if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
-            } else if (evt.event === "error") {
-              throw new Error(evt.message ?? "Erro do Dify");
-            }
-          } catch { /* ignore */ }
-        }
+        lines.forEach(processLine);
       }
+      if (buffer.trim()) processLine(buffer);
 
       const fullText = assistantTextRef.current;
       console.groupCollapsed("[QuickAnalysis] Resposta do Dify");
