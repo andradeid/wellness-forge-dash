@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getDifyConfig } from "@/lib/dify-config.server";
 
-async function authUserId(request: Request): Promise<string | null> {
+async function authUser(request: Request): Promise<{ userId: string; token: string } | null> {
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
@@ -13,7 +13,7 @@ async function authUserId(request: Request): Promise<string | null> {
   );
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) return null;
-  return data.claims.sub;
+  return { userId: data.claims.sub, token };
 }
 
 export const Route = createFileRoute("/api/dify/chat")({
