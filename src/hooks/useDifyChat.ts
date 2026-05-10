@@ -287,7 +287,41 @@ export function useDifyChat(patientId: string) {
     }
 
     const markers = tryExtractMarkers(assistantText);
-    const structured = markers ? { markers } : null;
+    let indexed = false;
+    let parseError = false;
+
+    if (markers && markers.length) {
+      try {
+        const result = await processAndPersistMarkers({
+          userId: user.id,
+          patientId,
+          examId: lastExamId,
+          chatId,
+          rawMarkers: markers as unknown as RawMarker[],
+          source: "chat",
+        });
+        indexed = result.inserted > 0 && result.invalid.length === 0;
+        if (result.invalid.length > 0) parseError = true;
+      } catch (e) {
+        console.error("[Chat] Falha no pipeline de marcadores:", e);
+        parseError = true;
+      }
+    } else if (/```(?:json)?/i.test(assistantText)) {
+      // JSON-looking block but couldn't parse → audit it
+      parseError = true;
+      await logStructuredAudit({
+        source: "chat",
+        event: "structured_data.parse_failed",
+        status: "error",
+        message: "Bloco JSON detectado no texto, mas não foi possível extrair marcadores válidos.",
+        data: { patient_id: patientId, chat_id: chatId, text_sample: assistantText.slice(0, 2000) },
+      });
+    }
+
+    const structured = markers
+      ? { markers, indexed, parse_error: parseError }
+      : (parseError ? { parse_error: true } : null);
+
     setMessages((prev) =>
       prev.map((m) =>
         m.id === assistantId ? { ...m, content: assistantText, structured_data: structured } : m
