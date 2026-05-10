@@ -20,6 +20,7 @@ import {
   FlaskRound,
   ChevronLeft,
   ChevronDown,
+  UserRound,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -49,7 +50,18 @@ type NavGroup = {
   items: NavItem[];
 };
 
-const groups: NavGroup[] = [
+const nutriGroup: NavGroup = {
+  key: "nutri",
+  label: "ATENDIMENTO",
+  subtitle: "Seus pacientes e análises",
+  icon: UserRound,
+  items: [
+    { title: "Pacientes", url: "/app/patients", icon: Users },
+    { title: "Chat", url: "/app/patients", icon: MessageSquare },
+  ],
+};
+
+const adminGroups: NavGroup[] = [
   {
     key: "operacao",
     label: "OPERAÇÃO",
@@ -122,14 +134,14 @@ export function AppSidebar() {
           <div className="flex items-end gap-2">
             <img src={lummaLockup} alt="Lumma" className="h-7" />
             <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground pb-[3px]">
-              Admin
+              {role === "nutri" ? "Nutri" : "Admin"}
             </span>
           </div>
         )}
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {groups.map((g) => {
+        {(role === "nutri" ? [nutriGroup] : adminGroups).map((g) => {
           const isOpen = open[g.key];
           const visibleItems = g.items.filter(
             (item) => !item.superAdminOnly || role === "super_admin",

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { FilePlus2, MessageSquare, Plus, Search, Users } from "lucide-react";
+import { MessageSquare, Plus, Search, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -91,19 +91,19 @@ function PatientsPage() {
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pacientes</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus pacientes e inicie novos exames.</p>
+          <h1 className="text-3xl font-semibold tracking-tight">Pacientes</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Bem-vinda ao Painel. Tudo em um só lugar — calmo, organizado, à mão.
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" disabled>
-            <FilePlus2 className="h-4 w-4 mr-2" />
-            Novo Exame
-          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button
+                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md"
+              >
                 <Plus className="h-4 w-4 mr-2" />
-                Novo paciente
+                Novo Paciente
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -144,9 +144,9 @@ function PatientsPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="bg-white shadow-sm rounded-lg border-muted">
         <CardHeader className="flex-row items-center justify-between gap-4">
-          <CardTitle className="text-base">Lista</CardTitle>
+          <CardTitle className="text-base font-medium">Lista de pacientes</CardTitle>
           <div className="relative w-64 max-w-full">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
