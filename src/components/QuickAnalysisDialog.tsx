@@ -587,6 +587,8 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       setAttaching(false);
     }
   };
+
+  return (
     <>
       <Dialog open={open} onOpenChange={(o) => { if (!processing) { setOpen(o); if (!o) reset(); } }}>
         <Button
