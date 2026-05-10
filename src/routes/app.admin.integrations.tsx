@@ -321,18 +321,35 @@ function IntegrationsPage() {
             return (
               <Card key={c.category} className="rounded-2xl border bg-card shadow-sm overflow-hidden">
                 <CardHeader className={cn("border-b bg-gradient-to-r", c.accent)}>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-white/80 flex items-center justify-center backdrop-blur">
-                      <c.icon className="h-5 w-5 text-foreground" />
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-white/80 flex items-center justify-center backdrop-blur">
+                        <c.icon className="h-5 w-5 text-foreground" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg font-serif font-normal">
+                          {c.title}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {c.subtitle}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-lg font-serif font-normal">
-                        {c.title}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {c.subtitle}
-                      </p>
-                    </div>
+                    {c.category === "ai" && (
+                      <Button
+                        onClick={testDifyConnection}
+                        disabled={testingDify}
+                        variant="outline"
+                        className="rounded-full border-foreground/15 bg-white/80 backdrop-blur"
+                      >
+                        {testingDify ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Wifi className="h-4 w-4" />
+                        )}
+                        Testar Conexão Dify
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-5">
