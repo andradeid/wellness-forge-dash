@@ -91,9 +91,12 @@ function ChatPage() {
             <ArrowLeft className="h-3 w-3" /> Pacientes
           </Link>
           <div className="mt-3 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] flex items-center justify-center text-white">
-              <User className="h-5 w-5" />
-            </div>
+            <Avatar className="h-10 w-10 ring-2 ring-[#e89bcf]/30">
+              {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
+              <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white text-sm font-medium">
+                {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <div className="font-medium truncate">{patient?.name ?? "…"}</div>
               <div className="text-xs text-muted-foreground">
