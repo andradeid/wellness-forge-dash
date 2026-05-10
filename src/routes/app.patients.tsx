@@ -91,7 +91,7 @@ function PatientsPage() {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("patients")
-      .select("id, name, birth_date, gender, created_at")
+      .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setPatients((data as Patient[]) ?? []);
