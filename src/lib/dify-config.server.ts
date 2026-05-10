@@ -31,8 +31,7 @@ export async function getDifyConfig(force = false): Promise<DifyConfig> {
   let apiKey = process.env.DIFY_API_KEY || "";
 
   try {
-    const admin = getAdminClient();
-    const { data } = await admin
+    const { data } = await supabaseAdmin
       .from("integrations")
       .select("key, value")
       .in("key", ["dify_endpoint", "dify_api_key"]);
