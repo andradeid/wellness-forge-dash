@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
 import type { Marker } from "@/components/chat/ExamResultCard";
+import {
+  processAndPersistMarkers,
+  logStructuredAudit,
+  type RawMarker,
+} from "@/lib/exam-markers";
 
 interface DifyFileRef {
   type: "image" | "document";
