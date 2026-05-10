@@ -121,7 +121,7 @@ const adminGroups: NavGroup[] = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { profile, role, signOut } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -130,6 +130,18 @@ export function AppSidebar() {
     produto: true,
     acesso: true,
   });
+
+  const [planType, setPlanType] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("subscriptions")
+      .select("plan_type")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: any) => setPlanType(data?.plan_type ?? null));
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
