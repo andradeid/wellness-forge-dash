@@ -80,6 +80,19 @@ function ChatPage() {
             </div>
           </div>
         </div>
+        <div className="px-3 py-2 border-b">
+          <Link
+            to="/app/evolution/$patientId"
+            params={{ patientId }}
+            className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-muted/50 transition"
+          >
+            <span className="inline-flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
+              Evolução clínica
+            </span>
+            <span className="text-[10px] text-muted-foreground">gráficos</span>
+          </Link>
+        </div>
         <div className="px-3 py-3 border-b flex-1 min-h-0 flex flex-col">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-3 mb-2">
             Histórico de exames
