@@ -241,6 +241,15 @@ function PatientsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          onClick={() => { setEditTarget(p); setEditOpen(true); }}
+                          className="rounded-full"
+                          aria-label="Editar paciente"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => askDelete(p)}
                           className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                           aria-label="Excluir chat"
