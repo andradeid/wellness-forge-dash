@@ -57,6 +57,36 @@ function pickStr(obj: RawMarker, ...keys: string[]): string {
   return "";
 }
 
+/**
+ * Visual state derived from the clinical classification term.
+ * The original term is preserved in `classification` for the database;
+ * this only drives card colors/badges in the UI.
+ */
+export type ClassificationVisualState = "otimo" | "normal" | "atencao" | "baixo" | "alto" | "desconhecido";
+
+export function classificationVisualState(raw: string | null | undefined): ClassificationVisualState {
+  if (!raw) return "desconhecido";
+  const k = raw
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .replace(/[\s-]+/g, "_");
+  if (k === "otimo" || k === "ideal" || k === "funcional_otimo") return "otimo";
+  if (k === "normal" || k === "dentro_da_referencia" || k === "adequado") return "normal";
+  if (
+    k === "levemente_baixo" ||
+    k === "levemente_alto" ||
+    k === "limitrofe" ||
+    k === "atencao" ||
+    k === "alerta"
+  ) return "atencao";
+  if (k === "baixo" || k === "deficiente" || k === "insuficiente") return "baixo";
+  if (k === "alto" || k === "elevado") return "alto";
+  return "desconhecido";
+}
+
 export function normalizeMarker(raw: RawMarker): NormalizedMarker {
   const name = pickStr(raw, "name", "parameter", "parametro");
   const valueStr = pickStr(raw, "value", "result", "resultado");
