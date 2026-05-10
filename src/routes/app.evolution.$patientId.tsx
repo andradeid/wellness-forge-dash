@@ -6,7 +6,6 @@ import {
   TrendingDown,
   Minus,
   Activity,
-  User,
   Calendar,
 } from "lucide-react";
 import { format, differenceInYears } from "date-fns";
