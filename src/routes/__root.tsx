@@ -13,19 +13,44 @@ import { AuthProvider } from "@/hooks/useAuth";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f5f0] px-4">
+      <div className="max-w-lg w-full text-center">
+        <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center">
+          <img src="/src/assets/lumma-symbol.svg" alt="Lumma" className="h-16 w-16 animate-pulse" />
+        </div>
+        <h1
+          className="text-8xl font-light bg-clip-text text-transparent"
+          style={{
+            backgroundImage: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
+            fontFamily: "'Instrument Serif', serif",
+          }}
+        >
+          404
+        </h1>
+        <h2
+          className="mt-4 text-3xl text-[#3d5a4a]"
+          style={{ fontFamily: "'Instrument Serif', serif" }}
+        >
+          Página não encontrada
+        </h2>
+        <p className="mt-3 text-sm text-[#6b7c72] leading-relaxed">
+          A página que você procura não existe, foi movida ou o endereço está incorreto.
+          <br />
+          Vamos te levar de volta para um lugar calmo e organizado.
         </p>
-        <div className="mt-6">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            to="/app"
+            className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90 shadow-md"
+            style={{ backgroundImage: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)" }}
+          >
+            Voltar ao painel
+          </Link>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-full border border-[#3d5a4a]/20 bg-white px-6 py-2.5 text-sm font-medium text-[#3d5a4a] transition-colors hover:bg-[#3d5a4a]/5"
           >
-            Go home
+            Ir para o início
           </Link>
         </div>
       </div>
