@@ -18,11 +18,14 @@ import {
   Shield,
   Plug,
   FlaskRound,
-  ChevronLeft,
   ChevronDown,
+  ChevronsUpDown,
   UserRound,
+  LogOut,
+  Settings as SettingsIcon,
+  User as UserIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -30,9 +33,21 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import lummaLockup from "@/assets/lumma-lockup.svg";
+
+const planLabel = (p?: string | null) =>
+  p === "pro" ? "Master" : p === "basic" ? "Essencial" : "Gratuito";
 
 type NavItem = {
   title: string;
