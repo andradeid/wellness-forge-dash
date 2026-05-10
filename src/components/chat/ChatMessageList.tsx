@@ -1,15 +1,21 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef } from "react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
+import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  structured_data?: { markers?: Marker[] } | null;
+  structured_data?: {
+    markers?: Marker[];
+    indexed?: boolean;
+    parse_error?: boolean;
+  } | null;
   attachments?: Array<{ name: string }> | null;
 }
 
