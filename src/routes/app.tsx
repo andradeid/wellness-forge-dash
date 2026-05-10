@@ -39,13 +39,15 @@ function AppLayout() {
   if (!session) return null;
 
   const isChat = pathname.startsWith("/app/chat/");
+  const isEvolution = pathname.startsWith("/app/evolution/");
+  const immersive = isChat || isEvolution;
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        {!isChat && <AppSidebar />}
+        {!immersive && <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
-          {!isChat && (
+          {!immersive && (
             <header className="h-14 flex items-center border-b bg-card px-4 gap-2">
               <SidebarTrigger />
               <div className="ml-2 text-sm font-medium text-muted-foreground">
@@ -56,7 +58,7 @@ function AppLayout() {
               </div>
             </header>
           )}
-          <main className={isChat ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
+          <main className={immersive ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
             <Outlet />
           </main>
         </div>
