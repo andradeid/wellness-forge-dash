@@ -30,19 +30,12 @@ export const Route = createFileRoute("/api/dify/chat")({
         const body = await request.json();
         const { query, conversation_id, inputs, files, meta } = body ?? {};
 
-        // Compose a friendly "user" identifier for Dify logs.
-        // IMPORTANT: Dify validates that conversation_id belongs to the same `user`.
-        // For existing conversations we keep the original UUID to avoid breaking them.
-        // Only NEW conversations adopt the friendly label.
+        // Dify exige que upload_file_id, conversation_id e mensagem usem o mesmo `user`.
+        // Por isso usamos sempre o UUID autenticado e enviamos nomes apenas em `inputs`.
         const sanitize = (s: unknown) =>
           String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
         const nutriName = sanitize(meta?.nutritionist_name);
         const patientName = sanitize(meta?.patient_name);
-        let displayUser = userId;
-        if (!conversation_id && (nutriName || patientName)) {
-          const label = [nutriName, patientName].filter(Boolean).join(" · ");
-          displayUser = label.length > 64 ? label.slice(0, 63) + "…" : label;
-        }
 
         const mergedInputs = {
           ...(inputs ?? {}),
@@ -67,7 +60,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             inputs: mergedInputs,
             response_mode: "streaming",
             conversation_id: conversation_id ?? "",
-            user: displayUser,
+            user: userId,
             files: files ?? [],
             auto_generate_name: true,
           }),
