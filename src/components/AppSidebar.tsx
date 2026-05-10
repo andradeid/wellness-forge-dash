@@ -141,7 +141,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {groups.map((g) => {
+        {(role === "nutri" ? [nutriGroup] : adminGroups).map((g) => {
           const isOpen = open[g.key];
           const visibleItems = g.items.filter(
             (item) => !item.superAdminOnly || role === "super_admin",
