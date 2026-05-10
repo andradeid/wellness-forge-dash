@@ -34,6 +34,10 @@ interface Patient {
   birth_date: string | null;
   gender: "male" | "female" | "other" | null;
   created_at: string;
+  email: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  notes: string | null;
 }
 
 function PatientsPage() {
