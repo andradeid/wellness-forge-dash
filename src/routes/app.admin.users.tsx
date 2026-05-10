@@ -289,16 +289,11 @@ function UsersPage() {
 
   const toggleBlock = async (u: UserRow) => {
     const next = !u.is_blocked;
-    const { data: sess } = await supabase.auth.getSession();
-    const token = sess.session?.access_token;
-    if (!token) { toast.error("Sessão expirada"); return; }
-    const res = await fetch("/api/admin/users", {
+    const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ user_id: u.id, blocked: next }),
+      body: { user_id: u.id, blocked: next },
     });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok || !json.ok) { toast.error(json.error ?? "Falha ao atualizar status"); return; }
+    if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao atualizar status"); return; }
     toast.success(next ? "Usuária bloqueada (login impedido)" : "Usuária reativada");
     refreshAll();
   };
@@ -328,19 +323,14 @@ function UsersPage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
     if (f.password.length < 8) { toast.error("A senha precisa ter ao menos 8 caracteres"); return; }
     setCreating(true);
-    const { data: sess } = await supabase.auth.getSession();
-    const token = sess.session?.access_token;
-    if (!token) { toast.error("Sessão expirada"); setCreating(false); return; }
-    const res = await fetch("/api/admin/users", {
+    const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(f),
+      body: f,
     });
-    const json = await res.json().catch(() => ({}));
     setCreating(false);
-    if (!res.ok || !json.ok) { toast.error(json.error ?? "Falha ao criar usuário"); return; }
+    if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao criar usuário"); return; }
     toast.success("Nutricionista criada com sucesso");
-    nutriIdsRef.current = null; // invalida cache de ids
+    nutriIdsRef.current = null;
     setCreateOpen(false);
     refreshAll();
   };
