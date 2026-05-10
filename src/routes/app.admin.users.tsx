@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   Search,
@@ -85,10 +85,14 @@ function UsersPage() {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState({ total: 0, active: 0, trial: 0, blocked: 0 });
+
+  const nutriIdsRef = useRef<string[] | null>(null);
 
   // Modais
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
@@ -108,36 +112,113 @@ function UsersPage() {
     );
   }
 
-  const load = async () => {
-    setLoading(true);
-    // ids de nutricionistas
-    const { data: roleRows, error: rErr } = await (supabase as any)
+  // debounce da busca
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // reset da página ao alterar filtros
+  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter, planFilter]);
+
+  const ensureNutriIds = useCallback(async (): Promise<string[]> => {
+    if (nutriIdsRef.current) return nutriIdsRef.current;
+    const { data, error } = await (supabase as any)
       .from("user_roles")
       .select("user_id")
       .eq("role", "nutri");
-    if (rErr) { toast.error(rErr.message); setLoading(false); return; }
-    const ids = (roleRows ?? []).map((r: any) => r.user_id);
+    if (error) { toast.error(error.message); return []; }
+    const ids = (data ?? []).map((r: any) => r.user_id);
+    nutriIdsRef.current = ids;
+    return ids;
+  }, []);
+
+  // Estatísticas (head count) — atualizadas no mount e após escritas
+  const loadStats = useCallback(async () => {
+    const ids = await ensureNutriIds();
+    if (ids.length === 0) { setStats({ total: 0, active: 0, trial: 0, blocked: 0 }); return; }
+
+    const baseProfiles = () => (supabase as any)
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .in("id", ids)
+      .is("deleted_at", null);
+
+    const baseSubs = (status: SubStatus) => (supabase as any)
+      .from("subscriptions")
+      .select("user_id", { count: "exact", head: true })
+      .in("user_id", ids)
+      .eq("status", status);
+
+    const [totalRes, activeRes, trialRes, blockedRes] = await Promise.all([
+      baseProfiles(),
+      baseSubs("active"),
+      baseSubs("trial"),
+      baseProfiles().eq("is_blocked", true),
+    ]);
+
+    setStats({
+      total: totalRes.count ?? 0,
+      active: activeRes.count ?? 0,
+      trial: trialRes.count ?? 0,
+      blocked: blockedRes.count ?? 0,
+    });
+  }, [ensureNutriIds]);
+
+  // Página atual com filtros aplicados no servidor
+  const load = useCallback(async () => {
+    setLoading(true);
+    const ids = await ensureNutriIds();
     if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
 
-    const [profilesRes, subsRes] = await Promise.all([
-      (supabase as any)
-        .from("profiles")
-        .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at")
-        .in("id", ids)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false }),
-      (supabase as any)
+    // Restringe ids quando há filtro de plano/status (não-bloqueado) — feito em subscriptions
+    let scopedIds: string[] = ids;
+    const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
+    if (subStatusActive || planFilter !== "all") {
+      let q = (supabase as any)
+        .from("subscriptions")
+        .select("user_id")
+        .in("user_id", ids);
+      if (subStatusActive) q = q.eq("status", statusFilter);
+      if (planFilter !== "all") q = q.eq("plan_type", planFilter);
+      const { data, error } = await q;
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      scopedIds = (data ?? []).map((r: any) => r.user_id);
+      if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+    }
+
+    let pq = (supabase as any)
+      .from("profiles")
+      .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
+      .in("id", scopedIds)
+      .is("deleted_at", null);
+
+    if (statusFilter === "blocked") pq = pq.eq("is_blocked", true);
+
+    if (debouncedSearch) {
+      const term = debouncedSearch.replace(/[%,]/g, "");
+      pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+    }
+
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    pq = pq.order("created_at", { ascending: false }).range(from, to);
+
+    const { data: profiles, count, error: pErr } = await pq;
+    if (pErr) { toast.error(pErr.message); setLoading(false); return; }
+
+    const pageIds = (profiles ?? []).map((p: any) => p.id);
+    let subMap = new Map<string, any>();
+    if (pageIds.length > 0) {
+      const { data: subs, error: sErr } = await (supabase as any)
         .from("subscriptions")
         .select("user_id, status, plan_type, current_period_end")
-        .in("user_id", ids),
-    ]);
-    if (profilesRes.error) toast.error(profilesRes.error.message);
-    if (subsRes.error) toast.error(subsRes.error.message);
+        .in("user_id", pageIds);
+      if (sErr) toast.error(sErr.message);
+      (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
+    }
 
-    const subMap = new Map<string, any>();
-    (subsRes.data ?? []).forEach((s: any) => subMap.set(s.user_id, s));
-
-    const merged: UserRow[] = (profilesRes.data ?? []).map((p: any) => ({
+    const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
       email: p.email,
@@ -150,107 +231,18 @@ function UsersPage() {
       plan_type: subMap.get(p.id)?.plan_type ?? null,
       current_period_end: subMap.get(p.id)?.current_period_end ?? null,
     }));
+
     setRows(merged);
-    setTotal(merged.length);
+    setTotal(count ?? merged.length);
     setLoading(false);
-  };
+  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, page]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadStats(); }, [loadStats]);
 
-  const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      const matchesSearch = !search ||
-        (r.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
-        r.email.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "blocked" && r.is_blocked) ||
-        (!r.is_blocked && r.status === statusFilter);
-      const matchesPlan = planFilter === "all" || r.plan_type === planFilter;
-      return matchesSearch && matchesStatus && matchesPlan;
-    });
-  }, [rows, search, statusFilter, planFilter]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  useEffect(() => { setPage(0); }, [search, statusFilter, planFilter]);
-
-  // ações
-  const openDetails = async (u: UserRow) => {
-    setDetailUser(u);
-    setExamCount(null);
-    const { count } = await (supabase as any)
-      .from("patient_exams")
-      .select("id", { count: "exact", head: true })
-      .eq("uploaded_by", u.id);
-    setExamCount(count ?? 0);
-  };
-
-  const openPlan = (u: UserRow) => {
-    setPlanUser(u);
-    setPlanForm({
-      plan_type: (u.plan_type as PlanType) ?? "free",
-      status: (u.status as SubStatus) ?? "trial",
-    });
-  };
-
-  const savePlan = async () => {
-    if (!planUser) return;
-    setSavingPlan(true);
-    const { error } = await (supabase as any)
-      .from("subscriptions")
-      .update({ plan_type: planForm.plan_type, status: planForm.status })
-      .eq("user_id", planUser.id);
-    setSavingPlan(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Plano atualizado com sucesso");
-    setPlanUser(null);
-    load();
-  };
-
-  const sendWelcome = async (u: UserRow) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(u.email);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`E-mail de boas-vindas enviado para ${u.email}`);
-  };
-
-  const toggleBlock = async (u: UserRow) => {
-    const next = !u.is_blocked;
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({ is_blocked: next })
-      .eq("id", u.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(next ? "Usuária bloqueada" : "Usuária reativada");
-    load();
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteUser) return;
-    if (deleteConfirm.trim().toLowerCase() !== deleteUser.email.toLowerCase()) {
-      toast.error("O e-mail digitado não confere");
-      return;
-    }
-    setDeleting(true);
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({ deleted_at: new Date().toISOString(), is_blocked: true })
-      .eq("id", deleteUser.id);
-    setDeleting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Usuária excluída");
-    setDeleteUser(null);
-    setDeleteConfirm("");
-    load();
-  };
-
-  const stats = {
-    total: rows.length,
-    active: rows.filter((r) => !r.is_blocked && r.status === "active").length,
-    trial: rows.filter((r) => !r.is_blocked && r.status === "trial").length,
-    blocked: rows.filter((r) => r.is_blocked).length,
-  };
+  const refreshAll = async () => { await Promise.all([load(), loadStats()]); };
 
   return (
     <div className="space-y-10 max-w-7xl">
