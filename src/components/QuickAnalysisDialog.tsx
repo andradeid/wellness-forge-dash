@@ -101,6 +101,62 @@ function normalizeGender(input?: string): "male" | "female" | "other" | undefine
   return undefined;
 }
 
+function normalizeName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function nameTokens(s: string): string[] {
+  return normalizeName(s).split(" ").filter((t) => t.length >= 2);
+}
+
+function isPartialNameMatch(a: string, b: string): boolean {
+  const ta = new Set(nameTokens(a));
+  const tb = new Set(nameTokens(b));
+  if (!ta.size || !tb.size) return false;
+  let common = 0;
+  for (const t of ta) if (tb.has(t)) common++;
+  // At least 2 common tokens, or every token of the shorter set is contained in the other
+  const minSize = Math.min(ta.size, tb.size);
+  return common >= 2 || (minSize > 0 && common === minSize);
+}
+
+async function findExistingPatient(
+  userId: string,
+  detected: PatientData,
+): Promise<{ patient: { id: string; name: string; birth_date: string | null }; kind: "exact" | "suggestion" } | null> {
+  if (!detected.name) return null;
+  const dob = detected.dob || null;
+
+  // Restrict by created_by (RLS already enforces this, but explicit for safety)
+  let query = (supabase as any)
+    .from("patients")
+    .select("id, name, birth_date")
+    .eq("created_by", userId);
+
+  if (dob) query = query.eq("birth_date", dob);
+
+  const { data, error } = await query;
+  if (error || !Array.isArray(data)) return null;
+
+  const target = normalizeName(detected.name);
+  // Exact (case-insensitive) match with same dob
+  const exact = data.find((p: any) => normalizeName(p.name) === target);
+  if (exact) return { patient: exact, kind: "exact" };
+
+  // If dob matches, partial-name suggestion
+  if (dob) {
+    const partial = data.find((p: any) => isPartialNameMatch(p.name, detected.name!));
+    if (partial) return { patient: partial, kind: "suggestion" };
+  }
+
+  return null;
+}
+
 function looksLikePatient(obj: Record<string, unknown>): boolean {
   return typeof obj.name === "string" && (obj.dob !== undefined || obj.gender !== undefined || obj.birth_date !== undefined);
 }
@@ -184,6 +240,10 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
   const [detected, setDetected] = useState<PatientData>({});
   const [markers, setMarkers] = useState<Marker[] | undefined>(undefined);
   const [creating, setCreating] = useState(false);
+  const [matchOpen, setMatchOpen] = useState(false);
+  const [matchPatient, setMatchPatient] = useState<{ id: string; name: string; birth_date: string | null } | null>(null);
+  const [matchKind, setMatchKind] = useState<"exact" | "suggestion">("exact");
+  const [attaching, setAttaching] = useState(false);
 
   const reset = () => {
     setFile(null);
@@ -333,14 +393,23 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       setMarkers(m);
 
       if (patient_data?.name) {
-        setDetected({
+        const detectedData: PatientData = {
           name: patient_data.name,
           dob: patient_data.dob,
           gender: patient_data.gender,
-        });
+        };
+        setDetected(detectedData);
         setProcessing(false);
         setOpen(false);
-        setConfirmOpen(true);
+
+        const existing = await findExistingPatient(user.id, detectedData);
+        if (existing) {
+          setMatchPatient({ id: existing.patient.id, name: existing.patient.name, birth_date: existing.patient.birth_date });
+          setMatchKind(existing.kind);
+          setMatchOpen(true);
+        } else {
+          setConfirmOpen(true);
+        }
       } else {
         const reason = !braceMatches.length
           ? "nenhum bloco JSON foi encontrado no texto"
@@ -433,6 +502,89 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       toast.error(msg);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleAttachToExisting = async () => {
+    if (!user || !matchPatient) return;
+    setAttaching(true);
+    try {
+      // Reuse the latest existing chat for this patient (preserving its Dify conversation_id),
+      // or create a new chat if none exists.
+      const { data: existingChat } = await (supabase as any)
+        .from("patient_chats")
+        .select("id, dify_conversation_id")
+        .eq("patient_id", matchPatient.id)
+        .eq("created_by", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let chatId: string;
+      if (existingChat?.id) {
+        chatId = existingChat.id;
+        // Touch updated_at so the chat surfaces at the top
+        await (supabase as any)
+          .from("patient_chats")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", chatId);
+      } else {
+        const { data: chat, error: cErr } = await (supabase as any)
+          .from("patient_chats")
+          .insert({
+            patient_id: matchPatient.id,
+            created_by: user.id,
+            dify_conversation_id: conversationIdRef.current || null,
+          })
+          .select("id")
+          .single();
+        if (cErr) throw new Error(cErr.message);
+        chatId = chat.id;
+      }
+
+      // Move the exam from _quick to the patient's folder (best-effort) and persist reference
+      if (storagePathRef.current && file) {
+        const newPath = `${user.id}/${matchPatient.id}/${Date.now()}-${file.name}`;
+        const { error: mvErr } = await supabase.storage.from("exams").move(storagePathRef.current, newPath);
+        const finalPath = mvErr ? storagePathRef.current : newPath;
+        await (supabase as any).from("patient_exams").insert({
+          patient_id: matchPatient.id,
+          chat_id: chatId,
+          uploaded_by: user.id,
+          file_path: finalPath,
+          file_name: file.name,
+          mime_type: file.type,
+          size_bytes: file.size,
+          dify_file_id: difyFileIdRef.current,
+        });
+      }
+
+      // Persist user + assistant messages
+      await (supabase as any).from("chat_messages").insert({
+        chat_id: chatId,
+        created_by: user.id,
+        role: "user",
+        content: "Análise rápida do exame anexado.",
+        attachments: file ? [{ name: file.name }] : null,
+      });
+      await (supabase as any).from("chat_messages").insert({
+        chat_id: chatId,
+        created_by: user.id,
+        role: "assistant",
+        content: assistantTextRef.current,
+        structured_data: markers ? { markers } : null,
+      });
+
+      toast.success(`Exame anexado ao histórico de ${matchPatient.name}.`);
+      setMatchOpen(false);
+      reset();
+      onCreated?.();
+      navigate({ to: "/app/chat/$patientId", params: { patientId: matchPatient.id } });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao anexar";
+      toast.error(msg);
+    } finally {
+      setAttaching(false);
     }
   };
 
@@ -557,6 +709,49 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
               className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90"
             >
               {creating ? "Cadastrando…" : "Cadastrar e abrir chat"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={matchOpen} onOpenChange={(o) => { if (!o && !attaching) { setMatchOpen(false); reset(); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {matchKind === "exact"
+                ? `Localizamos um paciente cadastrado com estes dados: ${matchPatient?.name}`
+                : `Encontramos um paciente parecido: ${matchPatient?.name}`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {matchKind === "exact"
+                ? "Deseja anexar este exame ao histórico dele?"
+                : `O nome extraído (${detected.name}) é uma variação do paciente acima e a data de nascimento confere. Deseja anexar este exame ao histórico dele ou cadastrar como um novo paciente?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+            <div><span className="text-muted-foreground">Paciente existente:</span> <strong>{matchPatient?.name}</strong></div>
+            {matchPatient?.birth_date && (
+              <div><span className="text-muted-foreground">Nascimento:</span> {new Date(matchPatient.birth_date + "T00:00:00").toLocaleDateString("pt-BR")}</div>
+            )}
+            <div className="pt-2 border-t mt-2"><span className="text-muted-foreground">Extraído do exame:</span> {detected.name} {detected.dob ? `· ${new Date(detected.dob + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}</div>
+          </div>
+
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={attaching}>Cancelar</AlertDialogCancel>
+            <Button
+              variant="outline"
+              disabled={attaching}
+              onClick={() => { setMatchOpen(false); setConfirmOpen(true); }}
+            >
+              Cadastrar como novo
+            </Button>
+            <AlertDialogAction
+              disabled={attaching}
+              onClick={(e) => { e.preventDefault(); handleAttachToExisting(); }}
+              className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90"
+            >
+              {attaching ? "Anexando…" : "Anexar ao histórico"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
