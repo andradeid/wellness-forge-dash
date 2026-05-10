@@ -144,9 +144,9 @@ function PatientsPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="bg-white shadow-sm rounded-lg border-muted">
         <CardHeader className="flex-row items-center justify-between gap-4">
-          <CardTitle className="text-base">Lista</CardTitle>
+          <CardTitle className="text-base font-medium">Lista de pacientes</CardTitle>
           <div className="relative w-64 max-w-full">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
