@@ -14,8 +14,50 @@ interface DifyFileRef {
   upload_file_id: string;
 }
 
+function inferClassification(s: string): string {
+  const t = s.toLowerCase();
+  if (/(crític|alerta)/.test(t)) return "atencao";
+  if (/(elevad|^alto|\balto\b|\balta\b|acima)/.test(t)) return "alto";
+  if (/(baix|deficien|abaixo|insuficien)/.test(t)) return "baixo";
+  if (/(atenç|limítrof|limitrof|borderline)/.test(t)) return "atencao";
+  if (/(ótim|otim|normal|adequad|dentro|controlad|saudáv|saudav)/.test(t)) return "normal";
+  return "";
+}
+
+function extractMarkersFromText(text: string): Marker[] {
+  const out: Marker[] = [];
+  // Match bullet lines like:
+  //   - Glicose: 82 mg/dL (normal — ref 75-85)
+  //   - Vitamina D (25-OH): 60 ng/mL — adequado
+  //   * HDL Colesterol — 54 mg/dL: dentro do esperado
+  const lineRe = /^[\s>]*[-*•]\s*([A-Za-zÀ-ÿ0-9()/\s.+-]{2,60}?)\s*[:\-—–(]\s*([<≤>≥]?\s*-?\d+(?:[.,]\d+)?)\s*([%A-Za-zµμ/]+)?\b([^\n]*)/gm;
+  let m: RegExpExecArray | null;
+  const seen = new Set<string>();
+  while ((m = lineRe.exec(text))) {
+    const rawName = m[1].replace(/\s+/g, " ").trim().replace(/[(]$/, "").trim();
+    if (!rawName || /^(paciente|nome|data|gênero|genero|análise|analise|conclus|recomendaç|observaç)/i.test(rawName)) continue;
+    const value = m[2].replace(/\s+/g, "");
+    const unit = (m[3] || "").trim();
+    const tail = (m[4] || "").trim();
+    const refMatch = tail.match(/(\d+(?:[.,]\d+)?\s*[-–]\s*\d+(?:[.,]\d+)?|[<≤>≥]\s*\d+(?:[.,]\d+)?)/);
+    const reference = refMatch ? refMatch[1] : "";
+    const classification = inferClassification(tail) || inferClassification(rawName);
+    const key = rawName.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      name: rawName,
+      value,
+      unit: unit || undefined,
+      reference: reference || undefined,
+      classification: (classification || "normal") as Marker["classification"],
+    });
+  }
+  return out;
+}
+
 function tryExtractMarkers(text: string): Marker[] | null {
-  // Look for ```json blocks containing { "markers": [...] }
+  // 1) ```json blocks containing { "markers": [...] }
   const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
   let m: RegExpExecArray | null;
   while ((m = blockRe.exec(text))) {
@@ -24,7 +66,7 @@ function tryExtractMarkers(text: string): Marker[] | null {
       if (Array.isArray(parsed?.markers)) return parsed.markers as Marker[];
     } catch { /* ignore */ }
   }
-  // Fallback: any { "markers": [...] } substring
+  // 2) any { "markers": [...] } substring
   const idx = text.indexOf('"markers"');
   if (idx !== -1) {
     const start = text.lastIndexOf("{", idx);
@@ -36,7 +78,9 @@ function tryExtractMarkers(text: string): Marker[] | null {
       } catch { /* ignore */ }
     }
   }
-  return null;
+  // 3) Fallback heurístico — extrai marcadores de respostas em linguagem natural.
+  const fromText = extractMarkersFromText(text);
+  return fromText.length ? fromText : null;
 }
 
 function getDifyAnswer(evt: Record<string, unknown>): string {
