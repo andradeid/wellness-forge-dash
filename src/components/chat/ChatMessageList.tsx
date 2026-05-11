@@ -67,16 +67,23 @@ function JsonCodeBlock({ value }: { value: string }) {
 export function ChatMessageList({
   messages,
   thinking,
+  highlightId,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
+  highlightId?: string;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
   useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, thinking]);
+  }, [messages, thinking, highlightId]);
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6">
@@ -93,14 +100,19 @@ export function ChatMessageList({
         {messages.map((m) => {
           const isUser = m.role === "user";
           const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
+          const isHighlighted = highlightId === m.id;
           return (
-            <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+            <div
+              key={m.id}
+              ref={isHighlighted ? highlightRef : undefined}
+              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+            >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md ${
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md transition-all ${
                   isUser
                     ? "bg-gradient-to-br from-[#3d5a4a]/95 to-[#2f4a3c]/95 text-white border border-white/10"
                     : "bg-white/70 border border-white/60 text-foreground"
-                }`}
+                } ${isHighlighted ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-transparent shadow-lg" : ""}`}
               >
                 {m.attachments && m.attachments.length > 0 && (
                   <div className="mb-2 text-xs opacity-80">
