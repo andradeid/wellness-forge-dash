@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
+import { MessageFeedback } from "./MessageFeedback";
 import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
