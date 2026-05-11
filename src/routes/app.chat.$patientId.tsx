@@ -167,7 +167,7 @@ function ChatPage() {
         </header>
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <ChatMessageList messages={messages} thinking={thinking} />
+          <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
         </div>
         <div className="shrink-0 px-4 pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
