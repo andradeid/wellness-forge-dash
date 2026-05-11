@@ -65,17 +65,27 @@ type NavGroup = {
   items: NavItem[];
 };
 
-const nutriGroup: NavGroup = {
-  key: "nutri",
-  label: "ATENDIMENTO",
-  subtitle: "Seus pacientes e análises",
-  icon: UserRound,
-  items: [
-    { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
-    { title: "Pacientes", url: "/app/patients", icon: Users },
-    { title: "Chat", url: "/app/patients", icon: MessageSquare },
-  ],
-};
+const nutriGroups: NavGroup[] = [
+  {
+    key: "visao",
+    label: "VISÃO GERAL",
+    subtitle: "Panorama da sua base",
+    icon: LayoutGrid,
+    items: [
+      { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
+    ],
+  },
+  {
+    key: "nutri",
+    label: "ATENDIMENTO",
+    subtitle: "Seus pacientes e análises",
+    icon: UserRound,
+    items: [
+      { title: "Pacientes", url: "/app/patients", icon: Users },
+      { title: "Chat", url: "/app/patients", icon: MessageSquare },
+    ],
+  },
+];
 
 const adminGroups: NavGroup[] = [
   {
@@ -169,7 +179,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {(role === "nutri" ? [nutriGroup] : adminGroups).map((g) => {
+        {(role === "nutri" ? nutriGroups : adminGroups).map((g) => {
           const isOpen = open[g.key];
           const visibleItems = g.items.filter(
             (item) => !item.superAdminOnly || role === "super_admin",
