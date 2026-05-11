@@ -71,6 +71,7 @@ const nutriGroup: NavGroup = {
   subtitle: "Seus pacientes e análises",
   icon: UserRound,
   items: [
+    { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
     { title: "Pacientes", url: "/app/patients", icon: Users },
     { title: "Chat", url: "/app/patients", icon: MessageSquare },
   ],
