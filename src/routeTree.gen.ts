@@ -23,6 +23,7 @@ import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
+import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
@@ -99,6 +100,11 @@ const AppAdminIntegrationsRoute = AppAdminIntegrationsRouteImport.update({
   path: '/admin/integrations',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminFeedbacksRoute = AppAdminFeedbacksRouteImport.update({
+  id: '/admin/feedbacks',
+  path: '/admin/feedbacks',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
   id: '/admin/administrators',
   path: '/admin/administrators',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
+    | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
     | '/app/admin/playground'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
+    | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
     | '/app/admin/playground'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
+    | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
     | '/app/admin/playground'
@@ -364,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminIntegrationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/feedbacks': {
+      id: '/app/admin/feedbacks'
+      path: '/admin/feedbacks'
+      fullPath: '/app/admin/feedbacks'
+      preLoaderRoute: typeof AppAdminFeedbacksRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/administrators': {
       id: '/app/admin/administrators'
       path: '/admin/administrators'
@@ -408,6 +427,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
+  AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
   AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
@@ -422,6 +442,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
+  AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
   AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,

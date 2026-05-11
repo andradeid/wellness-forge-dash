@@ -97,7 +97,7 @@ const adminGroups: NavGroup[] = [
       { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Conversas", url: "#conversas", icon: MessageSquare },
       { title: "Erros", url: "#erros", icon: AlertCircle },
-      { title: "Feedback", url: "#feedback", icon: Lightbulb },
+      { title: "Feedbacks", url: "/app/admin/feedbacks", icon: Lightbulb, superAdminOnly: true },
       { title: "Ranking de acessos", url: "#ranking", icon: Trophy },
     ],
   },
