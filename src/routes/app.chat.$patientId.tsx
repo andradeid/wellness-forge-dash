@@ -12,6 +12,10 @@ import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/chat/$patientId")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    chatId: typeof s.chatId === "string" ? s.chatId : undefined,
+    messageId: typeof s.messageId === "string" ? s.messageId : undefined,
+  }),
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/login" });
@@ -29,11 +33,15 @@ interface PatientCtx {
 
 function ChatPage() {
   const { patientId } = Route.useParams();
+  const { chatId: forceChatId, messageId: highlightId } = Route.useSearch();
   const { role } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
-  const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, { readOnly });
+  const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
+    readOnly,
+    forceChatId: forceChatId ?? null,
+  });
 
   useEffect(() => {
     (async () => {
@@ -159,7 +167,7 @@ function ChatPage() {
         </header>
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <ChatMessageList messages={messages} thinking={thinking} />
+          <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
         </div>
         <div className="shrink-0 px-4 pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
