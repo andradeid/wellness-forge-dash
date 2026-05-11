@@ -95,8 +95,12 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
   return "";
 }
 
-export function useDifyChat(patientId: string, options?: { readOnly?: boolean }) {
+export function useDifyChat(
+  patientId: string,
+  options?: { readOnly?: boolean; forceChatId?: string | null },
+) {
   const readOnly = options?.readOnly ?? false;
+  const forceChatId = options?.forceChatId ?? null;
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
@@ -119,13 +123,16 @@ export function useDifyChat(patientId: string, options?: { readOnly?: boolean })
       // Em modo somente-leitura (admin/super_admin auditando), buscamos o
       // chat mais recente do paciente sem filtrar por created_by — assim o
       // auditor enxerga a conversa do nutricionista responsável.
-      const chatQuery = (supabase as any)
+      // Se forceChatId for passado (ex: vindo da auditoria de feedback),
+      // carregamos exatamente aquele chat.
+      let chatQuery = (supabase as any)
         .from("patient_chats")
         .select("id, dify_conversation_id, created_by")
         .eq("patient_id", patientId)
         .order("created_at", { ascending: false })
         .limit(1);
-      if (!readOnly) chatQuery.eq("created_by", user.id);
+      if (forceChatId) chatQuery = chatQuery.eq("id", forceChatId);
+      else if (!readOnly) chatQuery = chatQuery.eq("created_by", user.id);
 
       const [{ data: existing }, { data: profile }, { data: patient }] = await Promise.all([
         chatQuery.maybeSingle(),
