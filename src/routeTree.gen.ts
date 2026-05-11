@@ -23,7 +23,6 @@ import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
 import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
-import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
@@ -100,11 +99,6 @@ const AppAdminPlaygroundRoute = AppAdminPlaygroundRouteImport.update({
 const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
   id: '/admin/nutritionists',
   path: '/admin/nutritionists',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminRankingRoute = AppAdminRankingRouteImport.update({
-  id: '/admin/ranking',
-  path: '/admin/ranking',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminIntegrationsRoute = AppAdminIntegrationsRouteImport.update({
@@ -392,13 +386,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/nutritionists'
       fullPath: '/app/admin/nutritionists'
       preLoaderRoute: typeof AppAdminNutritionistsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/ranking': {
-      id: '/app/admin/ranking'
-      path: '/admin/ranking'
-      fullPath: '/app/admin/ranking'
-      preLoaderRoute: typeof AppAdminRankingRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/admin/integrations': {
