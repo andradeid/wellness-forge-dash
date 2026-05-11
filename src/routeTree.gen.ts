@@ -20,6 +20,7 @@ import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
+import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
@@ -83,6 +84,11 @@ const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRankingRoute = AppAdminRankingRouteImport.update({
+  id: '/admin/ranking',
+  path: '/admin/ranking',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminPlaygroundRoute = AppAdminPlaygroundRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
+  '/app/admin/ranking': typeof AppAdminRankingRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
+  '/app/admin/ranking': typeof AppAdminRankingRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
+  '/app/admin/ranking': typeof AppAdminRankingRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
     | '/app/admin/playground'
+    | '/app/admin/ranking'
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
     | '/app/admin/playground'
+    | '/app/admin/ranking'
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
     | '/app/admin/playground'
+    | '/app/admin/ranking'
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
@@ -355,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/ranking': {
+      id: '/app/admin/ranking'
+      path: '/admin/ranking'
+      fullPath: '/app/admin/ranking'
+      preLoaderRoute: typeof AppAdminRankingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/playground': {
       id: '/app/admin/playground'
       path: '/admin/playground'
@@ -431,6 +450,7 @@ interface AppRouteChildren {
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
   AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
+  AppAdminRankingRoute: typeof AppAdminRankingRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
@@ -446,6 +466,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
   AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,
+  AppAdminRankingRoute: AppAdminRankingRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
