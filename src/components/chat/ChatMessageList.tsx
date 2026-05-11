@@ -139,6 +139,7 @@ export function ChatMessageList({
                     <AlertTriangle className="h-3 w-3" /> Erro na estrutura de dados recebida
                   </div>
                 )}
+                {m.role === "assistant" && <MessageFeedback messageId={m.id} />}
               </div>
             </div>
           );
