@@ -184,7 +184,7 @@ export function useDifyChat(
     };
     init();
     return () => { cancelled = true; };
-  }, [patientId, readOnly]);
+  }, [patientId, readOnly, forceChatId]);
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId || readOnly) return;
