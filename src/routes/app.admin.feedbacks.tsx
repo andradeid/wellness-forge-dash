@@ -356,6 +356,7 @@ function FeedbacksPage() {
                           <Link
                             to="/app/chat/$patientId"
                             params={{ patientId: r.patient_id }}
+                            search={{ chatId: r.chat_id ?? undefined, messageId: r.message_id }}
                           >
                             <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                             Ver conversa
