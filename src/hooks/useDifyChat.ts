@@ -180,7 +180,7 @@ export function useDifyChat(patientId: string, options?: { readOnly?: boolean })
   }, [patientId, readOnly]);
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
-    if (!chatId) return;
+    if (!chatId || readOnly) return;
     setError(null);
     setThinking(true);
 
