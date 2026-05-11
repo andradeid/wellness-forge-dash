@@ -124,7 +124,9 @@ function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, role]);
+
+  if (role === "super_admin") return null;
 
   const patientMap = useMemo(() => {
     const m = new Map<string, string>();
