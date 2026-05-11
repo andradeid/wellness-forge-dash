@@ -95,7 +95,8 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
   return "";
 }
 
-export function useDifyChat(patientId: string) {
+export function useDifyChat(patientId: string, options?: { readOnly?: boolean }) {
+  const readOnly = options?.readOnly ?? false;
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
@@ -115,15 +116,19 @@ export function useDifyChat(patientId: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Em modo somente-leitura (admin/super_admin auditando), buscamos o
+      // chat mais recente do paciente sem filtrar por created_by — assim o
+      // auditor enxerga a conversa do nutricionista responsável.
+      const chatQuery = (supabase as any)
+        .from("patient_chats")
+        .select("id, dify_conversation_id, created_by")
+        .eq("patient_id", patientId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!readOnly) chatQuery.eq("created_by", user.id);
+
       const [{ data: existing }, { data: profile }, { data: patient }] = await Promise.all([
-        (supabase as any)
-          .from("patient_chats")
-          .select("id, dify_conversation_id")
-          .eq("patient_id", patientId)
-          .eq("created_by", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+        chatQuery.maybeSingle(),
         (supabase as any)
           .from("profiles")
           .select("full_name, email")
@@ -145,6 +150,11 @@ export function useDifyChat(patientId: string) {
 
       let id = existing?.id as string | undefined;
       if (!id) {
+        if (readOnly) {
+          // Auditor não cria chat — apenas mostra que não há conversa.
+          if (!cancelled) setChatId("");
+          return;
+        }
         const { data: created, error: cErr } = await (supabase as any)
           .from("patient_chats")
           .insert({ patient_id: patientId, created_by: user.id })
@@ -167,7 +177,7 @@ export function useDifyChat(patientId: string) {
     };
     init();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, readOnly]);
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId) return;
