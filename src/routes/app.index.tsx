@@ -18,6 +18,7 @@ function AppIndex() {
     } else {
       navigate({ to: "/app/dashboard" });
     }
+    // nutri também vai para /app/dashboard como home
   }, [role, loading, user, navigate]);
 
   return (
