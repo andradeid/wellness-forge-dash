@@ -1,7 +1,8 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, TrendingUp } from "lucide-react";
+import { ArrowLeft, Eye, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -28,9 +29,11 @@ interface PatientCtx {
 
 function ChatPage() {
   const { patientId } = Route.useParams();
+  const { role } = useAuth();
+  const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
-  const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId);
+  const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, { readOnly });
 
   useEffect(() => {
     (async () => {
@@ -160,10 +163,19 @@ function ChatPage() {
         </div>
         <div className="shrink-0 px-4 pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
-            <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Máximo de 10 arquivos de 20MB
-            </p>
+            {readOnly ? (
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-xs text-amber-800">
+                <Eye className="h-3.5 w-3.5" />
+                Modo auditoria — você está visualizando esta conversa em modo somente leitura.
+              </div>
+            ) : (
+              <>
+                <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  Máximo de 10 arquivos de 20MB
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
