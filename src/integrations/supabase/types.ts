@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string
+          id: string
+          message_id: string
+          rating: Database["public"]["Enums"]["ai_feedback_rating"]
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          message_id: string
+          rating: Database["public"]["Enums"]["ai_feedback_rating"]
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          message_id?: string
+          rating?: Database["public"]["Enums"]["ai_feedback_rating"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           attachments: Json | null
@@ -413,6 +443,7 @@ export type Database = {
       }
     }
     Enums: {
+      ai_feedback_rating: "positive" | "negative" | "suggestion"
       app_role: "super_admin" | "admin" | "nutri"
       gender_type: "male" | "female" | "other"
       plan_type: "free" | "basic" | "pro"
@@ -544,6 +575,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_feedback_rating: ["positive", "negative", "suggestion"],
       app_role: ["super_admin", "admin", "nutri"],
       gender_type: ["male", "female", "other"],
       plan_type: ["free", "basic", "pro"],
