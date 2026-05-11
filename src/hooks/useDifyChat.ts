@@ -423,7 +423,7 @@ export function useDifyChat(patientId: string, options?: { readOnly?: boolean })
     }
 
     setThinking(false);
-  }, [chatId, patientId]);
+  }, [chatId, patientId, readOnly]);
 
   return { chatId, messages, thinking, error, sendMessage };
 }
