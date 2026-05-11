@@ -80,7 +80,7 @@ function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#f5f5f0] overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
       {/* Left column: patient + exams */}
       <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
         <div className="px-5 py-4 border-b">
@@ -131,7 +131,7 @@ function ChatPage() {
 
       {/* Main: chat */}
       <section className="flex-1 flex flex-col min-w-0 h-full">
-        <header className="px-6 py-4 border-b bg-white shrink-0 flex items-center gap-4">
+        <header className="px-6 py-4 border-b border-white/40 bg-white/60 backdrop-blur-md shrink-0 flex items-center gap-4">
           <Avatar className="h-12 w-12 ring-2 ring-[#e89bcf]/30 lg:hidden">
             {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
             <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white">
@@ -158,9 +158,12 @@ function ChatPage() {
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <ChatMessageList messages={messages} thinking={thinking} />
         </div>
-        <div className="shrink-0 px-3 pb-3 pt-2 bg-[#f5f5f0]">
-          <div className="rounded-2xl bg-white shadow-md border border-muted-foreground/10 overflow-hidden">
+        <div className="shrink-0 px-4 pb-6 pt-3">
+          <div className="mx-auto w-full max-w-3xl">
             <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              Máximo de 10 arquivos de 20MB
+            </p>
           </div>
         </div>
       </section>
