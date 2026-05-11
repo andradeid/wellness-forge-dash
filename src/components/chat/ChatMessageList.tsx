@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
+import { MessageFeedback } from "./MessageFeedback";
 import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
@@ -138,6 +139,7 @@ export function ChatMessageList({
                     <AlertTriangle className="h-3 w-3" /> Erro na estrutura de dados recebida
                   </div>
                 )}
+                {m.role === "assistant" && <MessageFeedback messageId={m.id} />}
               </div>
             </div>
           );
