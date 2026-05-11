@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Users,
@@ -75,14 +75,21 @@ interface PatientLite {
 }
 
 function DashboardPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, role, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
+    if (!authLoading && role === "super_admin") {
+      navigate({ to: "/app/admin/nutritionists", replace: true });
+    }
+  }, [authLoading, role, navigate]);
+
+  useEffect(() => {
+    if (!user || role === "super_admin") return;
     let cancelled = false;
     (async () => {
       setLoading(true);
