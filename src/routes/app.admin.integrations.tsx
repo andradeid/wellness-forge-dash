@@ -521,6 +521,42 @@ function IntegrationsPage() {
                           )}
                           Testar Conexão Dify
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              disabled={resettingDifyConversations}
+                              className="rounded-full text-muted-foreground hover:text-foreground"
+                            >
+                              {resettingDifyConversations ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <RotateCcw className="h-4 w-4" />
+                              )}
+                              Zerar conversas Dify
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="rounded-lg">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Zerar vínculos de conversa do Dify?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não apaga pacientes, mensagens, exames ou resultados salvos no Supabase.
+                                Ela apenas remove os conversation_id antigos para que as próximas mensagens iniciem
+                                novas conversas no workspace Dify atual.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={resetDifyConversations}
+                                className="rounded-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                              >
+                                Confirmar reset
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     )}
                   </div>
