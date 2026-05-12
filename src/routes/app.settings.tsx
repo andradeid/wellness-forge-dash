@@ -374,7 +374,7 @@ function SettingsPage() {
 
         {/* BRANDING */}
         <TabsContent value="branding">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-6">
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
             {/* Form */}
             <Card className="rounded-2xl shadow-md border-0 h-fit">
               <CardHeader>
@@ -521,22 +521,47 @@ function SettingsPage() {
                   Imprimir / PDF
                 </Button>
               </div>
-              <div className="rounded-2xl bg-muted/40 p-4 overflow-auto max-h-[820px]">
-                <div style={{ transform: "scale(0.62)", transformOrigin: "top center", width: "210mm" }}>
-                  <BrandingDocumentPreview
-                    ref={printRef}
-                    documentTitle="Análise clínica · exemplo"
-                    data={{
-                      pronoun,
-                      full_name: fullName,
-                      professional_id: crn,
-                      clinic_name: clinicName,
-                      clinic_logo_url: clinicLogoUrl,
-                      email,
-                      phone,
-                    }}
-                  />
-                </div>
+              <div className="rounded-2xl bg-muted/40 p-4 overflow-hidden">
+                {(() => {
+                  // A4: 210mm x 297mm ≈ 793.7px x 1122.5px at 96dpi
+                  const SCALE = 0.55;
+                  return (
+                    <div
+                      style={{
+                        width: `${210 * 3.7795 * SCALE}px`,
+                        height: `${297 * 3.7795 * SCALE}px`,
+                        margin: "0 auto",
+                        position: "relative",
+                      }}
+                    >
+                      <div
+                        style={{
+                          transform: `scale(${SCALE})`,
+                          transformOrigin: "top left",
+                          width: "210mm",
+                          height: "297mm",
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                        }}
+                      >
+                        <BrandingDocumentPreview
+                          ref={printRef}
+                          documentTitle="Análise clínica · exemplo"
+                          data={{
+                            pronoun,
+                            full_name: fullName,
+                            professional_id: crn,
+                            clinic_name: clinicName,
+                            clinic_logo_url: clinicLogoUrl,
+                            email,
+                            phone,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <p className="text-[11px] text-muted-foreground text-center">
                 No futuro, ao finalizar uma análise da Lumma, o botão "Gerar PDF Profissional"
