@@ -578,6 +578,19 @@ function IntegrationsPage() {
                           )}
                           Testar Conexão Dify
                         </Button>
+                        <Button
+                          onClick={inspectDifyKey}
+                          disabled={inspectingDify}
+                          variant="outline"
+                          className="rounded-full border-foreground/15 bg-white/80 backdrop-blur"
+                        >
+                          {inspectingDify ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Key className="h-4 w-4" />
+                          )}
+                          Inspecionar chave salva
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
