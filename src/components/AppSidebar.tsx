@@ -87,6 +87,15 @@ const nutriGroups: NavGroup[] = [
       { title: "Chat", url: "/app/patients", icon: MessageSquare },
     ],
   },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+    ],
+  },
 ];
 
 const adminGroups: NavGroup[] = [
