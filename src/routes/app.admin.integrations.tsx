@@ -315,8 +315,8 @@ function IntegrationsPage() {
         return;
       }
 
-      toast.success("Conversas do Dify resetadas com segurança.", {
-        description: `${json.resetCount ?? 0} conversas vão iniciar um novo histórico no Dify.`,
+      toast.success("Vínculos locais do Dify zerados com segurança.", {
+        description: `${json.resetCount ?? 0} conversas vão iniciar um novo histórico na conta Dify atual.`,
       });
       load();
     } catch (e: unknown) {
@@ -604,16 +604,16 @@ function IntegrationsPage() {
                               ) : (
                                 <RotateCcw className="h-4 w-4" />
                               )}
-                              Zerar conversas Dify
+                              Zerar vínculos Dify
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent className="rounded-lg">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Zerar vínculos de conversa do Dify?</AlertDialogTitle>
+                              <AlertDialogTitle>Zerar vínculos locais de conversa do Dify?</AlertDialogTitle>
                               <AlertDialogDescription>
                                 Esta ação não apaga pacientes, mensagens, exames ou resultados salvos no Supabase.
                                 Ela apenas remove os conversation_id antigos para que as próximas mensagens iniciem
-                                novas conversas no workspace Dify atual.
+                                novas conversas na conta Dify atual, sem depender da conta antiga existir.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
