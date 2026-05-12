@@ -154,9 +154,15 @@ function DashboardPage() {
     return m;
   }, [patients]);
 
+  const filteredResults = useMemo(() => {
+    const startIso = rangeStartIso(range);
+    if (!startIso) return results;
+    return results.filter((r) => r.measured_at >= startIso);
+  }, [results, range]);
+
   const stats = useMemo(() => {
     const dist: Record<Bucket, number> = { otimo: 0, atencao: 0, critico: 0, neutro: 0 };
-    for (const r of results) dist[classify(r.classification)]++;
+    for (const r of filteredResults) dist[classify(r.classification)]++;
 
     const last24h = subDays(new Date(), 1).toISOString();
     const criticalLast24 = results.filter(
@@ -173,9 +179,9 @@ function DashboardPage() {
         color: BUCKET_META[k].color,
         bucket: k,
       })),
-      totalAnalyzed: results.length,
+      totalAnalyzed: filteredResults.length,
     };
-  }, [results, patients.length, examsThisMonth]);
+  }, [filteredResults, results, patients.length, examsThisMonth]);
 
   const topDeficiencies = useMemo(() => {
     const counts = new Map<string, number>();
