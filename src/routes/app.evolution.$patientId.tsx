@@ -1,5 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
 import {
   ArrowLeft,
   TrendingUp,
@@ -7,7 +8,11 @@ import {
   Minus,
   Activity,
   Calendar,
+  FileDown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
+import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -110,6 +115,18 @@ function EvolutionPage() {
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [rows, setRows] = useState<ResultRow[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  const { data: branding } = useBrandingProfile(userId);
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Laudo-${patient?.name ?? "paciente"}`,
+  });
 
   useEffect(() => {
     (async () => {
@@ -234,7 +251,18 @@ function EvolutionPage() {
             </div>
           </div>
 
-          <div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => handlePrint?.()}
+              disabled={!rows || rows.length === 0}
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1.5"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Gerar Laudo PDF
+            </Button>
             <QuickAnalysisDialog onCreated={() => reload()} />
           </div>
         </div>
@@ -274,6 +302,26 @@ function EvolutionPage() {
             <ComparativeTable groups={groups} examDates={examDates} />
           </>
         )}
+      </div>
+
+      {/* Off-screen printable layout for "Gerar Laudo PDF" */}
+      <div
+        style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+        aria-hidden
+      >
+        <div ref={printRef}>
+          {branding && rows && (
+            <PatientReportPDF
+              branding={branding}
+              patient={{
+                name: patient.name,
+                birth_date: patient.birth_date,
+                gender: patient.gender,
+              }}
+              markers={rows}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
