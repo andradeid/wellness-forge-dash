@@ -688,6 +688,12 @@ function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="mt-8 pt-6 border-t text-xs text-muted-foreground flex items-center justify-end">
+        <a href="/app/politicas" className="hover:text-foreground underline-offset-4 hover:underline">
+          Políticas e Termos de Uso
+        </a>
+      </div>
     </div>
   );
 }

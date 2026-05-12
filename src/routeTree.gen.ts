@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
@@ -60,6 +61,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPoliticasRoute = AppPoliticasRouteImport.update({
+  id: '/politicas',
+  path: '/politicas',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPatientsRoute = AppPatientsRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/dashboard'
     | '/app/patients'
+    | '/app/politicas'
     | '/app/settings'
     | '/app/'
     | '/api/audit/structured'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/dashboard'
     | '/app/patients'
+    | '/app/politicas'
     | '/app/settings'
     | '/app'
     | '/api/audit/structured'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/dashboard'
     | '/app/patients'
+    | '/app/politicas'
     | '/app/settings'
     | '/app/'
     | '/api/audit/structured'
@@ -344,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/politicas': {
+      id: '/app/politicas'
+      path: '/politicas'
+      fullPath: '/app/politicas'
+      preLoaderRoute: typeof AppPoliticasRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/patients': {
@@ -464,6 +483,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppPatientsRoute: typeof AppPatientsRoute
+  AppPoliticasRoute: typeof AppPoliticasRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
@@ -480,6 +500,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppPatientsRoute: AppPatientsRoute,
+  AppPoliticasRoute: AppPoliticasRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
