@@ -30,12 +30,23 @@ export const Route = createFileRoute("/api/dify/chat")({
         const body = await request.json();
         const { query, conversation_id, inputs, files, meta } = body ?? {};
 
-        // Dify exige que upload_file_id, conversation_id e mensagem usem o mesmo `user`.
-        // Por isso usamos sempre o UUID autenticado e enviamos nomes apenas em `inputs`.
         const sanitize = (s: unknown) =>
           String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
         const nutriName = sanitize(meta?.nutritionist_name);
         const patientName = sanitize(meta?.patient_name);
+
+        // Compõe o identificador exibido em "Usuário Final ou Conta" no Dify.
+        // Mantém o UUID anexado no final para garantir unicidade e evitar colisão
+        // entre conversas (Dify valida conversation_id ↔ user).
+        const buildDisplayUser = () => {
+          if (!nutriName && !patientName) return userId;
+          const label = [nutriName, patientName].filter(Boolean).join(" · ");
+          const shortId = userId.slice(0, 8);
+          // Limite prático ~64 chars no Dify
+          const composed = `${label} [${shortId}]`;
+          return composed.length > 64 ? composed.slice(0, 64) : composed;
+        };
+        const displayUser = buildDisplayUser();
 
         const mergedInputs = {
           ...(inputs ?? {}),
@@ -60,7 +71,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             inputs: mergedInputs,
             response_mode: "streaming",
             conversation_id: conversation_id ?? "",
-            user: userId,
+            user: displayUser,
             files: files ?? [],
             auto_generate_name: true,
           }),
