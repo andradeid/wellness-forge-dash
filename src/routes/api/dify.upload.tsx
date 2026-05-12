@@ -35,13 +35,28 @@ export const Route = createFileRoute("/api/dify/upload")({
         outForm.append("file", file, file.name);
         outForm.append("user", userId);
 
-        const upstream = await fetch(`${baseUrl}/files/upload`, {
+        const url = `${baseUrl}/files/upload`;
+        console.log("[dify-upload] →", {
+          url,
+          userId,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          apiKeyPrefix: apiKey ? apiKey.slice(0, 8) + "…" : "(empty)",
+        });
+
+        const upstream = await fetch(url, {
           method: "POST",
           headers: { Authorization: `Bearer ${apiKey}` },
           body: outForm,
         });
 
         const text = await upstream.text();
+        if (!upstream.ok) {
+          console.error("[dify-upload] ←", upstream.status, text.slice(0, 500));
+        } else {
+          console.log("[dify-upload] ← OK", upstream.status);
+        }
         return new Response(text, {
           status: upstream.status,
           headers: { "Content-Type": "application/json" },
