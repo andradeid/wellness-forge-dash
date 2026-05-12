@@ -8,7 +8,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { format, startOfMonth, subDays } from "date-fns";
+import { format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
   PieChart,
@@ -74,10 +74,28 @@ interface PatientLite {
   name: string;
 }
 
+type RangeKey = "today" | "week" | "month" | "all";
+
+const RANGE_OPTIONS: Array<{ key: RangeKey; label: string }> = [
+  { key: "today", label: "Hoje" },
+  { key: "week", label: "Esta semana" },
+  { key: "month", label: "Este mês" },
+  { key: "all", label: "Tudo" },
+];
+
+function rangeStartIso(key: RangeKey): string | null {
+  const now = new Date();
+  if (key === "today") return startOfDay(now).toISOString();
+  if (key === "week") return startOfWeek(now, { weekStartsOn: 1 }).toISOString();
+  if (key === "month") return startOfMonth(now).toISOString();
+  return null;
+}
+
 function DashboardPage() {
   const { user, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<RangeKey>("month");
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
@@ -93,7 +111,13 @@ function DashboardPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const monthStart = startOfMonth(new Date()).toISOString();
+      const startIso = rangeStartIso(range);
+
+      const examsQuery = (supabase as any)
+        .from("patient_exams")
+        .select("id", { count: "exact", head: true })
+        .eq("uploaded_by", user.id);
+      if (startIso) examsQuery.gte("created_at", startIso);
 
       const [{ data: pts }, { data: res }, { count: examCount }] = await Promise.all([
         (supabase as any)
@@ -108,11 +132,7 @@ function DashboardPage() {
           .eq("created_by", user.id)
           .order("measured_at", { ascending: false })
           .limit(1000),
-        (supabase as any)
-          .from("patient_exams")
-          .select("id", { count: "exact", head: true })
-          .eq("uploaded_by", user.id)
-          .gte("created_at", monthStart),
+        examsQuery,
       ]);
 
       if (cancelled) return;
@@ -124,7 +144,7 @@ function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, role]);
+  }, [user, role, range]);
 
   if (role === "super_admin") return null;
 
@@ -134,9 +154,15 @@ function DashboardPage() {
     return m;
   }, [patients]);
 
+  const filteredResults = useMemo(() => {
+    const startIso = rangeStartIso(range);
+    if (!startIso) return results;
+    return results.filter((r) => r.measured_at >= startIso);
+  }, [results, range]);
+
   const stats = useMemo(() => {
     const dist: Record<Bucket, number> = { otimo: 0, atencao: 0, critico: 0, neutro: 0 };
-    for (const r of results) dist[classify(r.classification)]++;
+    for (const r of filteredResults) dist[classify(r.classification)]++;
 
     const last24h = subDays(new Date(), 1).toISOString();
     const criticalLast24 = results.filter(
@@ -153,13 +179,13 @@ function DashboardPage() {
         color: BUCKET_META[k].color,
         bucket: k,
       })),
-      totalAnalyzed: results.length,
+      totalAnalyzed: filteredResults.length,
     };
-  }, [results, patients.length, examsThisMonth]);
+  }, [filteredResults, results, patients.length, examsThisMonth]);
 
   const topDeficiencies = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const r of results) {
+    for (const r of filteredResults) {
       if (classify(r.classification) === "atencao" || classify(r.classification) === "critico") {
         const t = (r.classification ?? "").toLowerCase();
         if (/(baixo|abaixo|deficien)/.test(t)) {
@@ -171,7 +197,7 @@ function DashboardPage() {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-  }, [results]);
+  }, [filteredResults]);
 
   const attentionList = useMemo(() => {
     // Agrupa por paciente: cada paciente aparece uma vez,
@@ -187,7 +213,7 @@ function DashboardPage() {
         lastAt: string;
       }
     >();
-    for (const r of results) {
+    for (const r of filteredResults) {
       const b = classify(r.classification);
       if (b !== "critico" && b !== "atencao") continue;
       const cur = byPatient.get(r.patient_id);
@@ -217,7 +243,7 @@ function DashboardPage() {
         return b.lastAt.localeCompare(a.lastAt);
       })
       .slice(0, 6);
-  }, [results, patientMap]);
+  }, [filteredResults, patientMap]);
 
   const greeting = (() => {
     // Hora de Brasília (UTC−3), independente do fuso do navegador
@@ -251,7 +277,26 @@ function DashboardPage() {
               : "Tudo calmo por aqui. Continue acompanhando suas pacientes."}
           </p>
         </div>
-        <QuickAnalysisDialog onCreated={() => window.location.reload()} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-full border bg-white p-1 shadow-sm">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setRange(opt.key)}
+                className={cn(
+                  "px-3 py-1.5 text-xs rounded-full transition-colors",
+                  range === opt.key
+                    ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <QuickAnalysisDialog onCreated={() => window.location.reload()} />
+        </div>
       </div>
 
       {/* KPIs */}
@@ -266,9 +311,9 @@ function DashboardPage() {
         />
         <KpiCard
           icon={<Activity className="h-5 w-5" />}
-          label="Exames no mês"
+          label={`Exames · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`}
           value={stats.examsThisMonth}
-          hint={format(new Date(), "MMMM yyyy")}
+          hint={range === "all" ? "Histórico completo" : RANGE_OPTIONS.find((o) => o.key === range)?.label}
           tone="brand"
           loading={loading}
         />
@@ -464,11 +509,11 @@ function DashboardPage() {
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : results.length === 0 ? (
-            <EmptyState text="Nada por aqui ainda." />
+          ) : filteredResults.length === 0 ? (
+            <EmptyState text="Nada por aqui no período selecionado." />
           ) : (
             <ul className="space-y-2 text-xs">
-              {results.slice(0, 6).map((r) => (
+              {filteredResults.slice(0, 6).map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2">
                   <Link
                     to="/app/evolution/$patientId"
