@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Eye, TrendingUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Eye, FileDown, TrendingUp } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
@@ -8,6 +9,9 @@ import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useBrandingProfile } from "@/hooks/useBrandingProfile";
+import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
@@ -38,10 +42,18 @@ function ChatPage() {
   const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
+  const [reportMarkers, setReportMarkers] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+  const { data: branding } = useBrandingProfile(userId);
   const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -65,6 +77,24 @@ function ChatPage() {
       setExams((data as ExamItem[]) ?? []);
     })();
   }, [patientId, messages.length]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("patient_exam_results")
+        .select(
+          "marker_name, marker_value, marker_value_raw, marker_unit, reference_value, classification, analysis, measured_at",
+        )
+        .eq("patient_id", patientId)
+        .order("measured_at", { ascending: true });
+      setReportMarkers((data as any[]) ?? []);
+    })();
+  }, [patientId, messages.length]);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Laudo-${patient?.name ?? "paciente"}`,
+  });
 
   const age = patient?.birth_date
     ? differenceInYears(new Date(), new Date(patient.birth_date))
@@ -164,6 +194,17 @@ function ChatPage() {
               <p className="mt-2 text-xs text-rose-600">{error}</p>
             )}
           </div>
+          <Button
+            onClick={handlePrint}
+            disabled={!branding || reportMarkers.length === 0}
+            size="sm"
+            variant="outline"
+            className="rounded-full gap-2 shrink-0"
+            title={reportMarkers.length === 0 ? "Nenhum exame analisado para este paciente ainda" : "Gerar laudo profissional em PDF"}
+          >
+            <FileDown className="h-4 w-4" />
+            Gerar Laudo PDF
+          </Button>
         </header>
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
@@ -187,6 +228,26 @@ function ChatPage() {
           </div>
         </div>
       </section>
+
+      {/* Off-screen printable layout for "Gerar Laudo PDF" */}
+      <div
+        style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+        aria-hidden
+      >
+        <div ref={printRef}>
+          {branding && patient && reportMarkers.length > 0 && (
+            <PatientReportPDF
+              branding={branding}
+              patient={{
+                name: patient.name,
+                birth_date: patient.birth_date,
+                gender: patient.gender,
+              }}
+              markers={reportMarkers as any}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
