@@ -119,6 +119,7 @@ function IntegrationsPage() {
   const [healthChecking, setHealthChecking] = useState(false);
   const [testingDify, setTestingDify] = useState(false);
   const [savingDify, setSavingDify] = useState(false);
+  const [resettingDifyConversations, setResettingDifyConversations] = useState(false);
   const [health, setHealth] = useState<Record<string, boolean | null>>({
     supabase: null,
     dify: null,
@@ -227,6 +228,45 @@ function IntegrationsPage() {
       toast.error("Erro ao testar conexão.", { description: message });
     } finally {
       setTestingDify(false);
+    }
+  };
+
+  const resetDifyConversations = async () => {
+    setResettingDifyConversations(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      const res = await fetch("/api/dify/reset-conversations", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        resetCount?: number;
+        error?: string;
+      };
+
+      if (!res.ok || !json.ok) {
+        toast.error("Não foi possível resetar as conversas do Dify.", {
+          description: json.error ?? `HTTP ${res.status}`,
+        });
+        return;
+      }
+
+      toast.success("Conversas do Dify resetadas com segurança.", {
+        description: `${json.resetCount ?? 0} conversas vão iniciar um novo histórico no Dify.`,
+      });
+      load();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao resetar conversas do Dify.", { description: message });
+    } finally {
+      setResettingDifyConversations(false);
     }
   };
 
