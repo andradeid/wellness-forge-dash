@@ -1,5 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
 import {
   ArrowLeft,
   TrendingUp,
@@ -7,7 +8,11 @@ import {
   Minus,
   Activity,
   Calendar,
+  FileDown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
+import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
