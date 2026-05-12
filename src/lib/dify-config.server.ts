@@ -73,7 +73,7 @@ export async function getDifyConfig(
 
   let config: DifyConfig = {
     baseUrl: process.env.DIFY_BASE_URL || DEFAULT_BASE_URL,
-    apiKey: process.env.DIFY_API_KEY || "",
+    apiKey: "",
   };
 
   try {
