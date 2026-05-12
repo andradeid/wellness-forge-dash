@@ -204,14 +204,32 @@ function IntegrationsPage() {
         ok?: boolean;
         error?: string;
         baseUrl?: string;
+        status?: number;
+        reason?:
+          | "workspace_archived"
+          | "invalid_api_key"
+          | "app_not_found"
+          | "http_error"
+          | "network_error";
+        workspaceActive?: boolean;
       };
       if (json.ok) {
-        toast.success("Conexão com Dify estabelecida com sucesso.", {
+        toast.success("Conexão Dify OK — workspace ativo.", {
           description: json.baseUrl,
         });
         setHealth((h) => ({ ...h, dify: true }));
       } else {
-        toast.error("Falha ao conectar com o Dify.", {
+        const title =
+          json.reason === "workspace_archived"
+            ? "Workspace arquivado no Dify"
+            : json.reason === "invalid_api_key"
+              ? "API Key inválida"
+              : json.reason === "app_not_found"
+                ? "App não encontrado"
+                : json.reason === "network_error"
+                  ? "Sem conectividade com o Dify"
+                  : "Falha ao conectar com o Dify";
+        toast.error(title, {
           description: json.error ?? "Verifique a chave e a URL.",
         });
         setHealth((h) => ({ ...h, dify: false }));
@@ -220,7 +238,9 @@ function IntegrationsPage() {
         source: "dify",
         event: "connection_test",
         status: json.ok ? "success" : "error",
-        message: json.ok ? `OK ${json.baseUrl}` : json.error?.slice(0, 240),
+        message: json.ok
+          ? `OK ${json.baseUrl}`
+          : `[${json.reason ?? "error"}] ${json.error?.slice(0, 200) ?? ""}`,
       });
       load();
     } catch (e: unknown) {
