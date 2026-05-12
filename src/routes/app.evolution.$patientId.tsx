@@ -303,6 +303,26 @@ function EvolutionPage() {
           </>
         )}
       </div>
+
+      {/* Off-screen printable layout for "Gerar Laudo PDF" */}
+      <div
+        style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+        aria-hidden
+      >
+        <div ref={printRef}>
+          {branding && rows && (
+            <PatientReportPDF
+              branding={branding}
+              patient={{
+                name: patient.name,
+                birth_date: patient.birth_date,
+                gender: patient.gender,
+              }}
+              markers={rows}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
