@@ -78,6 +78,24 @@ function ChatPage() {
     })();
   }, [patientId, messages.length]);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("patient_exam_results")
+        .select(
+          "marker_name, marker_value, marker_value_raw, marker_unit, reference_value, classification, analysis, measured_at",
+        )
+        .eq("patient_id", patientId)
+        .order("measured_at", { ascending: true });
+      setReportMarkers((data as any[]) ?? []);
+    })();
+  }, [patientId, messages.length]);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Laudo-${patient?.name ?? "paciente"}`,
+  });
+
   const age = patient?.birth_date
     ? differenceInYears(new Date(), new Date(patient.birth_date))
     : null;
