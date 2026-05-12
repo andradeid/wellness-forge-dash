@@ -166,11 +166,17 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-white/10 text-white"
-      style={{
-        backgroundImage:
-          "linear-gradient(180deg, #2b0a3d 0%, #3d1259 35%, #4a2a8a 75%, #5a4aa8 100%)",
-      }}
+      className="border-r border-white/10 [&>div]:bg-transparent [&>div]:bg-[linear-gradient(180deg,#2b0a3d_0%,#3d1259_35%,#4a2a8a_75%,#5a4aa8_100%)]"
+      style={
+        {
+          "--sidebar": "#2b0a3d",
+          "--sidebar-foreground": "#ffffff",
+          "--sidebar-accent": "rgba(255,255,255,0.10)",
+          "--sidebar-accent-foreground": "#ffffff",
+          "--sidebar-border": "rgba(255,255,255,0.10)",
+          "--sidebar-ring": "rgba(255,255,255,0.30)",
+        } as React.CSSProperties
+      }
     >
       <SidebarHeader className="px-5 pt-6 pb-4">
         {collapsed ? (
