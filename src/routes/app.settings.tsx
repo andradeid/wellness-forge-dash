@@ -372,6 +372,180 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
+        {/* BRANDING */}
+        <TabsContent value="branding">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-6">
+            {/* Form */}
+            <Card className="rounded-2xl shadow-md border-0 h-fit">
+              <CardHeader>
+                <CardTitle className="font-serif text-2xl font-normal">
+                  Identidade profissional
+                </CardTitle>
+                <CardDescription>
+                  Esses dados serão impressos automaticamente em laudos e PDFs gerados pela Lumma.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Logo upload */}
+                <div className="space-y-2">
+                  <Label>Logotipo da clínica</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-xl border bg-muted/30 flex items-center justify-center overflow-hidden shrink-0">
+                      {clinicLogoUrl ? (
+                        <img
+                          src={clinicLogoUrl}
+                          alt="Logotipo"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <ImageIcon className="h-7 w-7 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        ref={logoFileRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        hidden
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleLogoUpload(f);
+                        }}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full"
+                          onClick={() => logoFileRef.current?.click()}
+                          disabled={uploadingLogo}
+                        >
+                          {uploadingLogo ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Camera className="h-4 w-4" />
+                          )}
+                          {clinicLogoUrl ? "Trocar logotipo" : "Enviar logotipo"}
+                        </Button>
+                        {clinicLogoUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full text-rose-600 hover:text-rose-700"
+                            onClick={removeLogo}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Remover
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        PNG, JPG, SVG ou WEBP, até 5MB. Fundo transparente recomendado.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pronoun">Pronome de tratamento</Label>
+                    <Select value={pronoun} onValueChange={setPronoun}>
+                      <SelectTrigger id="pronoun" className="rounded-lg">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRONOUN_OPTIONS.map((p) => (
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="branding-crn">Registro profissional (CRN)</Label>
+                    <Input
+                      id="branding-crn"
+                      value={crn}
+                      onChange={(e) => setCrn(e.target.value)}
+                      placeholder="CRN-3 12345"
+                      className="rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="clinic_name">Nome da clínica</Label>
+                    <Input
+                      id="clinic_name"
+                      value={clinicName}
+                      onChange={(e) => setClinicName(e.target.value)}
+                      placeholder="Ex.: Clínica Bem-Estar Integrativa"
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={saveBranding}
+                    disabled={savingBranding}
+                    className="rounded-full bg-gradient-brand text-white hover:opacity-90 border-0"
+                  >
+                    {savingBranding && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Salvar branding
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Preview de documento
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Simulação A4 com logotipo no topo e dados profissionais no rodapé.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => handlePrint()}
+                >
+                  <Printer className="h-4 w-4" />
+                  Imprimir / PDF
+                </Button>
+              </div>
+              <div className="rounded-2xl bg-muted/40 p-4 overflow-auto max-h-[820px]">
+                <div style={{ transform: "scale(0.62)", transformOrigin: "top center", width: "210mm" }}>
+                  <BrandingDocumentPreview
+                    ref={printRef}
+                    documentTitle="Análise clínica · exemplo"
+                    data={{
+                      pronoun,
+                      full_name: fullName,
+                      professional_id: crn,
+                      clinic_name: clinicName,
+                      clinic_logo_url: clinicLogoUrl,
+                      email,
+                      phone,
+                    }}
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center">
+                No futuro, ao finalizar uma análise da Lumma, o botão "Gerar PDF Profissional"
+                usará automaticamente este modelo com seus dados.
+              </p>
+            </div>
+          </div>
+        </TabsContent>
+
         {/* SEGURANÇA */}
         <TabsContent value="security">
           <Card className="rounded-2xl shadow-md border-0">
