@@ -357,10 +357,11 @@ function DashboardPage() {
             <EmptyState text="Nenhum alerta no momento. Tudo dentro do esperado." />
           ) : (
             <ul className="divide-y">
-              {attentionList.map((r) => {
-                const b = classify(r.classification);
+              {attentionList.map((p) => {
+                const b = p.top.bucket;
+                const totalAlerts = p.critical + p.attention;
                 return (
-                  <li key={r.id} className="py-3 flex items-center gap-3">
+                  <li key={p.patient_id} className="py-3 flex items-center gap-3">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ background: BUCKET_META[b].color }}
@@ -368,29 +369,37 @@ function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium truncate">
-                          {r.patientName}
+                          {p.patientName}
                         </span>
-                        <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs">
-                          {r.marker_name}: <strong>{r.marker_value_raw}</strong>
-                          {r.marker_unit ? ` ${r.marker_unit}` : ""}
-                        </span>
+                        {p.critical > 0 && (
+                          <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 text-[10px] h-4 px-1.5">
+                            {p.critical} crítico{p.critical > 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                        {p.attention > 0 && (
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-[10px] h-4 px-1.5">
+                            {p.attention} atenção
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {format(new Date(r.measured_at), "dd/MM/yyyy")} ·{" "}
+                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {p.top.marker_name}: <strong>{p.top.marker_value_raw}</strong>
+                        {p.top.marker_unit ? ` ${p.top.marker_unit}` : ""} ·{" "}
                         <span
                           className={cn(
                             "font-medium",
                             b === "critico" ? "text-rose-600" : "text-amber-600",
                           )}
                         >
-                          {r.classification}
-                        </span>
+                          {p.top.classification}
+                        </span>{" "}
+                        · {format(new Date(p.lastAt), "dd/MM/yyyy")}
+                        {totalAlerts > 1 ? ` · ${totalAlerts} marcadores` : ""}
                       </div>
                     </div>
                     <Link
-                      to="/app/chat/$patientId"
-                      params={{ patientId: r.patient_id }}
+                      to="/app/evolution/$patientId"
+                      params={{ patientId: p.patient_id }}
                     >
                       <Button size="sm" variant="ghost" className="rounded-full gap-1">
                         Abrir <ArrowRight className="h-3 w-3" />
