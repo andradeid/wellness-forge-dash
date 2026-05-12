@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, ExternalLink, ShieldCheck, User, Sparkles, CreditCard } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import {
+  Camera,
+  Loader2,
+  ExternalLink,
+  ShieldCheck,
+  User,
+  Sparkles,
+  CreditCard,
+  Palette,
+  ImageIcon,
+  Printer,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +23,22 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { BrandingDocumentPreview } from "@/components/branding/BrandingDocumentPreview";
+import { PRONOUN_OPTIONS } from "@/hooks/useBrandingProfile";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
 });
+
 
 const HUBLA_PORTAL_URL = "https://app.hub.la/customer/subscriptions";
 
@@ -57,6 +80,15 @@ function SettingsPage() {
   const [confirmPwd, setConfirmPwd] = useState("");
   const [savingPwd, setSavingPwd] = useState(false);
 
+  // Branding
+  const [pronoun, setPronoun] = useState<string>("");
+  const [clinicName, setClinicName] = useState("");
+  const [clinicLogoUrl, setClinicLogoUrl] = useState<string>("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [savingBranding, setSavingBranding] = useState(false);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
   // Subscription
   const [sub, setSub] = useState<Subscription | null>(null);
 
@@ -65,7 +97,9 @@ function SettingsPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("profiles")
-        .select("full_name, email, phone, avatar_url, professional_id, ai_tone")
+        .select(
+          "full_name, email, phone, avatar_url, professional_id, ai_tone, pronoun, clinic_name, clinic_logo_url",
+        )
         .eq("id", user.id)
         .maybeSingle();
       if (data) {
@@ -75,6 +109,9 @@ function SettingsPage() {
         setCrn(data.professional_id ?? "");
         setAvatarUrl(data.avatar_url ?? "");
         setAiTone((data.ai_tone as any) ?? "educational");
+        setPronoun(data.pronoun ?? "");
+        setClinicName(data.clinic_name ?? "");
+        setClinicLogoUrl(data.clinic_logo_url ?? "");
       }
       const { data: s } = await (supabase as any)
         .from("subscriptions")
@@ -84,6 +121,7 @@ function SettingsPage() {
       if (s) setSub(s as Subscription);
     })();
   }, [user]);
+
 
   const handleUpload = async (file: File) => {
     if (!user) return;
