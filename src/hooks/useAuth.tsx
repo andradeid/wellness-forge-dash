@@ -41,7 +41,7 @@ async function fetchProfileAndRole(userId: string): Promise<{
   const [profileRes, roleRes] = await Promise.all([
     (supabase as any)
       .from("profiles")
-      .select("id, full_name, email, avatar_url, phone, is_blocked")
+      .select("id, full_name, email, avatar_url, phone, is_blocked, pronoun")
       .eq("id", userId)
       .maybeSingle(),
     (supabase as any)
