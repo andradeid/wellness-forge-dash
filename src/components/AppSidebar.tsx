@@ -138,6 +138,15 @@ const adminGroups: NavGroup[] = [
       { title: "Administradores", url: "/app/admin/administrators", icon: Shield, badge: "NOVO" },
     ],
   },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+    ],
+  },
 ];
 
 export function AppSidebar() {
