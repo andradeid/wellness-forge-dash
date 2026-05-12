@@ -74,10 +74,28 @@ interface PatientLite {
   name: string;
 }
 
+type RangeKey = "today" | "week" | "month" | "all";
+
+const RANGE_OPTIONS: Array<{ key: RangeKey; label: string }> = [
+  { key: "today", label: "Hoje" },
+  { key: "week", label: "Esta semana" },
+  { key: "month", label: "Este mês" },
+  { key: "all", label: "Tudo" },
+];
+
+function rangeStartIso(key: RangeKey): string | null {
+  const now = new Date();
+  if (key === "today") return startOfDay(now).toISOString();
+  if (key === "week") return startOfWeek(now, { weekStartsOn: 1 }).toISOString();
+  if (key === "month") return startOfMonth(now).toISOString();
+  return null;
+}
+
 function DashboardPage() {
   const { user, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<RangeKey>("month");
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
