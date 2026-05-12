@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   FlaskConical,
   BookOpen,
+  LifeBuoy,
+  FileText,
   Tag,
   Users,
   Shield,
