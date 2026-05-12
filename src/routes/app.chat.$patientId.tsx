@@ -194,6 +194,17 @@ function ChatPage() {
               <p className="mt-2 text-xs text-rose-600">{error}</p>
             )}
           </div>
+          <Button
+            onClick={handlePrint}
+            disabled={!branding || reportMarkers.length === 0}
+            size="sm"
+            variant="outline"
+            className="rounded-full gap-2 shrink-0"
+            title={reportMarkers.length === 0 ? "Nenhum exame analisado para este paciente ainda" : "Gerar laudo profissional em PDF"}
+          >
+            <FileDown className="h-4 w-4" />
+            Gerar Laudo PDF
+          </Button>
         </header>
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
