@@ -42,10 +42,18 @@ function ChatPage() {
   const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
+  const [reportMarkers, setReportMarkers] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+  const { data: branding } = useBrandingProfile(userId);
   const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     (async () => {
