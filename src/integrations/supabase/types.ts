@@ -349,6 +349,7 @@ export type Database = {
           id: string
           is_blocked: boolean
           phone: string | null
+          policy_accepted_at: string | null
           professional_id: string | null
           pronoun: string | null
           updated_at: string
@@ -365,6 +366,7 @@ export type Database = {
           id: string
           is_blocked?: boolean
           phone?: string | null
+          policy_accepted_at?: string | null
           professional_id?: string | null
           pronoun?: string | null
           updated_at?: string
@@ -381,6 +383,7 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           phone?: string | null
+          policy_accepted_at?: string | null
           professional_id?: string | null
           pronoun?: string | null
           updated_at?: string
