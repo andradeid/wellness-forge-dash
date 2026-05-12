@@ -12,11 +12,13 @@ export const Route = createFileRoute("/api/dify/reset-conversations")({
 
         invalidateDifyConfigCache();
 
-        const { count, error } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin
           .from("patient_chats")
           .update({ dify_conversation_id: null })
           .not("dify_conversation_id", "is", null)
-          .select("id", { count: "exact", head: true });
+          .select("id");
+
+        const resetCount = data?.length ?? 0;
 
         if (error) {
           await supabaseAdmin.from("integration_logs").insert({
@@ -32,11 +34,11 @@ export const Route = createFileRoute("/api/dify/reset-conversations")({
           source: "dify",
           event: "conversation_reset",
           status: "success",
-          message: `${count ?? 0} conversas Dify resetadas por troca de workspace.`,
-          payload: { reset_by: auth.userId, reset_count: count ?? 0 },
+          message: `${resetCount} conversas Dify resetadas por troca de workspace.`,
+          payload: { reset_by: auth.userId, reset_count: resetCount },
         });
 
-        return Response.json({ ok: true, resetCount: count ?? 0 });
+        return Response.json({ ok: true, resetCount });
       },
     },
   },

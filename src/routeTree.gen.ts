@@ -28,6 +28,7 @@ import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedba
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
+import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
 
@@ -126,6 +127,12 @@ const ApiDifyTestRoute = ApiDifyTestRouteImport.update({
   path: '/api/dify/test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDifyResetConversationsRoute =
+  ApiDifyResetConversationsRouteImport.update({
+    id: '/api/dify/reset-conversations',
+    path: '/api/dify/reset-conversations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
   id: '/api/dify/chat',
   path: '/api/dify/chat',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
+  '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/api/audit/structured'
     | '/api/dify/chat'
+    | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/api/audit/structured'
     | '/api/dify/chat'
+    | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
@@ -264,6 +276,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/api/audit/structured'
     | '/api/dify/chat'
+    | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
@@ -284,6 +297,7 @@ export interface RootRouteChildren {
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
+  ApiDifyResetConversationsRoute: typeof ApiDifyResetConversationsRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
 }
@@ -423,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDifyTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/dify/reset-conversations': {
+      id: '/api/dify/reset-conversations'
+      path: '/api/dify/reset-conversations'
+      fullPath: '/api/dify/reset-conversations'
+      preLoaderRoute: typeof ApiDifyResetConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dify/chat': {
       id: '/api/dify/chat'
       path: '/api/dify/chat'
@@ -481,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
+  ApiDifyResetConversationsRoute: ApiDifyResetConversationsRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
 }
