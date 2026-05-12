@@ -311,9 +311,9 @@ function DashboardPage() {
         />
         <KpiCard
           icon={<Activity className="h-5 w-5" />}
-          label="Exames no mês"
+          label={`Exames · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`}
           value={stats.examsThisMonth}
-          hint={format(new Date(), "MMMM yyyy")}
+          hint={range === "all" ? "Histórico completo" : RANGE_OPTIONS.find((o) => o.key === range)?.label}
           tone="brand"
           loading={loading}
         />
