@@ -148,6 +148,9 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
   const [open, setOpen] = useState<Record<string, boolean>>({
+    visao: true,
+    nutri: true,
+    ajuda: true,
     operacao: true,
     produto: true,
     acesso: true,
