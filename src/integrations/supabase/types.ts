@@ -340,6 +340,8 @@ export type Database = {
         Row: {
           ai_tone: string
           avatar_url: string | null
+          clinic_logo_url: string | null
+          clinic_name: string | null
           created_at: string
           deleted_at: string | null
           email: string
@@ -348,11 +350,14 @@ export type Database = {
           is_blocked: boolean
           phone: string | null
           professional_id: string | null
+          pronoun: string | null
           updated_at: string
         }
         Insert: {
           ai_tone?: string
           avatar_url?: string | null
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
           created_at?: string
           deleted_at?: string | null
           email: string
@@ -361,11 +366,14 @@ export type Database = {
           is_blocked?: boolean
           phone?: string | null
           professional_id?: string | null
+          pronoun?: string | null
           updated_at?: string
         }
         Update: {
           ai_tone?: string
           avatar_url?: string | null
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string
@@ -374,6 +382,7 @@ export type Database = {
           is_blocked?: boolean
           phone?: string | null
           professional_id?: string | null
+          pronoun?: string | null
           updated_at?: string
         }
         Relationships: []

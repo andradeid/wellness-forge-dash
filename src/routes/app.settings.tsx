@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, ExternalLink, ShieldCheck, User, Sparkles, CreditCard } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import {
+  Camera,
+  Loader2,
+  ExternalLink,
+  ShieldCheck,
+  User,
+  Sparkles,
+  CreditCard,
+  Palette,
+  ImageIcon,
+  Printer,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +23,22 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { BrandingDocumentPreview } from "@/components/branding/BrandingDocumentPreview";
+import { PRONOUN_OPTIONS } from "@/hooks/useBrandingProfile";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
 });
+
 
 const HUBLA_PORTAL_URL = "https://app.hub.la/customer/subscriptions";
 
@@ -57,6 +80,15 @@ function SettingsPage() {
   const [confirmPwd, setConfirmPwd] = useState("");
   const [savingPwd, setSavingPwd] = useState(false);
 
+  // Branding
+  const [pronoun, setPronoun] = useState<string>("");
+  const [clinicName, setClinicName] = useState("");
+  const [clinicLogoUrl, setClinicLogoUrl] = useState<string>("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [savingBranding, setSavingBranding] = useState(false);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
   // Subscription
   const [sub, setSub] = useState<Subscription | null>(null);
 
@@ -65,7 +97,9 @@ function SettingsPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("profiles")
-        .select("full_name, email, phone, avatar_url, professional_id, ai_tone")
+        .select(
+          "full_name, email, phone, avatar_url, professional_id, ai_tone, pronoun, clinic_name, clinic_logo_url",
+        )
         .eq("id", user.id)
         .maybeSingle();
       if (data) {
@@ -75,6 +109,9 @@ function SettingsPage() {
         setCrn(data.professional_id ?? "");
         setAvatarUrl(data.avatar_url ?? "");
         setAiTone((data.ai_tone as any) ?? "educational");
+        setPronoun(data.pronoun ?? "");
+        setClinicName(data.clinic_name ?? "");
+        setClinicLogoUrl(data.clinic_logo_url ?? "");
       }
       const { data: s } = await (supabase as any)
         .from("subscriptions")
@@ -84,6 +121,7 @@ function SettingsPage() {
       if (s) setSub(s as Subscription);
     })();
   }, [user]);
+
 
   const handleUpload = async (file: File) => {
     if (!user) return;
@@ -166,6 +204,70 @@ function SettingsPage() {
     }
   };
 
+  const handleLogoUpload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O logotipo deve ter no máximo 5MB.");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("professional-logos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("professional-logos").getPublicUrl(path);
+      setClinicLogoUrl(data.publicUrl);
+      await (supabase as any)
+        .from("profiles")
+        .update({ clinic_logo_url: data.publicUrl })
+        .eq("id", user.id);
+      toast.success("Logotipo atualizado.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao enviar logotipo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    if (!user) return;
+    setClinicLogoUrl("");
+    await (supabase as any)
+      .from("profiles")
+      .update({ clinic_logo_url: null })
+      .eq("id", user.id);
+    toast.success("Logotipo removido.");
+  };
+
+  const saveBranding = async () => {
+    if (!user) return;
+    setSavingBranding(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          pronoun: pronoun || null,
+          clinic_name: clinicName || null,
+          professional_id: crn || null,
+        })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success("Branding profissional salvo.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar branding");
+    } finally {
+      setSavingBranding(false);
+    }
+  };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Branding - ${fullName || "Lumma"}`,
+  });
+
   const initials = (fullName || email).slice(0, 2).toUpperCase();
   const statusLabel =
     sub?.status === "active" ? "Ativa"
@@ -174,7 +276,7 @@ function SettingsPage() {
     : sub?.status === "canceled" ? "Cancelada" : "—";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <header>
         <h1 className="font-serif text-3xl">Minha conta</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -183,8 +285,9 @@ function SettingsPage() {
       </header>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-        <TabsList className="rounded-full p-1 bg-muted/60">
+        <TabsList className="rounded-full p-1 bg-muted/60 flex-wrap h-auto">
           <TabsTrigger value="identity" className="rounded-full gap-2"><User className="h-4 w-4" />Identidade</TabsTrigger>
+          <TabsTrigger value="branding" className="rounded-full gap-2"><Palette className="h-4 w-4" />Branding</TabsTrigger>
           <TabsTrigger value="security" className="rounded-full gap-2"><ShieldCheck className="h-4 w-4" />Segurança</TabsTrigger>
           <TabsTrigger value="subscription" className="rounded-full gap-2"><CreditCard className="h-4 w-4" />Assinatura</TabsTrigger>
           <TabsTrigger value="ai" className="rounded-full gap-2"><Sparkles className="h-4 w-4" />Preferências da IA</TabsTrigger>
@@ -267,6 +370,180 @@ function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* BRANDING */}
+        <TabsContent value="branding">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-6">
+            {/* Form */}
+            <Card className="rounded-2xl shadow-md border-0 h-fit">
+              <CardHeader>
+                <CardTitle className="font-serif text-2xl font-normal">
+                  Identidade profissional
+                </CardTitle>
+                <CardDescription>
+                  Esses dados serão impressos automaticamente em laudos e PDFs gerados pela Lumma.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Logo upload */}
+                <div className="space-y-2">
+                  <Label>Logotipo da clínica</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-xl border bg-muted/30 flex items-center justify-center overflow-hidden shrink-0">
+                      {clinicLogoUrl ? (
+                        <img
+                          src={clinicLogoUrl}
+                          alt="Logotipo"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <ImageIcon className="h-7 w-7 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        ref={logoFileRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        hidden
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleLogoUpload(f);
+                        }}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full"
+                          onClick={() => logoFileRef.current?.click()}
+                          disabled={uploadingLogo}
+                        >
+                          {uploadingLogo ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Camera className="h-4 w-4" />
+                          )}
+                          {clinicLogoUrl ? "Trocar logotipo" : "Enviar logotipo"}
+                        </Button>
+                        {clinicLogoUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full text-rose-600 hover:text-rose-700"
+                            onClick={removeLogo}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Remover
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        PNG, JPG, SVG ou WEBP, até 5MB. Fundo transparente recomendado.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pronoun">Pronome de tratamento</Label>
+                    <Select value={pronoun} onValueChange={setPronoun}>
+                      <SelectTrigger id="pronoun" className="rounded-lg">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRONOUN_OPTIONS.map((p) => (
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="branding-crn">Registro profissional (CRN)</Label>
+                    <Input
+                      id="branding-crn"
+                      value={crn}
+                      onChange={(e) => setCrn(e.target.value)}
+                      placeholder="CRN-3 12345"
+                      className="rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="clinic_name">Nome da clínica</Label>
+                    <Input
+                      id="clinic_name"
+                      value={clinicName}
+                      onChange={(e) => setClinicName(e.target.value)}
+                      placeholder="Ex.: Clínica Bem-Estar Integrativa"
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={saveBranding}
+                    disabled={savingBranding}
+                    className="rounded-full bg-gradient-brand text-white hover:opacity-90 border-0"
+                  >
+                    {savingBranding && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Salvar branding
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Preview de documento
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Simulação A4 com logotipo no topo e dados profissionais no rodapé.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => handlePrint()}
+                >
+                  <Printer className="h-4 w-4" />
+                  Imprimir / PDF
+                </Button>
+              </div>
+              <div className="rounded-2xl bg-muted/40 p-4 overflow-auto max-h-[820px]">
+                <div style={{ transform: "scale(0.62)", transformOrigin: "top center", width: "210mm" }}>
+                  <BrandingDocumentPreview
+                    ref={printRef}
+                    documentTitle="Análise clínica · exemplo"
+                    data={{
+                      pronoun,
+                      full_name: fullName,
+                      professional_id: crn,
+                      clinic_name: clinicName,
+                      clinic_logo_url: clinicLogoUrl,
+                      email,
+                      phone,
+                    }}
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center">
+                No futuro, ao finalizar uma análise da Lumma, o botão "Gerar PDF Profissional"
+                usará automaticamente este modelo com seus dados.
+              </p>
+            </div>
+          </div>
         </TabsContent>
 
         {/* SEGURANÇA */}
