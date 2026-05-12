@@ -111,7 +111,13 @@ function DashboardPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const monthStart = startOfMonth(new Date()).toISOString();
+      const startIso = rangeStartIso(range);
+
+      const examsQuery = (supabase as any)
+        .from("patient_exams")
+        .select("id", { count: "exact", head: true })
+        .eq("uploaded_by", user.id);
+      if (startIso) examsQuery.gte("created_at", startIso);
 
       const [{ data: pts }, { data: res }, { count: examCount }] = await Promise.all([
         (supabase as any)
@@ -126,11 +132,7 @@ function DashboardPage() {
           .eq("created_by", user.id)
           .order("measured_at", { ascending: false })
           .limit(1000),
-        (supabase as any)
-          .from("patient_exams")
-          .select("id", { count: "exact", head: true })
-          .eq("uploaded_by", user.id)
-          .gte("created_at", monthStart),
+        examsQuery,
       ]);
 
       if (cancelled) return;
@@ -142,7 +144,7 @@ function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, role]);
+  }, [user, role, range]);
 
   if (role === "super_admin") return null;
 
