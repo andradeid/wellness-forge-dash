@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   FlaskConical,
   BookOpen,
+  LifeBuoy,
+  FileText,
   Tag,
   Users,
   Shield,
@@ -85,6 +87,15 @@ const nutriGroups: NavGroup[] = [
       { title: "Chat", url: "/app/patients", icon: MessageSquare },
     ],
   },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+    ],
+  },
 ];
 
 const adminGroups: NavGroup[] = [
@@ -127,6 +138,15 @@ const adminGroups: NavGroup[] = [
       { title: "Administradores", url: "/app/admin/administrators", icon: Shield, badge: "NOVO" },
     ],
   },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -137,6 +157,9 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
   const [open, setOpen] = useState<Record<string, boolean>>({
+    visao: true,
+    nutri: true,
+    ajuda: true,
     operacao: true,
     produto: true,
     acesso: true,
