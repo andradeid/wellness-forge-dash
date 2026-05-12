@@ -278,12 +278,12 @@ export function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-3">
+      <SidebarFooter className="border-t border-white/10 p-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "w-full flex items-center gap-3 rounded-xl p-2 hover:bg-muted/60 transition-colors",
+                "w-full flex items-center gap-3 rounded-xl p-2 hover:bg-white/10 transition-colors",
                 collapsed && "justify-center",
               )}
               title={profile?.email}
@@ -297,14 +297,14 @@ export function AppSidebar() {
               {!collapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-sm font-medium text-foreground truncate">
+                    <div className="text-sm font-medium text-white truncate">
                       {profile?.full_name || profile?.email || "Usuário"}
                     </div>
-                    <div className="text-[11px] text-muted-foreground truncate">
+                    <div className="text-[11px] text-white/60 truncate">
                       Plano {planLabel(planType)}
                     </div>
                   </div>
-                  <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <ChevronsUpDown className="h-4 w-4 text-white/60 shrink-0" />
                 </>
               )}
             </button>
