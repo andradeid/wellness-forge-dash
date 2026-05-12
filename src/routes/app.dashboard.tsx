@@ -509,11 +509,11 @@ function DashboardPage() {
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : results.length === 0 ? (
-            <EmptyState text="Nada por aqui ainda." />
+          ) : filteredResults.length === 0 ? (
+            <EmptyState text="Nada por aqui no período selecionado." />
           ) : (
             <ul className="space-y-2 text-xs">
-              {results.slice(0, 6).map((r) => (
+              {filteredResults.slice(0, 6).map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2">
                   <Link
                     to="/app/evolution/$patientId"
