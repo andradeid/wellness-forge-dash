@@ -8,7 +8,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { format, startOfMonth, subDays } from "date-fns";
+import { format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
   PieChart,
