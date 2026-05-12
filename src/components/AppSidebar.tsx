@@ -164,7 +164,14 @@ export function AppSidebar() {
     (currentPath === url || (url !== "/app" && currentPath.startsWith(url + "/")));
 
   return (
-    <Sidebar collapsible="icon" className="border-r bg-background">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-white/10 text-white"
+      style={{
+        backgroundImage:
+          "linear-gradient(180deg, #2b0a3d 0%, #3d1259 35%, #4a2a8a 75%, #5a4aa8 100%)",
+      }}
+    >
       <SidebarHeader className="px-5 pt-6 pb-4">
         {collapsed ? (
           <div className="h-8 w-8 mx-auto rounded-lg bg-gradient-brand" />
