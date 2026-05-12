@@ -204,6 +204,70 @@ function SettingsPage() {
     }
   };
 
+  const handleLogoUpload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O logotipo deve ter no máximo 5MB.");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("professional-logos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("professional-logos").getPublicUrl(path);
+      setClinicLogoUrl(data.publicUrl);
+      await (supabase as any)
+        .from("profiles")
+        .update({ clinic_logo_url: data.publicUrl })
+        .eq("id", user.id);
+      toast.success("Logotipo atualizado.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao enviar logotipo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    if (!user) return;
+    setClinicLogoUrl("");
+    await (supabase as any)
+      .from("profiles")
+      .update({ clinic_logo_url: null })
+      .eq("id", user.id);
+    toast.success("Logotipo removido.");
+  };
+
+  const saveBranding = async () => {
+    if (!user) return;
+    setSavingBranding(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          pronoun: pronoun || null,
+          clinic_name: clinicName || null,
+          professional_id: crn || null,
+        })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success("Branding profissional salvo.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar branding");
+    } finally {
+      setSavingBranding(false);
+    }
+  };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Branding - ${fullName || "Lumma"}`,
+  });
+
   const initials = (fullName || email).slice(0, 2).toUpperCase();
   const statusLabel =
     sub?.status === "active" ? "Ativa"
