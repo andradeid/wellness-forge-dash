@@ -17,6 +17,7 @@ export interface Profile {
   avatar_url: string | null;
   phone: string | null;
   is_blocked: boolean;
+  pronoun: string | null;
 }
 
 interface AuthContextValue {
