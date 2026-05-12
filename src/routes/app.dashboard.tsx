@@ -530,13 +530,20 @@ function DashboardPage() {
               ))}
             </ul>
           )}
-        </Card>
-      </div>
-    </div>
-  );
-}
+         </Card>
+       </div>
 
-function KpiCard({
+       <footer className="mt-10 pt-6 border-t flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+         <span>© {new Date().getFullYear()} LUMMA 2.0 · Inteligência integrativa</span>
+         <Link to="/app/politicas" className="hover:text-foreground underline-offset-4 hover:underline">
+           Políticas e Termos de Uso
+         </Link>
+       </footer>
+     </div>
+   );
+ }
+
+ function KpiCard({
   icon,
   label,
   value,
