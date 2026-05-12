@@ -277,7 +277,26 @@ function DashboardPage() {
               : "Tudo calmo por aqui. Continue acompanhando suas pacientes."}
           </p>
         </div>
-        <QuickAnalysisDialog onCreated={() => window.location.reload()} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-full border bg-white p-1 shadow-sm">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setRange(opt.key)}
+                className={cn(
+                  "px-3 py-1.5 text-xs rounded-full transition-colors",
+                  range === opt.key
+                    ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <QuickAnalysisDialog onCreated={() => window.location.reload()} />
+        </div>
       </div>
 
       {/* KPIs */}
