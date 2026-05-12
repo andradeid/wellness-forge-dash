@@ -174,18 +174,49 @@ function DashboardPage() {
   }, [results]);
 
   const attentionList = useMemo(() => {
-    const seen = new Set<string>();
-    const out: Array<ResultRow & { patientName: string }> = [];
+    // Agrupa por paciente: cada paciente aparece uma vez,
+    // com o marcador mais grave + contagem total de alertas.
+    const byPatient = new Map<
+      string,
+      {
+        patient_id: string;
+        patientName: string;
+        critical: number;
+        attention: number;
+        top: ResultRow & { bucket: Bucket };
+        lastAt: string;
+      }
+    >();
     for (const r of results) {
       const b = classify(r.classification);
       if (b !== "critico" && b !== "atencao") continue;
-      const key = `${r.patient_id}-${r.marker_name}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({ ...r, patientName: patientMap.get(r.patient_id) ?? "Paciente" });
-      if (out.length >= 6) break;
+      const cur = byPatient.get(r.patient_id);
+      if (!cur) {
+        byPatient.set(r.patient_id, {
+          patient_id: r.patient_id,
+          patientName: patientMap.get(r.patient_id) ?? "Paciente",
+          critical: b === "critico" ? 1 : 0,
+          attention: b === "atencao" ? 1 : 0,
+          top: { ...r, bucket: b },
+          lastAt: r.measured_at,
+        });
+      } else {
+        if (b === "critico") cur.critical++;
+        else cur.attention++;
+        // Promove para crítico se ainda não for, ou mantém o mais recente
+        if (cur.top.bucket !== "critico" && b === "critico") {
+          cur.top = { ...r, bucket: b };
+        }
+        if (r.measured_at > cur.lastAt) cur.lastAt = r.measured_at;
+      }
     }
-    return out;
+    return Array.from(byPatient.values())
+      .sort((a, b) => {
+        if (b.critical !== a.critical) return b.critical - a.critical;
+        if (b.attention !== a.attention) return b.attention - a.attention;
+        return b.lastAt.localeCompare(a.lastAt);
+      })
+      .slice(0, 6);
   }, [results, patientMap]);
 
   const greeting = (() => {
