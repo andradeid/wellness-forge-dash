@@ -283,7 +283,7 @@ export function AppSidebar() {
                     );
 
                     return (
-                      <li key={item.url}>
+                      <li key={`${item.title}-${item.url}`}>
                         {item.url.startsWith("#") ? (
                           <a href={item.url} aria-disabled className="block opacity-70 cursor-not-allowed">
                             {content}
