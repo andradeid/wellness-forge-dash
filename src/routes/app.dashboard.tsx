@@ -243,7 +243,7 @@ function DashboardPage() {
         return b.lastAt.localeCompare(a.lastAt);
       })
       .slice(0, 6);
-  }, [results, patientMap]);
+  }, [filteredResults, patientMap]);
 
   const greeting = (() => {
     // Hora de Brasília (UTC−3), independente do fuso do navegador
