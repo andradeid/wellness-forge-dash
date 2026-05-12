@@ -374,7 +374,7 @@ function SettingsPage() {
 
         {/* BRANDING */}
         <TabsContent value="branding">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-6">
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
             {/* Form */}
             <Card className="rounded-2xl shadow-md border-0 h-fit">
               <CardHeader>
