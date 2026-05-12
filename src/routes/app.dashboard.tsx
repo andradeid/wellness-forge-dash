@@ -174,18 +174,49 @@ function DashboardPage() {
   }, [results]);
 
   const attentionList = useMemo(() => {
-    const seen = new Set<string>();
-    const out: Array<ResultRow & { patientName: string }> = [];
+    // Agrupa por paciente: cada paciente aparece uma vez,
+    // com o marcador mais grave + contagem total de alertas.
+    const byPatient = new Map<
+      string,
+      {
+        patient_id: string;
+        patientName: string;
+        critical: number;
+        attention: number;
+        top: ResultRow & { bucket: Bucket };
+        lastAt: string;
+      }
+    >();
     for (const r of results) {
       const b = classify(r.classification);
       if (b !== "critico" && b !== "atencao") continue;
-      const key = `${r.patient_id}-${r.marker_name}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({ ...r, patientName: patientMap.get(r.patient_id) ?? "Paciente" });
-      if (out.length >= 6) break;
+      const cur = byPatient.get(r.patient_id);
+      if (!cur) {
+        byPatient.set(r.patient_id, {
+          patient_id: r.patient_id,
+          patientName: patientMap.get(r.patient_id) ?? "Paciente",
+          critical: b === "critico" ? 1 : 0,
+          attention: b === "atencao" ? 1 : 0,
+          top: { ...r, bucket: b },
+          lastAt: r.measured_at,
+        });
+      } else {
+        if (b === "critico") cur.critical++;
+        else cur.attention++;
+        // Promove para crítico se ainda não for, ou mantém o mais recente
+        if (cur.top.bucket !== "critico" && b === "critico") {
+          cur.top = { ...r, bucket: b };
+        }
+        if (r.measured_at > cur.lastAt) cur.lastAt = r.measured_at;
+      }
     }
-    return out;
+    return Array.from(byPatient.values())
+      .sort((a, b) => {
+        if (b.critical !== a.critical) return b.critical - a.critical;
+        if (b.attention !== a.attention) return b.attention - a.attention;
+        return b.lastAt.localeCompare(a.lastAt);
+      })
+      .slice(0, 6);
   }, [results, patientMap]);
 
   const greeting = (() => {
@@ -326,10 +357,11 @@ function DashboardPage() {
             <EmptyState text="Nenhum alerta no momento. Tudo dentro do esperado." />
           ) : (
             <ul className="divide-y">
-              {attentionList.map((r) => {
-                const b = classify(r.classification);
+              {attentionList.map((p) => {
+                const b = p.top.bucket;
+                const totalAlerts = p.critical + p.attention;
                 return (
-                  <li key={r.id} className="py-3 flex items-center gap-3">
+                  <li key={p.patient_id} className="py-3 flex items-center gap-3">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ background: BUCKET_META[b].color }}
@@ -337,29 +369,37 @@ function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium truncate">
-                          {r.patientName}
+                          {p.patientName}
                         </span>
-                        <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs">
-                          {r.marker_name}: <strong>{r.marker_value_raw}</strong>
-                          {r.marker_unit ? ` ${r.marker_unit}` : ""}
-                        </span>
+                        {p.critical > 0 && (
+                          <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 text-[10px] h-4 px-1.5">
+                            {p.critical} crítico{p.critical > 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                        {p.attention > 0 && (
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-[10px] h-4 px-1.5">
+                            {p.attention} atenção
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {format(new Date(r.measured_at), "dd/MM/yyyy")} ·{" "}
+                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {p.top.marker_name}: <strong>{p.top.marker_value_raw}</strong>
+                        {p.top.marker_unit ? ` ${p.top.marker_unit}` : ""} ·{" "}
                         <span
                           className={cn(
                             "font-medium",
                             b === "critico" ? "text-rose-600" : "text-amber-600",
                           )}
                         >
-                          {r.classification}
-                        </span>
+                          {p.top.classification}
+                        </span>{" "}
+                        · {format(new Date(p.lastAt), "dd/MM/yyyy")}
+                        {totalAlerts > 1 ? ` · ${totalAlerts} marcadores` : ""}
                       </div>
                     </div>
                     <Link
-                      to="/app/chat/$patientId"
-                      params={{ patientId: r.patient_id }}
+                      to="/app/evolution/$patientId"
+                      params={{ patientId: p.patient_id }}
                     >
                       <Button size="sm" variant="ghost" className="rounded-full gap-1">
                         Abrir <ArrowRight className="h-3 w-3" />
