@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { getDifyConfig } from "@/lib/dify-config.server";
+import { getDifyConfig, invalidateDifyConfigCache } from "@/lib/dify-config.server";
 
 async function authUser(request: Request): Promise<{ userId: string; token: string } | null> {
   const auth = request.headers.get("authorization");
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/dify/chat")({
         if (!auth) return new Response("Unauthorized", { status: 401 });
         const { userId, token } = auth;
 
-        const { baseUrl, apiKey } = await getDifyConfig(token);
+        let { baseUrl, apiKey } = await getDifyConfig(token);
         if (!apiKey) return new Response("Dify API key não configurada", { status: 500 });
 
         const body = await request.json();
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             : {}),
         };
 
-        const upstream = await fetch(`${baseUrl}/chat-messages`, {
+        const sendToDify = () => fetch(`${baseUrl}/chat-messages`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
@@ -65,6 +65,33 @@ export const Route = createFileRoute("/api/dify/chat")({
             auto_generate_name: true,
           }),
         });
+
+        let upstream = await sendToDify();
+
+        if (!upstream.ok) {
+          const text = await upstream.text().catch(() => "");
+          if (upstream.status === 403 && /workspace.*archived|status is archived/i.test(text)) {
+            invalidateDifyConfigCache();
+            ({ baseUrl, apiKey } = await getDifyConfig(token, true));
+            upstream = await sendToDify();
+            if (upstream.ok && upstream.body) {
+              return new Response(upstream.body, {
+                status: 200,
+                headers: {
+                  "Content-Type": "text/event-stream; charset=utf-8",
+                  "Cache-Control": "no-cache, no-transform",
+                  Connection: "keep-alive",
+                },
+              });
+            }
+            const retryText = await upstream.text().catch(() => "");
+            return new Response(
+              retryText || "Workspace do Dify arquivado. Atualize a API Key da conta ativa em Integrações & APIs.",
+              { status: upstream.status },
+            );
+          }
+          return new Response(text || "Dify error", { status: upstream.status });
+        }
 
         if (!upstream.ok || !upstream.body) {
           const text = await upstream.text().catch(() => "");
