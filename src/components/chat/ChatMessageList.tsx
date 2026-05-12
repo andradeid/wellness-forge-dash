@@ -48,20 +48,13 @@ function splitJsonBlocks(text: string): Array<{ type: "text" | "json"; value: st
   return parts.length > 0 ? parts : [{ type: "text", value: text }];
 }
 
-function JsonCodeBlock({ value }: { value: string }) {
-  return (
-    <div className="my-2 rounded-xl border border-slate-700/50 bg-slate-900/95 shadow-md overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-700/50 bg-slate-800/60">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-          json · marcadores
-        </span>
-        <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
-      </div>
-      <pre className="px-3 py-2 text-[11.5px] leading-relaxed text-slate-100 overflow-x-auto font-mono">
-        {value}
-      </pre>
-    </div>
-  );
+/** Removes JSON preamble headings like "Parte 2 — JSON obrigatório" and trailing labels */
+function cleanProse(text: string): string {
+  return text
+    .replace(/^\s*Parte\s*2\s*[—\-:].*$/gim, "")
+    .replace(/^\s*JSON\s*(obrigat[óo]rio|marcadores)?\s*:?\s*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export function ChatMessageList({
@@ -119,20 +112,22 @@ export function ChatMessageList({
                     📎 {m.attachments.map((a) => a.name).join(", ")}
                   </div>
                 )}
-                {parts.map((p, i) =>
-                  p.type === "json" ? (
-                    <JsonCodeBlock key={i} value={p.value} />
-                  ) : (
-                    <div
-                      key={i}
-                      className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2"
-                    >
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {p.value || (m.role === "assistant" ? "…" : "")}
-                      </ReactMarkdown>
-                    </div>
-                  ),
-                )}
+                {parts
+                  .filter((p) => p.type === "text")
+                  .map((p, i) => {
+                    const cleaned = isUser ? p.value : cleanProse(p.value);
+                    if (!cleaned && m.role === "assistant") return null;
+                    return (
+                      <div
+                        key={i}
+                        className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2"
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {cleaned || ""}
+                        </ReactMarkdown>
+                      </div>
+                    );
+                  })}
                 {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
                   <div className="mt-3">
                     <ExamResultCard markers={m.structured_data.markers} />
