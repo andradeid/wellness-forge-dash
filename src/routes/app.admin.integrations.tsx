@@ -120,6 +120,43 @@ function IntegrationsPage() {
   const [testingDify, setTestingDify] = useState(false);
   const [savingDify, setSavingDify] = useState(false);
   const [resettingDifyConversations, setResettingDifyConversations] = useState(false);
+  const [inspectingDify, setInspectingDify] = useState(false);
+
+  const inspectDifyKey = async () => {
+    setInspectingDify(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("integrations")
+        .select("key, value, updated_at")
+        .in("key", ["dify_api_key", "dify_endpoint"]);
+      if (error) {
+        toast.error("Falha ao consultar Supabase.", { description: error.message });
+        return;
+      }
+      const apiRow = (data ?? []).find((r: any) => r.key === "dify_api_key");
+      const epRow = (data ?? []).find((r: any) => r.key === "dify_endpoint");
+      const apiVal: string = apiRow?.value ?? "";
+      const fp = apiVal ? `${apiVal.slice(0, 6)}…${apiVal.slice(-4)} (len ${apiVal.length})` : "vazia";
+      const when = apiRow?.updated_at
+        ? new Date(apiRow.updated_at).toLocaleString("pt-BR")
+        : "—";
+      toast.success("DIFY_API_KEY no Supabase", {
+        description: `${fp} • atualizada em ${when} • endpoint: ${epRow?.value ?? "—"}`,
+        duration: 12000,
+      });
+      await (supabase as any).from("integration_logs").insert({
+        source: "dify",
+        event: "key_inspect",
+        status: "success",
+        message: `fp=${fp} updated_at=${when}`,
+      });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao inspecionar chave.", { description: message });
+    } finally {
+      setInspectingDify(false);
+    }
+  };
   const [health, setHealth] = useState<Record<string, boolean | null>>({
     supabase: null,
     dify: null,
