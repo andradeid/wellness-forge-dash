@@ -276,7 +276,7 @@ function SettingsPage() {
     : sub?.status === "canceled" ? "Cancelada" : "—";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <header>
         <h1 className="font-serif text-3xl">Minha conta</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -285,8 +285,9 @@ function SettingsPage() {
       </header>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-        <TabsList className="rounded-full p-1 bg-muted/60">
+        <TabsList className="rounded-full p-1 bg-muted/60 flex-wrap h-auto">
           <TabsTrigger value="identity" className="rounded-full gap-2"><User className="h-4 w-4" />Identidade</TabsTrigger>
+          <TabsTrigger value="branding" className="rounded-full gap-2"><Palette className="h-4 w-4" />Branding</TabsTrigger>
           <TabsTrigger value="security" className="rounded-full gap-2"><ShieldCheck className="h-4 w-4" />Segurança</TabsTrigger>
           <TabsTrigger value="subscription" className="rounded-full gap-2"><CreditCard className="h-4 w-4" />Assinatura</TabsTrigger>
           <TabsTrigger value="ai" className="rounded-full gap-2"><Sparkles className="h-4 w-4" />Preferências da IA</TabsTrigger>
