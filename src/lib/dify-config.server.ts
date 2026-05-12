@@ -76,15 +76,32 @@ export async function getDifyConfig(
     apiKey: "",
   };
 
-  try {
-    const serviceClient = makeServiceClient();
-    if (serviceClient) {
+  const serviceClient = makeServiceClient();
+  console.log("[dify-config] service client available:", !!serviceClient);
+
+  if (serviceClient) {
+    try {
       config = await applyIntegrationRows(serviceClient, config);
-    } else {
-      config = await applyIntegrationRows(makeUserClient(userToken), config);
+      console.log("[dify-config] service read ok. apiKey len:", config.apiKey.length);
+    } catch (e) {
+      console.error("[dify-config] service read failed:", e);
     }
-  } catch (e) {
-    console.error("[dify-config] failed to read integrations table:", e);
+  }
+
+  // Fallback: try user client if service client missing or returned empty
+  if (!config.apiKey) {
+    try {
+      config = await applyIntegrationRows(makeUserClient(userToken), config);
+      console.log("[dify-config] user-client read. apiKey len:", config.apiKey.length);
+    } catch (e) {
+      console.error("[dify-config] user-client read failed:", e);
+    }
+  }
+
+  // Final fallback: env secret
+  if (!config.apiKey && process.env.DIFY_API_KEY) {
+    config.apiKey = process.env.DIFY_API_KEY;
+    console.log("[dify-config] using env DIFY_API_KEY fallback");
   }
 
   config = { ...config, baseUrl: normalizeBaseUrl(config.baseUrl) };
