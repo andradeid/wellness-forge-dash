@@ -441,6 +441,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reset_all_dify_conversations: { Args: never; Returns: number }
     }
     Enums: {
       ai_feedback_rating: "positive" | "negative" | "suggestion"
