@@ -213,7 +213,7 @@ function DashboardPage() {
         lastAt: string;
       }
     >();
-    for (const r of results) {
+    for (const r of filteredResults) {
       const b = classify(r.classification);
       if (b !== "critico" && b !== "atencao") continue;
       const cur = byPatient.get(r.patient_id);
