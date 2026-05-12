@@ -33,6 +33,32 @@ function makeUserClient(token: string): SupabaseClient {
   });
 }
 
+function makeServiceClient(): SupabaseClient | null {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+async function applyIntegrationRows(client: SupabaseClient, current: DifyConfig) {
+  const { data, error } = await client
+    .from("integrations")
+    .select("key, value")
+    .in("key", ["dify_endpoint", "dify_api_key"]);
+
+  if (error) throw error;
+
+  const next = { ...current };
+  for (const row of (data ?? []) as Array<{ key: string; value: string | null }>) {
+    if (row.key === "dify_endpoint" && row.value) next.baseUrl = row.value;
+    if (row.key === "dify_api_key" && row.value) next.apiKey = row.value;
+  }
+  return next;
+}
+
 /**
  * Loads Dify config from the `integrations` table using the caller's
  * authenticated Supabase client (RLS only allows super_admin to read).
@@ -45,29 +71,23 @@ export async function getDifyConfig(
   const now = Date.now();
   if (!force && cache && cache.expires > now) return cache.data;
 
-  let baseUrl = process.env.DIFY_BASE_URL || DEFAULT_BASE_URL;
-  let apiKey = process.env.DIFY_API_KEY || "";
+  let config: DifyConfig = {
+    baseUrl: process.env.DIFY_BASE_URL || DEFAULT_BASE_URL,
+    apiKey: "",
+  };
 
   try {
-    const client = makeUserClient(userToken);
-    const { data, error } = await client
-      .from("integrations")
-      .select("key, value")
-      .in("key", ["dify_endpoint", "dify_api_key"]);
-
-    if (error) {
-      console.error("[dify-config] integrations query error:", error.message);
-    } else if (data) {
-      for (const row of data as Array<{ key: string; value: string | null }>) {
-        if (row.key === "dify_endpoint" && row.value) baseUrl = row.value;
-        if (row.key === "dify_api_key" && row.value) apiKey = row.value;
-      }
+    const serviceClient = makeServiceClient();
+    if (serviceClient) {
+      config = await applyIntegrationRows(serviceClient, config);
+    } else {
+      config = await applyIntegrationRows(makeUserClient(userToken), config);
     }
   } catch (e) {
     console.error("[dify-config] failed to read integrations table:", e);
   }
 
-  const config: DifyConfig = { baseUrl: normalizeBaseUrl(baseUrl), apiKey };
+  config = { ...config, baseUrl: normalizeBaseUrl(config.baseUrl) };
   cache = { data: config, expires: now + TTL_MS };
   return config;
 }
