@@ -221,9 +221,28 @@ function ChatPage() {
             ) : (
               <>
                 <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
-                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
                 </p>
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[10px] text-muted-foreground/70 cursor-help select-none">
+                        <ShieldCheck className="h-3 w-3 text-[#7a8f6a] shrink-0" />
+                        <span>
+                          Análises baseadas nos protocolos de inteligência integrativa da Dra. Ana
+                          Paula. Sempre confira os dados estruturados com o laudo original do
+                          laboratório.
+                        </span>
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-[11px] leading-relaxed">
+                      A LUMMA é uma ferramenta de suporte à decisão. A validação final e a conduta
+                      clínica são de responsabilidade exclusiva do nutricionista conforme as normas
+                      do CRN.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </>
             )}
           </div>
