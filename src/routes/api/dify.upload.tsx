@@ -31,9 +31,21 @@ export const Route = createFileRoute("/api/dify/upload")({
         const file = inForm.get("file");
         if (!(file instanceof File)) return new Response("file required", { status: 400 });
 
+        const sanitize = (s: unknown) =>
+          String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
+        const nutriName = sanitize(inForm.get("nutritionist_name"));
+        const patientName = sanitize(inForm.get("patient_name"));
+        const buildDisplayUser = () => {
+          if (!nutriName && !patientName) return userId;
+          const label = [nutriName, patientName].filter(Boolean).join(" · ");
+          const composed = `${label} [${userId.slice(0, 8)}]`;
+          return composed.length > 64 ? composed.slice(0, 64) : composed;
+        };
+        const displayUser = buildDisplayUser();
+
         const outForm = new FormData();
         outForm.append("file", file, file.name);
-        outForm.append("user", userId);
+        outForm.append("user", displayUser);
 
         const uploadToDify = () => fetch(`${baseUrl}/files/upload`, {
           method: "POST",
@@ -49,7 +61,7 @@ export const Route = createFileRoute("/api/dify/upload")({
           ({ baseUrl, apiKey } = await getDifyConfig(token, true));
           const retryForm = new FormData();
           retryForm.append("file", file, file.name);
-          retryForm.append("user", userId);
+          retryForm.append("user", displayUser);
           upstream = await fetch(`${baseUrl}/files/upload`, {
             method: "POST",
             headers: { Authorization: `Bearer ${apiKey}` },
