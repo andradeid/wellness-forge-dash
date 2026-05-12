@@ -115,6 +115,18 @@ function EvolutionPage() {
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [rows, setRows] = useState<ResultRow[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  const { data: branding } = useBrandingProfile(userId);
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Laudo-${patient?.name ?? "paciente"}`,
+  });
 
   useEffect(() => {
     (async () => {
