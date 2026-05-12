@@ -228,6 +228,26 @@ function ChatPage() {
           </div>
         </div>
       </section>
+
+      {/* Off-screen printable layout for "Gerar Laudo PDF" */}
+      <div
+        style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+        aria-hidden
+      >
+        <div ref={printRef}>
+          {branding && patient && reportMarkers.length > 0 && (
+            <PatientReportPDF
+              branding={branding}
+              patient={{
+                name: patient.name,
+                birth_date: patient.birth_date,
+                gender: patient.gender,
+              }}
+              markers={reportMarkers as any}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
