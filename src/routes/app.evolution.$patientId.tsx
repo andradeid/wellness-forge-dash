@@ -251,7 +251,18 @@ function EvolutionPage() {
             </div>
           </div>
 
-          <div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => handlePrint?.()}
+              disabled={!rows || rows.length === 0}
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1.5"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Gerar Laudo PDF
+            </Button>
             <QuickAnalysisDialog onCreated={() => reload()} />
           </div>
         </div>
