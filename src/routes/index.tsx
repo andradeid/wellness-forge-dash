@@ -1,20 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Leaf, Stethoscope, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LUMMA — Plataforma para nutricionistas" },
-      { name: "description", content: "Gestão clínica e atendimento inteligente para nutricionistas modernos." },
+      { title: "LUMMA 2.0 — A Nova Era da Inteligência Clínica" },
+      {
+        name: "description",
+        content:
+          "O motor de raciocínio nutricional mais potente do mercado está sendo calibrado. Prepare-se para uma experiência de precisão absoluta.",
+      },
     ],
   }),
-  component: Landing,
+  component: Teaser,
 });
 
-function Landing() {
+function Teaser() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -23,52 +26,107 @@ function Landing() {
   }, [session, loading, navigate]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
+    <div className="relative min-h-screen overflow-hidden bg-[#0b0414] text-white font-sans antialiased">
+      {/* Ambient gradient blobs */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-[#7c3aed] opacity-30 blur-[140px]" />
+        <div className="absolute top-1/3 -right-32 h-[480px] w-[480px] rounded-full bg-[#e89bcf] opacity-20 blur-[140px]" />
+        <div className="absolute bottom-[-160px] left-1/3 h-[560px] w-[560px] rounded-full bg-[#e8a04c] opacity-25 blur-[160px]" />
+      </div>
+
+      {/* Subtle grid */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
+
+      {/* Header */}
+      <header className="relative z-10">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-              <Leaf className="h-4 w-4" />
-            </div>
-            <span className="font-semibold tracking-tight">LUMMA</span>
+            <img src="/src/assets/lumma-symbol.svg" alt="LUMMA" className="h-7 w-7" onError={(e) => ((e.currentTarget.style.display = "none"))} />
+            <span className="font-semibold tracking-[0.2em] text-sm text-white/80">LUMMA</span>
           </div>
-          <Button asChild variant="outline" size="sm">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+          >
             <Link to="/login">Entrar</Link>
           </Button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6">
-        <section className="py-24 text-center">
-          <div className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground bg-muted px-3 py-1 rounded-full mb-6">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Versão 2.0
+      {/* Hero */}
+      <main className="relative z-10 max-w-6xl mx-auto px-6">
+        <section className="pt-24 md:pt-32 pb-20 text-center">
+          <div className="inline-flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] uppercase text-white/70 backdrop-blur-md bg-white/5 border border-white/10 px-4 py-1.5 rounded-full mb-8">
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
+            Em breve
           </div>
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight max-w-3xl mx-auto">
-            Atendimento nutricional, inteligente e organizado.
-          </h1>
-          <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-            LUMMA centraliza pacientes, exames e planos em um único lugar — pensado para a rotina clínica do nutricionista.
+
+          <div className="relative">
+            {/* Glow */}
+            <div className="absolute inset-0 -z-10 flex items-center justify-center">
+              <div className="h-64 w-[80%] rounded-full bg-gradient-to-r from-[#e8a04c] via-[#e89bcf] to-[#7c3aed] opacity-30 blur-3xl animate-pulse" />
+            </div>
+
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight max-w-4xl mx-auto leading-[1.05]">
+              LUMMA 2.0:{" "}
+              <span className="bg-gradient-to-r from-[#e8a04c] via-[#e89bcf] to-[#c4b5fd] bg-clip-text text-transparent">
+                A Nova Era da Inteligência Clínica
+              </span>
+            </h1>
+          </div>
+
+          <p className="mt-6 text-base md:text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
+            O motor de raciocínio nutricional mais potente do mercado está sendo
+            calibrado. Prepare-se para uma experiência de precisão absoluta e
+            gestão inteligente.
           </p>
-          <div className="mt-8 flex justify-center gap-3">
-            <Button asChild size="lg">
-              <Link to="/login">Entrar na plataforma</Link>
-            </Button>
-          </div>
         </section>
 
-        <section className="grid md:grid-cols-2 gap-6 pb-24">
-          <div className="rounded-xl border p-6 bg-card">
-            <Stethoscope className="h-6 w-6 text-primary mb-3" />
-            <h3 className="font-medium mb-1">Para nutricionistas</h3>
-            <p className="text-sm text-muted-foreground">Cadastre pacientes, organize exames e tenha tudo à mão.</p>
-          </div>
-          <div className="rounded-xl border p-6 bg-card">
-            <ShieldCheck className="h-6 w-6 text-primary mb-3" />
-            <h3 className="font-medium mb-1">Seguro por padrão</h3>
-            <p className="text-sm text-muted-foreground">Cada profissional só vê os próprios pacientes — multi-tenancy real.</p>
-          </div>
+        {/* Feature cards */}
+        <section className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto pb-24">
+          {[
+            {
+              title: "Leitura Multi-Modal",
+              desc: "PDFs e fotos processados em segundos.",
+            },
+            {
+              title: "Soberania de Dados",
+              desc: "Sua própria infraestrutura e segurança.",
+            },
+            {
+              title: "Dashboard Estratégico",
+              desc: "Gestão clínica baseada em dados reais.",
+            },
+          ].map((c) => (
+            <div
+              key={c.title}
+              className="group relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 transition-all hover:bg-white/[0.07] hover:border-white/20"
+            >
+              <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              <h3 className="text-sm font-medium text-white mb-1">{c.title}</h3>
+              <p className="text-xs text-white/60 leading-relaxed">{c.desc}</p>
+            </div>
+          ))}
         </section>
       </main>
+
+      {/* Footer */}
+      <footer className="relative z-10">
+        <div className="max-w-6xl mx-auto px-6 pb-8 text-center">
+          <p className="text-[11px] tracking-wide text-white/40">
+            Desenvolvido com tecnologia de fluxo de elite. © 2026 LUMMA.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
