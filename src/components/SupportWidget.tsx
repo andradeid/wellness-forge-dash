@@ -7,8 +7,12 @@ import { Input } from "@/components/ui/input";
 export function SupportWidget() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {isSupportOpen && (
         <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[450px] bg-background border rounded-2xl shadow-2xl flex flex-col z-50 animate-in fade-in slide-in-from-bottom-4 overflow-hidden">
