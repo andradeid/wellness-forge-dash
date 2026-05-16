@@ -185,7 +185,7 @@ function ChatsCentralPage() {
                 params={{ patientId: r.patient_id }}
                 className="block"
               >
-                <Card className="p-4 hover:bg-accent/40 transition-colors">
+                <Card className={cn("p-4 hover:bg-accent/40 transition-colors", r.pinned_at && "border-amber-300 bg-amber-50/40")}>
                   <div className="flex items-start gap-4">
                     <Avatar className="h-11 w-11 shrink-0">
                       <AvatarImage src={r.patient?.avatar_url ?? undefined} />
@@ -195,6 +195,7 @@ function ChatsCentralPage() {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        {r.pinned_at && <Pin className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />}
                         <span className="font-medium truncate">
                           {r.patient?.name ?? "Paciente removido"}
                         </span>
@@ -226,6 +227,16 @@ function ChatsCentralPage() {
                       </span>
                       <span>{r.message_count} msgs</span>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => togglePin(e, r)}
+                      title={r.pinned_at ? "Desafixar conversa" : "Fixar no topo"}
+                      className={cn("shrink-0", r.pinned_at && "text-amber-600")}
+                    >
+                      {r.pinned_at ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    </Button>
                   </div>
                 </Card>
               </Link>
