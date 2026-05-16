@@ -10,6 +10,9 @@ import {
   Plus,
   Cake,
   Clock,
+  MessageCircle,
+  TrendingUp,
+  PieChart as PieChartIcon,
 } from "lucide-react";
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
