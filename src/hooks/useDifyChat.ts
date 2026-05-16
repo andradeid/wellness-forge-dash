@@ -474,6 +474,7 @@ export function useDifyChat(
     }
 
     setThinking(false);
+    window.setTimeout(() => setUploadProgress([]), 4000);
   }, [chatId, patientId, readOnly]);
 
   const resetChat = useCallback(async () => {
@@ -492,5 +493,5 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
-  return { chatId, messages, thinking, thinkingMode, error, sendMessage, resetChat };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat };
 }
