@@ -607,6 +607,10 @@ function DashboardPage() {
               {attentionList.map((p) => {
                 const b = p.top.bucket;
                 const totalAlerts = p.critical + p.attention;
+                const severityBadge =
+                  b === "critico"
+                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                    : "bg-amber-50 text-amber-700 border border-amber-200";
                 return (
                   <li key={p.patient_id} className="py-3 flex items-center gap-3">
                     <span
@@ -629,29 +633,50 @@ function DashboardPage() {
                           </Badge>
                         )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                        {p.top.marker_name}: <strong>{p.top.marker_value_raw}</strong>
-                        {p.top.marker_unit ? ` ${p.top.marker_unit}` : ""} ·{" "}
+                      <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium text-foreground/80">
+                          {p.top.marker_name}
+                        </span>
                         <span
                           className={cn(
-                            "font-medium",
-                            b === "critico" ? "text-rose-600" : "text-amber-600",
+                            "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                            severityBadge,
                           )}
                         >
+                          {p.top.marker_value_raw}
+                          {p.top.marker_unit ? ` ${p.top.marker_unit}` : ""} ·{" "}
                           {p.top.classification}
-                        </span>{" "}
-                        · {format(new Date(p.lastAt), "dd/MM/yyyy")}
-                        {totalAlerts > 1 ? ` · ${totalAlerts} marcadores` : ""}
+                        </span>
+                        <span className="text-muted-foreground/80">
+                          · {format(new Date(p.lastAt), "dd/MM/yyyy")}
+                          {totalAlerts > 1 ? ` · ${totalAlerts} marcadores` : ""}
+                        </span>
                       </div>
                     </div>
-                    <Link
-                      to="/app/evolution/$patientId"
-                      params={{ patientId: p.patient_id }}
-                    >
-                      <Button size="sm" variant="ghost" className="rounded-full gap-1">
-                        Abrir <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
-                      </Button>
-                    </Link>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Link
+                        to="/app/evolution/$patientId"
+                        params={{ patientId: p.patient_id }}
+                      >
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="rounded-full gap-1 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
+                          title="Ver evolução clínica"
+                        >
+                          <TrendingUp className="h-3.5 w-3.5" {...ICON_PROPS} />
+                          <span className="hidden sm:inline">Ver Evolução</span>
+                        </Button>
+                      </Link>
+                      <Link
+                        to="/app/chat/$patientId"
+                        params={{ patientId: p.patient_id }}
+                      >
+                        <Button size="sm" variant="ghost" className="rounded-full gap-1">
+                          Abrir <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
+                        </Button>
+                      </Link>
+                    </div>
                   </li>
                 );
               })}
