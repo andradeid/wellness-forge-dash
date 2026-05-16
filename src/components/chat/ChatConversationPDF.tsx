@@ -121,12 +121,12 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                           <tbody>
                             {markers.map((mk, i) => (
                               <tr key={i} className="border-t border-slate-100 align-top">
-                                <td className="px-2 py-1 font-medium">{mk.marker_name}</td>
+                                <td className="px-2 py-1 font-medium">{mk.name}</td>
                                 <td className="px-2 py-1 tabular-nums">
-                                  {mk.marker_value_raw ?? mk.marker_value ?? "—"}
-                                  {mk.marker_unit ? <span className="text-slate-500"> {mk.marker_unit}</span> : null}
+                                  {mk.value ?? "—"}
+                                  {mk.unit ? <span className="text-slate-500"> {mk.unit}</span> : null}
                                 </td>
-                                <td className="px-2 py-1 text-slate-600">{mk.reference_value ?? "—"}</td>
+                                <td className="px-2 py-1 text-slate-600">{mk.reference ?? "—"}</td>
                                 <td className="px-2 py-1">
                                   <span
                                     className={`inline-block rounded border px-1 py-0.5 text-[9px] capitalize ${toneClass(
