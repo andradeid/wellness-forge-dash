@@ -67,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const authRequestRef = useRef(0);
-  const sessionRef = useRef<Session | null>(null);
 
   const loadUserData = async (currentUser: User | null) => {
     if (!currentUser) {
@@ -93,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const applySession = async (nextSession: Session | null) => {
     const requestId = ++authRequestRef.current;
     setLoading(true);
-    sessionRef.current = nextSession;
     setSession(nextSession);
     setUser(nextSession?.user ?? null);
 
