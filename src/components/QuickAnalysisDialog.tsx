@@ -639,13 +639,16 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
     <>
       <Dialog open={open} onOpenChange={(o) => { if (!processing) { setOpen(o); if (!o) reset(); } }}>
         <Button
-          onClick={() => setOpen(true)}
+          onClick={() => toast.info("Análise Rápida temporariamente desativada em ambiente de testes.")}
           variant="outline"
-          className="rounded-full border-2 border-transparent bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10 hover:from-[#e8a04c]/20 hover:to-[#e89bcf]/20 text-foreground gap-2"
+          disabled
+          aria-disabled="true"
+          title="Recurso em manutenção"
+          className="rounded-full border-2 border-transparent bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10 text-foreground gap-2 opacity-60 cursor-not-allowed"
           style={{ backgroundClip: "padding-box" }}
         >
           <Sparkles className="h-4 w-4 text-[#e8a04c]" />
-          Análise Rápida
+          Análise Rápida (em breve)
         </Button>
 
         <DialogContent>
