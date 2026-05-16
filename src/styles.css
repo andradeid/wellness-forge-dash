@@ -160,3 +160,15 @@
     color: transparent;
   }
 }
+
+/* LUMMA sidebar — gradiente roxo aplicado tanto no desktop quanto no Sheet mobile (portal) */
+[data-sidebar="sidebar"] {
+  background: linear-gradient(180deg, #2b0a3d 0%, #3d1259 35%, #4a2a8a 75%, #5a4aa8 100%);
+  color: #ffffff;
+  --sidebar: #2b0a3d;
+  --sidebar-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.10);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: rgba(255, 255, 255, 0.30);
+}
