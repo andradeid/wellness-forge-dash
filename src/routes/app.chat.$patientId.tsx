@@ -364,6 +364,20 @@ function ChatPage() {
             />
           )}
         </div>
+        </div>
+        <div ref={conversationRef}>
+          {branding && patient && messages.length > 0 && (
+            <ChatConversationPDF
+              branding={branding}
+              patient={{
+                name: patient.name,
+                birth_date: patient.birth_date,
+                gender: patient.gender,
+              }}
+              messages={messages}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
