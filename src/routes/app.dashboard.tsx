@@ -423,13 +423,13 @@ function DashboardPage() {
   })();
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-6 w-full overflow-x-hidden">
       <TestEnvironmentNotice />
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-5">
-        <div>
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-4 md:gap-5">
+        <div className="min-w-0">
           <h1
-            className="text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+            className="text-2xl sm:text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent break-words"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
             {greeting}
@@ -440,15 +440,15 @@ function DashboardPage() {
               : "Tudo calmo por aqui. Continue acompanhando suas pacientes."}
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="inline-flex rounded-full bg-muted/60 p-1">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="inline-flex rounded-full bg-muted/60 p-1 flex-wrap">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => setRange(opt.key)}
                 className={cn(
-                  "px-4 py-1.5 text-xs font-medium rounded-full transition-all",
+                  "px-3 sm:px-4 py-1.5 text-xs font-medium rounded-full transition-all min-h-[36px]",
                   range === opt.key
                     ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -461,7 +461,7 @@ function DashboardPage() {
           {role === "nutri" && (
             <Button
               asChild
-              className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90"
+              className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90 min-h-[44px]"
             >
               <Link to="/app/patients">
                 <Plus className="h-[18px] w-[18px]" {...ICON_PROPS} />
