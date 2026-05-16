@@ -582,7 +582,7 @@ function DashboardPage() {
         </Card>
 
         {/* Attention list */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold">Atenção prioritária</h2>
@@ -685,7 +685,7 @@ function DashboardPage() {
         </Card>
 
         {/* Top deficiencies */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold">Top 5 deficiências da base</h2>
@@ -727,7 +727,7 @@ function DashboardPage() {
         </Card>
 
         {/* Recent activity */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1">Últimas análises</h2>
           <p className="text-xs text-muted-foreground mb-4">Mais recentes da Lumma.</p>
           {loading ? (
@@ -760,7 +760,7 @@ function DashboardPage() {
          </Card>
 
         {/* Follow-up: pacientes sem exame há +60 dias */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold flex items-center gap-2">
@@ -809,7 +809,7 @@ function DashboardPage() {
         </Card>
 
         {/* Aniversariantes da semana */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Cake className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
             Aniversariantes da semana
@@ -858,7 +858,7 @@ function DashboardPage() {
         </Card>
 
         {/* Tendência semanal de exames */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600" {...ICON_PROPS} />
@@ -901,7 +901,7 @@ function DashboardPage() {
         </Card>
 
         {/* Última conversa com a Lumma */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
             Últimas conversas
@@ -941,7 +941,7 @@ function DashboardPage() {
         </Card>
 
         {/* Top marcadores analisados */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold">Marcadores mais analisados</h2>
             <span className="text-xs text-muted-foreground">
@@ -971,7 +971,7 @@ function DashboardPage() {
         </Card>
 
         {/* Perfil da base: gênero + faixa etária */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <PieChartIcon className="h-4 w-4 text-[#7ba88b]" {...ICON_PROPS} />
             Perfil da base
