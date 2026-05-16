@@ -249,6 +249,49 @@ function DashboardPage() {
       .slice(0, 6);
   }, [filteredResults, patientMap]);
 
+  // Pacientes sem exame há +60 dias (usa último measured_at; cai para created_at)
+  const followUpList = useMemo(() => {
+    const lastByPatient = new Map<string, string>();
+    for (const r of results) {
+      const cur = lastByPatient.get(r.patient_id);
+      if (!cur || r.measured_at > cur) lastByPatient.set(r.patient_id, r.measured_at);
+    }
+    const now = new Date();
+    const rows = patients.map((p) => {
+      const ref = lastByPatient.get(p.id) ?? p.created_at;
+      const days = differenceInCalendarDays(now, new Date(ref));
+      return { id: p.id, name: p.name, lastAt: ref, days, hasExam: lastByPatient.has(p.id) };
+    });
+    return rows
+      .filter((r) => r.days >= 60)
+      .sort((a, b) => b.days - a.days)
+      .slice(0, 6);
+  }, [patients, results]);
+
+  // Aniversariantes dos próximos 7 dias
+  const birthdaysWeek = useMemo(() => {
+    const today = startOfDay(new Date());
+    const yearNow = today.getFullYear();
+    const rows = patients
+      .filter((p) => !!p.birth_date)
+      .map((p) => {
+        const bd = new Date(p.birth_date as string);
+        // Mantém em UTC para não derivar de fuso
+        const m = bd.getUTCMonth();
+        const d = bd.getUTCDate();
+        let next = new Date(yearNow, m, d);
+        if (differenceInCalendarDays(next, today) < 0) {
+          next = new Date(yearNow + 1, m, d);
+        }
+        const inDays = differenceInCalendarDays(next, today);
+        const turning = next.getFullYear() - bd.getUTCFullYear();
+        return { id: p.id, name: p.name, next, inDays, turning };
+      })
+      .filter((r) => r.inDays >= 0 && r.inDays <= 7)
+      .sort((a, b) => a.inDays - b.inDays);
+    return rows;
+  }, [patients]);
+
   const greeting = (() => {
     // Hora de Brasília (UTC−3), independente do fuso do navegador
     const hourStr = new Intl.DateTimeFormat("pt-BR", {
