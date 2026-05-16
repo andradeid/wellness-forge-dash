@@ -15,6 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
+import { ChatConversationPDF } from "@/components/chat/ChatConversationPDF";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
