@@ -74,7 +74,18 @@ function AppLayout() {
               </header>
             )}
             <main className={immersive ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
-              <Outlet />
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={pathname}
+                  initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -6, filter: "blur(3px)" }}
+                  transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                  className={immersive ? "h-full w-full" : "w-full"}
+                >
+                  <Outlet />
+                </motion.div>
+              </AnimatePresence>
             </main>
           </div>
         </div>
