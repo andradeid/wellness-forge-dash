@@ -352,6 +352,12 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       console.groupCollapsed("[QuickAnalysis] Resposta do Dify");
       console.log("Tamanho do texto:", fullText.length);
       console.log("Texto completo:", fullText);
+      if (!fullText.trim()) {
+        console.groupEnd();
+        toast.error("O Dify não retornou texto. Verifique o workflow (input patient_id) ou tente novamente.");
+        setProcessing(false);
+        return;
+      }
       const fenced = fullText.match(/```(?:json)?[\s\S]*?```/gi);
       console.log("Blocos com cercas ``` encontrados:", fenced?.length ?? 0, fenced);
 
