@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import {
@@ -51,10 +51,6 @@ import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/evolution/$patientId")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login" });
-  },
   head: () => ({
     meta: [{ title: "Evolução clínica — Lumma" }],
   }),

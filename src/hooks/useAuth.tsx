@@ -123,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const initialRequestId = authRequestRef.current;
     // Listener FIRST, then getSession
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
@@ -133,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     supabase.auth.getSession().then(({ data }) => {
+      if (initialRequestId !== authRequestRef.current) return;
       void applySession(data.session);
     });
 

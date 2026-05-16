@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Eye, FileDown, Plus, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,10 +22,6 @@ export const Route = createFileRoute("/app/chat/$patientId")({
     chatId: typeof s.chatId === "string" ? s.chatId : undefined,
     messageId: typeof s.messageId === "string" ? s.messageId : undefined,
   }),
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login" });
-  },
   component: ChatPage,
 });
 

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Play, Paperclip, FileText, Type, Trash2, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,19 +12,6 @@ import { ChatThinking } from "@/components/chat/ChatThinking";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/admin/playground")({
-  beforeLoad: async () => {
-    const { data: userRes } = await supabase.auth.getUser();
-    if (!userRes.user) throw redirect({ to: "/login" });
-
-    const { data: roleRow } = await (supabase as any)
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userRes.user.id)
-      .eq("role", "super_admin")
-      .maybeSingle();
-
-    if (!roleRow) throw redirect({ to: "/unauthorized" });
-  },
   component: PlaygroundPage,
 });
 
