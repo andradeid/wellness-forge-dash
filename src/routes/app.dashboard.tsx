@@ -9,6 +9,9 @@ import {
   Sparkles,
   Plus,
 } from "lucide-react";
+
+// Ícones com peso visual leve e tamanho uniforme em toda a página
+const ICON_PROPS = { strokeWidth: 1.6 } as const;
 import { format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
