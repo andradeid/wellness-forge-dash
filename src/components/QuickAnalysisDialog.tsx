@@ -308,8 +308,8 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
           meta: {
             nutritionist_name: (profile?.full_name as string) || (profile?.email as string) || "Nutricionista",
             nutritionist_email: (profile?.email as string) || "",
-            patient_name: "novo",
-            patient_id: "novo",
+            patient_name: `quick-${Date.now()}`,
+            patient_id: `quick-${Date.now()}`,
           },
         }),
       });
@@ -323,16 +323,20 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
         if (!l.startsWith("data:")) return;
         const payload = l.slice(5).trim();
         if (!payload || payload === "[DONE]") return;
+        let evt: any;
+        try { evt = JSON.parse(payload); } catch { return; }
         try {
-          const evt = JSON.parse(payload);
           if (evt.event === "message" || evt.event === "agent_message") {
             assistantTextRef.current += getDifyAnswer(evt);
           } else if (evt.event === "message_end" || evt.event === "agent_thought") {
             if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
           } else if (evt.event === "error") {
+            console.error("[QuickAnalysis] Evento de erro do Dify:", evt);
             throw new Error(evt.message ?? "Erro do Dify");
           }
-        } catch { /* ignore */ }
+        } catch (err) {
+          console.error("[QuickAnalysis] Erro processando evento:", err, evt);
+        }
       };
       while (true) {
         const { value, done } = await reader.read();
@@ -348,6 +352,12 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       console.groupCollapsed("[QuickAnalysis] Resposta do Dify");
       console.log("Tamanho do texto:", fullText.length);
       console.log("Texto completo:", fullText);
+      if (!fullText.trim()) {
+        console.groupEnd();
+        toast.error("O Dify não retornou texto. Verifique o workflow (input patient_id) ou tente novamente.");
+        setProcessing(false);
+        return;
+      }
       const fenced = fullText.match(/```(?:json)?[\s\S]*?```/gi);
       console.log("Blocos com cercas ``` encontrados:", fenced?.length ?? 0, fenced);
 
