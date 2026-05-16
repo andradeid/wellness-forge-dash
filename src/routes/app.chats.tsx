@@ -41,8 +41,9 @@ function ChatsCentralPage() {
       setLoading(true);
       const { data: chats } = await (supabase as any)
         .from("patient_chats")
-        .select("id, patient_id, title, created_at, updated_at, patients:patient_id(id, name, avatar_url)")
+        .select("id, patient_id, title, created_at, updated_at, pinned_at, patients:patient_id(id, name, avatar_url)")
         .eq("created_by", user.id)
+        .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
         .limit(200);
 
