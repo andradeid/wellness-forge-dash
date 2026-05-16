@@ -8,11 +8,13 @@ import {
   ArrowRight,
   Sparkles,
   Plus,
+  Cake,
+  Clock,
 } from "lucide-react";
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
 const ICON_PROPS = { strokeWidth: 1.6 } as const;
-import { format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
+import { differenceInCalendarDays, format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
   PieChart,
@@ -72,6 +74,8 @@ interface ResultRow {
 interface PatientLite {
   id: string;
   name: string;
+  birth_date: string | null;
+  created_at: string;
 }
 
 type RangeKey = "today" | "week" | "month" | "all";
@@ -122,7 +126,7 @@ function DashboardPage() {
       const [{ data: pts }, { data: res }, { count: examCount }] = await Promise.all([
         (supabase as any)
           .from("patients")
-          .select("id, name")
+          .select("id, name, birth_date, created_at")
           .eq("created_by", user.id),
         (supabase as any)
           .from("patient_exam_results")
@@ -244,6 +248,49 @@ function DashboardPage() {
       })
       .slice(0, 6);
   }, [filteredResults, patientMap]);
+
+  // Pacientes sem exame há +60 dias (usa último measured_at; cai para created_at)
+  const followUpList = useMemo(() => {
+    const lastByPatient = new Map<string, string>();
+    for (const r of results) {
+      const cur = lastByPatient.get(r.patient_id);
+      if (!cur || r.measured_at > cur) lastByPatient.set(r.patient_id, r.measured_at);
+    }
+    const now = new Date();
+    const rows = patients.map((p) => {
+      const ref = lastByPatient.get(p.id) ?? p.created_at;
+      const days = differenceInCalendarDays(now, new Date(ref));
+      return { id: p.id, name: p.name, lastAt: ref, days, hasExam: lastByPatient.has(p.id) };
+    });
+    return rows
+      .filter((r) => r.days >= 60)
+      .sort((a, b) => b.days - a.days)
+      .slice(0, 6);
+  }, [patients, results]);
+
+  // Aniversariantes dos próximos 7 dias
+  const birthdaysWeek = useMemo(() => {
+    const today = startOfDay(new Date());
+    const yearNow = today.getFullYear();
+    const rows = patients
+      .filter((p) => !!p.birth_date)
+      .map((p) => {
+        const bd = new Date(p.birth_date as string);
+        // Mantém em UTC para não derivar de fuso
+        const m = bd.getUTCMonth();
+        const d = bd.getUTCDate();
+        let next = new Date(yearNow, m, d);
+        if (differenceInCalendarDays(next, today) < 0) {
+          next = new Date(yearNow + 1, m, d);
+        }
+        const inDays = differenceInCalendarDays(next, today);
+        const turning = next.getFullYear() - bd.getUTCFullYear();
+        return { id: p.id, name: p.name, next, inDays, turning };
+      })
+      .filter((r) => r.inDays >= 0 && r.inDays <= 7)
+      .sort((a, b) => a.inDays - b.inDays);
+    return rows;
+  }, [patients]);
 
   const greeting = (() => {
     // Hora de Brasília (UTC−3), independente do fuso do navegador
@@ -542,7 +589,105 @@ function DashboardPage() {
             </ul>
           )}
          </Card>
-       </div>
+
+        {/* Follow-up: pacientes sem exame há +60 dias */}
+        <Card className="p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
+                Reengajar pacientes
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Sem exame há mais de 60 dias — bom momento para um follow-up.
+              </p>
+            </div>
+            <Badge variant="outline" className="text-[10px]">
+              {followUpList.length}
+            </Badge>
+          </div>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : followUpList.length === 0 ? (
+            <EmptyState text="Todas as pacientes em dia. Excelente acompanhamento." />
+          ) : (
+            <ul className="divide-y">
+              {followUpList.map((p) => (
+                <li key={p.id} className="py-3 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{p.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {p.hasExam
+                        ? `Último exame em ${format(new Date(p.lastAt), "dd/MM/yyyy")}`
+                        : `Cadastrada em ${format(new Date(p.lastAt), "dd/MM/yyyy")} · sem exames`}
+                      {" · "}
+                      <span className="font-medium text-[#b6743a]">{p.days} dias</span>
+                    </div>
+                  </div>
+                  <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                    <Button size="sm" variant="ghost" className="rounded-full gap-1">
+                      Conversar <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
+                    </Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Aniversariantes da semana */}
+        <Card className="p-6 lg:col-span-1">
+          <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
+            <Cake className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
+            Aniversariantes da semana
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Um carinho de parabéns vai longe.
+          </p>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : birthdaysWeek.length === 0 ? (
+            <EmptyState text="Nenhum aniversário nos próximos 7 dias." />
+          ) : (
+            <ul className="space-y-2.5">
+              {birthdaysWeek.map((b) => (
+                <li key={b.id} className="flex items-center justify-between gap-2 text-xs">
+                  <Link
+                    to="/app/evolution/$patientId"
+                    params={{ patientId: b.id }}
+                    className="truncate hover:underline min-w-0"
+                  >
+                    <span className="font-medium">{b.name}</span>
+                    <span className="text-muted-foreground"> · {b.turning} anos</span>
+                  </Link>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                      b.inDays === 0
+                        ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {b.inDays === 0
+                      ? "Hoje!"
+                      : b.inDays === 1
+                        ? "Amanhã"
+                        : format(b.next, "dd/MM")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
 
        <footer className="mt-10 pt-6 border-t flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
          <span>© {new Date().getFullYear()} LUMMA 2.0 · Inteligência integrativa</span>
