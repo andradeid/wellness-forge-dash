@@ -18,6 +18,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
+import { Route as AppChatsRouteImport } from './routes/app.chats'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
@@ -76,6 +77,11 @@ const AppPatientsRoute = AppPatientsRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatsRoute = AppChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/politicas': typeof AppPoliticasRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/politicas': typeof AppPoliticasRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/politicas': typeof AppPoliticasRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/unauthorized'
+    | '/app/chats'
     | '/app/dashboard'
     | '/app/patients'
     | '/app/politicas'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/unauthorized'
+    | '/app/chats'
     | '/app/dashboard'
     | '/app/patients'
     | '/app/politicas'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/unauthorized'
+    | '/app/chats'
     | '/app/dashboard'
     | '/app/patients'
     | '/app/politicas'
@@ -377,6 +389,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/app/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/chats': {
+      id: '/app/chats'
+      path: '/chats'
+      fullPath: '/app/chats'
+      preLoaderRoute: typeof AppChatsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/evolution/$patientId': {
@@ -481,6 +500,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppChatsRoute: typeof AppChatsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppPatientsRoute: typeof AppPatientsRoute
   AppPoliticasRoute: typeof AppPoliticasRoute
@@ -498,6 +518,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppChatsRoute: AppChatsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppPatientsRoute: AppPatientsRoute,
   AppPoliticasRoute: AppPoliticasRoute,
