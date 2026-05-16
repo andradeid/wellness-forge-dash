@@ -30,8 +30,6 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
   Area,
   AreaChart,
 } from "recharts";
