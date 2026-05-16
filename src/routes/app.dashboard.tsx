@@ -612,7 +612,7 @@ function DashboardPage() {
                     ? "bg-rose-50 text-rose-700 border border-rose-200"
                     : "bg-amber-50 text-amber-700 border border-amber-200";
                 return (
-                  <li key={p.patient_id} className="py-3 flex items-center gap-3">
+                  <li key={p.patient_id} className="py-3 flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ background: BUCKET_META[b].color }}
