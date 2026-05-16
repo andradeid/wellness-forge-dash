@@ -28,8 +28,11 @@ export function ChatInput({
     noKeyboard: true,
     accept: {
       "application/pdf": [".pdf"],
-      "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+      "image/png": [".png"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/webp": [".webp"],
     },
+    multiple: true,
     maxSize: 20 * 1024 * 1024,
   });
 
