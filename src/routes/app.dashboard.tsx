@@ -1124,6 +1124,7 @@ function TestEnvironmentNotice() {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
