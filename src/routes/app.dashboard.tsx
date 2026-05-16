@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Users,
   Activity,
@@ -1056,9 +1057,9 @@ function TestEnvironmentNotice() {
     setShowModal(false);
   };
 
-  if (!showModal) return null;
+  if (!showModal || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -1123,6 +1124,7 @@ function TestEnvironmentNotice() {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
