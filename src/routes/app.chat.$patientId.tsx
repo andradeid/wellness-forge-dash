@@ -13,6 +13,7 @@ import { ChatIntentPanel, emptyFilters, filtersToContext, type ExamFilters } fro
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
 import { format, differenceInYears } from "date-fns";
