@@ -9,7 +9,7 @@ export interface PendingFile {
   file: File;
 }
 
-export type AttachmentProgressStage = "enviando" | "processando" | "concluido" | "erro";
+export type AttachmentProgressStage = "pendente" | "enviando" | "processando" | "concluido" | "erro";
 
 export interface AttachmentProgressItem {
   id: string;
@@ -32,10 +32,11 @@ function formatFileSize(size: number) {
 }
 
 function getProgressMeta(stage: AttachmentProgressStage) {
-  if (stage === "concluido") return { label: "concluído", icon: CheckCircle2, className: "text-emerald-700" };
-  if (stage === "erro") return { label: "erro no envio", icon: AlertCircle, className: "text-rose-700" };
-  if (stage === "processando") return { label: "processando", icon: Loader2, className: "text-amber-700" };
-  return { label: "enviando", icon: Loader2, className: "text-[#c66f16]" };
+  if (stage === "concluido") return { label: "concluído", icon: CheckCircle2, className: "text-emerald-700", pct: 100 };
+  if (stage === "erro") return { label: "erro no envio", icon: AlertCircle, className: "text-rose-700", pct: 100 };
+  if (stage === "processando") return { label: "processando", icon: Loader2, className: "text-amber-700", pct: 70 };
+  if (stage === "enviando") return { label: "enviando", icon: Loader2, className: "text-[#c66f16]", pct: 35 };
+  return { label: "pronto para envio", icon: Paperclip, className: "text-[#c66f16]", pct: 12 };
 }
 
 export function ChatInput({
@@ -120,7 +121,22 @@ export function ChatInput({
   };
 
   const canSend = !disabled && (text.trim().length > 0 || files.length > 0);
-  const hasUploadProgress = uploadProgress.length > 0;
+
+  // Itens pendentes (recém-anexados) que ainda não têm progresso real
+  const progressNames = new Set(uploadProgress.map((p) => p.name));
+  const pendingItems: AttachmentProgressItem[] = files
+    .filter((f) => !progressNames.has(f.file.name))
+    .map((f, i) => ({
+      id: `pending-${i}-${f.file.name}`,
+      name: f.file.name,
+      size: f.file.size,
+      type: f.file.type,
+      stage: "pendente",
+      progress: 12,
+      message: "pronto para envio",
+    }));
+  const allProgress = [...pendingItems, ...uploadProgress];
+  const hasAnyProgress = allProgress.length > 0;
 
   return (
     <div
@@ -192,15 +208,16 @@ export function ChatInput({
           </div>
         </div>
       )}
-      {hasUploadProgress && (
+      {hasAnyProgress && (
         <div className="mb-3 space-y-2 rounded-2xl border border-[#e8a04c]/25 bg-white/85 p-3 shadow-sm">
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Upload de arquivos
+            Status dos arquivos
           </div>
-          {uploadProgress.map((item) => {
+          {allProgress.map((item) => {
             const meta = getProgressMeta(item.stage);
             const Icon = meta.icon;
             const isLoading = item.stage === "enviando" || item.stage === "processando";
+            const pct = item.progress > 0 ? item.progress : meta.pct;
             return (
               <div key={item.id} className="space-y-1.5">
                 <div className="flex items-center gap-2 text-xs">
@@ -211,7 +228,7 @@ export function ChatInput({
                 <div className="h-1.5 overflow-hidden rounded-full bg-[#e8a04c]/15">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] transition-all"
-                    style={{ width: `${Math.min(100, Math.max(0, item.progress))}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground">
