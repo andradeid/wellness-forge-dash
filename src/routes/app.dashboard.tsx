@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
+import { SupportWidget } from "@/components/SupportWidget";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/dashboard")({
