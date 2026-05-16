@@ -43,7 +43,13 @@ export function ChatInput({
   const handleNativePick = (e: ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files ?? []);
     const MAX = 20 * 1024 * 1024;
-    const valid = picked.filter((f) => f.size <= MAX);
+    const ALLOWED = /^(application\/pdf|image\/(png|jpe?g|webp))$/i;
+    const ALLOWED_EXT = /\.(pdf|png|jpe?g|webp)$/i;
+    const valid: File[] = [];
+    for (const f of picked) {
+      if (f.size > MAX) continue;
+      if (ALLOWED.test(f.type) || ALLOWED_EXT.test(f.name)) valid.push(f);
+    }
     if (valid.length) setFiles((prev) => [...prev, ...valid.map((file) => ({ file }))]);
     e.target.value = "";
   };
@@ -77,7 +83,7 @@ export function ChatInput({
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/pdf,image/*"
+        accept="*/*"
         multiple
         className="hidden"
         onChange={handleNativePick}
