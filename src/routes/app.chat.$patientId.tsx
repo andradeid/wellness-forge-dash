@@ -251,6 +251,17 @@ function ChatPage() {
               </Button>
             )}
             <Button
+              onClick={handleExportConversation}
+              disabled={!branding || messages.length === 0}
+              size="sm"
+              variant="outline"
+              className="rounded-full gap-2 h-10 sm:h-9 px-3"
+              title={messages.length === 0 ? "Nenhuma mensagem para exportar" : "Exportar conversa em PDF"}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Exportar Conversa</span>
+            </Button>
+            <Button
               onClick={handlePrint}
               disabled={!branding || reportMarkers.length === 0}
               size="sm"
