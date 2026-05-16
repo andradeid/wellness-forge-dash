@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { Paperclip, ArrowUp, X, FileText, ImageIcon } from "lucide-react";
+import { AlertCircle, ArrowUp, CheckCircle2, FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -8,20 +9,72 @@ export interface PendingFile {
   file: File;
 }
 
+export type AttachmentProgressStage = "enviando" | "processando" | "concluido" | "erro";
+
+export interface AttachmentProgressItem {
+  id: string;
+  name: string;
+  size: number;
+  type?: string;
+  stage: AttachmentProgressStage;
+  progress: number;
+  message?: string;
+}
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILES = 10;
+const ALLOWED_MIME = /^(application\/(pdf|x-pdf|acrobat|vnd\.pdf|octet-stream)|text\/pdf|image\/(png|jpe?g|webp))$/i;
+const ALLOWED_EXT = /\.(pdf|png|jpe?g|webp)$/i;
+
+function formatFileSize(size: number) {
+  const sizeKb = size / 1024;
+  return sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(sizeKb))} KB`;
+}
+
+function getProgressMeta(stage: AttachmentProgressStage) {
+  if (stage === "concluido") return { label: "concluído", icon: CheckCircle2, className: "text-emerald-700" };
+  if (stage === "erro") return { label: "erro no envio", icon: AlertCircle, className: "text-rose-700" };
+  if (stage === "processando") return { label: "processando", icon: Loader2, className: "text-amber-700" };
+  return { label: "enviando", icon: Loader2, className: "text-[#c66f16]" };
+}
+
 export function ChatInput({
   onSubmit,
   disabled,
+  uploadProgress = [],
 }: {
   onSubmit: (text: string, files: File[]) => Promise<void> | void;
   disabled?: boolean;
+  uploadProgress?: AttachmentProgressItem[];
 }) {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<PendingFile[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const addFiles = useCallback((picked: File[]) => {
+    const valid: File[] = [];
+    let rejected = 0;
+    let oversized = 0;
+    for (const f of picked) {
+      if (f.size > MAX_FILE_SIZE) { oversized += 1; continue; }
+      if (ALLOWED_MIME.test(f.type) || ALLOWED_EXT.test(f.name)) valid.push(f);
+      else rejected += 1;
+    }
+    if (oversized) toast.error("Arquivo acima do limite de 20MB.");
+    if (rejected) toast.error("Formato não suportado. Envie PDF, PNG, JPG ou WEBP.");
+    if (!valid.length) return;
+    setFiles((prev) => {
+      const slots = Math.max(0, MAX_FILES - prev.length);
+      const accepted = valid.slice(0, slots);
+      if (accepted.length < valid.length) toast.warning("Limite de 10 arquivos por mensagem.");
+      return [...prev, ...accepted.map((file) => ({ file }))];
+    });
+  }, []);
+
   const onDrop = useCallback((accepted: File[]) => {
-    setFiles((prev) => [...prev, ...accepted.map((file) => ({ file }))]);
+    addFiles(accepted);
+  }, [addFiles]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -35,22 +88,15 @@ export function ChatInput({
       "image/webp": [".webp"],
     },
     multiple: true,
-    maxSize: 20 * 1024 * 1024,
+    maxSize: MAX_FILE_SIZE,
+    onDropRejected: () => toast.error("Não consegui anexar este arquivo. Use PDF, PNG, JPG ou WEBP até 20MB."),
   });
 
   const openPicker = () => fileInputRef.current?.click();
 
   const handleNativePick = (e: ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files ?? []);
-    const MAX = 20 * 1024 * 1024;
-    const ALLOWED = /^(application\/pdf|image\/(png|jpe?g|webp))$/i;
-    const ALLOWED_EXT = /\.(pdf|png|jpe?g|webp)$/i;
-    const valid: File[] = [];
-    for (const f of picked) {
-      if (f.size > MAX) continue;
-      if (ALLOWED.test(f.type) || ALLOWED_EXT.test(f.name)) valid.push(f);
-    }
-    if (valid.length) setFiles((prev) => [...prev, ...valid.map((file) => ({ file }))]);
+    addFiles(picked);
     e.target.value = "";
   };
 
@@ -71,6 +117,7 @@ export function ChatInput({
   };
 
   const canSend = !disabled && (text.trim().length > 0 || files.length > 0);
+  const hasUploadProgress = uploadProgress.length > 0;
 
   return (
     <div
