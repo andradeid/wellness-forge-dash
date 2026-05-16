@@ -78,6 +78,7 @@ function ChatsCentralPage() {
           title: c.title,
           created_at: c.created_at,
           updated_at: c.updated_at,
+          pinned_at: c.pinned_at ?? null,
           patient: c.patients ?? null,
           last_message: ms[0]
             ? { content: ms[0].content ?? "", role: ms[0].role, created_at: ms[0].created_at }
