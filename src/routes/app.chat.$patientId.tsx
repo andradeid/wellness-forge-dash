@@ -46,6 +46,7 @@ function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
   const printRef = useRef<HTMLDivElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { messages, thinking, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
     readOnly,
