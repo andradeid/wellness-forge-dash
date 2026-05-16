@@ -62,10 +62,12 @@ function cleanProse(text: string): string {
 export function ChatMessageList({
   messages,
   thinking,
+  thinkingMode = "analysis",
   highlightId,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
+  thinkingMode?: "analysis" | "simple";
   highlightId?: string;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
