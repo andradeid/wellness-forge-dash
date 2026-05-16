@@ -234,16 +234,32 @@ function ChatsCentralPage() {
                       </span>
                       <span>{r.message_count} msgs</span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => togglePin(e, r)}
-                      title={r.pinned_at ? "Desafixar conversa" : "Fixar no topo"}
-                      className={cn("shrink-0", r.pinned_at && "text-amber-600")}
-                    >
-                      {r.pinned_at ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                    </Button>
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => togglePin(e, r)}
+                            className={cn("shrink-0 relative", r.pinned_at && "text-amber-600")}
+                          >
+                            {r.pinned_at ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="max-w-[220px] text-xs">
+                          <p className="font-semibold text-[11px] uppercase tracking-wide bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
+                            Novo recurso
+                          </p>
+                          <p className="mt-1">
+                            {r.pinned_at
+                              ? "Clique para desafixar esta conversa do topo."
+                              : "Fixe esta conversa no topo da lista para acessá-la rapidamente."}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </Card>
               </Link>
