@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { UserMenu } from "@/components/UserMenu";
