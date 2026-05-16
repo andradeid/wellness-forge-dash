@@ -58,6 +58,8 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
   superAdminOnly?: boolean;
+  matchPrefix?: string;
+  exact?: boolean;
 };
 
 type NavGroup = {
@@ -84,8 +86,8 @@ const nutriGroups: NavGroup[] = [
     subtitle: "Seus pacientes e análises",
     icon: UserRound,
     items: [
-      { title: "Pacientes", url: "/app/patients", icon: Users },
-      { title: "Chat", url: "/app/patients", icon: MessageSquare },
+      { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
+      { title: "Chat", url: "/app/patients", icon: MessageSquare, matchPrefix: "/app/chat" },
     ],
   },
   {
@@ -183,9 +185,14 @@ export function AppSidebar() {
     navigate({ to: "/login" });
   };
 
-  const isActive = (url: string) =>
-    !url.startsWith("#") &&
-    (currentPath === url || (url !== "/app" && currentPath.startsWith(url + "/")));
+  const isActive = (item: NavItem) => {
+    if (item.matchPrefix) {
+      return currentPath === item.matchPrefix || currentPath.startsWith(item.matchPrefix + "/");
+    }
+    if (item.url.startsWith("#")) return false;
+    if (item.exact) return currentPath === item.url;
+    return currentPath === item.url || (item.url !== "/app" && currentPath.startsWith(item.url + "/"));
+  };
 
   return (
     <Sidebar
@@ -261,7 +268,7 @@ export function AppSidebar() {
               {isOpen && (
                 <ul className="mt-1 space-y-0.5">
                   {visibleItems.map((item) => {
-                    const active = isActive(item.url);
+                    const active = isActive(item);
                     const content = (
                       <span
                         className={cn(
