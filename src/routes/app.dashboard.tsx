@@ -477,7 +477,7 @@ function DashboardPage() {
                 Marcadores classificados como baixos / deficientes na sua base.
               </p>
             </div>
-            <Sparkles className="h-4 w-4 text-[#e8a04c]" />
+            <Sparkles className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
           </div>
           {loading ? (
             <Skeleton className="h-56 w-full" />
