@@ -538,9 +538,9 @@ function DashboardPage() {
       </div>
 
       {/* Bento grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
         {/* Distribution */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold">Saúde da base</h2>
             <span className="text-xs text-muted-foreground">{stats.totalAnalyzed} marcadores</span>
