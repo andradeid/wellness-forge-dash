@@ -48,7 +48,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
@@ -301,7 +301,7 @@ function ChatPage() {
                 />
               </div>
             ) : (
-              <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+              <ChatMessageList messages={messages} thinking={thinking} thinkingMode={thinkingMode} highlightId={highlightId} />
             )}
           </div>
         </div>
