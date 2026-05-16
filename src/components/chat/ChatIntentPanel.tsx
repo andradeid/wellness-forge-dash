@@ -8,10 +8,19 @@ export type ExamFilters = {
   sexo: "masculino" | "feminino" | null;
   gestanteTipo: "monofetal" | "gemelar" | null;
   gestantePeriodo: "1t" | "2t" | "3t" | null;
+  dataExame: string; // YYYY-MM-DD
 };
 
+function todayISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export function emptyFilters(): ExamFilters {
-  return { publico: null, sexo: null, gestanteTipo: null, gestantePeriodo: null };
+  return { publico: null, sexo: null, gestanteTipo: null, gestantePeriodo: null, dataExame: todayISO() };
 }
 
 export function filtersToContext(f: ExamFilters): string | null {
@@ -23,6 +32,10 @@ export function filtersToContext(f: ExamFilters): string | null {
   if (f.publico === "gestante" && f.gestantePeriodo) {
     const map = { "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const;
     parts.push(`Período: ${map[f.gestantePeriodo]}`);
+  }
+  if (f.dataExame) {
+    const [y, m, d] = f.dataExame.split("-");
+    parts.push(`Data de realização do exame: ${d}/${m}/${y}`);
   }
   return parts.length ? `[Contexto clínico] ${parts.join(" · ")}` : null;
 }
@@ -148,6 +161,25 @@ export function ChatIntentPanel({
               </FilterRow>
             </>
           )}
+
+          <FilterRow label="Data do exame">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="data-exame" className="sr-only">
+                Data de Realização do Exame
+              </label>
+              <input
+                id="data-exame"
+                type="date"
+                value={filters.dataExame}
+                max={todayISO()}
+                onChange={(e) => update({ dataExame: e.target.value || todayISO() })}
+                className="rounded-full px-4 py-1.5 text-xs font-medium bg-white/80 text-foreground border border-white shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#e8a04c]/40 transition-all"
+              />
+              <span className="text-[10px] text-muted-foreground px-1">
+                Data de realização do exame · usada na linha do tempo clínica
+              </span>
+            </div>
+          </FilterRow>
         </div>
 
         <div className="mt-6 pt-5 border-t border-muted/40 flex items-center justify-between flex-wrap gap-3">
