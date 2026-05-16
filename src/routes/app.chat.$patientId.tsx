@@ -136,60 +136,76 @@ function ChatPage() {
     );
   }
 
-  return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
-      {/* Left column: patient + exams */}
-      <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
-        <div className="px-5 py-4 border-b">
-          <Link
-            to="/app/patients"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3 w-3" /> Pacientes
-          </Link>
-          <div className="mt-3 flex items-center gap-3">
-            <Avatar className="h-10 w-10 ring-2 ring-[#e89bcf]/30">
-              {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
-              <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white text-sm font-medium">
-                {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <div className="font-medium truncate">{patient?.name ?? "…"}</div>
-              <div className="text-xs text-muted-foreground">
-                {age !== null ? `${age} anos` : "—"}
-                {patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
-              </div>
+  const SidebarContent = (
+    <>
+      <div className="px-5 py-4 border-b">
+        <Link
+          to="/app/patients"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3 w-3" /> Pacientes
+        </Link>
+        <div className="mt-3 flex items-center gap-3">
+          <Avatar className="h-10 w-10 ring-2 ring-[#e89bcf]/30">
+            {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
+            <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white text-sm font-medium">
+              {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="font-medium truncate">{patient?.name ?? "…"}</div>
+            <div className="text-xs text-muted-foreground">
+              {age !== null ? `${age} anos` : "—"}
+              {patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
             </div>
           </div>
         </div>
-        <div className="px-3 py-2 border-b">
-          <Link
-            to="/app/evolution/$patientId"
-            params={{ patientId }}
-            className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-muted/50 transition"
-          >
-            <span className="inline-flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
-              Evolução clínica
-            </span>
-            <span className="text-[10px] text-muted-foreground">gráficos</span>
-          </Link>
+      </div>
+      <div className="px-3 py-2 border-b">
+        <Link
+          to="/app/evolution/$patientId"
+          params={{ patientId }}
+          className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-muted/50 transition min-h-11"
+        >
+          <span className="inline-flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
+            Evolução clínica
+          </span>
+          <span className="text-[10px] text-muted-foreground">gráficos</span>
+        </Link>
+      </div>
+      <div className="px-3 py-3 border-b flex-1 min-h-0 flex flex-col">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-3 mb-2">
+          Histórico de exames
         </div>
-        <div className="px-3 py-3 border-b flex-1 min-h-0 flex flex-col">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-3 mb-2">
-            Histórico de exames
-          </div>
-          <div className="overflow-y-auto flex-1">
-            <ExamHistoryList exams={exams} />
-          </div>
+        <div className="overflow-y-auto flex-1">
+          <ExamHistoryList exams={exams} />
         </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+      {/* Left column: patient + exams (desktop) */}
+      <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
+        {SidebarContent}
       </aside>
 
       {/* Main: chat */}
       <section className="flex-1 flex flex-col min-w-0 h-full">
-        <header className="px-6 py-4 border-b border-white/40 bg-white/60 backdrop-blur-md shrink-0 flex items-center gap-4">
-          <Avatar className="h-12 w-12 ring-2 ring-[#e89bcf]/30 lg:hidden">
+        <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-white/40 bg-white/60 backdrop-blur-md shrink-0 flex items-center gap-2 sm:gap-4">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden shrink-0 h-10 w-10" aria-label="Abrir menu do paciente">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white">
+              {SidebarContent}
+            </SheetContent>
+          </Sheet>
+          <Avatar className="h-10 w-10 sm:h-12 sm:w-12 ring-2 ring-[#e89bcf]/30 lg:hidden shrink-0">
             {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
             <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white">
               {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
@@ -197,30 +213,32 @@ function ChatPage() {
           </Avatar>
           <div className="min-w-0 flex-1">
             <h1
-              className="text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+              className="text-lg sm:text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent leading-tight truncate"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
               Chat com Lumma
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
               {patient?.name ? `Atendimento de ${patient.name}` : "Carregando paciente…"}
-              {chatId && ` · sessão iniciada em ${format(new Date(), "dd/MM/yyyy")}`}
+              <span className="hidden sm:inline">
+                {chatId && ` · sessão iniciada em ${format(new Date(), "dd/MM/yyyy")}`}
+              </span>
             </p>
             {error && (
-              <p className="mt-2 text-xs text-rose-600">{error}</p>
+              <p className="mt-1 text-[11px] sm:text-xs text-rose-600 line-clamp-2">{error}</p>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
             {role === "nutri" && (
               <Button
                 onClick={handleNewChat}
                 disabled={thinking || !chatId}
                 size="sm"
-                className="rounded-full gap-2 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 shadow-sm"
+                className="rounded-full gap-2 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 shadow-sm h-10 sm:h-9 px-3"
                 title="Iniciar uma nova consulta para este paciente"
               >
                 <Plus className="h-4 w-4" />
-                Novo Chat
+                <span className="hidden sm:inline">Novo Chat</span>
               </Button>
             )}
             <Button
@@ -228,11 +246,11 @@ function ChatPage() {
               disabled={!branding || reportMarkers.length === 0}
               size="sm"
               variant="outline"
-              className="rounded-full gap-2"
+              className="rounded-full gap-2 h-10 sm:h-9 px-3"
               title={reportMarkers.length === 0 ? "Nenhum exame analisado para este paciente ainda" : "Gerar laudo profissional em PDF"}
             >
               <FileDown className="h-4 w-4" />
-              Gerar Laudo PDF
+              <span className="hidden sm:inline">Gerar Laudo PDF</span>
             </Button>
           </div>
         </header>
@@ -244,7 +262,7 @@ function ChatPage() {
               className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none z-0"
             >
               <span
-                className="text-[clamp(2rem,8vw,5rem)] font-black uppercase tracking-widest text-black/[0.045] whitespace-nowrap"
+                className="text-[clamp(1.25rem,8vw,5rem)] font-black uppercase tracking-widest text-black/[0.045] whitespace-nowrap"
                 style={{ transform: "rotate(-25deg)" }}
               >
                 AMBIENTE DE TESTES — VERSÃO 2.0 (MOTOR)
@@ -263,11 +281,11 @@ function ChatPage() {
             )}
           </div>
         </div>
-        <div className="shrink-0 px-4 pb-6 pt-3">
+        <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
             {readOnly ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-xs text-amber-800">
-                <Eye className="h-3.5 w-3.5" />
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-xs text-amber-800 text-center">
+                <Eye className="h-3.5 w-3.5 shrink-0" />
                 Modo auditoria — você está visualizando esta conversa em modo somente leitura.
               </div>
             ) : (
@@ -277,15 +295,15 @@ function ChatPage() {
                   Máximo de 10 arquivos de 20MB
                 </p>
                 {role === "nutri" && (
-                  <p className="mt-1 text-center text-[10px] italic text-amber-700/80">
+                  <p className="mt-1 text-center text-[10px] italic text-amber-700/80 px-2">
                     Nota: Processamento estrutural em modo de validação técnica.
                   </p>
                 )}
                 <TooltipProvider delayDuration={150}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[10px] text-muted-foreground/70 cursor-help select-none">
-                        <ShieldCheck className="h-3 w-3 text-[#7a8f6a] shrink-0" />
+                      <p className="mt-3 flex items-start sm:items-center justify-center gap-1.5 text-center text-[10px] text-muted-foreground/70 cursor-help select-none px-2">
+                        <ShieldCheck className="h-3 w-3 text-[#7a8f6a] shrink-0 mt-0.5 sm:mt-0" />
                         <span>
                           Análises baseadas nos protocolos de inteligência integrativa da Dra. Ana
                           Paula. Sempre confira os dados estruturados com o laudo original do
