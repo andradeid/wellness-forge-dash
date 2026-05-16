@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { EditPatientSheet, type EditablePatient } from "@/components/EditPatientSheet";
+import { BirthDatePicker } from "@/components/BirthDatePicker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -184,19 +185,12 @@ function PatientsPage() {
                     className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="p-birth" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento</Label>
-                    <Input
-                      id="p-birth"
-                      type="date"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                      className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento</Label>
+                  <BirthDatePicker value={birthDate} onChange={setBirthDate} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
                     <Select value={gender ?? undefined} onValueChange={(v) => setGender(v as Patient["gender"])}>
                       <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
                         <SelectValue placeholder="Selecione" />
@@ -206,8 +200,7 @@ function PatientsPage() {
                         <SelectItem value="female">Feminino</SelectItem>
                         <SelectItem value="other">Outro</SelectItem>
                       </SelectContent>
-                    </Select>
-                  </div>
+                  </Select>
                 </div>
                 <DialogFooter className="pt-2">
                   <Button
