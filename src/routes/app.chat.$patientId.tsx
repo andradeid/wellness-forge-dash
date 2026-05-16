@@ -116,6 +116,11 @@ function ChatPage() {
     documentTitle: `Laudo-${patient?.name ?? "paciente"}`,
   });
 
+  const handleExportConversation = useReactToPrint({
+    contentRef: conversationRef,
+    documentTitle: `Conversa-${patient?.name ?? "paciente"}-${format(new Date(), "dd-MM-yyyy")}`,
+  });
+
   const age = patient?.birth_date
     ? differenceInYears(new Date(), new Date(patient.birth_date))
     : null;
