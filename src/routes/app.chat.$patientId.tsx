@@ -239,6 +239,11 @@ function ChatPage() {
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
                 </p>
+                {role === "nutri" && (
+                  <p className="mt-1 text-center text-[10px] italic text-amber-700/80">
+                    Nota: Processamento estrutural em modo de validação. Arquivos de imagem e PDF estão habilitados para teste de estabilidade de leitura.
+                  </p>
+                )}
                 <TooltipProvider delayDuration={150}>
                   <Tooltip>
                     <TooltipTrigger asChild>
