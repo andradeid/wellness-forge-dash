@@ -96,6 +96,7 @@ export function SupportWidget() {
         <span className="absolute inset-0 rounded-full bg-[#e89bcf]/40 animate-ping opacity-60 group-hover:opacity-0" />
         {isSupportOpen ? <X className="h-6 w-6 relative" /> : <MessageSquareText className="h-6 w-6 relative" />}
       </button>
-    </>
+    </>,
+    document.body,
   );
 }
