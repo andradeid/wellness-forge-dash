@@ -145,10 +145,18 @@ function DashboardPage() {
         .eq("uploaded_by", user.id);
       if (startIso) examsQuery.gte("created_at", startIso);
 
-      const [{ data: pts }, { data: res }, { count: examCount }] = await Promise.all([
+      const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
+
+      const [
+        { data: pts },
+        { data: res },
+        { count: examCount },
+        { data: exs },
+        { data: chs },
+      ] = await Promise.all([
         (supabase as any)
           .from("patients")
-          .select("id, name, birth_date, created_at")
+          .select("id, name, birth_date, created_at, gender")
           .eq("created_by", user.id),
         (supabase as any)
           .from("patient_exam_results")
@@ -159,12 +167,27 @@ function DashboardPage() {
           .order("measured_at", { ascending: false })
           .limit(1000),
         examsQuery,
+        (supabase as any)
+          .from("patient_exams")
+          .select("id, created_at")
+          .eq("uploaded_by", user.id)
+          .gte("created_at", sinceSparkline)
+          .order("created_at", { ascending: true })
+          .limit(2000),
+        (supabase as any)
+          .from("patient_chats")
+          .select("id, patient_id, title, updated_at")
+          .eq("created_by", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(5),
       ]);
 
       if (cancelled) return;
       setPatients((pts as PatientLite[]) ?? []);
       setResults((res as ResultRow[]) ?? []);
       setExamsThisMonth(examCount ?? 0);
+      setRecentExams((exs as ExamLite[]) ?? []);
+      setRecentChats((chs as ChatLite[]) ?? []);
       setLoading(false);
     })();
     return () => {
