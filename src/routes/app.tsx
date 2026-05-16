@@ -55,7 +55,7 @@ function AppLayout() {
     <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-background">
         {showStagingBanner && (
-          <div className="shrink-0 bg-amber-100 text-amber-900 border-b border-amber-200/80 text-[11px] sm:text-xs font-medium px-3 py-1.5 text-center leading-snug">
+          <div className="shrink-0 bg-amber-100 text-amber-900 border-b border-amber-200/80 text-[11px] sm:text-xs font-medium px-3 py-1.5 text-center leading-snug whitespace-normal break-words">
             ⚠️ AMBIENTE DE HOMOLOGAÇÃO E TESTES (ETAPA 2) • Recursos de processamento em fase de validação estrutural. A migração para a VPS de alta performance ocorrerá na Etapa 3.
           </div>
         )}
