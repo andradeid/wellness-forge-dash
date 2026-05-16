@@ -185,9 +185,14 @@ export function AppSidebar() {
     navigate({ to: "/login" });
   };
 
-  const isActive = (url: string) =>
-    !url.startsWith("#") &&
-    (currentPath === url || (url !== "/app" && currentPath.startsWith(url + "/")));
+  const isActive = (item: NavItem) => {
+    if (item.matchPrefix) {
+      return currentPath === item.matchPrefix || currentPath.startsWith(item.matchPrefix + "/");
+    }
+    if (item.url.startsWith("#")) return false;
+    if (item.exact) return currentPath === item.url;
+    return currentPath === item.url || (item.url !== "/app" && currentPath.startsWith(item.url + "/"));
+  };
 
   return (
     <Sidebar
