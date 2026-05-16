@@ -62,11 +62,16 @@ function ChatPage() {
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
-      // Só anexamos o "[Contexto clínico]" quando há exame anexado.
-      // Mensagens de texto puro vão direto pro Dify, sem prefixo.
       const ctx = files.length > 0 ? filtersToContext(filters) : null;
-      const finalText = ctx ? `${ctx}\n\n${text}`.trim() : text;
-      await sendMessage(finalText, files);
+      if (files.length > 0 && ctx) {
+        // 1) Envia o exame primeiro e aguarda a resposta da Lumma
+        const firstText = text?.trim() || "Analise o exame anexado.";
+        await sendMessage(firstText, files);
+        // 2) Só então envia as perguntas pré-selecionadas como segunda mensagem
+        await sendMessage(ctx, []);
+        return;
+      }
+      await sendMessage(text, files);
     },
     [filters, sendMessage],
   );
