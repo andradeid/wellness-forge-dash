@@ -83,6 +83,19 @@ interface PatientLite {
   name: string;
   birth_date: string | null;
   created_at: string;
+  gender: string | null;
+}
+
+interface ExamLite {
+  id: string;
+  created_at: string;
+}
+
+interface ChatLite {
+  id: string;
+  patient_id: string;
+  title: string | null;
+  updated_at: string;
 }
 
 type RangeKey = "today" | "week" | "month" | "all";
