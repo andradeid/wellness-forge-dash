@@ -1057,9 +1057,9 @@ function TestEnvironmentNotice() {
     setShowModal(false);
   };
 
-  if (!showModal) return null;
+  if (!showModal || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
