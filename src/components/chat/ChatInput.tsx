@@ -9,7 +9,7 @@ export interface PendingFile {
   file: File;
 }
 
-export type AttachmentProgressStage = "enviando" | "processando" | "concluido" | "erro";
+export type AttachmentProgressStage = "pendente" | "enviando" | "processando" | "concluido" | "erro";
 
 export interface AttachmentProgressItem {
   id: string;
