@@ -961,7 +961,7 @@ function DashboardPage() {
                 <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
                   <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} stroke="#475569" />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
                   <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
                   <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
                 </BarChart>
