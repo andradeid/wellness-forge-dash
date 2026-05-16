@@ -337,6 +337,76 @@ function DashboardPage() {
     return rows;
   }, [patients]);
 
+  // Tendência: volume de exames por semana nas últimas 8 semanas
+  const examsTrend = useMemo(() => {
+    const weeks: { label: string; count: number; start: Date }[] = [];
+    const today = startOfDay(new Date());
+    for (let i = 7; i >= 0; i--) {
+      const start = startOfWeek(subDays(today, i * 7), { weekStartsOn: 1 });
+      weeks.push({ label: format(start, "dd/MM"), count: 0, start });
+    }
+    for (const e of recentExams) {
+      const t = new Date(e.created_at).getTime();
+      for (let i = weeks.length - 1; i >= 0; i--) {
+        if (t >= weeks[i].start.getTime()) {
+          weeks[i].count++;
+          break;
+        }
+      }
+    }
+    return weeks;
+  }, [recentExams]);
+
+  // Top marcadores analisados (todos, não só deficiências)
+  const topMarkers = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of filteredResults) {
+      counts.set(r.marker_name, (counts.get(r.marker_name) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  }, [filteredResults]);
+
+  // Perfil da base: distribuição por gênero e faixa etária
+  const baseProfile = useMemo(() => {
+    const gender = { feminino: 0, masculino: 0, outro: 0 };
+    const ages = { "0-17": 0, "18-29": 0, "30-44": 0, "45-59": 0, "60+": 0 };
+    const now = new Date();
+    for (const p of patients) {
+      const g = (p.gender ?? "").toLowerCase();
+      if (g.startsWith("f")) gender.feminino++;
+      else if (g.startsWith("m")) gender.masculino++;
+      else gender.outro++;
+      if (p.birth_date) {
+        const a = differenceInYears(now, new Date(p.birth_date));
+        if (a < 18) ages["0-17"]++;
+        else if (a < 30) ages["18-29"]++;
+        else if (a < 45) ages["30-44"]++;
+        else if (a < 60) ages["45-59"]++;
+        else ages["60+"]++;
+      }
+    }
+    return {
+      gender: [
+        { name: "Feminino", value: gender.feminino, color: "#e89bcf" },
+        { name: "Masculino", value: gender.masculino, color: "#7ba6c4" },
+        { name: "Outro / —", value: gender.outro, color: "#cbd5e1" },
+      ].filter((g) => g.value > 0),
+      ages: Object.entries(ages).map(([k, v]) => ({ name: k, count: v })),
+      totalWithBirth: patients.filter((p) => !!p.birth_date).length,
+    };
+  }, [patients]);
+
+  // Últimas conversas com a Lumma
+  const lastChats = useMemo(() => {
+    return recentChats.slice(0, 4).map((c) => ({
+      ...c,
+      patientName: patientMap.get(c.patient_id) ?? "Paciente",
+    }));
+  }, [recentChats, patientMap]);
+
   const greeting = (() => {
     // Hora de Brasília (UTC−3), independente do fuso do navegador
     const hourStr = new Intl.DateTimeFormat("pt-BR", {
