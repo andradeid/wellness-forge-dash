@@ -218,19 +218,19 @@ function PatientsPage() {
       </div>
 
       <Card className="bg-white shadow-sm rounded-lg border-muted">
-        <CardHeader className="flex-row items-center justify-between gap-4">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <CardTitle className="text-base font-medium">Lista de pacientes</CardTitle>
-          <div className="relative w-64 max-w-full">
+          <div className="relative w-full sm:w-64 sm:max-w-full">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar paciente..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-11 sm:h-10"
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {loading ? (
             <div className="py-12 text-center text-sm text-muted-foreground">Carregando...</div>
           ) : filtered.length === 0 ? (
@@ -241,64 +241,116 @@ function PatientsPage() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Nascimento</TableHead>
-                  <TableHead>Gênero</TableHead>
-                  <TableHead>Cadastrado em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile: card list */}
+              <div className="md:hidden space-y-3">
                 {filtered.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
-                          <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
-                            {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{p.name}</span>
+                  <div key={p.id} className="rounded-xl border border-muted bg-white p-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
+                        <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                          {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{p.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {genderLabel(p.gender)} · {p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                    <TableCell>{genderLabel(p.gender)}</TableCell>
-                    <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
-                          <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
-                            <MessageSquare className="h-4 w-4" /> Chat
-                          </Link>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => { setEditTarget(p); setEditOpen(true); }}
-                          className="rounded-full"
-                          aria-label="Editar paciente"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => askDelete(p)}
-                          className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          aria-label="Excluir chat"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1 justify-end">
+                      <Button asChild size="sm" variant="ghost" className="rounded-full gap-1 min-h-[40px]">
+                        <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                          <MessageSquare className="h-4 w-4" /> Chat
+                        </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => { setEditTarget(p); setEditOpen(true); }}
+                        className="rounded-full min-h-[40px] min-w-[40px]"
+                        aria-label="Editar paciente"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => askDelete(p)}
+                        className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px] min-w-[40px]"
+                        aria-label="Excluir chat"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Nascimento</TableHead>
+                      <TableHead>Gênero</TableHead>
+                      <TableHead>Cadastrado em</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
+                              <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                                {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{p.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell>{genderLabel(p.gender)}</TableCell>
+                        <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
+                              <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                                <MessageSquare className="h-4 w-4" /> Chat
+                              </Link>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => { setEditTarget(p); setEditOpen(true); }}
+                              className="rounded-full"
+                              aria-label="Editar paciente"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => askDelete(p)}
+                              className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              aria-label="Excluir chat"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
