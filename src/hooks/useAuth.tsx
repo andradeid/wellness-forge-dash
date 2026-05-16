@@ -91,7 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applySession = async (nextSession: Session | null) => {
     const requestId = ++authRequestRef.current;
-    setLoading(true);
     setSession(nextSession);
     setUser(nextSession?.user ?? null);
 

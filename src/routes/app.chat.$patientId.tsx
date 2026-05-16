@@ -132,7 +132,11 @@ function ChatPage() {
     ? differenceInYears(new Date(), new Date(patient.birth_date))
     : null;
 
-  const initialLoading = patient === null || chatId === null;
+  const initialLoading =
+    (patient === null || chatId === null) &&
+    messages.length === 0 &&
+    uploadProgress.length === 0 &&
+    !thinking;
 
   if (initialLoading) {
     return (
