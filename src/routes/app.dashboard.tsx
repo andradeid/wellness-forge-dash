@@ -422,6 +422,7 @@ function DashboardPage() {
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto">
+      <TestEnvironmentNotice />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-5">
         <div>
