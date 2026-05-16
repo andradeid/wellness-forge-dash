@@ -75,7 +75,6 @@ export function ChatInput({
   const onDrop = useCallback((accepted: File[]) => {
     addFiles(accepted);
   }, [addFiles]);
-  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -152,8 +151,7 @@ export function ChatInput({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {files.map((f, i) => {
               const isImg = f.file.type.startsWith("image/");
-              const sizeKb = f.file.size / 1024;
-              const sizeStr = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.round(sizeKb)} KB`;
+              const sizeStr = formatFileSize(f.file.size);
               const previewUrl = isImg ? URL.createObjectURL(f.file) : null;
               return (
                 <div
@@ -188,6 +186,37 @@ export function ChatInput({
               );
             })}
           </div>
+        </div>
+      )}
+      {hasUploadProgress && (
+        <div className="mb-3 space-y-2 rounded-2xl border border-[#e8a04c]/25 bg-white/85 p-3 shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Upload de arquivos
+          </div>
+          {uploadProgress.map((item) => {
+            const meta = getProgressMeta(item.stage);
+            const Icon = meta.icon;
+            const isLoading = item.stage === "enviando" || item.stage === "processando";
+            return (
+              <div key={item.id} className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs">
+                  <Icon className={`h-3.5 w-3.5 shrink-0 ${meta.className} ${isLoading ? "animate-spin" : ""}`} />
+                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">{item.name}</span>
+                  <span className={`shrink-0 text-[10px] ${meta.className}`}>{meta.label}</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#e8a04c]/15">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] transition-all"
+                    style={{ width: `${Math.min(100, Math.max(0, item.progress))}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>{item.message ?? meta.label}</span>
+                  <span>{formatFileSize(item.size)}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
       <Textarea
