@@ -1,4 +1,4 @@
-import { useCallback, useState, type KeyboardEvent } from "react";
+import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
 import { Paperclip, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,13 @@ export function ChatInput({
   const [text, setText] = useState("");
   const [files, setFiles] = useState<PendingFile[]>([]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const onDrop = useCallback((accepted: File[]) => {
     setFiles((prev) => [...prev, ...accepted.map((file) => ({ file }))]);
   }, []);
 
-  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     noClick: true,
     noKeyboard: true,
@@ -35,6 +37,16 @@ export function ChatInput({
     multiple: true,
     maxSize: 20 * 1024 * 1024,
   });
+
+  const openPicker = () => fileInputRef.current?.click();
+
+  const handleNativePick = (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    const MAX = 20 * 1024 * 1024;
+    const valid = picked.filter((f) => f.size <= MAX);
+    if (valid.length) setFiles((prev) => [...prev, ...valid.map((file) => ({ file }))]);
+    e.target.value = "";
+  };
 
   const send = async () => {
     if (disabled) return;
@@ -62,6 +74,14 @@ export function ChatInput({
       }`}
     >
       <input {...getInputProps()} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf,image/*"
+        multiple
+        className="hidden"
+        onChange={handleNativePick}
+      />
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {files.map((f, i) => (
@@ -96,7 +116,7 @@ export function ChatInput({
           variant="ghost"
           size="icon"
           className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm"
-          onClick={open}
+          onClick={openPicker}
           disabled={disabled}
           aria-label="Anexar exame"
         >
