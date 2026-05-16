@@ -40,18 +40,28 @@ interface PatientCtx {
 function ChatPage() {
   const { patientId } = Route.useParams();
   const { chatId: forceChatId, messageId: highlightId } = Route.useSearch();
-  const { role } = useAuth();
+  const { role, profile } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [reportMarkers, setReportMarkers] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
   const printRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  const wrappedSend = useCallback(
+    async (text: string, files: File[]) => {
+      const ctx = filtersToContext(filters);
+      const finalText = ctx ? `${ctx}\n\n${text}`.trim() : text;
+      await sendMessage(finalText, files);
+    },
+    [filters, sendMessage],
+  );
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
