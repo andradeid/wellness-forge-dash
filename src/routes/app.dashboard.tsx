@@ -474,7 +474,7 @@ function DashboardPage() {
       </div>
 
       {/* Lumma Insights — inteligência consolidada da base */}
-      <Card className="relative overflow-hidden border border-[#f1d9b8] bg-gradient-to-br from-[#fffaf2] via-white to-[#fdf3f8] p-5 shadow-sm">
+      <Card className="relative overflow-hidden border border-[#f1d9b8] bg-gradient-to-br from-[#fffaf2] via-white to-[#fdf3f8] p-4 sm:p-5 shadow-sm">
         <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#e8a04c] to-[#e89bcf]" />
         <div className="flex items-start gap-4 pl-2">
           <div className="shrink-0 mt-0.5 h-9 w-9 rounded-full bg-white shadow-sm border border-[#f1d9b8] flex items-center justify-center">
