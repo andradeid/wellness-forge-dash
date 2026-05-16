@@ -458,7 +458,7 @@ function DashboardPage() {
                       params={{ patientId: p.patient_id }}
                     >
                       <Button size="sm" variant="ghost" className="rounded-full gap-1">
-                        Abrir <ArrowRight className="h-3 w-3" />
+                        Abrir <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
                       </Button>
                     </Link>
                   </li>
