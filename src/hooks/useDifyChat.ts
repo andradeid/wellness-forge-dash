@@ -191,6 +191,8 @@ export function useDifyChat(
     if (!chatId || readOnly) return;
     setError(null);
     setThinking(true);
+    setThinkingMode(files.length > 0 ? "analysis" : "simple");
+    const startedAt = performance.now();
 
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
@@ -262,11 +264,12 @@ export function useDifyChat(
       role: "user",
       content: text,
       attachments: attachments.length ? attachments : null,
+      created_at: new Date().toISOString(),
     };
 
     // 3) Placeholder assistant message
     const assistantId = crypto.randomUUID();
-    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "", created_at: new Date().toISOString() }]);
 
     // 4) Stream from Dify proxy
     let assistantText = "";
