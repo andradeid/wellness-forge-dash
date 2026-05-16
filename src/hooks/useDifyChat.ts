@@ -205,10 +205,18 @@ export function useDifyChat(
     const attachments: Array<{ name: string }> = [];
     let lastExamId: string | null = null;
     for (const file of files) {
+      const toastId = `upload-${file.name}-${Date.now()}`;
+      toast.loading(`Enviando ${file.name}...`, { id: toastId });
+
       // Storage
       const path = `${user.id}/${patientId}/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("exams").upload(path, file);
-      if (upErr) { setError(upErr.message); setThinking(false); return; }
+      if (upErr) {
+        toast.error(`Falha ao salvar ${file.name}`, { id: toastId });
+        setError(upErr.message); setThinking(false); return;
+      }
+
+      toast.loading(`Processando ${file.name} na Lumma...`, { id: toastId });
 
       // Dify
       const fd = new FormData();
@@ -221,6 +229,7 @@ export function useDifyChat(
         body: fd,
       });
       if (!res.ok) {
+        toast.error(`Falha ao enviar ${file.name} (${res.status})`, { id: toastId });
         setError(`Falha ao enviar exame ao Dify (${res.status})`);
         setThinking(false);
         return;
@@ -248,6 +257,7 @@ export function useDifyChat(
         });
       }
       attachments.push({ name: file.name });
+      toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
 
     // 2) Persist user message
