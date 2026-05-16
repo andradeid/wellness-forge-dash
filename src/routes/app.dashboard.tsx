@@ -123,6 +123,8 @@ function DashboardPage() {
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
+  const [recentExams, setRecentExams] = useState<ExamLite[]>([]);
+  const [recentChats, setRecentChats] = useState<ChatLite[]>([]);
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
