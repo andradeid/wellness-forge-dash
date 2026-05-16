@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { Paperclip, ArrowUp, X, FileText, ImageIcon } from "lucide-react";
+import { AlertCircle, ArrowUp, CheckCircle2, FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -8,21 +9,72 @@ export interface PendingFile {
   file: File;
 }
 
+export type AttachmentProgressStage = "enviando" | "processando" | "concluido" | "erro";
+
+export interface AttachmentProgressItem {
+  id: string;
+  name: string;
+  size: number;
+  type?: string;
+  stage: AttachmentProgressStage;
+  progress: number;
+  message?: string;
+}
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILES = 10;
+const ALLOWED_MIME = /^(application\/(pdf|x-pdf|acrobat|vnd\.pdf|octet-stream)|text\/pdf|image\/(png|jpe?g|webp))$/i;
+const ALLOWED_EXT = /\.(pdf|png|jpe?g|webp)$/i;
+
+function formatFileSize(size: number) {
+  const sizeKb = size / 1024;
+  return sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(sizeKb))} KB`;
+}
+
+function getProgressMeta(stage: AttachmentProgressStage) {
+  if (stage === "concluido") return { label: "concluído", icon: CheckCircle2, className: "text-emerald-700" };
+  if (stage === "erro") return { label: "erro no envio", icon: AlertCircle, className: "text-rose-700" };
+  if (stage === "processando") return { label: "processando", icon: Loader2, className: "text-amber-700" };
+  return { label: "enviando", icon: Loader2, className: "text-[#c66f16]" };
+}
+
 export function ChatInput({
   onSubmit,
   disabled,
+  uploadProgress = [],
 }: {
   onSubmit: (text: string, files: File[]) => Promise<void> | void;
   disabled?: boolean;
+  uploadProgress?: AttachmentProgressItem[];
 }) {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<PendingFile[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const onDrop = useCallback((accepted: File[]) => {
-    setFiles((prev) => [...prev, ...accepted.map((file) => ({ file }))]);
+  const addFiles = useCallback((picked: File[]) => {
+    const valid: File[] = [];
+    let rejected = 0;
+    let oversized = 0;
+    for (const f of picked) {
+      if (f.size > MAX_FILE_SIZE) { oversized += 1; continue; }
+      if (ALLOWED_MIME.test(f.type) || ALLOWED_EXT.test(f.name)) valid.push(f);
+      else rejected += 1;
+    }
+    if (oversized) toast.error("Arquivo acima do limite de 20MB.");
+    if (rejected) toast.error("Formato não suportado. Envie PDF, PNG, JPG ou WEBP.");
+    if (!valid.length) return;
+    setFiles((prev) => {
+      const slots = Math.max(0, MAX_FILES - prev.length);
+      const accepted = valid.slice(0, slots);
+      if (accepted.length < valid.length) toast.warning("Limite de 10 arquivos por mensagem.");
+      return [...prev, ...accepted.map((file) => ({ file }))];
+    });
   }, []);
+
+  const onDrop = useCallback((accepted: File[]) => {
+    addFiles(accepted);
+  }, [addFiles]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -35,22 +87,15 @@ export function ChatInput({
       "image/webp": [".webp"],
     },
     multiple: true,
-    maxSize: 20 * 1024 * 1024,
+    maxSize: MAX_FILE_SIZE,
+    onDropRejected: () => toast.error("Não consegui anexar este arquivo. Use PDF, PNG, JPG ou WEBP até 20MB."),
   });
 
   const openPicker = () => fileInputRef.current?.click();
 
   const handleNativePick = (e: ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files ?? []);
-    const MAX = 20 * 1024 * 1024;
-    const ALLOWED = /^(application\/pdf|image\/(png|jpe?g|webp))$/i;
-    const ALLOWED_EXT = /\.(pdf|png|jpe?g|webp)$/i;
-    const valid: File[] = [];
-    for (const f of picked) {
-      if (f.size > MAX) continue;
-      if (ALLOWED.test(f.type) || ALLOWED_EXT.test(f.name)) valid.push(f);
-    }
-    if (valid.length) setFiles((prev) => [...prev, ...valid.map((file) => ({ file }))]);
+    addFiles(picked);
     e.target.value = "";
   };
 
@@ -71,6 +116,7 @@ export function ChatInput({
   };
 
   const canSend = !disabled && (text.trim().length > 0 || files.length > 0);
+  const hasUploadProgress = uploadProgress.length > 0;
 
   return (
     <div
@@ -105,8 +151,7 @@ export function ChatInput({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {files.map((f, i) => {
               const isImg = f.file.type.startsWith("image/");
-              const sizeKb = f.file.size / 1024;
-              const sizeStr = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.round(sizeKb)} KB`;
+              const sizeStr = formatFileSize(f.file.size);
               const previewUrl = isImg ? URL.createObjectURL(f.file) : null;
               return (
                 <div
@@ -141,6 +186,37 @@ export function ChatInput({
               );
             })}
           </div>
+        </div>
+      )}
+      {hasUploadProgress && (
+        <div className="mb-3 space-y-2 rounded-2xl border border-[#e8a04c]/25 bg-white/85 p-3 shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Upload de arquivos
+          </div>
+          {uploadProgress.map((item) => {
+            const meta = getProgressMeta(item.stage);
+            const Icon = meta.icon;
+            const isLoading = item.stage === "enviando" || item.stage === "processando";
+            return (
+              <div key={item.id} className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs">
+                  <Icon className={`h-3.5 w-3.5 shrink-0 ${meta.className} ${isLoading ? "animate-spin" : ""}`} />
+                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">{item.name}</span>
+                  <span className={`shrink-0 text-[10px] ${meta.className}`}>{meta.label}</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#e8a04c]/15">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] transition-all"
+                    style={{ width: `${Math.min(100, Math.max(0, item.progress))}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>{item.message ?? meta.label}</span>
+                  <span>{formatFileSize(item.size)}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
       <Textarea
