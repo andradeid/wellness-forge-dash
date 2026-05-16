@@ -54,14 +54,14 @@ function AppLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-background">
-        {showStagingBanner && (
-          <div className="shrink-0 bg-amber-100 text-amber-900 border-b border-amber-200/80 text-[11px] sm:text-xs font-medium px-3 py-1.5 text-center leading-snug">
-            ⚠️ AMBIENTE DE HOMOLOGAÇÃO E TESTES (ETAPA 2) • Recursos de processamento em fase de validação estrutural. A migração para a VPS de alta performance ocorrerá na Etapa 3.
-          </div>
-        )}
         <div className="flex flex-1 min-h-0 w-full">
           {!immersive && <AppSidebar />}
           <div className="flex-1 flex flex-col min-w-0">
+            {showStagingBanner && (
+              <div className="shrink-0 bg-amber-100 text-amber-900 border-b border-amber-200/80 text-[11px] sm:text-xs font-medium px-3 py-1.5 text-center leading-snug whitespace-normal break-words">
+                ⚠️ AMBIENTE DE HOMOLOGAÇÃO E TESTES (ETAPA 2) • Recursos de processamento em fase de validação estrutural. A migração para a VPS de alta performance ocorrerá na Etapa 3.
+              </div>
+            )}
             {!immersive && (
               <header className="h-14 flex items-center border-b bg-card px-4 gap-2">
                 <SidebarTrigger />
