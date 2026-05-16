@@ -104,6 +104,7 @@ export function useDifyChat(
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
   const conversationIdRef = useRef<string>("");
   const metaRef = useRef<{
@@ -190,6 +191,8 @@ export function useDifyChat(
     if (!chatId || readOnly) return;
     setError(null);
     setThinking(true);
+    setThinkingMode(files.length > 0 ? "analysis" : "simple");
+    const startedAt = performance.now();
 
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
@@ -261,11 +264,12 @@ export function useDifyChat(
       role: "user",
       content: text,
       attachments: attachments.length ? attachments : null,
+      created_at: new Date().toISOString(),
     };
 
     // 3) Placeholder assistant message
     const assistantId = crypto.randomUUID();
-    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "", created_at: new Date().toISOString() }]);
 
     // 4) Stream from Dify proxy
     let assistantText = "";
@@ -406,9 +410,10 @@ export function useDifyChat(
       });
     }
 
+    const processingMs = Math.round(performance.now() - startedAt);
     const structured = markers
-      ? { markers, indexed, parse_error: parseError }
-      : (parseError ? { parse_error: true } : null);
+      ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
+      : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs };
 
     setMessages((prev) =>
       prev.map((m) =>
@@ -450,5 +455,5 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
-  return { chatId, messages, thinking, error, sendMessage, resetChat };
+  return { chatId, messages, thinking, thinkingMode, error, sendMessage, resetChat };
 }

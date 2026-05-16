@@ -16,8 +16,10 @@ export interface ChatMessage {
     markers?: Marker[];
     indexed?: boolean;
     parse_error?: boolean;
+    processing_ms?: number;
   } | null;
   attachments?: Array<{ name: string }> | null;
+  created_at?: string | null;
 }
 
 /** Splits assistant text into prose + JSON code blocks for elegant rendering. */
@@ -60,10 +62,12 @@ function cleanProse(text: string): string {
 export function ChatMessageList({
   messages,
   thinking,
+  thinkingMode = "analysis",
   highlightId,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
+  thinkingMode?: "analysis" | "simple";
   highlightId?: string;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
@@ -147,6 +151,28 @@ export function ChatMessageList({
                   </div>
                 )}
                 {m.role === "assistant" && <MessageFeedback messageId={m.id} />}
+                <div
+                  className={`mt-2 flex items-center gap-2 text-[10px] ${
+                    isUser ? "text-white/70 justify-end" : "text-muted-foreground/70 justify-start"
+                  }`}
+                >
+                  {m.created_at && (
+                    <span title={new Date(m.created_at).toLocaleString("pt-BR")}>
+                      {new Date(m.created_at).toLocaleString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  )}
+                  {m.role === "assistant" && typeof m.structured_data?.processing_ms === "number" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                      ⏱ {(m.structured_data.processing_ms / 1000).toFixed(2)}s
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -155,7 +181,7 @@ export function ChatMessageList({
         {thinking && (
           <div className="flex justify-start">
             <div className="rounded-2xl bg-white/60 backdrop-blur-md border border-white/60 shadow-sm px-2">
-              <ChatThinking />
+              <ChatThinking mode={thinkingMode} />
             </div>
           </div>
         )}

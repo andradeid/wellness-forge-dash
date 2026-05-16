@@ -48,7 +48,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
@@ -62,7 +62,9 @@ function ChatPage() {
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
-      const ctx = filtersToContext(filters);
+      // Só anexamos o "[Contexto clínico]" quando há exame anexado.
+      // Mensagens de texto puro vão direto pro Dify, sem prefixo.
+      const ctx = files.length > 0 ? filtersToContext(filters) : null;
       const finalText = ctx ? `${ctx}\n\n${text}`.trim() : text;
       await sendMessage(finalText, files);
     },
@@ -299,7 +301,7 @@ function ChatPage() {
                 />
               </div>
             ) : (
-              <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+              <ChatMessageList messages={messages} thinking={thinking} thinkingMode={thinkingMode} highlightId={highlightId} />
             )}
           </div>
         </div>

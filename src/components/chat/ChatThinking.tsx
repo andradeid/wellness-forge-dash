@@ -11,15 +11,27 @@ const STEPS = [
   { icon: Sparkles, text: "Organizando a interpretação para você…" },
 ];
 
-export function ChatThinking() {
+export function ChatThinking({ mode = "analysis" }: { mode?: "analysis" | "simple" }) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
+    if (mode !== "analysis") return;
     const id = setInterval(() => {
       setIdx((i) => (i + 1) % STEPS.length);
     }, 2200);
     return () => clearInterval(id);
-  }, []);
+  }, [mode]);
+
+  if (mode === "simple") {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 min-w-[220px]">
+        <img src={lummaSymbol} alt="Lumma" className="h-5 w-5 animate-spin shrink-0" />
+        <span className="text-sm font-medium animate-pulse bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
+          Lumma está pensando…
+        </span>
+      </div>
+    );
+  }
 
   const Step = STEPS[idx];
   const Icon = Step.icon;
