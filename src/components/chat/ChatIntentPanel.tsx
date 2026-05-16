@@ -8,10 +8,19 @@ export type ExamFilters = {
   sexo: "masculino" | "feminino" | null;
   gestanteTipo: "monofetal" | "gemelar" | null;
   gestantePeriodo: "1t" | "2t" | "3t" | null;
+  dataExame: string; // YYYY-MM-DD
 };
 
+function todayISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export function emptyFilters(): ExamFilters {
-  return { publico: null, sexo: null, gestanteTipo: null, gestantePeriodo: null };
+  return { publico: null, sexo: null, gestanteTipo: null, gestantePeriodo: null, dataExame: todayISO() };
 }
 
 export function filtersToContext(f: ExamFilters): string | null {
@@ -23,6 +32,10 @@ export function filtersToContext(f: ExamFilters): string | null {
   if (f.publico === "gestante" && f.gestantePeriodo) {
     const map = { "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const;
     parts.push(`Período: ${map[f.gestantePeriodo]}`);
+  }
+  if (f.dataExame) {
+    const [y, m, d] = f.dataExame.split("-");
+    parts.push(`Data de realização do exame: ${d}/${m}/${y}`);
   }
   return parts.length ? `[Contexto clínico] ${parts.join(" · ")}` : null;
 }
