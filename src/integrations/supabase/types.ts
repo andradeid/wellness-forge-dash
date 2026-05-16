@@ -245,6 +245,7 @@ export type Database = {
           chat_id: string | null
           created_at: string
           dify_file_id: string | null
+          exam_date: string
           file_name: string
           file_path: string
           id: string
@@ -257,6 +258,7 @@ export type Database = {
           chat_id?: string | null
           created_at?: string
           dify_file_id?: string | null
+          exam_date?: string
           file_name: string
           file_path: string
           id?: string
@@ -269,6 +271,7 @@ export type Database = {
           chat_id?: string | null
           created_at?: string
           dify_file_id?: string | null
+          exam_date?: string
           file_name?: string
           file_path?: string
           id?: string
