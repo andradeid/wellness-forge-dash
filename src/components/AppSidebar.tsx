@@ -268,7 +268,7 @@ export function AppSidebar() {
               {isOpen && (
                 <ul className="mt-1 space-y-0.5">
                   {visibleItems.map((item) => {
-                    const active = isActive(item.url);
+                    const active = isActive(item);
                     const content = (
                       <span
                         className={cn(
