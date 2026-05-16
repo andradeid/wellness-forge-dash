@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquareText, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +7,12 @@ import { Input } from "@/components/ui/input";
 export function SupportWidget() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {isSupportOpen && (
         <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[450px] bg-background border rounded-2xl shadow-2xl flex flex-col z-50 animate-in fade-in slide-in-from-bottom-4 overflow-hidden">
@@ -91,6 +96,7 @@ export function SupportWidget() {
         <span className="absolute inset-0 rounded-full bg-[#e89bcf]/40 animate-ping opacity-60 group-hover:opacity-0" />
         {isSupportOpen ? <X className="h-6 w-6 relative" /> : <MessageSquareText className="h-6 w-6 relative" />}
       </button>
-    </>
+    </>,
+    document.body,
   );
 }
