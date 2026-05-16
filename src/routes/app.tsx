@@ -81,7 +81,7 @@ function AppLayout() {
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   exit={{ opacity: 0, y: -6, filter: "blur(3px)" }}
                   transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                  className={immersive ? "h-full w-full" : "w-full"}
+                  className={immersive ? "absolute inset-0" : "w-full"}
                 >
                   <Outlet />
                 </motion.div>
