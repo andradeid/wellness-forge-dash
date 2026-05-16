@@ -58,6 +58,8 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
   superAdminOnly?: boolean;
+  matchPrefix?: string;
+  exact?: boolean;
 };
 
 type NavGroup = {
