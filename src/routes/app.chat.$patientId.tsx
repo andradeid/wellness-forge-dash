@@ -120,7 +120,7 @@ function ChatPage() {
 
   if (initialLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#f5f5f0] overflow-hidden">
+      <div className="flex h-full w-full items-center justify-center bg-[#f5f5f0] overflow-hidden">
         <div className="flex flex-col items-center gap-4 px-6 text-center">
           <img src={lummaSymbol} alt="Lumma" className="h-14 w-14 animate-spin" />
           <div>
