@@ -422,6 +422,7 @@ function DashboardPage() {
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto">
+      <TestEnvironmentNotice />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-5">
         <div>
@@ -1028,6 +1029,100 @@ function EmptyState({ text }: { text: string }) {
   return (
     <div className="h-40 flex items-center justify-center text-center text-xs text-muted-foreground px-6">
       {text}
+    </div>
+  );
+}
+
+const TEST_ENV_ACK_KEY = "lumma_test_environment_acknowledged";
+
+function TestEnvironmentNotice() {
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    try {
+      const acked = window.localStorage.getItem(TEST_ENV_ACK_KEY);
+      if (!acked) setShowModal(true);
+    } catch {
+      setShowModal(true);
+    }
+  }, []);
+
+  const acknowledge = () => {
+    try {
+      window.localStorage.setItem(TEST_ENV_ACK_KEY, "true");
+    } catch {
+      /* ignore */
+    }
+    setShowModal(false);
+  };
+
+  if (!showModal) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="test-env-title"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
+      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-border overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+        <div className="p-7 space-y-5">
+          <div>
+            <h2
+              id="test-env-title"
+              className="text-2xl text-foreground leading-tight"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              ⚠️ Ambiente de Validação Técnica{" "}
+              <span className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
+                (Etapa 2)
+              </span>
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+            <p>
+              Você está acessando o ambiente de homologação e testes estruturais da{" "}
+              <strong className="text-foreground">LUMMA</strong>. Este espaço é dedicado
+              exclusivamente à validação do nosso novo motor de processamento.
+            </p>
+            <p>Por favor, esteja ciente de dois pontos importantes durante seus testes:</p>
+            <ul className="space-y-3 pl-1">
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] shrink-0" />
+                <span>
+                  <strong className="text-foreground">Processamento de Dados:</strong> o foco
+                  desta etapa é validar a estabilidade e a precisão da leitura de arquivos
+                  (PDFs e imagens). Sinta-se à vontade para testar laudos complexos que
+                  costumavam falhar.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] shrink-0" />
+                <span>
+                  <strong className="text-foreground">Velocidade de Navegação:</strong> como
+                  estamos operando em servidores de desenvolvimento para homologação, a
+                  velocidade de resposta ainda não é a máxima da plataforma. A infraestrutura
+                  de alta performance e tráfego ultra-rápido será ativada na Etapa 3, com a
+                  migração para a sua VPS própria.
+                </span>
+              </li>
+            </ul>
+            <p className="italic">
+              Sua experiência e feedback nesta fase são fundamentais para calibrarmos a
+              curadoria do sistema.
+            </p>
+          </div>
+
+          <Button
+            onClick={acknowledge}
+            className="w-full rounded-full h-11 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90 text-sm font-medium"
+          >
+            Estou Ciente e Quero Iniciar
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
