@@ -410,9 +410,10 @@ export function useDifyChat(
       });
     }
 
+    const processingMs = Math.round(performance.now() - startedAt);
     const structured = markers
-      ? { markers, indexed, parse_error: parseError }
-      : (parseError ? { parse_error: true } : null);
+      ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
+      : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs };
 
     setMessages((prev) =>
       prev.map((m) =>
@@ -454,5 +455,5 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
-  return { chatId, messages, thinking, error, sendMessage, resetChat };
+  return { chatId, messages, thinking, thinkingMode, error, sendMessage, resetChat };
 }

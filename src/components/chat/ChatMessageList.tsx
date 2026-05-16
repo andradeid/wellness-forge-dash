@@ -16,8 +16,10 @@ export interface ChatMessage {
     markers?: Marker[];
     indexed?: boolean;
     parse_error?: boolean;
+    processing_ms?: number;
   } | null;
   attachments?: Array<{ name: string }> | null;
+  created_at?: string | null;
 }
 
 /** Splits assistant text into prose + JSON code blocks for elegant rendering. */
