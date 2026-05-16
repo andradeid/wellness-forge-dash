@@ -86,8 +86,8 @@ const nutriGroups: NavGroup[] = [
     subtitle: "Seus pacientes e análises",
     icon: UserRound,
     items: [
-      { title: "Pacientes", url: "/app/patients", icon: Users },
-      { title: "Chat", url: "/app/patients", icon: MessageSquare },
+      { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
+      { title: "Chat", url: "/app/patients", icon: MessageSquare, matchPrefix: "/app/chat" },
     ],
   },
   {
