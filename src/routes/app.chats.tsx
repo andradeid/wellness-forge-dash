@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MessageSquare, Search, Clock, FileText } from "lucide-react";
+import { MessageSquare, Search, Clock, FileText, Pin, PinOff } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +22,7 @@ interface ChatRow {
   title: string | null;
   created_at: string;
   updated_at: string;
+  pinned_at: string | null;
   patient: { id: string; name: string; avatar_url: string | null } | null;
   last_message: { content: string; role: string; created_at: string } | null;
   message_count: number;
@@ -38,8 +41,9 @@ function ChatsCentralPage() {
       setLoading(true);
       const { data: chats } = await (supabase as any)
         .from("patient_chats")
-        .select("id, patient_id, title, created_at, updated_at, patients:patient_id(id, name, avatar_url)")
+        .select("id, patient_id, title, created_at, updated_at, pinned_at, patients:patient_id(id, name, avatar_url)")
         .eq("created_by", user.id)
+        .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
         .limit(200);
 
@@ -74,6 +78,7 @@ function ChatsCentralPage() {
           title: c.title,
           created_at: c.created_at,
           updated_at: c.updated_at,
+          pinned_at: c.pinned_at ?? null,
           patient: c.patients ?? null,
           last_message: ms[0]
             ? { content: ms[0].content ?? "", role: ms[0].role, created_at: ms[0].created_at }
@@ -87,6 +92,27 @@ function ChatsCentralPage() {
       setLoading(false);
     })();
   }, [user]);
+
+  const togglePin = async (e: React.MouseEvent, chat: ChatRow) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = chat.pinned_at ? null : new Date().toISOString();
+    setRows((rs) =>
+      [...rs.map((r) => (r.id === chat.id ? { ...r, pinned_at: next } : r))].sort(sortRows),
+    );
+    const { error } = await (supabase as any)
+      .from("patient_chats")
+      .update({ pinned_at: next })
+      .eq("id", chat.id);
+    if (error) {
+      toast.error("Não foi possível atualizar a fixação.");
+      setRows((rs) =>
+        [...rs.map((r) => (r.id === chat.id ? { ...r, pinned_at: chat.pinned_at } : r))].sort(sortRows),
+      );
+    } else {
+      toast.success(next ? "Conversa fixada no topo." : "Conversa desafixada.");
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -159,7 +185,7 @@ function ChatsCentralPage() {
                 params={{ patientId: r.patient_id }}
                 className="block"
               >
-                <Card className="p-4 hover:bg-accent/40 transition-colors">
+                <Card className={cn("p-4 hover:bg-accent/40 transition-colors", r.pinned_at && "border-amber-300 bg-amber-50/40")}>
                   <div className="flex items-start gap-4">
                     <Avatar className="h-11 w-11 shrink-0">
                       <AvatarImage src={r.patient?.avatar_url ?? undefined} />
@@ -169,6 +195,7 @@ function ChatsCentralPage() {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        {r.pinned_at && <Pin className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />}
                         <span className="font-medium truncate">
                           {r.patient?.name ?? "Paciente removido"}
                         </span>
@@ -200,6 +227,16 @@ function ChatsCentralPage() {
                       </span>
                       <span>{r.message_count} msgs</span>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => togglePin(e, r)}
+                      title={r.pinned_at ? "Desafixar conversa" : "Fixar no topo"}
+                      className={cn("shrink-0", r.pinned_at && "text-amber-600")}
+                    >
+                      {r.pinned_at ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    </Button>
                   </div>
                 </Card>
               </Link>
@@ -254,4 +291,12 @@ function formatWhen(iso: string) {
   const days = Math.floor(h / 24);
   if (days < 7) return `há ${days}d`;
   return d.toLocaleDateString("pt-BR");
+}
+
+function sortRows(a: ChatRow, b: ChatRow) {
+  if (!!a.pinned_at !== !!b.pinned_at) return a.pinned_at ? -1 : 1;
+  if (a.pinned_at && b.pinned_at) {
+    return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+  }
+  return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
 }

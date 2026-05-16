@@ -1,0 +1,2 @@
+ALTER TABLE public.patient_chats ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_patient_chats_pinned ON public.patient_chats(created_by, pinned_at DESC NULLS LAST, updated_at DESC);
