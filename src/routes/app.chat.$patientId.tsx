@@ -181,7 +181,7 @@ function ChatPage() {
           Histórico de exames
         </div>
         <div className="overflow-y-auto flex-1">
-          <ExamHistoryList exams={exams} />
+          <ExamHistoryList exams={exams} onChanged={reloadExams} />
         </div>
       </div>
     </>
