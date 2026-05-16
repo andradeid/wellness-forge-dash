@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Eye, FileDown, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReactToPrint } from "react-to-print";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatIntentPanel, emptyFilters, filtersToContext, type ExamFilters } from "@/components/chat/ChatIntentPanel";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -39,18 +40,28 @@ interface PatientCtx {
 function ChatPage() {
   const { patientId } = Route.useParams();
   const { chatId: forceChatId, messageId: highlightId } = Route.useSearch();
-  const { role } = useAuth();
+  const { role, profile } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [reportMarkers, setReportMarkers] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
   const printRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  const wrappedSend = useCallback(
+    async (text: string, files: File[]) => {
+      const ctx = filtersToContext(filters);
+      const finalText = ctx ? `${ctx}\n\n${text}`.trim() : text;
+      await sendMessage(finalText, files);
+    },
+    [filters, sendMessage],
+  );
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -222,8 +233,16 @@ function ChatPage() {
               </span>
             </div>
           )}
-          <div className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col">
-            <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+          <div className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col">
+            {messages.length === 0 && !thinking && role === "nutri" ? (
+              <ChatIntentPanel
+                filters={filters}
+                onChange={setFilters}
+                userName={profile?.full_name?.split(" ")[0]}
+              />
+            ) : (
+              <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+            )}
           </div>
         </div>
         <div className="shrink-0 px-4 pb-6 pt-3">
@@ -235,13 +254,13 @@ function ChatPage() {
               </div>
             ) : (
               <>
-                <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
+                <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} />
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
                 </p>
                 {role === "nutri" && (
                   <p className="mt-1 text-center text-[10px] italic text-amber-700/80">
-                    Nota: Processamento estrutural em modo de validação. Arquivos de imagem e PDF estão habilitados para teste de estabilidade de leitura.
+                    Nota: Processamento estrutural em modo de validação técnica.
                   </p>
                 )}
                 <TooltipProvider delayDuration={150}>
