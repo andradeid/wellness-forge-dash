@@ -714,8 +714,8 @@ function DashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={140}
-                    tick={{ fontSize: 12 }}
+                    width={100}
+                    tick={{ fontSize: 11 }}
                     stroke="#475569"
                   />
                   <Tooltip formatter={(v: number) => [`${v} ocorrências`, "Total"]} />
