@@ -323,16 +323,20 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
         if (!l.startsWith("data:")) return;
         const payload = l.slice(5).trim();
         if (!payload || payload === "[DONE]") return;
+        let evt: any;
+        try { evt = JSON.parse(payload); } catch { return; }
         try {
-          const evt = JSON.parse(payload);
           if (evt.event === "message" || evt.event === "agent_message") {
             assistantTextRef.current += getDifyAnswer(evt);
           } else if (evt.event === "message_end" || evt.event === "agent_thought") {
             if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
           } else if (evt.event === "error") {
+            console.error("[QuickAnalysis] Evento de erro do Dify:", evt);
             throw new Error(evt.message ?? "Erro do Dify");
           }
-        } catch { /* ignore */ }
+        } catch (err) {
+          console.error("[QuickAnalysis] Erro processando evento:", err, evt);
+        }
       };
       while (true) {
         const { value, done } = await reader.read();
