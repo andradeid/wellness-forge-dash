@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, FileDown, ShieldCheck, TrendingUp } from "lucide-react";
+import { ArrowLeft, Eye, FileDown, Plus, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReactToPrint } from "react-to-print";
 import { supabase } from "@/integrations/supabase/client";
