@@ -17,7 +17,7 @@ import {
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
 const ICON_PROPS = { strokeWidth: 1.6 } as const;
-import { differenceInCalendarDays, format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
+import { differenceInCalendarDays, differenceInYears, format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
   PieChart,
@@ -30,6 +30,10 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
+  Line,
+  LineChart,
+  Area,
+  AreaChart,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
