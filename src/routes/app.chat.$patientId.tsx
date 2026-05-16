@@ -48,7 +48,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
@@ -319,7 +319,7 @@ function ChatPage() {
               </div>
             ) : (
               <>
-                <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} />
+                <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} uploadProgress={uploadProgress} />
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
                 </p>
