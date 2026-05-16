@@ -8,6 +8,8 @@ import {
   ArrowRight,
   Sparkles,
   Plus,
+  Cake,
+  Clock,
 } from "lucide-react";
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
