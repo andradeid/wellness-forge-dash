@@ -876,7 +876,7 @@ function DashboardPage() {
           ) : (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={examsTrend} margin={{ left: -10, right: 8, top: 8 }}>
+                <AreaChart data={examsTrend} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#e8a04c" stopOpacity={0.35} />
