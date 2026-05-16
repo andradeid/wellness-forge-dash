@@ -208,8 +208,23 @@ function ChatPage() {
           </Button>
         </header>
 
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+        <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
+          {role === "nutri" && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none z-0"
+            >
+              <span
+                className="text-[clamp(2rem,8vw,5rem)] font-black uppercase tracking-widest text-black/[0.045] whitespace-nowrap"
+                style={{ transform: "rotate(-25deg)" }}
+              >
+                AMBIENTE DE TESTES — VERSÃO 2.0 (MOTOR)
+              </span>
+            </div>
+          )}
+          <div className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+          </div>
         </div>
         <div className="shrink-0 px-4 pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
