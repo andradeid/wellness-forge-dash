@@ -308,8 +308,8 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
           meta: {
             nutritionist_name: (profile?.full_name as string) || (profile?.email as string) || "Nutricionista",
             nutritionist_email: (profile?.email as string) || "",
-            patient_name: "novo",
-            patient_id: "novo",
+            patient_name: `quick-${Date.now()}`,
+            patient_id: `quick-${Date.now()}`,
           },
         }),
       });
