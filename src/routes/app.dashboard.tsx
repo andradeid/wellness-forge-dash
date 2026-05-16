@@ -1037,23 +1037,9 @@ function EmptyState({ text }: { text: string }) {
 const TEST_ENV_ACK_KEY = "lumma_test_environment_acknowledged";
 
 function TestEnvironmentNotice() {
-  const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    try {
-      const acked = window.localStorage.getItem(TEST_ENV_ACK_KEY);
-      if (!acked) setShowModal(true);
-    } catch {
-      setShowModal(true);
-    }
-  }, []);
+  const [showModal, setShowModal] = useState(true);
 
   const acknowledge = () => {
-    try {
-      window.localStorage.setItem(TEST_ENV_ACK_KEY, "true");
-    } catch {
-      /* ignore */
-    }
     setShowModal(false);
   };
 
