@@ -254,13 +254,13 @@ function ChatPage() {
               </div>
             ) : (
               <>
-                <ChatInput onSubmit={sendMessage} disabled={thinking || !chatId} />
+                <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} />
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
                 </p>
                 {role === "nutri" && (
                   <p className="mt-1 text-center text-[10px] italic text-amber-700/80">
-                    Nota: Processamento estrutural em modo de validação. Arquivos de imagem e PDF estão habilitados para teste de estabilidade de leitura.
+                    Nota: Processamento estrutural em modo de validação técnica.
                   </p>
                 )}
                 <TooltipProvider delayDuration={150}>
