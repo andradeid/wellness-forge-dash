@@ -9,6 +9,9 @@ import {
   Sparkles,
   Plus,
 } from "lucide-react";
+
+// Ícones com peso visual leve e tamanho uniforme em toda a página
+const ICON_PROPS = { strokeWidth: 1.6 } as const;
 import { format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
@@ -258,9 +261,9 @@ function DashboardPage() {
   })();
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="space-y-8 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-5">
         <div>
           <h1
             className="text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
@@ -268,23 +271,23 @@ function DashboardPage() {
           >
             {greeting}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
             {stats.criticalLast24 > 0
               ? `Você tem ${stats.criticalLast24} alerta${stats.criticalLast24 > 1 ? "s" : ""} crítico${stats.criticalLast24 > 1 ? "s" : ""} nas últimas 24h.`
               : "Tudo calmo por aqui. Continue acompanhando suas pacientes."}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-full border bg-white p-1 shadow-sm">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex rounded-full bg-muted/60 p-1">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => setRange(opt.key)}
                 className={cn(
-                  "px-3 py-1.5 text-xs rounded-full transition-colors",
+                  "px-4 py-1.5 text-xs font-medium rounded-full transition-all",
                   range === opt.key
-                    ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow"
+                    ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -298,7 +301,7 @@ function DashboardPage() {
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90"
             >
               <Link to="/app/patients">
-                <Plus className="h-4 w-4" />
+                <Plus className="h-[18px] w-[18px]" {...ICON_PROPS} />
                 Novo Chat
               </Link>
             </Button>
@@ -308,9 +311,9 @@ function DashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <KpiCard
-          icon={<Users className="h-5 w-5" />}
+          icon={<Users className="h-5 w-5" {...ICON_PROPS} />}
           label="Vidas impactadas"
           value={stats.totalPatients}
           hint="Pacientes ativos na sua base"
@@ -318,7 +321,7 @@ function DashboardPage() {
           loading={loading}
         />
         <KpiCard
-          icon={<Activity className="h-5 w-5" />}
+          icon={<Activity className="h-5 w-5" {...ICON_PROPS} />}
           label={`Exames · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`}
           value={stats.examsThisMonth}
           hint={range === "all" ? "Histórico completo" : RANGE_OPTIONS.find((o) => o.key === range)?.label}
@@ -326,7 +329,7 @@ function DashboardPage() {
           loading={loading}
         />
         <KpiCard
-          icon={<AlertTriangle className="h-5 w-5" />}
+          icon={<AlertTriangle className="h-5 w-5" {...ICON_PROPS} />}
           label="Alertas críticos (24h)"
           value={stats.criticalLast24}
           hint="Marcadores graves recentes"
@@ -334,7 +337,7 @@ function DashboardPage() {
           loading={loading}
         />
         <KpiCard
-          icon={<TrendingDown className="h-5 w-5" />}
+          icon={<TrendingDown className="h-5 w-5" {...ICON_PROPS} />}
           label="Marcadores analisados"
           value={stats.totalAnalyzed}
           hint="Total auditado pela Lumma"
@@ -344,7 +347,7 @@ function DashboardPage() {
       </div>
 
       {/* Bento grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Distribution */}
         <Card className="p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-2">
@@ -455,7 +458,7 @@ function DashboardPage() {
                       params={{ patientId: p.patient_id }}
                     >
                       <Button size="sm" variant="ghost" className="rounded-full gap-1">
-                        Abrir <ArrowRight className="h-3 w-3" />
+                        Abrir <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
                       </Button>
                     </Link>
                   </li>
@@ -474,7 +477,7 @@ function DashboardPage() {
                 Marcadores classificados como baixos / deficientes na sua base.
               </p>
             </div>
-            <Sparkles className="h-4 w-4 text-[#e8a04c]" />
+            <Sparkles className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
           </div>
           {loading ? (
             <Skeleton className="h-56 w-full" />
