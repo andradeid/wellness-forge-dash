@@ -135,20 +135,20 @@ function PatientsPage() {
     g === "male" ? "Masculino" : g === "female" ? "Feminino" : g === "other" ? "Outro" : "—";
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Pacientes</h1>
+    <div className="space-y-6 max-w-6xl px-3 sm:px-4 lg:px-0 overflow-x-hidden">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight break-words">Pacientes</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Bem-vinda ao Painel. Tudo em um só lugar — calmo, organizado, à mão.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <QuickAnalysisDialog onCreated={load} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
-                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md"
+                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md min-h-[44px] flex-1 md:flex-none"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Paciente
