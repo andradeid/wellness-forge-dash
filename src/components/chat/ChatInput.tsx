@@ -89,22 +89,58 @@ export function ChatInput({
         onChange={handleNativePick}
       />
       {files.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
-          {files.map((f, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-1 text-xs bg-muted/70 rounded-full px-3 py-1"
-            >
-              📎 {f.file.name}
-              <button
-                type="button"
-                onClick={() => setFiles((p) => p.filter((_, idx) => idx !== i))}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
-              </button>
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              {files.length} {files.length === 1 ? "arquivo anexado" : "arquivos anexados"}
             </span>
-          ))}
+            <button
+              type="button"
+              onClick={() => setFiles([])}
+              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+            >
+              Remover todos
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {files.map((f, i) => {
+              const isImg = f.file.type.startsWith("image/");
+              const sizeKb = f.file.size / 1024;
+              const sizeStr = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.round(sizeKb)} KB`;
+              const previewUrl = isImg ? URL.createObjectURL(f.file) : null;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-2xl border border-[#e8a04c]/20 bg-gradient-to-br from-[#fff7ed] to-[#fef2f8] px-3 py-2 shadow-sm"
+                >
+                  <div className="h-10 w-10 shrink-0 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-white shadow-inner">
+                    {isImg && previewUrl ? (
+                      <img src={previewUrl} alt={f.file.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <FileText className="h-5 w-5 text-[#e8a04c]" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-xs font-medium text-foreground" title={f.file.name}>
+                      {f.file.name}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      {isImg ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                      {sizeStr} · pronto para envio
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFiles((p) => p.filter((_, idx) => idx !== i))}
+                    className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/60 transition"
+                    aria-label={`Remover ${f.file.name}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       <Textarea
