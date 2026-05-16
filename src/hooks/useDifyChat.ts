@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
+import type { AttachmentProgressItem, AttachmentProgressStage } from "@/components/chat/ChatInput";
 import type { Marker } from "@/components/chat/ExamResultCard";
 import {
   processAndPersistMarkers,
@@ -107,6 +108,7 @@ export function useDifyChat(
   const [thinking, setThinking] = useState(false);
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
   const metaRef = useRef<{
     nutritionist_name: string;
@@ -193,12 +195,30 @@ export function useDifyChat(
     setError(null);
     setThinking(true);
     setThinkingMode(files.length > 0 ? "analysis" : "simple");
+    if (files.length > 0) {
+      setUploadProgress(files.map((file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        stage: "enviando",
+        progress: 8,
+        message: "Preparando envio do exame",
+      })));
+    }
     const startedAt = performance.now();
+
+    const updateFileProgress = (file: File, stage: AttachmentProgressStage, progress: number, message?: string) => {
+      const id = `${file.name}-${file.size}-${file.lastModified}`;
+      setUploadProgress((prev) => prev.map((item) => (
+        item.id === id ? { ...item, stage, progress, message } : item
+      )));
+    };
 
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     const { data: { user } } = await supabase.auth.getUser();
-    if (!token || !user) { setThinking(false); return; }
+    if (!token || !user) { setThinking(false); setUploadProgress([]); return; }
 
     // 1) Upload files to Dify + storage
     const difyFiles: DifyFileRef[] = [];
@@ -206,16 +226,19 @@ export function useDifyChat(
     let lastExamId: string | null = null;
     for (const file of files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
+      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
 
       // Storage
       const path = `${user.id}/${patientId}/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("exams").upload(path, file);
       if (upErr) {
+        updateFileProgress(file, "erro", 100, "Falha ao salvar exame");
         toast.error(`Falha ao salvar ${file.name}`, { id: toastId });
         setError(upErr.message); setThinking(false); return;
       }
 
+      updateFileProgress(file, "processando", 45, "Enviando arquivo ao Dify");
       toast.loading(`Processando ${file.name} na Lumma...`, { id: toastId });
 
       // Dify
@@ -229,6 +252,7 @@ export function useDifyChat(
         body: fd,
       });
       if (!res.ok) {
+        updateFileProgress(file, "erro", 100, "Falha ao enviar ao Dify");
         toast.error(`Falha ao enviar ${file.name} (${res.status})`, { id: toastId });
         setError(`Falha ao enviar exame ao Dify (${res.status})`);
         setThinking(false);
@@ -236,6 +260,7 @@ export function useDifyChat(
       }
       const json = await res.json() as { id?: string; mime_type?: string };
       const difyId = json.id;
+      updateFileProgress(file, "processando", 70, "Arquivo recebido pelo Dify");
 
       const { data: examIns } = await (supabase as any).from("patient_exams").insert({
         patient_id: patientId,
@@ -257,6 +282,7 @@ export function useDifyChat(
         });
       }
       attachments.push({ name: file.name });
+      updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
 
