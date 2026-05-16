@@ -120,18 +120,63 @@ function ChatPage() {
 
   if (initialLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#f5f5f0] overflow-hidden">
-        <div className="flex flex-col items-center gap-4 px-6 text-center">
-          <img src={lummaSymbol} alt="Lumma" className="h-14 w-14 animate-spin" />
-          <div>
-            <p className="text-lg font-medium animate-pulse bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
-              Carregando dados e conversas do paciente…
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Aguarde um instante enquanto a Lumma prepara o atendimento.
-            </p>
+      <div className="flex h-full min-h-0 w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+        {/* Skeleton sidebar paciente */}
+        <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
+          <div className="px-5 py-4 border-b">
+            <Skeleton className="h-3 w-20" />
+            <div className="mt-3 flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
           </div>
-        </div>
+          <div className="px-3 py-2 border-b">
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+          <div className="px-3 py-3 border-b flex-1 min-h-0 flex flex-col gap-2">
+            <Skeleton className="h-3 w-32 mx-3 mb-2" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            ))}
+          </div>
+        </aside>
+
+        {/* Skeleton chat principal */}
+        <section className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
+          <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-white/40 bg-white/60 backdrop-blur-md shrink-0 flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-full lg:hidden" />
+            <Skeleton className="h-5 w-40" />
+            <div className="ml-auto flex gap-2">
+              <Skeleton className="h-8 w-24 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+          </header>
+
+          <div className="flex-1 min-h-0 overflow-hidden px-3 sm:px-6 py-6 space-y-4">
+            <div className="flex flex-col items-center gap-3 pt-2">
+              <img src={lummaSymbol} alt="Lumma" className="h-10 w-10 animate-spin" />
+              <p className="text-sm font-medium animate-pulse bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
+                Aguarde, Lumma está raciocinando...
+              </p>
+            </div>
+            <div className="flex justify-start">
+              <Skeleton className="h-16 w-2/3 max-w-md rounded-2xl" />
+            </div>
+            <div className="flex justify-end">
+              <Skeleton className="h-12 w-1/2 max-w-sm rounded-2xl" />
+            </div>
+            <div className="flex justify-start">
+              <Skeleton className="h-20 w-3/4 max-w-lg rounded-2xl" />
+            </div>
+          </div>
+
+          <div className="border-t border-white/40 bg-white/60 backdrop-blur-md p-3 sm:p-4 shrink-0">
+            <Skeleton className="h-12 w-full rounded-full" />
+          </div>
+        </section>
       </div>
     );
   }
