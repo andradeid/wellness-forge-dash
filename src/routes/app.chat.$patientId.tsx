@@ -49,10 +49,17 @@ function ChatPage() {
   const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
   const printRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
+  const { messages, thinking, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  const handleNewChat = useCallback(async () => {
+    if (thinking) return;
+    if (messages.length > 0 && !window.confirm("Iniciar uma nova consulta? A conversa atual será encerrada e arquivada no histórico.")) return;
+    setFilters(emptyFilters());
+    await resetChat();
+  }, [thinking, messages.length, resetChat]);
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
