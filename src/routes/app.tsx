@@ -73,7 +73,7 @@ function AppLayout() {
                 </div>
               </header>
             )}
-            <main className={immersive ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
+            <main className={immersive ? "flex-1 min-h-0 overflow-hidden relative" : "flex-1 p-6 overflow-auto"}>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={pathname}
