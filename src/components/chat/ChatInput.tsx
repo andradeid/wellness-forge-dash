@@ -53,21 +53,25 @@ export function ChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((picked: File[]) => {
+    if (!picked.length) return;
     const valid: File[] = [];
-    let rejected = 0;
     let oversized = 0;
+    let unknown = 0;
     for (const f of picked) {
       if (f.size > MAX_FILE_SIZE) { oversized += 1; continue; }
-      if (ALLOWED_MIME.test(f.type) || ALLOWED_EXT.test(f.name)) valid.push(f);
-      else rejected += 1;
+      const ok = ALLOWED_MIME.test(f.type) || ALLOWED_EXT.test(f.name);
+      if (!ok) unknown += 1;
+      // Aceita mesmo sem MIME/extensão reconhecidos (comum no Android) — valida no envio
+      valid.push(f);
     }
     if (oversized) toast.error("Arquivo acima do limite de 20MB.");
-    if (rejected) toast.error("Formato não suportado. Envie PDF, PNG, JPG ou WEBP.");
+    if (unknown) toast.warning("Tipo de arquivo não reconhecido — envie PDF, PNG, JPG ou WEBP se necessário.");
     if (!valid.length) return;
     setFiles((prev) => {
       const slots = Math.max(0, MAX_FILES - prev.length);
       const accepted = valid.slice(0, slots);
       if (accepted.length < valid.length) toast.warning("Limite de 10 arquivos por mensagem.");
+      toast.success(`${accepted.length} ${accepted.length === 1 ? "arquivo anexado" : "arquivos anexados"}`);
       return [...prev, ...accepted.map((file) => ({ file }))];
     });
   }, []);
