@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Users,
@@ -33,10 +33,6 @@ import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/dashboard")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login" });
-  },
   head: () => ({
     meta: [{ title: "Dashboard — Lumma" }],
   }),

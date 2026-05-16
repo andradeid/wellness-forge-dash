@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const authRequestRef = useRef(0);
+  const sessionRef = useRef<Session | null>(null);
 
   const loadUserData = async (currentUser: User | null) => {
     if (!currentUser) {
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const applySession = async (nextSession: Session | null) => {
     const requestId = ++authRequestRef.current;
     setLoading(true);
+    sessionRef.current = nextSession;
     setSession(nextSession);
     setUser(nextSession?.user ?? null);
 
@@ -123,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const initialRequestId = authRequestRef.current;
     // Listener FIRST, then getSession
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
@@ -133,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     supabase.auth.getSession().then(({ data }) => {
+      if (initialRequestId !== authRequestRef.current) return;
       void applySession(data.session);
     });
 

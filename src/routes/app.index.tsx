@@ -14,9 +14,9 @@ function AppIndex() {
     if (loading || !user) return;
     if (role === null) return; // wait until role resolved
     if (role === "super_admin") {
-      navigate({ to: "/app/admin/nutritionists" });
+      navigate({ to: "/app/admin/nutritionists", replace: true });
     } else {
-      navigate({ to: "/app/dashboard" });
+      navigate({ to: "/app/dashboard", replace: true });
     }
     // nutri também vai para /app/dashboard como home
   }, [role, loading, user, navigate]);

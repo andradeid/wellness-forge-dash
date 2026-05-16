@@ -33,7 +33,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && session) {
-      navigate({ to: "/app" });
+      navigate({ to: "/app", replace: true });
     }
   }, [session, loading, navigate]);
 
