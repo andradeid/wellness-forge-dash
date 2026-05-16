@@ -153,25 +153,54 @@ function PatientsPage() {
                 Novo Paciente
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Novo paciente</DialogTitle>
-                <DialogDescription>Cadastre um paciente. Mais campos virão na criação do chat.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreate} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="p-name">Nome</Label>
-                  <Input id="p-name" required value={name} onChange={(e) => setName(e.target.value)} />
+            <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
+              <div className="h-1.5 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+              <div className="px-6 pt-6 pb-2 bg-gradient-to-b from-[#f7f5f0] to-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] flex items-center justify-center shadow-md">
+                    <Plus className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <DialogHeader className="space-y-0 text-left">
+                      <DialogTitle className="text-lg font-semibold tracking-tight text-foreground text-left">
+                        Novo paciente
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground text-left">
+                        Cadastre um paciente. Mais campos virão na criação do chat.
+                      </DialogDescription>
+                    </DialogHeader>
+                  </div>
+                </div>
+              </div>
+              <form onSubmit={handleCreate} className="space-y-4 px-6 pb-6 pt-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="p-name" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nome</Label>
+                  <Input
+                    id="p-name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nome completo"
+                    className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="p-birth">Nascimento</Label>
-                    <Input id="p-birth" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="p-birth" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento</Label>
+                    <Input
+                      id="p-birth"
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Gênero</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
                     <Select value={gender ?? undefined} onValueChange={(v) => setGender(v as Patient["gender"])}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="male">Masculino</SelectItem>
                         <SelectItem value="female">Feminino</SelectItem>
@@ -180,9 +209,13 @@ function PatientsPage() {
                     </Select>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? "Salvando..." : "Salvar"}
+                <DialogFooter className="pt-2">
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full rounded-full h-11 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md font-medium"
+                  >
+                    {submitting ? "Salvando..." : "Salvar paciente"}
                   </Button>
                 </DialogFooter>
               </form>
