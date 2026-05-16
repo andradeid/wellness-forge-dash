@@ -144,6 +144,13 @@ function ChatsCentralPage() {
         </p>
       </header>
 
+      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <Pin className="h-4 w-4 mt-0.5 shrink-0 fill-amber-500 text-amber-600" />
+        <div>
+          <span className="font-semibold">Novo:</span> agora você pode fixar conversas no topo clicando no ícone de pin em cada cartão para manter os atendimentos prioritários sempre à mão.
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Conversas" value={stats.total} />
         <StatCard label="Ativas (7 dias)" value={stats.last7} />
