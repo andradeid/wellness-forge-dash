@@ -24,6 +24,7 @@ import {
   ChevronsUpDown,
   UserRound,
   LogOut,
+  Plus,
   Settings as SettingsIcon,
   User as UserIcon,
 } from "lucide-react";
