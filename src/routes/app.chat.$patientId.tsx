@@ -82,17 +82,19 @@ function ChatPage() {
     })();
   }, [patientId]);
 
+  const reloadExams = useCallback(async () => {
+    const { data } = await (supabase as any)
+      .from("patient_exams")
+      .select("id, file_name, file_path, mime_type, created_at, exam_date")
+      .eq("patient_id", patientId)
+      .order("exam_date", { ascending: false })
+      .limit(20);
+    setExams((data as ExamItem[]) ?? []);
+  }, [patientId]);
+
   useEffect(() => {
-    (async () => {
-      const { data } = await (supabase as any)
-        .from("patient_exams")
-        .select("id, file_name, mime_type, created_at")
-        .eq("patient_id", patientId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setExams((data as ExamItem[]) ?? []);
-    })();
-  }, [patientId, messages.length]);
+    reloadExams();
+  }, [reloadExams, messages.length]);
 
   useEffect(() => {
     (async () => {
