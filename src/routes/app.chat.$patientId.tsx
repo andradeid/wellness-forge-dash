@@ -233,8 +233,16 @@ function ChatPage() {
               </span>
             </div>
           )}
-          <div className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col">
-            <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+          <div className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col">
+            {messages.length === 0 && !thinking && role === "nutri" ? (
+              <ChatIntentPanel
+                filters={filters}
+                onChange={setFilters}
+                userName={profile?.full_name?.split(" ")[0]}
+              />
+            ) : (
+              <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
+            )}
           </div>
         </div>
         <div className="shrink-0 px-4 pb-6 pt-3">
