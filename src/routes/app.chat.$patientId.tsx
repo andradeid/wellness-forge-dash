@@ -186,15 +186,15 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="flex h-screen max-h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
       {/* Left column: patient + exams (desktop) */}
-      <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
+      <aside className="hidden lg:flex h-full w-72 shrink-0 flex-col overflow-hidden border-r bg-white">
         {SidebarContent}
       </aside>
 
       {/* Main: chat */}
-      <section className="flex-1 flex flex-col min-w-0 h-full">
-        <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-white/40 bg-white/60 backdrop-blur-md shrink-0 flex items-center gap-2 sm:gap-4">
+      <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-3 sm:py-4 border-b border-white/40 bg-white/80 backdrop-blur-md flex items-center gap-2 sm:gap-4">
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden shrink-0 h-10 w-10" aria-label="Abrir menu do paciente">
@@ -269,13 +269,15 @@ function ChatPage() {
               </span>
             </div>
           )}
-          <div className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col">
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
             {messages.length === 0 && !thinking && role === "nutri" ? (
-              <ChatIntentPanel
-                filters={filters}
-                onChange={setFilters}
-                userName={profile?.full_name?.split(" ")[0]}
-              />
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <ChatIntentPanel
+                  filters={filters}
+                  onChange={setFilters}
+                  userName={profile?.full_name?.split(" ")[0]}
+                />
+              </div>
             ) : (
               <ChatMessageList messages={messages} thinking={thinking} highlightId={highlightId} />
             )}
