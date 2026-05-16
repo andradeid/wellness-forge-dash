@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, FileDown, ShieldCheck, TrendingUp } from "lucide-react";
+import { ArrowLeft, Eye, FileDown, Plus, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReactToPrint } from "react-to-print";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,10 +49,17 @@ function ChatPage() {
   const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
   const printRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, sendMessage, chatId, error } = useDifyChat(patientId, {
+  const { messages, thinking, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  const handleNewChat = useCallback(async () => {
+    if (thinking) return;
+    if (messages.length > 0 && !window.confirm("Iniciar uma nova consulta? A conversa atual será encerrada e arquivada no histórico.")) return;
+    setFilters(emptyFilters());
+    await resetChat();
+  }, [thinking, messages.length, resetChat]);
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
@@ -206,17 +213,31 @@ function ChatPage() {
               <p className="mt-2 text-xs text-rose-600">{error}</p>
             )}
           </div>
-          <Button
-            onClick={handlePrint}
-            disabled={!branding || reportMarkers.length === 0}
-            size="sm"
-            variant="outline"
-            className="rounded-full gap-2 shrink-0"
-            title={reportMarkers.length === 0 ? "Nenhum exame analisado para este paciente ainda" : "Gerar laudo profissional em PDF"}
-          >
-            <FileDown className="h-4 w-4" />
-            Gerar Laudo PDF
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {role === "nutri" && (
+              <Button
+                onClick={handleNewChat}
+                disabled={thinking || !chatId}
+                size="sm"
+                className="rounded-full gap-2 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 shadow-sm"
+                title="Iniciar uma nova consulta para este paciente"
+              >
+                <Plus className="h-4 w-4" />
+                Novo Chat
+              </Button>
+            )}
+            <Button
+              onClick={handlePrint}
+              disabled={!branding || reportMarkers.length === 0}
+              size="sm"
+              variant="outline"
+              className="rounded-full gap-2"
+              title={reportMarkers.length === 0 ? "Nenhum exame analisado para este paciente ainda" : "Gerar laudo profissional em PDF"}
+            >
+              <FileDown className="h-4 w-4" />
+              Gerar Laudo PDF
+            </Button>
+          </div>
         </header>
 
         <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">

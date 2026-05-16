@@ -434,5 +434,21 @@ export function useDifyChat(
     setThinking(false);
   }, [chatId, patientId, readOnly]);
 
-  return { chatId, messages, thinking, error, sendMessage };
+  const resetChat = useCallback(async () => {
+    if (readOnly) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: created, error: cErr } = await (supabase as any)
+      .from("patient_chats")
+      .insert({ patient_id: patientId, created_by: user.id })
+      .select("id")
+      .single();
+    if (cErr) { setError(cErr.message); return; }
+    conversationIdRef.current = "";
+    setMessages([]);
+    setError(null);
+    setChatId(created.id as string);
+  }, [patientId, readOnly]);
+
+  return { chatId, messages, thinking, error, sendMessage, resetChat };
 }
