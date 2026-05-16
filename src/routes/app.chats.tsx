@@ -93,6 +93,27 @@ function ChatsCentralPage() {
     })();
   }, [user]);
 
+  const togglePin = async (e: React.MouseEvent, chat: ChatRow) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = chat.pinned_at ? null : new Date().toISOString();
+    setRows((rs) =>
+      [...rs.map((r) => (r.id === chat.id ? { ...r, pinned_at: next } : r))].sort(sortRows),
+    );
+    const { error } = await (supabase as any)
+      .from("patient_chats")
+      .update({ pinned_at: next })
+      .eq("id", chat.id);
+    if (error) {
+      toast.error("Não foi possível atualizar a fixação.");
+      setRows((rs) =>
+        [...rs.map((r) => (r.id === chat.id ? { ...r, pinned_at: chat.pinned_at } : r))].sort(sortRows),
+      );
+    } else {
+      toast.success(next ? "Conversa fixada no topo." : "Conversa desafixada.");
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
