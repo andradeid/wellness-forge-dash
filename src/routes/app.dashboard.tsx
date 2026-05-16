@@ -10,11 +10,14 @@ import {
   Plus,
   Cake,
   Clock,
+  MessageCircle,
+  TrendingUp,
+  PieChart as PieChartIcon,
 } from "lucide-react";
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
 const ICON_PROPS = { strokeWidth: 1.6 } as const;
-import { differenceInCalendarDays, format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
+import { differenceInCalendarDays, differenceInYears, format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
   ResponsiveContainer,
   PieChart,
@@ -27,6 +30,8 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
+  Area,
+  AreaChart,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,6 +81,19 @@ interface PatientLite {
   name: string;
   birth_date: string | null;
   created_at: string;
+  gender: string | null;
+}
+
+interface ExamLite {
+  id: string;
+  created_at: string;
+}
+
+interface ChatLite {
+  id: string;
+  patient_id: string;
+  title: string | null;
+  updated_at: string;
 }
 
 type RangeKey = "today" | "week" | "month" | "all";
@@ -103,6 +121,8 @@ function DashboardPage() {
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
+  const [recentExams, setRecentExams] = useState<ExamLite[]>([]);
+  const [recentChats, setRecentChats] = useState<ChatLite[]>([]);
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
@@ -123,10 +143,18 @@ function DashboardPage() {
         .eq("uploaded_by", user.id);
       if (startIso) examsQuery.gte("created_at", startIso);
 
-      const [{ data: pts }, { data: res }, { count: examCount }] = await Promise.all([
+      const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
+
+      const [
+        { data: pts },
+        { data: res },
+        { count: examCount },
+        { data: exs },
+        { data: chs },
+      ] = await Promise.all([
         (supabase as any)
           .from("patients")
-          .select("id, name, birth_date, created_at")
+          .select("id, name, birth_date, created_at, gender")
           .eq("created_by", user.id),
         (supabase as any)
           .from("patient_exam_results")
@@ -137,12 +165,27 @@ function DashboardPage() {
           .order("measured_at", { ascending: false })
           .limit(1000),
         examsQuery,
+        (supabase as any)
+          .from("patient_exams")
+          .select("id, created_at")
+          .eq("uploaded_by", user.id)
+          .gte("created_at", sinceSparkline)
+          .order("created_at", { ascending: true })
+          .limit(2000),
+        (supabase as any)
+          .from("patient_chats")
+          .select("id, patient_id, title, updated_at")
+          .eq("created_by", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(5),
       ]);
 
       if (cancelled) return;
       setPatients((pts as PatientLite[]) ?? []);
       setResults((res as ResultRow[]) ?? []);
       setExamsThisMonth(examCount ?? 0);
+      setRecentExams((exs as ExamLite[]) ?? []);
+      setRecentChats((chs as ChatLite[]) ?? []);
       setLoading(false);
     })();
     return () => {
@@ -291,6 +334,76 @@ function DashboardPage() {
       .sort((a, b) => a.inDays - b.inDays);
     return rows;
   }, [patients]);
+
+  // Tendência: volume de exames por semana nas últimas 8 semanas
+  const examsTrend = useMemo(() => {
+    const weeks: { label: string; count: number; start: Date }[] = [];
+    const today = startOfDay(new Date());
+    for (let i = 7; i >= 0; i--) {
+      const start = startOfWeek(subDays(today, i * 7), { weekStartsOn: 1 });
+      weeks.push({ label: format(start, "dd/MM"), count: 0, start });
+    }
+    for (const e of recentExams) {
+      const t = new Date(e.created_at).getTime();
+      for (let i = weeks.length - 1; i >= 0; i--) {
+        if (t >= weeks[i].start.getTime()) {
+          weeks[i].count++;
+          break;
+        }
+      }
+    }
+    return weeks;
+  }, [recentExams]);
+
+  // Top marcadores analisados (todos, não só deficiências)
+  const topMarkers = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of filteredResults) {
+      counts.set(r.marker_name, (counts.get(r.marker_name) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  }, [filteredResults]);
+
+  // Perfil da base: distribuição por gênero e faixa etária
+  const baseProfile = useMemo(() => {
+    const gender = { feminino: 0, masculino: 0, outro: 0 };
+    const ages = { "0-17": 0, "18-29": 0, "30-44": 0, "45-59": 0, "60+": 0 };
+    const now = new Date();
+    for (const p of patients) {
+      const g = (p.gender ?? "").toLowerCase();
+      if (g.startsWith("f")) gender.feminino++;
+      else if (g.startsWith("m")) gender.masculino++;
+      else gender.outro++;
+      if (p.birth_date) {
+        const a = differenceInYears(now, new Date(p.birth_date));
+        if (a < 18) ages["0-17"]++;
+        else if (a < 30) ages["18-29"]++;
+        else if (a < 45) ages["30-44"]++;
+        else if (a < 60) ages["45-59"]++;
+        else ages["60+"]++;
+      }
+    }
+    return {
+      gender: [
+        { name: "Feminino", value: gender.feminino, color: "#e89bcf" },
+        { name: "Masculino", value: gender.masculino, color: "#7ba6c4" },
+        { name: "Outro / —", value: gender.outro, color: "#cbd5e1" },
+      ].filter((g) => g.value > 0),
+      ages: Object.entries(ages).map(([k, v]) => ({ name: k, count: v })),
+      totalWithBirth: patients.filter((p) => !!p.birth_date).length,
+    };
+  }, [patients]);
+
+  // Últimas conversas com a Lumma
+  const lastChats = useMemo(() => {
+    return recentChats.slice(0, 4).map((c) => ({
+      ...c,
+      patientName: patientMap.get(c.patient_id) ?? "Paciente",
+    }));
+  }, [recentChats, patientMap]);
 
   const greeting = (() => {
     // Hora de Brasília (UTC−3), independente do fuso do navegador
@@ -685,6 +798,177 @@ function DashboardPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </Card>
+
+        {/* Tendência semanal de exames */}
+        <Card className="p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-600" {...ICON_PROPS} />
+              Tendência de exames
+            </h2>
+            <span className="text-xs text-muted-foreground">Últimas 8 semanas</span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Ritmo de trabalho ao longo do tempo.
+          </p>
+          {loading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : examsTrend.every((w) => w.count === 0) ? (
+            <EmptyState text="Sem exames nas últimas 8 semanas." />
+          ) : (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={examsTrend} margin={{ left: -10, right: 8, top: 8 }}>
+                  <defs>
+                    <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#e8a04c" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#e89bcf" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} width={28} />
+                  <Tooltip formatter={(v: number) => [`${v} exames`, "Volume"]} />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#e8a04c"
+                    strokeWidth={2}
+                    fill="url(#trendArea)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        {/* Última conversa com a Lumma */}
+        <Card className="p-6 lg:col-span-1">
+          <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
+            Últimas conversas
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">Retome de onde parou.</p>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : lastChats.length === 0 ? (
+            <EmptyState text="Nenhuma conversa registrada ainda." />
+          ) : (
+            <ul className="space-y-2">
+              {lastChats.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to="/app/chat/$patientId"
+                    params={{ patientId: c.patient_id }}
+                    className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium truncate">{c.patientName}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {c.title ?? "Conversa com a Lumma"}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {format(new Date(c.updated_at), "dd/MM")}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Top marcadores analisados */}
+        <Card className="p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold">Marcadores mais analisados</h2>
+            <span className="text-xs text-muted-foreground">
+              {RANGE_OPTIONS.find((o) => o.key === range)?.label}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Padrão clínico predominante na sua base.
+          </p>
+          {loading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : topMarkers.length === 0 ? (
+            <EmptyState text="Sem marcadores no período." />
+          ) : (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} stroke="#475569" />
+                  <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
+                  <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        {/* Perfil da base: gênero + faixa etária */}
+        <Card className="p-6 lg:col-span-1">
+          <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
+            <PieChartIcon className="h-4 w-4 text-[#7ba88b]" {...ICON_PROPS} />
+            Perfil da base
+          </h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            {patients.length} pacientes · {baseProfile.totalWithBirth} com idade
+          </p>
+          {loading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : patients.length === 0 ? (
+            <EmptyState text="Cadastre pacientes para ver o perfil." />
+          ) : (
+            <div className="space-y-3">
+              <div className="h-28">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={baseProfile.gender}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={28}
+                      outerRadius={48}
+                      paddingAngle={2}
+                    >
+                      {baseProfile.gender.map((g) => (
+                        <Cell key={g.name} fill={g.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="space-y-1 text-[11px]">
+                {baseProfile.ages.map((a) => {
+                  const pct = baseProfile.totalWithBirth
+                    ? Math.round((a.count / baseProfile.totalWithBirth) * 100)
+                    : 0;
+                  return (
+                    <li key={a.name} className="flex items-center gap-2">
+                      <span className="w-12 text-muted-foreground">{a.name}</span>
+                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="w-8 text-right tabular-nums text-muted-foreground">{a.count}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
         </Card>
       </div>
