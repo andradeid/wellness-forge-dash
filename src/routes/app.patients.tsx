@@ -199,8 +199,7 @@ function PatientsPage() {
                         <SelectItem value="female">Feminino</SelectItem>
                         <SelectItem value="other">Outro</SelectItem>
                       </SelectContent>
-                    </Select>
-                  </div>
+                  </Select>
                 </div>
                 <DialogFooter className="pt-2">
                   <Button
