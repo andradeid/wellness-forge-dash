@@ -423,13 +423,13 @@ function DashboardPage() {
   })();
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-6 w-full overflow-x-hidden">
       <TestEnvironmentNotice />
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-5">
-        <div>
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-4 md:gap-5">
+        <div className="min-w-0">
           <h1
-            className="text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+            className="text-2xl sm:text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent break-words"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
             {greeting}
@@ -440,15 +440,15 @@ function DashboardPage() {
               : "Tudo calmo por aqui. Continue acompanhando suas pacientes."}
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="inline-flex rounded-full bg-muted/60 p-1">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="inline-flex rounded-full bg-muted/60 p-1 flex-wrap">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => setRange(opt.key)}
                 className={cn(
-                  "px-4 py-1.5 text-xs font-medium rounded-full transition-all",
+                  "px-3 sm:px-4 py-1.5 text-xs font-medium rounded-full transition-all min-h-[36px]",
                   range === opt.key
                     ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -461,7 +461,7 @@ function DashboardPage() {
           {role === "nutri" && (
             <Button
               asChild
-              className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90"
+              className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90 min-h-[44px]"
             >
               <Link to="/app/patients">
                 <Plus className="h-[18px] w-[18px]" {...ICON_PROPS} />
@@ -474,7 +474,7 @@ function DashboardPage() {
       </div>
 
       {/* Lumma Insights — inteligência consolidada da base */}
-      <Card className="relative overflow-hidden border border-[#f1d9b8] bg-gradient-to-br from-[#fffaf2] via-white to-[#fdf3f8] p-5 shadow-sm">
+      <Card className="relative overflow-hidden border border-[#f1d9b8] bg-gradient-to-br from-[#fffaf2] via-white to-[#fdf3f8] p-4 sm:p-5 shadow-sm">
         <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#e8a04c] to-[#e89bcf]" />
         <div className="flex items-start gap-4 pl-2">
           <div className="shrink-0 mt-0.5 h-9 w-9 rounded-full bg-white shadow-sm border border-[#f1d9b8] flex items-center justify-center">
@@ -502,7 +502,7 @@ function DashboardPage() {
       </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <KpiCard
           icon={<Users className="h-5 w-5" {...ICON_PROPS} />}
           label="Vidas impactadas"
@@ -538,9 +538,9 @@ function DashboardPage() {
       </div>
 
       {/* Bento grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
         {/* Distribution */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold">Saúde da base</h2>
             <span className="text-xs text-muted-foreground">{stats.totalAnalyzed} marcadores</span>
@@ -582,7 +582,7 @@ function DashboardPage() {
         </Card>
 
         {/* Attention list */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold">Atenção prioritária</h2>
@@ -612,7 +612,7 @@ function DashboardPage() {
                     ? "bg-rose-50 text-rose-700 border border-rose-200"
                     : "bg-amber-50 text-amber-700 border border-amber-200";
                 return (
-                  <li key={p.patient_id} className="py-3 flex items-center gap-3">
+                  <li key={p.patient_id} className="py-3 flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ background: BUCKET_META[b].color }}
@@ -653,7 +653,7 @@ function DashboardPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0 ml-auto">
                       <Link
                         to="/app/evolution/$patientId"
                         params={{ patientId: p.patient_id }}
@@ -685,7 +685,7 @@ function DashboardPage() {
         </Card>
 
         {/* Top deficiencies */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold">Top 5 deficiências da base</h2>
@@ -714,8 +714,8 @@ function DashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={140}
-                    tick={{ fontSize: 12 }}
+                    width={100}
+                    tick={{ fontSize: 11 }}
                     stroke="#475569"
                   />
                   <Tooltip formatter={(v: number) => [`${v} ocorrências`, "Total"]} />
@@ -727,7 +727,7 @@ function DashboardPage() {
         </Card>
 
         {/* Recent activity */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1">Últimas análises</h2>
           <p className="text-xs text-muted-foreground mb-4">Mais recentes da Lumma.</p>
           {loading ? (
@@ -760,7 +760,7 @@ function DashboardPage() {
          </Card>
 
         {/* Follow-up: pacientes sem exame há +60 dias */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold flex items-center gap-2">
@@ -809,7 +809,7 @@ function DashboardPage() {
         </Card>
 
         {/* Aniversariantes da semana */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Cake className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
             Aniversariantes da semana
@@ -858,7 +858,7 @@ function DashboardPage() {
         </Card>
 
         {/* Tendência semanal de exames */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600" {...ICON_PROPS} />
@@ -901,7 +901,7 @@ function DashboardPage() {
         </Card>
 
         {/* Última conversa com a Lumma */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
             Últimas conversas
@@ -941,7 +941,7 @@ function DashboardPage() {
         </Card>
 
         {/* Top marcadores analisados */}
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold">Marcadores mais analisados</h2>
             <span className="text-xs text-muted-foreground">
@@ -961,7 +961,7 @@ function DashboardPage() {
                 <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
                   <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} stroke="#475569" />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
                   <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
                   <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -971,7 +971,7 @@ function DashboardPage() {
         </Card>
 
         {/* Perfil da base: gênero + faixa etária */}
-        <Card className="p-6 lg:col-span-1">
+        <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <PieChartIcon className="h-4 w-4 text-[#7ba88b]" {...ICON_PROPS} />
             Perfil da base
