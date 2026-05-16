@@ -116,7 +116,7 @@ export function ChatInput({
           variant="ghost"
           size="icon"
           className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm"
-          onClick={open}
+          onClick={openPicker}
           disabled={disabled}
           aria-label="Anexar exame"
         >
