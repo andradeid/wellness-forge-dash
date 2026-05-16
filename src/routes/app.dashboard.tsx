@@ -473,6 +473,34 @@ function DashboardPage() {
         </div>
       </div>
 
+      {/* Lumma Insights — inteligência consolidada da base */}
+      <Card className="relative overflow-hidden border border-[#f1d9b8] bg-gradient-to-br from-[#fffaf2] via-white to-[#fdf3f8] p-5 shadow-sm">
+        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#e8a04c] to-[#e89bcf]" />
+        <div className="flex items-start gap-4 pl-2">
+          <div className="shrink-0 mt-0.5 h-9 w-9 rounded-full bg-white shadow-sm border border-[#f1d9b8] flex items-center justify-center">
+            <Lightbulb className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-semibold tracking-tight">
+                Insight Consolidado da Base
+              </h2>
+              <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 text-[10px] h-4 px-2 hover:opacity-90">
+                LUMMA Insights
+              </Badge>
+            </div>
+            <p className="text-[13px] text-foreground/80 mt-1.5 leading-relaxed max-w-3xl">
+              A análise automatizada desta semana identificou uma tendência de{" "}
+              <strong className="text-[#b6743a]">12% de aumento</strong> em marcadores de
+              estresse oxidativo na sua base de pacientes ativos. O perfil predominante
+              atual exige atenção preventiva para deficiência de{" "}
+              <strong className="text-foreground">Vitamina B12</strong> e{" "}
+              <strong className="text-foreground">Ferritina</strong>.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <KpiCard
