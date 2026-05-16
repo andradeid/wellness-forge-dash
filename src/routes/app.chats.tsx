@@ -292,3 +292,11 @@ function formatWhen(iso: string) {
   if (days < 7) return `há ${days}d`;
   return d.toLocaleDateString("pt-BR");
 }
+
+function sortRows(a: ChatRow, b: ChatRow) {
+  if (!!a.pinned_at !== !!b.pinned_at) return a.pinned_at ? -1 : 1;
+  if (a.pinned_at && b.pinned_at) {
+    return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+  }
+  return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+}
