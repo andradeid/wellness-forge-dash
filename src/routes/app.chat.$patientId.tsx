@@ -364,7 +364,6 @@ function ChatPage() {
             />
           )}
         </div>
-        </div>
         <div ref={conversationRef}>
           {branding && patient && messages.length > 0 && (
             <ChatConversationPDF
