@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useReactToPrint } from "react-to-print";
@@ -15,6 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
+import { ChatConversationPDF } from "@/components/chat/ChatConversationPDF";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
@@ -45,6 +46,7 @@ function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
   const printRef = useRef<HTMLDivElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { messages, thinking, sendMessage, chatId, error, resetChat } = useDifyChat(patientId, {
     readOnly,
@@ -112,6 +114,11 @@ function ChatPage() {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Laudo-${patient?.name ?? "paciente"}`,
+  });
+
+  const handleExportConversation = useReactToPrint({
+    contentRef: conversationRef,
+    documentTitle: `Conversa-${patient?.name ?? "paciente"}-${format(new Date(), "dd-MM-yyyy")}`,
   });
 
   const age = patient?.birth_date
@@ -244,6 +251,17 @@ function ChatPage() {
               </Button>
             )}
             <Button
+              onClick={handleExportConversation}
+              disabled={!branding || messages.length === 0}
+              size="sm"
+              variant="outline"
+              className="rounded-full gap-2 h-10 sm:h-9 px-3"
+              title={messages.length === 0 ? "Nenhuma mensagem para exportar" : "Exportar conversa em PDF"}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Exportar Conversa</span>
+            </Button>
+            <Button
               onClick={handlePrint}
               disabled={!branding || reportMarkers.length === 0}
               size="sm"
@@ -343,6 +361,19 @@ function ChatPage() {
                 gender: patient.gender,
               }}
               markers={reportMarkers as any}
+            />
+          )}
+        </div>
+        <div ref={conversationRef}>
+          {branding && patient && messages.length > 0 && (
+            <ChatConversationPDF
+              branding={branding}
+              patient={{
+                name: patient.name,
+                birth_date: patient.birth_date,
+                gender: patient.gender,
+              }}
+              messages={messages}
             />
           )}
         </div>
