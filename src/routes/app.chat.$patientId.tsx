@@ -186,14 +186,14 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
       {/* Left column: patient + exams (desktop) */}
       <aside className="hidden lg:flex w-72 flex-col border-r bg-white shrink-0">
         {SidebarContent}
       </aside>
 
       {/* Main: chat */}
-      <section className="flex-1 flex flex-col min-w-0 h-full">
+      <section className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
         <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-white/40 bg-white/60 backdrop-blur-md shrink-0 flex items-center gap-2 sm:gap-4">
           <Sheet>
             <SheetTrigger asChild>

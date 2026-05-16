@@ -55,25 +55,23 @@ function AppLayout() {
     <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-background">
         <div className="flex flex-1 min-h-0 w-full">
-          {!immersive && <AppSidebar />}
+          <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             {showStagingBanner && (
               <div className="shrink-0 bg-amber-100 text-amber-900 border-b border-amber-200/80 text-[11px] sm:text-xs font-medium px-3 py-1.5 text-center leading-snug whitespace-normal break-words">
                 ⚠️ AMBIENTE DE HOMOLOGAÇÃO E TESTES (ETAPA 2) • Recursos de processamento em fase de validação estrutural. A migração para a VPS de alta performance ocorrerá na Etapa 3.
               </div>
             )}
-            {!immersive && (
-              <header className="h-14 flex items-center border-b bg-card px-4 gap-2">
-                <SidebarTrigger />
-                <div className="ml-2 text-sm font-medium text-muted-foreground">
-                  LUMMA
-                </div>
-                <div className="ml-auto">
-                  <UserMenu />
-                </div>
-              </header>
-            )}
-            <main className={immersive ? "flex-1 min-h-0 overflow-hidden relative" : "flex-1 p-6 overflow-auto"}>
+            <header className="h-14 flex items-center border-b bg-card px-4 gap-2 shrink-0">
+              <SidebarTrigger />
+              <div className="ml-2 text-sm font-medium text-muted-foreground">
+                LUMMA
+              </div>
+              <div className="ml-auto">
+                <UserMenu />
+              </div>
+            </header>
+            <main className={immersive ? "flex-1 min-h-0 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={pathname}
@@ -81,7 +79,7 @@ function AppLayout() {
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   exit={{ opacity: 0, y: -6, filter: "blur(3px)" }}
                   transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                  className={immersive ? "absolute inset-0" : "w-full"}
+                  className={immersive ? "h-full w-full" : "w-full"}
                 >
                   <Outlet />
                 </motion.div>
