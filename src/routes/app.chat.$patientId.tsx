@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Eye, FileDown, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReactToPrint } from "react-to-print";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatIntentPanel, emptyFilters, filtersToContext, type ExamFilters } from "@/components/chat/ChatIntentPanel";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
