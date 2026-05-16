@@ -74,6 +74,8 @@ interface ResultRow {
 interface PatientLite {
   id: string;
   name: string;
+  birth_date: string | null;
+  created_at: string;
 }
 
 type RangeKey = "today" | "week" | "month" | "all";
