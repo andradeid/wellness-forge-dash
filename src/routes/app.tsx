@@ -17,7 +17,7 @@ function AppLayout() {
 
   useEffect(() => {
     if (!loading && !session) {
-      navigate({ to: "/login" });
+      navigate({ to: "/login", replace: true });
     }
   }, [session, loading, navigate]);
 
@@ -36,7 +36,13 @@ function AppLayout() {
     );
   }
 
-  if (!session) return null;
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">Validando acesso...</div>
+      </div>
+    );
+  }
 
   const isChat = pathname.startsWith("/app/chat/");
   const isEvolution = pathname.startsWith("/app/evolution/");

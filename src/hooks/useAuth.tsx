@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const authRequestRef = useRef(0);
 
   const loadUserData = async (currentUser: User | null) => {
     if (!currentUser) {
@@ -87,32 +89,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(role);
   };
 
+  const applySession = async (nextSession: Session | null) => {
+    const requestId = ++authRequestRef.current;
+    setLoading(true);
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+
+    if (!nextSession?.user) {
+      setProfile(null);
+      setRole(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { profile, role } = await fetchProfileAndRole(nextSession.user.id);
+      if (requestId !== authRequestRef.current) return;
+      if (profile?.is_blocked) {
+        const { toast } = await import("sonner");
+        toast.error("Sua conta foi bloqueada. Entre em contato com o suporte.");
+        await supabase.auth.signOut();
+        setProfile(null);
+        setRole(null);
+        setSession(null);
+        setUser(null);
+        return;
+      }
+      setProfile(profile);
+      setRole(role);
+    } finally {
+      if (requestId === authRequestRef.current) setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Listener FIRST, then getSession
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        // Defer to avoid deadlocks inside the auth callback
-        if (newSession?.user) {
-          setTimeout(() => {
-            loadUserData(newSession.user);
-          }, 0);
-        } else {
-          setProfile(null);
-          setRole(null);
-        }
+        setTimeout(() => {
+          void applySession(newSession);
+        }, 0);
       }
     );
 
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-      // Load profile/role in background — don't block auth readiness
-      if (data.session?.user) {
-        loadUserData(data.session.user);
-      }
+      void applySession(data.session);
     });
 
     return () => {
@@ -121,14 +142,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-
-    setSession(data.session);
-    setUser(data.user ?? null);
-    if (data.user) {
-      loadUserData(data.user);
+    if (error) {
+      setLoading(false);
+      throw error;
     }
+    await applySession(data.session);
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
