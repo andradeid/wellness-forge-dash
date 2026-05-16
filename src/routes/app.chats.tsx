@@ -22,6 +22,7 @@ interface ChatRow {
   title: string | null;
   created_at: string;
   updated_at: string;
+  pinned_at: string | null;
   patient: { id: string; name: string; avatar_url: string | null } | null;
   last_message: { content: string; role: string; created_at: string } | null;
   message_count: number;
