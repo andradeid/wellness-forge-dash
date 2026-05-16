@@ -32,10 +32,11 @@ function formatFileSize(size: number) {
 }
 
 function getProgressMeta(stage: AttachmentProgressStage) {
-  if (stage === "concluido") return { label: "concluído", icon: CheckCircle2, className: "text-emerald-700" };
-  if (stage === "erro") return { label: "erro no envio", icon: AlertCircle, className: "text-rose-700" };
-  if (stage === "processando") return { label: "processando", icon: Loader2, className: "text-amber-700" };
-  return { label: "enviando", icon: Loader2, className: "text-[#c66f16]" };
+  if (stage === "concluido") return { label: "concluído", icon: CheckCircle2, className: "text-emerald-700", pct: 100 };
+  if (stage === "erro") return { label: "erro no envio", icon: AlertCircle, className: "text-rose-700", pct: 100 };
+  if (stage === "processando") return { label: "processando", icon: Loader2, className: "text-amber-700", pct: 70 };
+  if (stage === "enviando") return { label: "enviando", icon: Loader2, className: "text-[#c66f16]", pct: 35 };
+  return { label: "pronto para envio", icon: Paperclip, className: "text-[#c66f16]", pct: 12 };
 }
 
 export function ChatInput({
