@@ -18,11 +18,13 @@ export function ChatInput({
   const [text, setText] = useState("");
   const [files, setFiles] = useState<PendingFile[]>([]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const onDrop = useCallback((accepted: File[]) => {
     setFiles((prev) => [...prev, ...accepted.map((file) => ({ file }))]);
   }, []);
 
-  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     noClick: true,
     noKeyboard: true,
@@ -35,6 +37,16 @@ export function ChatInput({
     multiple: true,
     maxSize: 20 * 1024 * 1024,
   });
+
+  const openPicker = () => fileInputRef.current?.click();
+
+  const handleNativePick = (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    const MAX = 20 * 1024 * 1024;
+    const valid = picked.filter((f) => f.size <= MAX);
+    if (valid.length) setFiles((prev) => [...prev, ...valid.map((file) => ({ file }))]);
+    e.target.value = "";
+  };
 
   const send = async () => {
     if (disabled) return;
