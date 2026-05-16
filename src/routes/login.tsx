@@ -43,10 +43,10 @@ function LoginPage() {
     try {
       await signIn(email, password);
       toast.success("Bem-vindo de volta!");
-      navigate({ to: "/app" });
+      // Não navega aqui — o useEffect acima detecta `session` e redireciona,
+      // evitando race com o AuthProvider (que ainda não propagou o contexto).
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao entrar");
-    } finally {
       setSubmitting(false);
     }
   };
