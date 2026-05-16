@@ -74,6 +74,14 @@ export function ChatInput({
       }`}
     >
       <input {...getInputProps()} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf,image/*"
+        multiple
+        className="hidden"
+        onChange={handleNativePick}
+      />
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {files.map((f, i) => (
