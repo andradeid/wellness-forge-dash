@@ -50,14 +50,35 @@ function splitJsonBlocks(text: string): Array<{ type: "text" | "json"; value: st
   return parts.length > 0 ? parts : [{ type: "text", value: text }];
 }
 
-/** Removes JSON preamble headings like "Parte 2 — JSON obrigatório" and trailing labels */
+/** Removes JSON preamble headings and any unterminated streaming JSON tail. */
 function cleanProse(text: string): string {
-  return text
+  let out = text;
+  // Strip unterminated ```json ... (still streaming, no closing fence yet)
+  const fenceOpen = out.search(/```json\b/i);
+  if (fenceOpen !== -1 && !/```json[\s\S]*?```/i.test(out)) {
+    out = out.slice(0, fenceOpen);
+  }
+  // Strip unterminated loose "json { ..." block while streaming
+  const looseOpen = out.search(/(?:^|\n)\s*json\s*\{/i);
+  if (looseOpen !== -1 && !/(?:^|\n)\s*json\s*\{[\s\S]*?\}(?=\n|$)/i.test(out)) {
+    out = out.slice(0, looseOpen);
+  }
+  // Also hide bare streaming JSON object that starts the tail (no "json" keyword)
+  const braceOpen = out.search(/(?:^|\n)\s*\{\s*"\w/);
+  if (braceOpen !== -1) {
+    const tail = out.slice(braceOpen);
+    // unbalanced braces => still streaming => hide it
+    const opens = (tail.match(/\{/g) || []).length;
+    const closes = (tail.match(/\}/g) || []).length;
+    if (opens !== closes) out = out.slice(0, braceOpen);
+  }
+  return out
     .replace(/^\s*Parte\s*2\s*[—\-:].*$/gim, "")
     .replace(/^\s*JSON\s*(obrigat[óo]rio|marcadores)?\s*:?\s*$/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
 
 export function ChatMessageList({
   messages,
