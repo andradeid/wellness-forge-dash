@@ -7,6 +7,7 @@ import {
   TrendingDown,
   ArrowRight,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import { format, startOfDay, startOfMonth, startOfWeek, subDays } from "date-fns";
 import {
@@ -295,6 +296,17 @@ function DashboardPage() {
               </button>
             ))}
           </div>
+          {role === "nutri" && (
+            <Button
+              asChild
+              className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90"
+            >
+              <Link to="/app/patients">
+                <Plus className="h-4 w-4" />
+                Novo Chat
+              </Link>
+            </Button>
+          )}
           <QuickAnalysisDialog onCreated={() => window.location.reload()} />
         </div>
       </div>
