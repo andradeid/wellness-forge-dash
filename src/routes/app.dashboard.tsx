@@ -126,7 +126,7 @@ function DashboardPage() {
       const [{ data: pts }, { data: res }, { count: examCount }] = await Promise.all([
         (supabase as any)
           .from("patients")
-          .select("id, name")
+          .select("id, name, birth_date, created_at")
           .eq("created_by", user.id),
         (supabase as any)
           .from("patient_exam_results")
