@@ -186,7 +186,7 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-screen max-h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="flex h-full max-h-full w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
       {/* Left column: patient + exams (desktop) */}
       <aside className="hidden lg:flex h-full w-72 shrink-0 flex-col overflow-hidden border-r bg-white">
         {SidebarContent}
