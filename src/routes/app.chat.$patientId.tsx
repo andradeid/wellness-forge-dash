@@ -62,7 +62,9 @@ function ChatPage() {
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
-      const ctx = filtersToContext(filters);
+      // Só anexamos o "[Contexto clínico]" quando há exame anexado.
+      // Mensagens de texto puro vão direto pro Dify, sem prefixo.
+      const ctx = files.length > 0 ? filtersToContext(filters) : null;
       const finalText = ctx ? `${ctx}\n\n${text}`.trim() : text;
       await sendMessage(finalText, files);
     },

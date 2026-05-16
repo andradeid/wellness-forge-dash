@@ -104,6 +104,7 @@ export function useDifyChat(
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
   const conversationIdRef = useRef<string>("");
   const metaRef = useRef<{
