@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,7 +49,7 @@ function Teaser() {
       <header className="relative z-10">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/src/assets/lumma-symbol.svg" alt="LUMMA" className="h-7 w-7" onError={(e) => ((e.currentTarget.style.display = "none"))} />
+            <img src={lummaSymbol} alt="LUMMA" className="h-7 w-7" />
             <span className="font-semibold tracking-[0.2em] text-sm text-white/80">LUMMA</span>
           </div>
           <Button
