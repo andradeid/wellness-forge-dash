@@ -139,7 +139,7 @@ export function ChatIntentPanel({
             <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
               Adulto
             </Pill>
-            <Pill active={filters.publico === "gestante"} onClick={() => update({ publico: "gestante", sexo: "feminino" })}>
+            <Pill active={filters.publico === "gestante"} onClick={() => update({ publico: "gestante", sexo: "feminino", faseCiclo: null })}>
               Gestante
             </Pill>
             <Pill disabled>Criança (Em breve)</Pill>
@@ -149,7 +149,7 @@ export function ChatIntentPanel({
             <Pill
               active={filters.sexo === "masculino"}
               disabled={filters.publico === "gestante"}
-              onClick={() => update({ sexo: "masculino" })}
+              onClick={() => update({ sexo: "masculino", faseCiclo: null })}
             >
               Masculino
             </Pill>
