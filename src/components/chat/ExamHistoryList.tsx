@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { CalendarIcon, Download, FileText, Pencil } from "lucide-react";
+import { CalendarIcon, Download, FileText, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +36,9 @@ interface Props {
 export function ExamHistoryList({ exams, onChanged }: Props) {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<ExamItem | null>(null);
+  const [confirmStep, setConfirmStep] = useState<0 | 1 | 2>(0);
+  const [deleting, setDeleting] = useState(false);
 
   if (!exams.length) {
     return (
@@ -74,65 +87,171 @@ export function ExamHistoryList({ exams, onChanged }: Props) {
     }
   };
 
+  const askDelete = (exam: ExamItem) => {
+    setPendingDelete(exam);
+    setConfirmStep(1);
+  };
+
+  const doDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await (supabase as any)
+        .from("patient_exam_results")
+        .delete()
+        .eq("exam_id", pendingDelete.id);
+      const { error } = await (supabase as any)
+        .from("patient_exams")
+        .delete()
+        .eq("id", pendingDelete.id);
+      if (error) throw error;
+      if (pendingDelete.file_path) {
+        await supabase.storage.from("exams").remove([pendingDelete.file_path]);
+      }
+      toast.success("Exame excluído");
+      await onChanged?.();
+    } catch (err: any) {
+      toast.error("Erro ao excluir o exame", { description: err?.message });
+    } finally {
+      setDeleting(false);
+      setPendingDelete(null);
+      setConfirmStep(0);
+    }
+  };
+
   return (
-    <ul className="space-y-1">
-      {exams.map((e) => {
-        const dateStr = e.exam_date ?? e.created_at;
-        const currentDate = new Date(dateStr);
-        return (
-          <li
-            key={e.id}
-            className="group flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted/60 text-sm"
-          >
-            <FileText className="h-4 w-4 text-[#3d5a4a] shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-medium" title={e.file_name}>
-                {e.file_name}
+    <>
+      <ul className="space-y-1">
+        {exams.map((e) => {
+          const dateStr = e.exam_date ?? e.created_at;
+          const currentDate = new Date(dateStr);
+          const addedAt = new Date(e.created_at);
+          return (
+            <li
+              key={e.id}
+              className="group flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted/60 text-sm"
+            >
+              <FileText className="h-4 w-4 text-[#3d5a4a] shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium" title={e.file_name}>
+                  {e.file_name}
+                </div>
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  {format(currentDate, "dd/MM/yyyy")}
+                </div>
+                <div
+                  className="text-[10px] text-muted-foreground/80"
+                  title="Adicionado ao histórico"
+                >
+                  Adicionado em {format(addedAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </div>
               </div>
-              <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-                <CalendarIcon className="h-3 w-3" />
-                {format(currentDate, "dd/MM/yyyy")}
+              <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition shrink-0">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Editar data do exame"
+                      disabled={savingId === e.id}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={currentDate}
+                      onSelect={(d) => handleUpdateDate(e.id, d)}
+                      disabled={(d) => d > new Date()}
+                      initialFocus
+                      locale={ptBR}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Baixar arquivo original"
+                  disabled={downloadingId === e.id || !e.file_path}
+                  onClick={() => handleDownload(e)}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  title="Excluir exame"
+                  onClick={() => askDelete(e)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
-            </div>
-            <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition shrink-0">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    title="Editar data do exame"
-                    disabled={savingId === e.id}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={currentDate}
-                    onSelect={(d) => handleUpdateDate(e.id, d)}
-                    disabled={(d) => d > new Date()}
-                    initialFocus
-                    locale={ptBR}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                title="Baixar arquivo original"
-                disabled={downloadingId === e.id || !e.file_path}
-                onClick={() => handleDownload(e)}
-              >
-                <Download className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+            </li>
+          );
+        })}
+      </ul>
+
+      <AlertDialog
+        open={confirmStep === 1}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPendingDelete(null);
+            setConfirmStep(0);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir este exame?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.file_name} será removido do histórico e da evolução
+              clínica. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => setConfirmStep(2)}>
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={confirmStep === 2}
+        onOpenChange={(o) => {
+          if (!o && !deleting) {
+            setPendingDelete(null);
+            setConfirmStep(0);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirmação final: o exame e seus resultados associados serão
+              apagados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={doDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
