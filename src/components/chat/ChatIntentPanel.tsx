@@ -158,6 +158,23 @@ export function ChatIntentPanel({
             </Pill>
           </FilterRow>
 
+          {filters.publico === "adulto" && filters.sexo === "feminino" && (
+            <FilterRow label="Fase do ciclo">
+              <Pill active={filters.faseCiclo === "folicular"} onClick={() => update({ faseCiclo: "folicular" })}>
+                Folicular
+              </Pill>
+              <Pill active={filters.faseCiclo === "ovulatoria"} onClick={() => update({ faseCiclo: "ovulatoria" })}>
+                Ovulatória
+              </Pill>
+              <Pill active={filters.faseCiclo === "lutea"} onClick={() => update({ faseCiclo: "lutea" })}>
+                Lútea
+              </Pill>
+              <Pill active={filters.faseCiclo === "menopausa"} onClick={() => update({ faseCiclo: "menopausa" })}>
+                Menopausa
+              </Pill>
+            </FilterRow>
+          )}
+
           {filters.publico === "gestante" && (
             <>
               <FilterRow label="Tipo de gestação">
