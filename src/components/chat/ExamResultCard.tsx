@@ -73,6 +73,9 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
             const isOpen = openIdx === i;
             const hasAnalysis = !!m.analysis?.toString().trim();
             const refText = m.reference?.toString().trim();
+            const notIndexed = !!refText && /n[ãa]o\s+indexado/i.test(refText);
+            const showRef = !!refText && !notIndexed;
+            const showBadge = !!m.classification && state !== "desconhecido";
 
             return (
               <div key={`${m.name}-${i}`} className="px-4 py-3">
@@ -84,9 +87,11 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">{m.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      Ref. BC: {refText || "—"}
-                    </div>
+                    {showRef && (
+                      <div className="text-xs text-muted-foreground truncate">
+                        Ref. BC: {refText}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold tabular-nums">
@@ -95,7 +100,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                         <span className="text-muted-foreground font-normal">{m.unit}</span>
                       )}
                     </div>
-                    {m.classification && (
+                    {showBadge && (
                       <Badge
                         variant="outline"
                         className={`mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide ${style.badge}`}
