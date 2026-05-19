@@ -277,7 +277,7 @@ export function useDifyChat(
         setError(upErr.message); setThinking(false); return;
       }
 
-      updateFileProgress(file, "processando", 45, "Enviando arquivo ao Dify");
+      updateFileProgress(file, "processando", 45, "Enviando à Lumma");
       toast.loading(`Processando ${file.name} na Lumma...`, { id: toastId });
 
       // Dify
@@ -291,15 +291,15 @@ export function useDifyChat(
         body: fd,
       });
       if (!res.ok) {
-        updateFileProgress(file, "erro", 100, "Falha ao enviar ao Dify");
+        updateFileProgress(file, "erro", 100, "Falha ao enviar exame");
         toast.error(`Falha ao enviar ${file.name} (${res.status})`, { id: toastId });
-        setError(`Falha ao enviar exame ao Dify (${res.status})`);
+        setError(`Falha ao enviar exame para análise (${res.status})`);
         setThinking(false);
         return;
       }
       const json = await res.json() as { id?: string; mime_type?: string };
       const difyId = json.id;
-      updateFileProgress(file, "processando", 70, "Arquivo recebido pelo Dify");
+      updateFileProgress(file, "processando", 70, "Arquivo recebido — analisando");
 
       const { data: examIns } = await (supabase as any).from("patient_exams").insert({
         patient_id: patientId,
