@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,18 @@ function daysInMonth(year: number, month: number) {
 }
 
 export function BirthDatePicker({ value, onChange }: BirthDatePickerProps) {
-  const [y = "", m = "", d = ""] = value ? value.split("-") : [];
+  // Estado local para reter seleções parciais (o pai só recebe quando completo)
+  const [y, setY] = useState("");
+  const [m, setM] = useState("");
+  const [d, setD] = useState("");
+
+  // Sincroniza quando o valor externo mudar (ex.: reset do form)
+  useEffect(() => {
+    const [yy = "", mm = "", dd = ""] = value ? value.split("-") : [];
+    setY(yy);
+    setM(mm);
+    setD(dd);
+  }, [value]);
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 120 }, (_, i) => currentYear - i);
@@ -37,6 +49,9 @@ export function BirthDatePicker({ value, onChange }: BirthDatePickerProps) {
   );
 
   const emit = (yy: string, mm: string, dd: string) => {
+    setY(yy);
+    setM(mm);
+    setD(dd);
     if (yy && mm && dd) onChange(`${yy}-${mm}-${dd}`);
     else onChange("");
   };
