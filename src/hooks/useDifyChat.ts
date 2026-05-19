@@ -144,17 +144,41 @@ export function useDifyChat(
       // auditor enxerga a conversa do nutricionista responsável.
       // Se forceChatId for passado (ex: vindo da auditoria de feedback),
       // carregamos exatamente aquele chat.
-      let chatQuery = (supabase as any)
-        .from("patient_chats")
-        .select("id, dify_conversation_id, created_by")
-        .eq("patient_id", patientId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      if (forceChatId) chatQuery = chatQuery.eq("id", forceChatId);
-      else if (!readOnly) chatQuery = chatQuery.eq("created_by", user.id);
+      // Se forceChatId for passado, carrega exatamente aquele chat.
+      // Caso contrário, prefere o chat com MAIOR atividade (última mensagem
+      // mais recente) — assim "Novo Chat" vazio não esconde o histórico antigo.
+      let chosenChat: { id: string; dify_conversation_id: string | null } | null = null;
 
-      const [{ data: existing }, { data: profile }, { data: patient }] = await Promise.all([
-        chatQuery.maybeSingle(),
+      if (forceChatId) {
+        const { data } = await (supabase as any)
+          .from("patient_chats")
+          .select("id, dify_conversation_id, created_by")
+          .eq("patient_id", patientId)
+          .eq("id", forceChatId)
+          .maybeSingle();
+        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id };
+      } else {
+        let listQuery = (supabase as any)
+          .from("patient_chats")
+          .select("id, dify_conversation_id, created_by, created_at")
+          .eq("patient_id", patientId)
+          .order("created_at", { ascending: false });
+        if (!readOnly) listQuery = listQuery.eq("created_by", user.id);
+        const { data: chats } = await listQuery;
+        const list = (chats as Array<{ id: string; dify_conversation_id: string | null }>) ?? [];
+        if (list.length > 0) {
+          const { data: lastMsg } = await (supabase as any)
+            .from("chat_messages")
+            .select("chat_id, created_at")
+            .in("chat_id", list.map((c) => c.id))
+            .order("created_at", { ascending: false })
+            .limit(1);
+          const lastChatId = (lastMsg as Array<{ chat_id: string }> | null)?.[0]?.chat_id;
+          chosenChat = list.find((c) => c.id === lastChatId) ?? list[0];
+        }
+      }
+
+      const [{ data: profile }, { data: patient }] = await Promise.all([
         (supabase as any)
           .from("profiles")
           .select("full_name, email")
@@ -175,10 +199,9 @@ export function useDifyChat(
         patient_id: patientId,
       };
 
-      let id = existing?.id as string | undefined;
+      let id = chosenChat?.id;
       if (!id) {
         if (readOnly) {
-          // Auditor não cria chat — apenas mostra que não há conversa.
           if (!cancelled) setChatId("");
           return;
         }
@@ -190,7 +213,7 @@ export function useDifyChat(
         if (cErr) { setError(cErr.message); return; }
         id = created.id;
       } else {
-        conversationIdRef.current = existing.dify_conversation_id ?? "";
+        conversationIdRef.current = chosenChat!.dify_conversation_id ?? "";
       }
       if (cancelled || !id) return;
       setChatId(id);
@@ -254,7 +277,7 @@ export function useDifyChat(
         setError(upErr.message); setThinking(false); return;
       }
 
-      updateFileProgress(file, "processando", 45, "Enviando arquivo ao Dify");
+      updateFileProgress(file, "processando", 45, "Enviando à Lumma");
       toast.loading(`Processando ${file.name} na Lumma...`, { id: toastId });
 
       // Dify
@@ -268,15 +291,15 @@ export function useDifyChat(
         body: fd,
       });
       if (!res.ok) {
-        updateFileProgress(file, "erro", 100, "Falha ao enviar ao Dify");
+        updateFileProgress(file, "erro", 100, "Falha ao enviar exame");
         toast.error(`Falha ao enviar ${file.name} (${res.status})`, { id: toastId });
-        setError(`Falha ao enviar exame ao Dify (${res.status})`);
+        setError(`Falha ao enviar exame para análise (${res.status})`);
         setThinking(false);
         return;
       }
       const json = await res.json() as { id?: string; mime_type?: string };
       const difyId = json.id;
-      updateFileProgress(file, "processando", 70, "Arquivo recebido pelo Dify");
+      updateFileProgress(file, "processando", 70, "Arquivo recebido — analisando");
 
       const { data: examIns } = await (supabase as any).from("patient_exams").insert({
         patient_id: patientId,
