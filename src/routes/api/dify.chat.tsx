@@ -56,6 +56,11 @@ export const Route = createFileRoute("/api/dify/chat")({
                 nutritionist_email: sanitize(meta.nutritionist_email),
                 patient_name: patientName,
                 patient_id: sanitize(meta.patient_id),
+                patient_sex: sanitize(meta.patient_sex),
+                patient_profile: sanitize(meta.patient_profile),
+                gestante_tipo: sanitize(meta.gestante_tipo),
+                gestante_periodo: sanitize(meta.gestante_periodo),
+                fase_ciclo: sanitize(meta.fase_ciclo),
               }
             : {}),
         };

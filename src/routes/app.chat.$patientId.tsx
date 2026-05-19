@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { ChatIntentPanel, emptyFilters, filtersToContext, type ExamFilters } from "@/components/chat/ChatIntentPanel";
+import { ChatIntentPanel, emptyFilters, faseCicloToInput, filtersToContext, type ExamFilters } from "@/components/chat/ChatIntentPanel";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,10 +48,24 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+
+  useEffect(() => {
+    setContext({
+      patient_sex: filters.sexo ? (filters.sexo === "masculino" ? "Masculino" : "Feminino") : "",
+      patient_profile: filters.publico ? (filters.publico === "adulto" ? "Adulto" : "Gestante") : "",
+      gestante_tipo: filters.publico === "gestante" && filters.gestanteTipo
+        ? (filters.gestanteTipo === "monofetal" ? "Monofetal" : "Gemelar")
+        : "",
+      gestante_periodo: filters.publico === "gestante" && filters.gestantePeriodo
+        ? ({ "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const)[filters.gestantePeriodo]
+        : "",
+      fase_ciclo: faseCicloToInput(filters),
+    });
+  }, [filters, setContext]);
 
   const handleNewChat = useCallback(async () => {
     if (thinking) return;

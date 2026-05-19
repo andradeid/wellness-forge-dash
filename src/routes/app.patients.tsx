@@ -107,11 +107,15 @@ function PatientsPage() {
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!birthDate) {
+      toast.error("Selecione dia, mês e ano de nascimento");
+      return;
+    }
     setSubmitting(true);
     const { error } = await (supabase as any).from("patients").insert({
       created_by: user.id,
       name,
-      birth_date: birthDate || null,
+      birth_date: birthDate,
       gender,
     });
     setSubmitting(false);
@@ -186,7 +190,7 @@ function PatientsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento</Label>
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento *</Label>
                   <BirthDatePicker value={birthDate} onChange={setBirthDate} />
                 </div>
                 <div className="space-y-1.5">

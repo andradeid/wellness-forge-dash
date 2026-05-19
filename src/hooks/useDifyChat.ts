@@ -115,7 +115,22 @@ export function useDifyChat(
     nutritionist_email: string;
     patient_name: string;
     patient_id: string;
-  }>({ nutritionist_name: "", nutritionist_email: "", patient_name: "", patient_id: patientId });
+    patient_sex: string;
+    patient_profile: string;
+    gestante_tipo: string;
+    gestante_periodo: string;
+    fase_ciclo: string;
+  }>({
+    nutritionist_name: "",
+    nutritionist_email: "",
+    patient_name: "",
+    patient_id: patientId,
+    patient_sex: "",
+    patient_profile: "",
+    gestante_tipo: "",
+    gestante_periodo: "",
+    fase_ciclo: "",
+  });
 
   // Load or create chat for this patient
   useEffect(() => {
@@ -153,6 +168,7 @@ export function useDifyChat(
       ]);
 
       metaRef.current = {
+        ...metaRef.current,
         nutritionist_name: (profile?.full_name as string) || (profile?.email as string) || "Nutricionista",
         nutritionist_email: (profile?.email as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
@@ -493,5 +509,22 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat };
+  const setContext = useCallback((ctx: {
+    patient_sex?: string;
+    patient_profile?: string;
+    gestante_tipo?: string;
+    gestante_periodo?: string;
+    fase_ciclo?: string;
+  }) => {
+    metaRef.current = {
+      ...metaRef.current,
+      patient_sex: ctx.patient_sex ?? "",
+      patient_profile: ctx.patient_profile ?? "",
+      gestante_tipo: ctx.gestante_tipo ?? "",
+      gestante_periodo: ctx.gestante_periodo ?? "",
+      fase_ciclo: ctx.fase_ciclo ?? "",
+    };
+  }, []);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext };
 }
