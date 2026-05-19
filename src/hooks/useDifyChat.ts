@@ -509,5 +509,22 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat };
+  const setContext = useCallback((ctx: {
+    patient_sex?: string;
+    patient_profile?: string;
+    gestante_tipo?: string;
+    gestante_periodo?: string;
+    fase_ciclo?: string;
+  }) => {
+    metaRef.current = {
+      ...metaRef.current,
+      patient_sex: ctx.patient_sex ?? "",
+      patient_profile: ctx.patient_profile ?? "",
+      gestante_tipo: ctx.gestante_tipo ?? "",
+      gestante_periodo: ctx.gestante_periodo ?? "",
+      fase_ciclo: ctx.fase_ciclo ?? "",
+    };
+  }, []);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext };
 }
