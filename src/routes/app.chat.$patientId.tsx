@@ -113,6 +113,18 @@ function ChatPage() {
     })();
   }, [patientId]);
 
+  // Pré-popula sexo/público a partir da ficha do paciente, evitando que a Lumma
+  // pergunte dados que já temos cadastrados (ex.: "está gestante?" para homem).
+  useEffect(() => {
+    if (!patient) return;
+    setFilters((prev) => {
+      const sexo: ExamFilters["sexo"] =
+        prev.sexo ?? (patient.gender === "female" ? "feminino" : patient.gender === "male" ? "masculino" : null);
+      const publico: ExamFilters["publico"] = prev.publico ?? (sexo ? "adulto" : null);
+      return { ...prev, sexo, publico };
+    });
+  }, [patient]);
+
   const reloadExams = useCallback(async () => {
     const { data } = await (supabase as any)
       .from("patient_exams")
