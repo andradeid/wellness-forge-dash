@@ -168,6 +168,7 @@ export function useDifyChat(
       ]);
 
       metaRef.current = {
+        ...metaRef.current,
         nutritionist_name: (profile?.full_name as string) || (profile?.email as string) || "Nutricionista",
         nutritionist_email: (profile?.email as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
