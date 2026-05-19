@@ -3,12 +3,22 @@ import { FileText, Search, Utensils, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+export type FaseCiclo = "folicular" | "ovulatoria" | "lutea" | "menopausa";
+
 export type ExamFilters = {
   publico: "adulto" | "gestante" | null;
   sexo: "masculino" | "feminino" | null;
   gestanteTipo: "monofetal" | "gemelar" | null;
   gestantePeriodo: "1t" | "2t" | "3t" | null;
+  faseCiclo: FaseCiclo | null;
   dataExame: string; // YYYY-MM-DD
+};
+
+const FASE_CICLO_LABEL: Record<FaseCiclo, string> = {
+  folicular: "Fase Folicular",
+  ovulatoria: "Fase Ovulatória",
+  lutea: "Fase Lútea",
+  menopausa: "Menopausa",
 };
 
 function todayISO() {
@@ -20,7 +30,7 @@ function todayISO() {
 }
 
 export function emptyFilters(): ExamFilters {
-  return { publico: null, sexo: null, gestanteTipo: null, gestantePeriodo: null, dataExame: todayISO() };
+  return { publico: null, sexo: null, gestanteTipo: null, gestantePeriodo: null, faseCiclo: null, dataExame: todayISO() };
 }
 
 export function filtersToContext(f: ExamFilters): string | null {
@@ -33,11 +43,21 @@ export function filtersToContext(f: ExamFilters): string | null {
     const map = { "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const;
     parts.push(`Período: ${map[f.gestantePeriodo]}`);
   }
+  if (f.publico === "adulto" && f.sexo === "feminino" && f.faseCiclo) {
+    parts.push(`Fase do ciclo: ${FASE_CICLO_LABEL[f.faseCiclo]}`);
+  }
   if (f.dataExame) {
     const [y, m, d] = f.dataExame.split("-");
     parts.push(`Data de realização do exame: ${d}/${m}/${y}`);
   }
   return parts.length ? `[Contexto clínico] ${parts.join(" · ")}` : null;
+}
+
+export function faseCicloToInput(f: ExamFilters): string {
+  if (f.publico === "adulto" && f.sexo === "feminino" && f.faseCiclo) {
+    return FASE_CICLO_LABEL[f.faseCiclo];
+  }
+  return "";
 }
 
 function Pill({
