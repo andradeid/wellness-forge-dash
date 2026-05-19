@@ -54,9 +54,17 @@ function ChatPage() {
   });
 
   useEffect(() => {
+    const patientProfile =
+      filters.publico === "gestante"
+        ? "gestante"
+        : filters.publico === "adulto" && filters.sexo === "feminino"
+        ? "adulto_feminino"
+        : filters.publico === "adulto" && filters.sexo === "masculino"
+        ? "adulto_masculino"
+        : "";
     setContext({
-      patient_sex: filters.sexo ? (filters.sexo === "masculino" ? "Masculino" : "Feminino") : "",
-      patient_profile: filters.publico ? (filters.publico === "adulto" ? "Adulto" : "Gestante") : "",
+      patient_sex: filters.sexo ?? "",
+      patient_profile: patientProfile,
       gestante_tipo: filters.publico === "gestante" && filters.gestanteTipo
         ? (filters.gestanteTipo === "monofetal" ? "Monofetal" : "Gemelar")
         : "",

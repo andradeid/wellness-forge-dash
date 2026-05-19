@@ -160,14 +160,17 @@ export function ChatIntentPanel({
 
           {filters.publico === "adulto" && filters.sexo === "feminino" && (
             <FilterRow label="Fase do ciclo">
+              <Pill active={filters.faseCiclo === null} onClick={() => update({ faseCiclo: null })}>
+                Não informada
+              </Pill>
               <Pill active={filters.faseCiclo === "folicular"} onClick={() => update({ faseCiclo: "folicular" })}>
-                Folicular
+                Folicular (dias 1–13)
               </Pill>
               <Pill active={filters.faseCiclo === "ovulatoria"} onClick={() => update({ faseCiclo: "ovulatoria" })}>
-                Ovulatória
+                Ovulatória (dias 14–16)
               </Pill>
               <Pill active={filters.faseCiclo === "lutea"} onClick={() => update({ faseCiclo: "lutea" })}>
-                Lútea
+                Lútea (dias 17–28)
               </Pill>
               <Pill active={filters.faseCiclo === "menopausa"} onClick={() => update({ faseCiclo: "menopausa" })}>
                 Menopausa
