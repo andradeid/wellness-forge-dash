@@ -115,7 +115,22 @@ export function useDifyChat(
     nutritionist_email: string;
     patient_name: string;
     patient_id: string;
-  }>({ nutritionist_name: "", nutritionist_email: "", patient_name: "", patient_id: patientId });
+    patient_sex: string;
+    patient_profile: string;
+    gestante_tipo: string;
+    gestante_periodo: string;
+    fase_ciclo: string;
+  }>({
+    nutritionist_name: "",
+    nutritionist_email: "",
+    patient_name: "",
+    patient_id: patientId,
+    patient_sex: "",
+    patient_profile: "",
+    gestante_tipo: "",
+    gestante_periodo: "",
+    fase_ciclo: "",
+  });
 
   // Load or create chat for this patient
   useEffect(() => {
