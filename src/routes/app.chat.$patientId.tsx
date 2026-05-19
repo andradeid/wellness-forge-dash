@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
 import { ChatConversationPDF } from "@/components/chat/ChatConversationPDF";
+import { PatientChatHistory } from "@/components/chat/PatientChatHistory";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
