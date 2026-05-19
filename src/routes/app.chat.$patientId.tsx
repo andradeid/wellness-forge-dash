@@ -284,6 +284,7 @@ function ChatPage() {
             )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+            <PatientChatHistory patientId={patientId} currentChatId={chatId} readOnly={readOnly} />
             {role === "nutri" && (
               <Button
                 onClick={handleNewChat}
