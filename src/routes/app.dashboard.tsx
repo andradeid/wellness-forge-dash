@@ -148,9 +148,32 @@ function DashboardPage() {
 
       const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
 
+      // Paginação para buscar TODOS os resultados (Supabase limita 1000 por requisição)
+      const fetchAllResults = async () => {
+        const pageSize = 1000;
+        let from = 0;
+        const all: any[] = [];
+        // hard cap de segurança (50k linhas)
+        for (let i = 0; i < 50; i++) {
+          const { data, error } = await (supabase as any)
+            .from("patient_exam_results")
+            .select(
+              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at",
+            )
+            .eq("created_by", user.id)
+            .order("measured_at", { ascending: false })
+            .range(from, from + pageSize - 1);
+          if (error || !data) break;
+          all.push(...data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        return all;
+      };
+
       const [
         { data: pts },
-        { data: res },
+        res,
         { count: examCount },
         { data: exs },
         { data: chs },
@@ -159,16 +182,12 @@ function DashboardPage() {
           .from("patients")
           .select("id, name, birth_date, created_at, gender")
           .eq("created_by", user.id),
-        (supabase as any)
-          .from("patient_exam_results")
-          .select(
-            "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at",
-          )
-          .eq("created_by", user.id)
-          .order("measured_at", { ascending: false })
-          .limit(1000),
+        fetchAllResults(),
         examsQuery,
         (supabase as any)
+          .from("patient_exams")
+          .select("id, created_at")
+          .uploaded_by_eq_workaround ? null : (supabase as any)
           .from("patient_exams")
           .select("id, created_at")
           .eq("uploaded_by", user.id)
@@ -182,6 +201,7 @@ function DashboardPage() {
           .order("updated_at", { ascending: false })
           .limit(5),
       ]);
+
 
       if (cancelled) return;
       setPatients((pts as PatientLite[]) ?? []);
