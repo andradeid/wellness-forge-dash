@@ -199,12 +199,7 @@ function DashboardPage() {
           .limit(5),
       ]);
 
-          .from("patient_chats")
-          .select("id, patient_id, title, updated_at")
-          .eq("created_by", user.id)
-          .order("updated_at", { ascending: false })
-          .limit(5),
-      ]);
+
 
 
       if (cancelled) return;
