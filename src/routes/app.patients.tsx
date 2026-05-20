@@ -378,9 +378,9 @@ function PatientsPage() {
       <AlertDialog open={deleteStep === 1} onOpenChange={(o) => !o && setDeleteStep(0)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir chat de {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir paciente {deleteTarget?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Todas as mensagens e exames vinculados a este chat serão removidos permanentemente. O cadastro do paciente será mantido.
+              O cadastro do paciente, todos os chats, mensagens e exames vinculados serão removidos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -400,14 +400,14 @@ function PatientsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmação final</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é irreversível. Tem certeza que deseja excluir o chat de <strong>{deleteTarget?.name}</strong>?
+              Esta ação é irreversível. Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong> e todo o histórico?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Voltar</AlertDialogCancel>
             <AlertDialogAction
               disabled={deleting}
-              onClick={(e) => { e.preventDefault(); confirmDeleteChat(); }}
+              onClick={(e) => { e.preventDefault(); confirmDeletePatient(); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? "Excluindo..." : "Excluir definitivamente"}
@@ -415,6 +415,7 @@ function PatientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
 
       <EditPatientSheet
         patient={editTarget}
