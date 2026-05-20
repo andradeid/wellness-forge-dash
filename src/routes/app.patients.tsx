@@ -64,30 +64,46 @@ function PatientsPage() {
     setDeleteStep(1);
   };
 
-  const confirmDeleteChat = async () => {
+  const confirmDeletePatient = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { data: chats } = await (supabase as any)
-      .from("patient_chats")
-      .select("id")
-      .eq("patient_id", deleteTarget.id);
-    const chatIds = (chats ?? []).map((c: { id: string }) => c.id);
-    if (chatIds.length > 0) {
-      await (supabase as any).from("chat_messages").delete().in("chat_id", chatIds);
-      await (supabase as any).from("patient_exams").delete().in("chat_id", chatIds);
+    try {
+      const patientId = deleteTarget.id;
+      const { data: chats } = await (supabase as any)
+        .from("patient_chats")
+        .select("id")
+        .eq("patient_id", patientId);
+      const chatIds = (chats ?? []).map((c: { id: string }) => c.id);
+
+      await (supabase as any).from("patient_exam_results").delete().eq("patient_id", patientId);
+      await (supabase as any).from("patient_exams").delete().eq("patient_id", patientId);
+      if (chatIds.length > 0) {
+        await (supabase as any).from("chat_messages").delete().in("chat_id", chatIds);
+        await (supabase as any).from("patient_exams").delete().in("chat_id", chatIds);
+        await (supabase as any).from("patient_chats").delete().in("id", chatIds);
+      }
+
       const { error } = await (supabase as any)
-        .from("patient_chats").delete().in("id", chatIds);
+        .from("patients")
+        .delete()
+        .eq("id", patientId);
       if (error) {
         toast.error(error.message);
         setDeleting(false);
         return;
       }
+
+      setPatients((prev) => prev.filter((p) => p.id !== patientId));
+      toast.success("Paciente excluído com sucesso");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao excluir paciente");
+    } finally {
+      setDeleting(false);
+      setDeleteStep(0);
+      setDeleteTarget(null);
     }
-    setDeleting(false);
-    setDeleteStep(0);
-    setDeleteTarget(null);
-    toast.success("Chat excluído com sucesso");
   };
+
 
   const load = async () => {
     setLoading(true);
