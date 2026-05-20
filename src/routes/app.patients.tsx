@@ -300,7 +300,7 @@ function PatientsPage() {
                         variant="ghost"
                         onClick={() => askDelete(p)}
                         className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px] min-w-[40px]"
-                        aria-label="Excluir chat"
+                        aria-label="Excluir paciente"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -359,7 +359,7 @@ function PatientsPage() {
                               variant="ghost"
                               onClick={() => askDelete(p)}
                               className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              aria-label="Excluir chat"
+                              aria-label="Excluir paciente"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
