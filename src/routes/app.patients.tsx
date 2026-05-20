@@ -64,30 +64,46 @@ function PatientsPage() {
     setDeleteStep(1);
   };
 
-  const confirmDeleteChat = async () => {
+  const confirmDeletePatient = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { data: chats } = await (supabase as any)
-      .from("patient_chats")
-      .select("id")
-      .eq("patient_id", deleteTarget.id);
-    const chatIds = (chats ?? []).map((c: { id: string }) => c.id);
-    if (chatIds.length > 0) {
-      await (supabase as any).from("chat_messages").delete().in("chat_id", chatIds);
-      await (supabase as any).from("patient_exams").delete().in("chat_id", chatIds);
+    try {
+      const patientId = deleteTarget.id;
+      const { data: chats } = await (supabase as any)
+        .from("patient_chats")
+        .select("id")
+        .eq("patient_id", patientId);
+      const chatIds = (chats ?? []).map((c: { id: string }) => c.id);
+
+      await (supabase as any).from("patient_exam_results").delete().eq("patient_id", patientId);
+      await (supabase as any).from("patient_exams").delete().eq("patient_id", patientId);
+      if (chatIds.length > 0) {
+        await (supabase as any).from("chat_messages").delete().in("chat_id", chatIds);
+        await (supabase as any).from("patient_exams").delete().in("chat_id", chatIds);
+        await (supabase as any).from("patient_chats").delete().in("id", chatIds);
+      }
+
       const { error } = await (supabase as any)
-        .from("patient_chats").delete().in("id", chatIds);
+        .from("patients")
+        .delete()
+        .eq("id", patientId);
       if (error) {
         toast.error(error.message);
         setDeleting(false);
         return;
       }
+
+      setPatients((prev) => prev.filter((p) => p.id !== patientId));
+      toast.success("Paciente excluído com sucesso");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao excluir paciente");
+    } finally {
+      setDeleting(false);
+      setDeleteStep(0);
+      setDeleteTarget(null);
     }
-    setDeleting(false);
-    setDeleteStep(0);
-    setDeleteTarget(null);
-    toast.success("Chat excluído com sucesso");
   };
+
 
   const load = async () => {
     setLoading(true);
@@ -284,7 +300,7 @@ function PatientsPage() {
                         variant="ghost"
                         onClick={() => askDelete(p)}
                         className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px] min-w-[40px]"
-                        aria-label="Excluir chat"
+                        aria-label="Excluir paciente"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -343,7 +359,7 @@ function PatientsPage() {
                               variant="ghost"
                               onClick={() => askDelete(p)}
                               className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              aria-label="Excluir chat"
+                              aria-label="Excluir paciente"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -362,9 +378,9 @@ function PatientsPage() {
       <AlertDialog open={deleteStep === 1} onOpenChange={(o) => !o && setDeleteStep(0)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir chat de {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir paciente {deleteTarget?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Todas as mensagens e exames vinculados a este chat serão removidos permanentemente. O cadastro do paciente será mantido.
+              O cadastro do paciente, todos os chats, mensagens e exames vinculados serão removidos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -384,14 +400,14 @@ function PatientsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmação final</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é irreversível. Tem certeza que deseja excluir o chat de <strong>{deleteTarget?.name}</strong>?
+              Esta ação é irreversível. Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong> e todo o histórico?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Voltar</AlertDialogCancel>
             <AlertDialogAction
               disabled={deleting}
-              onClick={(e) => { e.preventDefault(); confirmDeleteChat(); }}
+              onClick={(e) => { e.preventDefault(); confirmDeletePatient(); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? "Excluindo..." : "Excluir definitivamente"}
@@ -399,6 +415,7 @@ function PatientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
 
       <EditPatientSheet
         patient={editTarget}
