@@ -187,14 +187,18 @@ function DashboardPage() {
         (supabase as any)
           .from("patient_exams")
           .select("id, created_at")
-          .uploaded_by_eq_workaround ? null : (supabase as any)
-          .from("patient_exams")
-          .select("id, created_at")
           .eq("uploaded_by", user.id)
           .gte("created_at", sinceSparkline)
           .order("created_at", { ascending: true })
           .limit(2000),
         (supabase as any)
+          .from("patient_chats")
+          .select("id, patient_id, title, updated_at")
+          .eq("created_by", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(5),
+      ]);
+
           .from("patient_chats")
           .select("id, patient_id, title, updated_at")
           .eq("created_by", user.id)
