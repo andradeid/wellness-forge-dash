@@ -27,6 +27,7 @@ import {
   Plus,
   Settings as SettingsIcon,
   User as UserIcon,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
