@@ -217,15 +217,15 @@ export function AppSidebar() {
       <SidebarContent className="px-3 gap-1">
         {role === "nutri" && (
           <div className={cn("px-1 pb-2", collapsed && "px-0")}>
-            <Link to="/app/patients" title="Iniciar nova consulta">
+            <Link to="/app/fale-com-lumma" title="Fale com a Lumma">
               <span
                 className={cn(
                   "flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm hover:opacity-90 transition",
                   collapsed && "justify-center px-0 py-2",
                 )}
               >
-                <Plus className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>Nova Consulta</span>}
+                <Sparkles className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>Fale com a Lumma</span>}
               </span>
             </Link>
           </div>
