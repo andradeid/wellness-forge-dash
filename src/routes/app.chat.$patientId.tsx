@@ -288,7 +288,7 @@ function ChatPage() {
         <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 h-10 w-10" aria-label="Abrir menu">
+              <Button variant="ghost" size="icon" className="shrink-0 h-10 w-10" aria-label="Histórico de exames">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -296,6 +296,12 @@ function ChatPage() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
+          <Link
+            to="/app/patients"
+            className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <ArrowLeft className="h-3 w-3" /> Pacientes
+          </Link>
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Avatar className="h-9 w-9 shrink-0">
               {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
@@ -313,16 +319,49 @@ function ChatPage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={handleNewChat}
-            disabled={thinking}
-            className="shrink-0 h-9 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 px-4 text-sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Nova Conversa
-          </Button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {role === "nutri" && (
+              <Button
+                onClick={handleNewChat}
+                disabled={thinking}
+                className="h-9 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 px-4 text-sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Nova Conversa
+              </Button>
+            )}
+            <PatientChatHistory patientId={patientId} currentChatId={chatId} readOnly={readOnly} />
+            <Button
+              onClick={handleExportConversation}
+              disabled={!branding || messages.length === 0}
+              variant="ghost"
+              size="sm"
+              className="h-9 rounded-lg gap-1.5"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden lg:inline">Exportar</span>
+            </Button>
+            <Button
+              onClick={handlePrint}
+              disabled={!branding || reportMarkers.length === 0}
+              variant="ghost"
+              size="sm"
+              className="h-9 rounded-lg gap-1.5"
+            >
+              <FileDown className="h-4 w-4" />
+              <span className="hidden lg:inline">Laudo PDF</span>
+            </Button>
+            <Link
+              to="/app/evolution/$patientId"
+              params={{ patientId }}
+              className="inline-flex items-center gap-1.5 h-9 rounded-lg px-3 text-sm hover:bg-muted/50 transition"
+            >
+              <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
+              <span className="hidden lg:inline">Evolução</span>
+            </Link>
+          </div>
           {error && (
-            <p className="text-[11px] sm:text-xs text-rose-600 line-clamp-1 max-w-xs">{error}</p>
+            <p className="text-[11px] sm:text-xs text-rose-600 line-clamp-1 max-w-[200px] shrink-0">{error}</p>
           )}
         </header>
 
