@@ -47,7 +47,8 @@ function AppLayout() {
 
   const isChat = pathname.startsWith("/app/chat/");
   const isEvolution = pathname.startsWith("/app/evolution/");
-  const immersive = isChat || isEvolution;
+  const isFaleComLumma = pathname.startsWith("/app/fale-com-lumma");
+  const immersive = isChat || isEvolution || isFaleComLumma;
 
   const showStagingBanner = role === "nutri";
 
