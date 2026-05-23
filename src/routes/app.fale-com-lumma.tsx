@@ -251,8 +251,7 @@ function FaleComLummaPage() {
           className="absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(circle at 20% 30%, #ffe5cc 0%, transparent 45%), radial-gradient(circle at 75% 25%, #ffc4e0 0%, transparent 45%), radial-gradient(circle at 80% 70%, #b8e0ff 0%, transparent 50%), radial-gradient(circle at 25% 80%, #ffd6b8 0%, transparent 45%), linear-gradient(135deg, #fff4ea 0%, #f5e6ff 50%, #d6ecff 100%)",
-            filter: "blur(0.5px)",
+              "radial-gradient(circle at 25% 20%, #ffe8d6 0%, transparent 40%), radial-gradient(circle at 70% 18%, #ffc1e3 0%, transparent 45%), radial-gradient(circle at 88% 55%, #d9c4ff 0%, transparent 45%), radial-gradient(circle at 55% 70%, #b8e3ff 0%, transparent 50%), radial-gradient(circle at 15% 80%, #ffd9b8 0%, transparent 45%), linear-gradient(135deg, #fff1e0 0%, #ffc8e8 30%, #d6c4ff 55%, #b8e0ff 100%)",
           }}
         />
 
