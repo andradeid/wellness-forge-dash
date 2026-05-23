@@ -24,6 +24,7 @@ interface ChatItem {
   id: string;
   title: string;
   updated_at: string;
+  patient_id: string | null;
   patient_name: string | null;
 }
 
