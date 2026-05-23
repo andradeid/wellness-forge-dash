@@ -212,7 +212,16 @@ function FaleComLummaPage() {
               filtered.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => setActiveId(c.id)}
+                  onClick={() => {
+                    setActiveId(c.id);
+                    if (c.patient_id) {
+                      navigate({
+                        to: "/app/chat/$patientId",
+                        params: { patientId: c.patient_id },
+                        search: { chatId: c.id },
+                      });
+                    }
+                  }}
                   className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors group ${
                     activeId === c.id
                       ? "bg-white/15"
