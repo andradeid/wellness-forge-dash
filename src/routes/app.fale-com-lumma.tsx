@@ -53,6 +53,78 @@ function FaleComLummaPage() {
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
 
+  // Estado: modais de paciente
+  const [identifyOpen, setIdentifyOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [patients, setPatients] = useState<PatientItem[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [patientQuery, setPatientQuery] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState<PatientItem | null>(null);
+
+  // Form: novo paciente
+  const [newName, setNewName] = useState("");
+  const [newBirthDate, setNewBirthDate] = useState("");
+  const [newGender, setNewGender] = useState<Gender | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const loadPatients = async () => {
+    if (!user) return;
+    setLoadingPatients(true);
+    const { data } = await (supabase as any)
+      .from("patients")
+      .select("id, name, birth_date, gender, avatar_url")
+      .eq("created_by", user.id)
+      .order("name", { ascending: true });
+    setPatients((data as PatientItem[]) ?? []);
+    setLoadingPatients(false);
+  };
+
+  useEffect(() => {
+    if (identifyOpen) loadPatients();
+  }, [identifyOpen, user]);
+
+  const handleCreatePatient = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    if (!newBirthDate) {
+      toast.error("Selecione dia, mês e ano de nascimento");
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await (supabase as any)
+      .from("patients")
+      .insert({
+        created_by: user.id,
+        name: newName,
+        birth_date: newBirthDate,
+        gender: newGender,
+      })
+      .select("id, name, birth_date, gender, avatar_url")
+      .single();
+    setCreating(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Paciente cadastrado");
+    setCreateOpen(false);
+    setNewName("");
+    setNewBirthDate("");
+    setNewGender(null);
+    if (data) {
+      setSelectedPatient(data as PatientItem);
+      setPatients((prev) => [...prev, data as PatientItem]);
+    }
+  };
+
+  const filteredPatients = useMemo(
+    () =>
+      patients.filter((p) =>
+        p.name.toLowerCase().includes(patientQuery.toLowerCase())
+      ),
+    [patients, patientQuery]
+  );
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
