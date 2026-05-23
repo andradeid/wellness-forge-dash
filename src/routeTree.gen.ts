@@ -17,6 +17,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppChatsRouteImport } from './routes/app.chats'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
@@ -72,6 +73,11 @@ const AppPoliticasRoute = AppPoliticasRouteImport.update({
 const AppPatientsRoute = AppPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFaleComLummaRoute = AppFaleComLummaRouteImport.update({
+  id: '/fale-com-lumma',
+  path: '/fale-com-lumma',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
+    | '/app/fale-com-lumma'
     | '/app/patients'
     | '/app/politicas'
     | '/app/settings'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
+    | '/app/fale-com-lumma'
     | '/app/patients'
     | '/app/politicas'
     | '/app/settings'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
+    | '/app/fale-com-lumma'
     | '/app/patients'
     | '/app/politicas'
     | '/app/settings'
@@ -382,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/app/patients'
       preLoaderRoute: typeof AppPatientsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/fale-com-lumma': {
+      id: '/app/fale-com-lumma'
+      path: '/fale-com-lumma'
+      fullPath: '/app/fale-com-lumma'
+      preLoaderRoute: typeof AppFaleComLummaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/dashboard': {
@@ -502,6 +521,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppChatsRoute: typeof AppChatsRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppFaleComLummaRoute: typeof AppFaleComLummaRoute
   AppPatientsRoute: typeof AppPatientsRoute
   AppPoliticasRoute: typeof AppPoliticasRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -520,6 +540,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppChatsRoute: AppChatsRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppFaleComLummaRoute: AppFaleComLummaRoute,
   AppPatientsRoute: AppPatientsRoute,
   AppPoliticasRoute: AppPoliticasRoute,
   AppSettingsRoute: AppSettingsRoute,
