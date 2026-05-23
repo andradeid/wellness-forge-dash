@@ -196,7 +196,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible="none"
       className="border-r border-white/10"
     >
       <SidebarHeader className="px-5 pt-6 pb-4">
