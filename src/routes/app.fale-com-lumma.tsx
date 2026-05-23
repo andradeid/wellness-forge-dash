@@ -12,7 +12,7 @@ function FaleComLummaPage() {
   const [message, setMessage] = useState("");
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden">
       {/* Fundo gradiente aurora */}
       <div
         className="absolute inset-0 -z-10"
@@ -24,7 +24,7 @@ function FaleComLummaPage() {
       />
 
       {/* Conteúdo central */}
-      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-between px-6 py-12">
+      <div className="flex h-full flex-col items-center justify-between px-6 py-12">
         <div className="flex flex-1 flex-col items-center justify-center text-center max-w-2xl mx-auto">
           <img
             src={lummaSymbol}
