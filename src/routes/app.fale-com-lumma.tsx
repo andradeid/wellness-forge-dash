@@ -101,7 +101,11 @@ function FaleComLummaPage() {
             <div className="px-2 pb-1 text-[10px] uppercase tracking-wider text-white/50 font-semibold">
               Recentes
             </div>
-            {filtered.length === 0 ? (
+            {loadingChats ? (
+              <div className="flex items-center justify-center py-8 text-white/60">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="px-3 py-6 text-xs text-white/60 text-center">
                 Nenhuma conversa encontrada.
               </div>
@@ -122,7 +126,7 @@ function FaleComLummaPage() {
                       {c.title}
                     </div>
                     <div className="text-[11px] text-white/55 mt-0.5">
-                      {c.when}
+                      {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true, locale: ptBR })}
                     </div>
                   </div>
                 </button>
