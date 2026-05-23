@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -298,6 +298,22 @@ function FaleComLummaPage() {
               >
                 <ClipboardList className="h-4 w-4 mr-2" />
                 Formulações e ou Planos Alimentares
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Microscope className="h-4 w-4 mr-2" />
+                Pesquisa Científica
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Pill className="h-4 w-4 mr-2" />
+                Cálculos e Prescrição
               </Button>
             </div>
             {selectedPatient && (
