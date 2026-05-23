@@ -296,14 +296,33 @@ function ChatPage() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <h1
-            className="text-lg sm:text-xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent leading-tight truncate"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Avatar className="h-9 w-9 shrink-0">
+              {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
+              <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-800 truncate leading-tight">
+                {patient?.name ?? "Carregando paciente…"}
+              </p>
+              <p className="text-[11px] text-slate-500 leading-tight truncate">
+                {age !== null ? `${age} anos` : "—"}
+                {patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={handleNewChat}
+            disabled={thinking}
+            className="shrink-0 h-9 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 px-4 text-sm"
           >
-            Chat com Lumma
-          </h1>
+            <Plus className="h-4 w-4 mr-1" />
+            Nova Conversa
+          </Button>
           {error && (
-            <p className="ml-auto text-[11px] sm:text-xs text-rose-600 line-clamp-1 max-w-md">{error}</p>
+            <p className="text-[11px] sm:text-xs text-rose-600 line-clamp-1 max-w-xs">{error}</p>
           )}
         </header>
 
