@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +24,7 @@ interface ChatItem {
   id: string;
   title: string;
   updated_at: string;
+  patient_id: string | null;
   patient_name: string | null;
 }
 
@@ -47,6 +48,7 @@ function calcAge(birth: string | null): number | null {
 
 function FaleComLummaPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -132,7 +134,7 @@ function FaleComLummaPage() {
       setLoadingChats(true);
       const { data } = await (supabase as any)
         .from("patient_chats")
-        .select("id, title, updated_at, patients:patient_id(name)")
+        .select("id, title, updated_at, patient_id, patients:patient_id(name)")
         .eq("created_by", user.id)
         .order("updated_at", { ascending: false })
         .limit(50);
@@ -141,6 +143,7 @@ function FaleComLummaPage() {
         id: c.id,
         title: c.title || c.patients?.name || "Conversa sem título",
         updated_at: c.updated_at,
+        patient_id: c.patient_id ?? null,
         patient_name: c.patients?.name ?? null,
       }));
       setChats(mapped);
@@ -209,7 +212,16 @@ function FaleComLummaPage() {
               filtered.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => setActiveId(c.id)}
+                  onClick={() => {
+                    setActiveId(c.id);
+                    if (c.patient_id) {
+                      navigate({
+                        to: "/app/chat/$patientId",
+                        params: { patientId: c.patient_id },
+                        search: { chatId: c.id },
+                      });
+                    }
+                  }}
                   className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors group ${
                     activeId === c.id
                       ? "bg-white/15"
@@ -259,17 +271,28 @@ function FaleComLummaPage() {
               Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
               Funcional e Integrativa.
             </p>
-            <Button
-              size="lg"
-              onClick={() => setIdentifyOpen(true)}
-              className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow border-0"
-              style={{
-                background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-              }}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              {selectedPatient ? `Atendendo: ${selectedPatient.name}` : "Identificar paciente"}
-            </Button>
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              <Button
+                size="lg"
+                onClick={() => setIdentifyOpen(true)}
+                className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow border-0"
+                style={{
+                  background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
+                }}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                {selectedPatient ? `Atendendo: ${selectedPatient.name}` : "Identificar paciente"}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setCreateOpen(true)}
+                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Criar paciente
+              </Button>
+            </div>
             {selectedPatient && (
               <button
                 type="button"
