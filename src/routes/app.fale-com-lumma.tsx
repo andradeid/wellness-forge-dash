@@ -27,6 +27,24 @@ interface ChatItem {
   patient_name: string | null;
 }
 
+interface PatientItem {
+  id: string;
+  name: string;
+  birth_date: string | null;
+  gender: "male" | "female" | "other" | null;
+  avatar_url: string | null;
+}
+
+type Gender = "male" | "female" | "other";
+
+function calcAge(birth: string | null): number | null {
+  if (!birth) return null;
+  const d = new Date(birth);
+  if (Number.isNaN(d.getTime())) return null;
+  const diff = Date.now() - d.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
 function FaleComLummaPage() {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
