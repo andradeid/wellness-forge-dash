@@ -191,11 +191,15 @@ function ChatPage() {
     );
   }
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
   const SidebarContent = (
     <>
       <div className="px-5 py-4 border-b">
         <Link
           to="/app/patients"
+          onClick={closeMenu}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3 w-3" /> Pacientes
@@ -208,7 +212,9 @@ function ChatPage() {
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <div className="font-medium truncate">{patient?.name ?? "…"}</div>
+            <div className="font-medium truncate">
+              {patient?.name ? `Atendimento de ${patient.name}` : "Carregando paciente…"}
+            </div>
             <div className="text-xs text-muted-foreground">
               {age !== null ? `${age} anos` : "—"}
               {patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
@@ -216,20 +222,55 @@ function ChatPage() {
           </div>
         </div>
       </div>
-      <div className="px-3 py-2 border-b">
+
+      {role === "nutri" && (
+        <div className="px-3 pt-3">
+          <Button
+            onClick={() => { closeMenu(); handleNewChat(); }}
+            disabled={thinking || !chatId}
+            className="w-full justify-start rounded-full gap-2 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 shadow-sm h-10"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Chat
+          </Button>
+        </div>
+      )}
+
+      <div className="px-3 pt-2 flex flex-col gap-1">
+        <div onClick={closeMenu}>
+          <PatientChatHistory patientId={patientId} currentChatId={chatId} readOnly={readOnly} />
+        </div>
+        <Button
+          onClick={() => { closeMenu(); handleExportConversation(); }}
+          disabled={!branding || messages.length === 0}
+          variant="ghost"
+          className="w-full justify-start gap-2 h-10 rounded-lg"
+        >
+          <Download className="h-4 w-4" />
+          Exportar Conversa
+        </Button>
+        <Button
+          onClick={() => { closeMenu(); handlePrint(); }}
+          disabled={!branding || reportMarkers.length === 0}
+          variant="ghost"
+          className="w-full justify-start gap-2 h-10 rounded-lg"
+        >
+          <FileDown className="h-4 w-4" />
+          Gerar Laudo PDF
+        </Button>
         <Link
           to="/app/evolution/$patientId"
           params={{ patientId }}
-          className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-muted/50 transition min-h-11"
+          onClick={closeMenu}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted/50 transition min-h-10"
         >
-          <span className="inline-flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
-            Evolução clínica
-          </span>
-          <span className="text-[10px] text-muted-foreground">gráficos</span>
+          <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
+          Evolução clínica
+          <span className="ml-auto text-[10px] text-muted-foreground">gráficos</span>
         </Link>
       </div>
-      <div className="px-3 py-3 border-b flex-1 min-h-0 flex flex-col">
+
+      <div className="px-3 py-3 mt-2 border-t flex-1 min-h-0 flex flex-col">
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-3 mb-2">
           Histórico de exames
         </div>
@@ -242,17 +283,12 @@ function ChatPage() {
 
   return (
     <div className="flex h-full max-h-full w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
-      {/* Left column: patient + exams (desktop) */}
-      <aside className="hidden lg:flex h-full w-72 shrink-0 flex-col overflow-hidden border-r bg-white">
-        {SidebarContent}
-      </aside>
-
       {/* Main: chat */}
       <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-3 sm:py-4 border-b border-white/40 bg-white/80 backdrop-blur-md flex items-center gap-2 sm:gap-4">
-          <Sheet>
+        <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden shrink-0 h-10 w-10" aria-label="Abrir menu do paciente">
+              <Button variant="ghost" size="icon" className="shrink-0 h-10 w-10" aria-label="Abrir menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -260,67 +296,17 @@ function ChatPage() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <Avatar className="h-10 w-10 sm:h-12 sm:w-12 ring-2 ring-[#e89bcf]/30 lg:hidden shrink-0">
-            {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
-            <AvatarFallback className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white">
-              {patient?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "?"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <h1
-              className="text-lg sm:text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent leading-tight truncate"
-              style={{ fontFamily: "'Instrument Serif', serif" }}
-            >
-              Chat com Lumma
-            </h1>
-            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
-              {patient?.name ? `Atendimento de ${patient.name}` : "Carregando paciente…"}
-              <span className="hidden sm:inline">
-                {chatId && ` · sessão iniciada em ${format(new Date(), "dd/MM/yyyy")}`}
-              </span>
-            </p>
-            {error && (
-              <p className="mt-1 text-[11px] sm:text-xs text-rose-600 line-clamp-2">{error}</p>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
-            <PatientChatHistory patientId={patientId} currentChatId={chatId} readOnly={readOnly} />
-            {role === "nutri" && (
-              <Button
-                onClick={handleNewChat}
-                disabled={thinking || !chatId}
-                size="sm"
-                className="rounded-full gap-2 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 shadow-sm h-10 sm:h-9 px-3"
-                title="Iniciar uma nova consulta para este paciente"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Novo Chat</span>
-              </Button>
-            )}
-            <Button
-              onClick={handleExportConversation}
-              disabled={!branding || messages.length === 0}
-              size="sm"
-              variant="outline"
-              className="rounded-full gap-2 h-10 sm:h-9 px-3"
-              title={messages.length === 0 ? "Nenhuma mensagem para exportar" : "Exportar conversa em PDF"}
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Exportar Conversa</span>
-            </Button>
-            <Button
-              onClick={handlePrint}
-              disabled={!branding || reportMarkers.length === 0}
-              size="sm"
-              variant="outline"
-              className="rounded-full gap-2 h-10 sm:h-9 px-3"
-              title={reportMarkers.length === 0 ? "Nenhum exame analisado para este paciente ainda" : "Gerar laudo profissional em PDF"}
-            >
-              <FileDown className="h-4 w-4" />
-              <span className="hidden sm:inline">Gerar Laudo PDF</span>
-            </Button>
-          </div>
+          <h1
+            className="text-lg sm:text-xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent leading-tight truncate"
+            style={{ fontFamily: "'Instrument Serif', serif" }}
+          >
+            Chat com Lumma
+          </h1>
+          {error && (
+            <p className="ml-auto text-[11px] sm:text-xs text-rose-600 line-clamp-1 max-w-md">{error}</p>
+          )}
         </header>
+
 
         <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           {role === "nutri" && (
