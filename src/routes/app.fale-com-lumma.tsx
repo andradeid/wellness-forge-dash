@@ -1,11 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BirthDatePicker } from "@/components/BirthDatePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
@@ -21,6 +27,24 @@ interface ChatItem {
   patient_name: string | null;
 }
 
+interface PatientItem {
+  id: string;
+  name: string;
+  birth_date: string | null;
+  gender: "male" | "female" | "other" | null;
+  avatar_url: string | null;
+}
+
+type Gender = "male" | "female" | "other";
+
+function calcAge(birth: string | null): number | null {
+  if (!birth) return null;
+  const d = new Date(birth);
+  if (Number.isNaN(d.getTime())) return null;
+  const diff = Date.now() - d.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
 function FaleComLummaPage() {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
@@ -28,6 +52,78 @@ function FaleComLummaPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
+
+  // Estado: modais de paciente
+  const [identifyOpen, setIdentifyOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [patients, setPatients] = useState<PatientItem[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [patientQuery, setPatientQuery] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState<PatientItem | null>(null);
+
+  // Form: novo paciente
+  const [newName, setNewName] = useState("");
+  const [newBirthDate, setNewBirthDate] = useState("");
+  const [newGender, setNewGender] = useState<Gender | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const loadPatients = async () => {
+    if (!user) return;
+    setLoadingPatients(true);
+    const { data } = await (supabase as any)
+      .from("patients")
+      .select("id, name, birth_date, gender, avatar_url")
+      .eq("created_by", user.id)
+      .order("name", { ascending: true });
+    setPatients((data as PatientItem[]) ?? []);
+    setLoadingPatients(false);
+  };
+
+  useEffect(() => {
+    if (identifyOpen) loadPatients();
+  }, [identifyOpen, user]);
+
+  const handleCreatePatient = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    if (!newBirthDate) {
+      toast.error("Selecione dia, mês e ano de nascimento");
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await (supabase as any)
+      .from("patients")
+      .insert({
+        created_by: user.id,
+        name: newName,
+        birth_date: newBirthDate,
+        gender: newGender,
+      })
+      .select("id, name, birth_date, gender, avatar_url")
+      .single();
+    setCreating(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Paciente cadastrado");
+    setCreateOpen(false);
+    setNewName("");
+    setNewBirthDate("");
+    setNewGender(null);
+    if (data) {
+      setSelectedPatient(data as PatientItem);
+      setPatients((prev) => [...prev, data as PatientItem]);
+    }
+  };
+
+  const filteredPatients = useMemo(
+    () =>
+      patients.filter((p) =>
+        p.name.toLowerCase().includes(patientQuery.toLowerCase())
+      ),
+    [patients, patientQuery]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -165,30 +261,24 @@ function FaleComLummaPage() {
             </p>
             <Button
               size="lg"
-              className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow"
+              onClick={() => setIdentifyOpen(true)}
+              className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow border-0"
               style={{
                 background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
               }}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mr-2"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              Identificar paciente
+              <Users className="h-4 w-4 mr-2" />
+              {selectedPatient ? `Atendendo: ${selectedPatient.name}` : "Identificar paciente"}
             </Button>
+            {selectedPatient && (
+              <button
+                type="button"
+                onClick={() => setSelectedPatient(null)}
+                className="mt-3 text-xs text-foreground/60 hover:text-foreground underline underline-offset-2"
+              >
+                Limpar paciente
+              </button>
+            )}
           </div>
 
           {/* Barra de input */}
@@ -242,6 +332,159 @@ function FaleComLummaPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal: Identificar paciente */}
+      <Dialog open={identifyOpen} onOpenChange={setIdentifyOpen}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
+          <div className="h-1.5 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+          <div className="px-6 pt-6 pb-2 bg-gradient-to-b from-[#f7f5f0] to-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] flex items-center justify-center shadow-md">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <DialogHeader className="space-y-0 text-left flex-1">
+                <DialogTitle className="text-lg font-semibold tracking-tight text-foreground text-left">
+                  Identificar paciente
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground text-left">
+                  Selecione um paciente já cadastrado ou crie um novo.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+          </div>
+          <div className="px-6 pt-2 pb-4 space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={patientQuery}
+                onChange={(e) => setPatientQuery(e.target.value)}
+                placeholder="Buscar paciente por nome..."
+                className="pl-9 rounded-xl h-11"
+              />
+            </div>
+            <ScrollArea className="h-72 rounded-xl border border-muted bg-white">
+              {loadingPatients ? (
+                <div className="flex items-center justify-center py-10 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : filteredPatients.length === 0 ? (
+                <div className="px-4 py-10 text-sm text-muted-foreground text-center">
+                  Nenhum paciente encontrado.
+                </div>
+              ) : (
+                <ul className="divide-y divide-muted/60">
+                  {filteredPatients.map((p) => {
+                    const age = calcAge(p.birth_date);
+                    return (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPatient(p);
+                            setIdentifyOpen(false);
+                            toast.success(`Paciente ${p.name} selecionado`);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+                        >
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage src={p.avatar_url ?? undefined} />
+                            <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                              {p.name.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-foreground truncate">
+                              {p.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {age !== null ? `${age} anos` : "Idade não informada"}
+                              {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : p.gender === "other" ? " • Outro" : ""}
+                            </div>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </ScrollArea>
+          </div>
+          <DialogFooter className="px-6 pb-6 pt-0">
+            <Button
+              type="button"
+              onClick={() => {
+                setIdentifyOpen(false);
+                setCreateOpen(true);
+              }}
+              className="w-full rounded-full h-11 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md font-medium"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Criar paciente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Criar paciente */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
+          <div className="h-1.5 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+          <div className="px-6 pt-6 pb-2 bg-gradient-to-b from-[#f7f5f0] to-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] flex items-center justify-center shadow-md">
+                <UserPlus className="h-5 w-5 text-white" />
+              </div>
+              <DialogHeader className="space-y-0 text-left flex-1">
+                <DialogTitle className="text-lg font-semibold tracking-tight text-foreground text-left">
+                  Novo paciente
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground text-left">
+                  Cadastre um paciente. Mais campos virão na criação do chat.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+          </div>
+          <form onSubmit={handleCreatePatient} className="space-y-4 px-6 pb-6 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="fcl-p-name" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nome</Label>
+              <Input
+                id="fcl-p-name"
+                required
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Nome completo"
+                className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento *</Label>
+              <BirthDatePicker value={newBirthDate} onChange={setNewBirthDate} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
+              <Select value={newGender ?? undefined} onValueChange={(v) => setNewGender(v as Gender)}>
+                <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Masculino</SelectItem>
+                  <SelectItem value="female">Feminino</SelectItem>
+                  <SelectItem value="other">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="submit"
+                disabled={creating}
+                className="w-full rounded-full h-11 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md font-medium"
+              >
+                {creating ? "Salvando..." : "Salvar paciente"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
