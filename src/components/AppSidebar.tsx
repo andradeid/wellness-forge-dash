@@ -27,6 +27,7 @@ import {
   Plus,
   Settings as SettingsIcon,
   User as UserIcon,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -88,6 +89,7 @@ const nutriGroups: NavGroup[] = [
     items: [
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
       { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
+      { title: "Fale com a Lumma", url: "/app/fale-com-lumma", icon: Sparkles, badge: "BETA" },
     ],
   },
   {
