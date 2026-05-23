@@ -251,7 +251,7 @@ function FaleComLummaPage() {
           className="absolute inset-0 -z-10"
           style={{
             background:
-              "linear-gradient(105deg, #ffe1cc 0%, #fcd9e4 22%, #d9d4f5 45%, #b8e8fb 70%, #d4f3f0 100%)",
+              "linear-gradient(135deg, #f3e8ff 0%, #e0f2fe 50%, #fce7f3 100%)",
           }}
         />
 
