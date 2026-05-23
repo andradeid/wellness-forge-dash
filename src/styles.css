@@ -162,7 +162,8 @@
 }
 
 /* LUMMA sidebar — gradiente roxo aplicado tanto no desktop quanto no Sheet mobile (portal) */
-[data-sidebar="sidebar"] {
+[data-sidebar="sidebar"],
+.lumma-sidebar {
   background: linear-gradient(180deg, #2b0a3d 0%, #3d1259 35%, #4a2a8a 75%, #5a4aa8 100%);
   color: #ffffff;
   --sidebar: #2b0a3d;
