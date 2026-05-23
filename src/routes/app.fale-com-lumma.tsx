@@ -291,6 +291,14 @@ function FaleComLummaPage() {
                 <UserPlus className="h-4 w-4 mr-2" />
                 Criar paciente
               </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <ClipboardList className="h-4 w-4 mr-2" />
+                Formulações e ou Planos Alimentares
+              </Button>
             </div>
             {selectedPatient && (
               <button
