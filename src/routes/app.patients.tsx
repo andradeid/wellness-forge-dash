@@ -155,7 +155,7 @@ function PatientsPage() {
     g === "male" ? "Masculino" : g === "female" ? "Feminino" : g === "other" ? "Outro" : "—";
 
   return (
-    <div className="space-y-6 max-w-6xl px-3 sm:px-4 lg:px-0 overflow-x-hidden">
+    <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 lg:px-0 overflow-x-hidden">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight break-words">Pacientes</h1>
