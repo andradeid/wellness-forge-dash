@@ -134,7 +134,7 @@ function FaleComLummaPage() {
       setLoadingChats(true);
       const { data } = await (supabase as any)
         .from("patient_chats")
-        .select("id, title, updated_at, patients:patient_id(name)")
+        .select("id, title, updated_at, patient_id, patients:patient_id(name)")
         .eq("created_by", user.id)
         .order("updated_at", { ascending: false })
         .limit(50);
@@ -143,6 +143,7 @@ function FaleComLummaPage() {
         id: c.id,
         title: c.title || c.patients?.name || "Conversa sem título",
         updated_at: c.updated_at,
+        patient_id: c.patient_id ?? null,
         patient_name: c.patients?.name ?? null,
       }));
       setChats(mapped);
