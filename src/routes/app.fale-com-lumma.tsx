@@ -271,17 +271,28 @@ function FaleComLummaPage() {
               Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
               Funcional e Integrativa.
             </p>
-            <Button
-              size="lg"
-              onClick={() => setIdentifyOpen(true)}
-              className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow border-0"
-              style={{
-                background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-              }}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              {selectedPatient ? `Atendendo: ${selectedPatient.name}` : "Identificar paciente"}
-            </Button>
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              <Button
+                size="lg"
+                onClick={() => setIdentifyOpen(true)}
+                className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow border-0"
+                style={{
+                  background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
+                }}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                {selectedPatient ? `Atendendo: ${selectedPatient.name}` : "Identificar paciente"}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setCreateOpen(true)}
+                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Criar paciente
+              </Button>
+            </div>
             {selectedPatient && (
               <button
                 type="button"
