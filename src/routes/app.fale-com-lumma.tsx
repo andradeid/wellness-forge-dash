@@ -1,35 +1,68 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/fale-com-lumma")({
   component: FaleComLummaPage,
 });
 
-// Mock — apenas visual enquanto estudamos a melhor apresentação
-const mockChats = [
-  { id: "1", title: "Protocolo intestino permeável", when: "Agora há pouco" },
-  { id: "2", title: "Interpretação de cortisol salivar", when: "Hoje, 09:42" },
-  { id: "3", title: "Plano alimentar SOP", when: "Ontem" },
-  { id: "4", title: "Suplementação de magnésio", when: "Ontem" },
-  { id: "5", title: "Marcadores de inflamação", when: "2 dias atrás" },
-  { id: "6", title: "Disbiose e histamina", when: "3 dias atrás" },
-  { id: "7", title: "Vitamina D e autoimunidade", when: "Semana passada" },
-  { id: "8", title: "Fadiga adrenal — abordagem", when: "Semana passada" },
-];
+interface ChatItem {
+  id: string;
+  title: string;
+  updated_at: string;
+  patient_name: string | null;
+}
 
 function FaleComLummaPage() {
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [chats, setChats] = useState<ChatItem[]>([]);
+  const [loadingChats, setLoadingChats] = useState(true);
 
-  const filtered = mockChats.filter((c) =>
-    c.title.toLowerCase().includes(query.toLowerCase())
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingChats(true);
+      const { data } = await (supabase as any)
+        .from("patient_chats")
+        .select("id, title, updated_at, patients:patient_id(name)")
+        .eq("created_by", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(50);
+      if (cancelled) return;
+      const mapped: ChatItem[] = (data ?? []).map((c: any) => ({
+        id: c.id,
+        title: c.title || c.patients?.name || "Conversa sem título",
+        updated_at: c.updated_at,
+        patient_name: c.patients?.name ?? null,
+      }));
+      setChats(mapped);
+      setLoadingChats(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const filtered = useMemo(
+    () =>
+      chats.filter((c) =>
+        c.title.toLowerCase().includes(query.toLowerCase())
+      ),
+    [chats, query]
   );
+
 
   return (
     <div className="relative h-full w-full overflow-hidden flex">
