@@ -46,6 +46,7 @@ function ChatPage() {
   const [reportMarkers, setReportMarkers] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [filters, setFilters] = useState<ExamFilters>(emptyFilters());
+  const [menuOpen, setMenuOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
@@ -191,7 +192,6 @@ function ChatPage() {
     );
   }
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
   const SidebarContent = (
