@@ -34,10 +34,17 @@ function FaleComLummaPage() {
   return (
     <div className="relative h-full w-full overflow-hidden flex">
       {/* Painel lateral: últimos chats */}
-      <aside className="hidden md:flex w-72 shrink-0 flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm">
-        <div className="p-4 border-b border-border/60">
+      <aside className="lumma-sidebar hidden md:flex w-72 shrink-0 flex-col border-r border-white/10 text-white">
+        <div className="p-4 border-b border-white/10">
+          <Link
+            to="/app/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors mb-3"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Voltar ao Dashboard
+          </Link>
           <Button
-            className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow"
+            className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
             style={{
               background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
             }}
@@ -46,23 +53,23 @@ function FaleComLummaPage() {
             Nova conversa
           </Button>
           <div className="relative mt-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar conversas..."
-              className="pl-8 h-9 text-sm rounded-lg"
+              className="pl-8 h-9 text-sm rounded-lg bg-white/10 border-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30"
             />
           </div>
         </div>
 
         <ScrollArea className="flex-1">
           <div className="px-2 py-3 space-y-1">
-            <div className="px-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
+            <div className="px-2 pb-1 text-[10px] uppercase tracking-wider text-white/50 font-semibold">
               Recentes
             </div>
             {filtered.length === 0 ? (
-              <div className="px-3 py-6 text-xs text-muted-foreground text-center">
+              <div className="px-3 py-6 text-xs text-white/60 text-center">
                 Nenhuma conversa encontrada.
               </div>
             ) : (
@@ -72,16 +79,16 @@ function FaleComLummaPage() {
                   onClick={() => setActiveId(c.id)}
                   className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors group ${
                     activeId === c.id
-                      ? "bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10"
-                      : "hover:bg-muted/60"
+                      ? "bg-white/15"
+                      : "hover:bg-white/10"
                   }`}
                 >
-                  <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0 group-hover:text-foreground" />
+                  <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 shrink-0 group-hover:text-white" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-foreground truncate">
+                    <div className="text-sm font-medium text-white truncate">
                       {c.title}
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                    <div className="text-[11px] text-white/55 mt-0.5">
                       {c.when}
                     </div>
                   </div>
