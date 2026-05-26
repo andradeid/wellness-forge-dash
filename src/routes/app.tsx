@@ -11,6 +11,31 @@ export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
+type AppRole = "super_admin" | "admin" | "nutri";
+
+// RBAC central: rota (prefixo) -> roles permitidos.
+// Defesa em profundidade: páginas continuam com seus guards locais.
+const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
+  // Somente super_admin
+  { prefix: "/app/admin/users", roles: ["super_admin"] },
+  { prefix: "/app/admin/ranking", roles: ["super_admin"] },
+  { prefix: "/app/admin/playground", roles: ["super_admin"] },
+  { prefix: "/app/admin/feedbacks", roles: ["super_admin"] },
+  // Admin + super_admin
+  { prefix: "/app/admin/administrators", roles: ["admin", "super_admin"] },
+  { prefix: "/app/admin/integrations", roles: ["admin", "super_admin"] },
+  { prefix: "/app/admin/nutritionists", roles: ["admin", "super_admin"] },
+  // Qualquer outra rota /app/admin/* exige pelo menos admin
+  { prefix: "/app/admin", roles: ["admin", "super_admin"] },
+];
+
+function isAllowed(pathname: string, role: AppRole | null): boolean {
+  const match = ROUTE_ACCESS.find((r) => pathname.startsWith(r.prefix));
+  if (!match) return true; // rotas /app não administrativas: liberadas para qualquer role logada
+  if (!role) return false;
+  return match.roles.includes(role);
+}
+
 function AppLayout() {
   const { session, loading, role } = useAuth();
   const navigate = useNavigate();
@@ -22,10 +47,11 @@ function AppLayout() {
     }
   }, [session, loading, navigate]);
 
-  // RBAC: nutri não acessa rotas administrativas
+  // RBAC: redireciona para /unauthorized se a role atual não tiver permissão.
   useEffect(() => {
-    if (!loading && session && role && role === "nutri" && pathname.startsWith("/app/admin")) {
-      navigate({ to: "/app/patients", replace: true });
+    if (loading || !session || !role) return;
+    if (!isAllowed(pathname, role)) {
+      navigate({ to: "/unauthorized", replace: true });
     }
   }, [loading, session, role, pathname, navigate]);
 
@@ -44,6 +70,7 @@ function AppLayout() {
       </div>
     );
   }
+
 
   const isChat = pathname.startsWith("/app/chat/");
   const isEvolution = pathname.startsWith("/app/evolution/");
