@@ -1138,44 +1138,46 @@ function TestEnvironmentNotice() {
             >
               ⚠️ Ambiente de Validação Técnica{" "}
               <span className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">
-                (Etapa 2)
+                (Etapa 3)
               </span>
             </h2>
           </div>
 
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
             <p>
-              Você está acessando o ambiente de homologação e testes estruturais da{" "}
-              <strong className="text-foreground">LUMMA</strong>. Este espaço é dedicado
-              exclusivamente à validação do nosso novo motor de processamento.
+              Você está acessando o ambiente de homologação da{" "}
+              <strong className="text-foreground">LUMMA</strong>, já operando em nossa{" "}
+              <strong className="text-foreground">VPS de alta performance</strong>. Nosso
+              foco agora é garantir a extração correta dos dados e refinar o layout antes
+              da liberação geral.
             </p>
-            <p>Por favor, esteja ciente de dois pontos importantes durante seus testes:</p>
+            <p>Antes de seguir, é importante saber:</p>
             <ul className="space-y-3 pl-1">
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] shrink-0" />
                 <span>
-                  <strong className="text-foreground">Processamento de Dados:</strong> o foco
-                  desta etapa é validar a estabilidade e a precisão da leitura de arquivos
-                  (PDFs e imagens). Sinta-se à vontade para testar laudos complexos que
-                  costumavam falhar.
+                  <strong className="text-foreground">Extração de Dados em primeiro lugar:</strong>{" "}
+                  nossa prioridade nesta fase é validar a precisão da leitura de exames
+                  (PDFs e imagens) e a fidelidade dos dados interpretados. Teste laudos
+                  variados, especialmente os mais complexos.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] shrink-0" />
                 <span>
-                  <strong className="text-foreground">Velocidade de Navegação:</strong> como
-                  estamos operando em servidores de desenvolvimento para homologação, a
-                  velocidade de resposta ainda não é a máxima da plataforma. A infraestrutura
-                  de alta performance e tráfego ultra-rápido será ativada na Etapa 3, com a
-                  migração para a sua VPS própria.
+                  <strong className="text-foreground">Ajustes de Layout:</strong> em
+                  paralelo, estamos refinando telas, espaçamentos e componentes. Pequenas
+                  inconsistências visuais podem aparecer e serão corrigidas antes do
+                  lançamento oficial.
                 </span>
               </li>
             </ul>
             <p className="italic">
-              Sua experiência e feedback nesta fase são fundamentais para calibrarmos a
-              curadoria do sistema.
+              Seu feedback nesta etapa é essencial para calibrarmos a curadoria do sistema
+              e entregarmos uma experiência impecável.
             </p>
           </div>
+
 
           <Button
             onClick={acknowledge}
