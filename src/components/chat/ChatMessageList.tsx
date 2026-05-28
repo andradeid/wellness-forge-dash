@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef } from "react";
-import { CheckCircle2, AlertTriangle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip } from "lucide-react";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
@@ -133,8 +133,20 @@ export function ChatMessageList({
                 } ${isHighlighted ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-transparent shadow-lg" : ""}`}
               >
                 {m.attachments && m.attachments.length > 0 && (
-                  <div className="mb-2 text-xs opacity-80">
-                    📎 {m.attachments.map((a) => a.name).join(", ")}
+                  <div className="mb-2 flex flex-col gap-1 text-xs opacity-90">
+                    {m.attachments.map((a, idx) => {
+                      const name = a.name || "";
+                      const ext = name.split(".").pop()?.toLowerCase() ?? "";
+                      const isPdf = ext === "pdf";
+                      const isImage = ["png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "heic"].includes(ext);
+                      const Icon = isPdf ? FileText : isImage ? ImageIcon : Paperclip;
+                      return (
+                        <div key={idx} className="inline-flex items-center gap-1.5">
+                          <Icon className={`h-3.5 w-3.5 ${isPdf ? "text-rose-300" : isImage ? "text-sky-300" : ""}`} />
+                          <span className="truncate">{name}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
