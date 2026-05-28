@@ -137,6 +137,11 @@ export function ChatMessageList({
                     📎 {m.attachments.map((a) => a.name).join(", ")}
                   </div>
                 )}
+                {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
+                  <div className="mb-4">
+                    <ExamResultCard markers={m.structured_data.markers} />
+                  </div>
+                )}
                 {parts
                   .filter((p) => p.type === "text")
                   .map((p, i) => {
@@ -153,11 +158,6 @@ export function ChatMessageList({
                       </div>
                     );
                   })}
-                {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
-                  <div className="mt-3">
-                    <ExamResultCard markers={m.structured_data.markers} />
-                  </div>
-                )}
                 {m.role === "assistant" && isAdmin && m.structured_data?.indexed && (
                   <div
                     className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-600/80"
