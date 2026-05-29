@@ -491,7 +491,8 @@ export function useDifyChat(
       return;
     }
 
-    const markers = tryExtractMarkers(assistantText);
+    const labReportError = tryExtractLabReportError(assistantText);
+    const markers = !labReportError ? tryExtractMarkers(assistantText) : null;
     let indexed = false;
     let parseError = false;
 
