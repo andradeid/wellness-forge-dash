@@ -56,7 +56,10 @@ export const Route = createFileRoute("/api/dify/upload")({
         let upstream = await uploadToDify();
 
         const text = await upstream.text();
-        if (upstream.status === 403 && /workspace.*archived|status is archived/i.test(text)) {
+        const isArchived = upstream.status === 403 && /workspace.*archived|status is archived/i.test(text);
+        const isInvalid = upstream.status === 401 && /invalid|unauthorized/i.test(text);
+
+        if (isArchived || isInvalid) {
           invalidateDifyConfigCache();
           ({ baseUrl, apiKey } = await getDifyConfig(token, true));
           const retryForm = new FormData();
