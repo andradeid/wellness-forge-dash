@@ -525,6 +525,9 @@ export function useDifyChat(
     }
 
     const processingMs = Math.round(performance.now() - startedAt);
+    if (labReportError) {
+      toast.warning(labReportError, { duration: 5000 });
+    }
     const structured = labReportError
       ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
       : (markers
