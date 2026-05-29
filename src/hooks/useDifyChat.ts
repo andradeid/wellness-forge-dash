@@ -58,7 +58,24 @@ function extractMarkersFromText(text: string): Marker[] {
   return out;
 }
 
+function tryExtractLabReportError(text: string): string | null {
+  const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(text))) {
+    try {
+      const parsed = JSON.parse(m[1].trim());
+      if (parsed?.error === true && parsed?.error_type === "not_a_lab_report") {
+        return parsed.message || "Imagem não reconhecida como laudo laboratorial.";
+      }
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
 function tryExtractMarkers(text: string): Marker[] | null {
+  // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
+  if (tryExtractLabReportError(text)) return null;
+
   // 1) ```json blocks containing { "markers": [...] }
   const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
   let m: RegExpExecArray | null;
@@ -419,14 +436,17 @@ export function useDifyChat(
           if (evt.event === "message" || evt.event === "agent_message") {
             assistantText += getDifyAnswer(evt);
             
-            // Tenta extrair marcadores durante o streaming para que o painel apareça imediatamente
-            const streamingMarkers = tryExtractMarkers(assistantText);
+            // Tenta detectar se não é um laudo ou extrair marcadores durante o streaming
+            const labReportError = tryExtractLabReportError(assistantText);
+            const streamingMarkers = !labReportError ? tryExtractMarkers(assistantText) : null;
             
             setMessages((prev) =>
               prev.map((m) => (m.id === assistantId ? { 
                 ...m, 
                 content: assistantText,
-                structured_data: streamingMarkers ? { markers: streamingMarkers } : m.structured_data
+                structured_data: labReportError 
+                  ? { not_a_lab_report_error: labReportError }
+                  : (streamingMarkers ? { markers: streamingMarkers } : m.structured_data)
               } : m))
             );
           } else if (evt.event === "message_end" || evt.event === "agent_thought") {
@@ -471,7 +491,8 @@ export function useDifyChat(
       return;
     }
 
-    const markers = tryExtractMarkers(assistantText);
+    const labReportError = tryExtractLabReportError(assistantText);
+    const markers = !labReportError ? tryExtractMarkers(assistantText) : null;
     let indexed = false;
     let parseError = false;
 
@@ -504,9 +525,14 @@ export function useDifyChat(
     }
 
     const processingMs = Math.round(performance.now() - startedAt);
-    const structured = markers
-      ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
-      : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs };
+    if (labReportError) {
+      toast.warning(labReportError, { duration: 5000 });
+    }
+    const structured = labReportError
+      ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
+      : (markers
+          ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
+          : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs });
 
     setMessages((prev) =>
       prev.map((m) =>

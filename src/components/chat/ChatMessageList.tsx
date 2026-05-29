@@ -17,6 +17,7 @@ export interface ChatMessage {
     indexed?: boolean;
     parse_error?: boolean;
     processing_ms?: number;
+    not_a_lab_report_error?: string;
   } | null;
   attachments?: Array<{ name: string }> | null;
   created_at?: string | null;
@@ -147,6 +148,14 @@ export function ChatMessageList({
                         </div>
                       );
                     })}
+                  </div>
+                )}
+                {m.structured_data?.not_a_lab_report_error && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3 text-amber-900 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="text-sm font-medium leading-relaxed">
+                      {m.structured_data.not_a_lab_report_error}
+                    </div>
                   </div>
                 )}
                 {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
