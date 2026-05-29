@@ -17,6 +17,7 @@ export interface ChatMessage {
     indexed?: boolean;
     parse_error?: boolean;
     processing_ms?: number;
+    not_a_lab_report_error?: string;
   } | null;
   attachments?: Array<{ name: string }> | null;
   created_at?: string | null;
