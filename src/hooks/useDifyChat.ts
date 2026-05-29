@@ -58,7 +58,24 @@ function extractMarkersFromText(text: string): Marker[] {
   return out;
 }
 
+function tryExtractLabReportError(text: string): string | null {
+  const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(text))) {
+    try {
+      const parsed = JSON.parse(m[1].trim());
+      if (parsed?.error === true && parsed?.error_type === "not_a_lab_report") {
+        return parsed.message || "Imagem não reconhecida como laudo laboratorial.";
+      }
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
 function tryExtractMarkers(text: string): Marker[] | null {
+  // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
+  if (tryExtractLabReportError(text)) return null;
+
   // 1) ```json blocks containing { "markers": [...] }
   const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
   let m: RegExpExecArray | null;
