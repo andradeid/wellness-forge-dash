@@ -11,6 +11,7 @@ export interface RawMarker {
   reference?: unknown;
   classification?: unknown;
   analysis?: unknown;
+  category?: unknown;
   // Portuguese variants
   parametro?: unknown;
   resultado?: unknown;
@@ -18,6 +19,7 @@ export interface RawMarker {
   valor_referencia?: unknown;
   classificacao?: unknown;
   analise?: unknown;
+  categoria?: unknown;
   [k: string]: unknown;
 }
 
@@ -29,6 +31,7 @@ export interface NormalizedMarker {
   reference: string;
   classification: string;
   analysis: string;
+  category: string;
 }
 
 export interface MarkerValidation {
@@ -94,6 +97,7 @@ export function normalizeMarker(raw: RawMarker): NormalizedMarker {
   const reference = pickStr(raw, "reference", "reference_value", "valor_referencia");
   const classification = pickStr(raw, "classification", "classificacao");
   const analysis = pickStr(raw, "analysis", "analise");
+  const category = pickStr(raw, "category", "categoria") || "outros";
   return {
     name,
     value: valueStr,
@@ -102,6 +106,7 @@ export function normalizeMarker(raw: RawMarker): NormalizedMarker {
     reference,
     classification,
     analysis,
+    category,
   };
 }
 
@@ -176,6 +181,7 @@ export async function persistMarkers(args: {
     reference_value: m.reference || null,
     classification: m.classification || null,
     analysis: m.analysis || null,
+    category: m.category || 'outros',
     measured_at: args.measuredAt ?? new Date().toISOString(),
   }));
   const { error, data } = await (supabase as any)

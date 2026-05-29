@@ -409,8 +409,16 @@ export function useDifyChat(
           console.log("Evento recebido:", evt.event, evt);
           if (evt.event === "message" || evt.event === "agent_message") {
             assistantText += getDifyAnswer(evt);
+            
+            // Tenta extrair marcadores durante o streaming para que o painel apareça imediatamente
+            const streamingMarkers = tryExtractMarkers(assistantText);
+            
             setMessages((prev) =>
-              prev.map((m) => (m.id === assistantId ? { ...m, content: assistantText } : m))
+              prev.map((m) => (m.id === assistantId ? { 
+                ...m, 
+                content: assistantText,
+                structured_data: streamingMarkers ? { markers: streamingMarkers } : m.structured_data
+              } : m))
             );
           } else if (evt.event === "message_end" || evt.event === "agent_thought") {
             if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
