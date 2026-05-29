@@ -436,14 +436,17 @@ export function useDifyChat(
           if (evt.event === "message" || evt.event === "agent_message") {
             assistantText += getDifyAnswer(evt);
             
-            // Tenta extrair marcadores durante o streaming para que o painel apareça imediatamente
-            const streamingMarkers = tryExtractMarkers(assistantText);
+            // Tenta detectar se não é um laudo ou extrair marcadores durante o streaming
+            const labReportError = tryExtractLabReportError(assistantText);
+            const streamingMarkers = !labReportError ? tryExtractMarkers(assistantText) : null;
             
             setMessages((prev) =>
               prev.map((m) => (m.id === assistantId ? { 
                 ...m, 
                 content: assistantText,
-                structured_data: streamingMarkers ? { markers: streamingMarkers } : m.structured_data
+                structured_data: labReportError 
+                  ? { not_a_lab_report_error: labReportError }
+                  : (streamingMarkers ? { markers: streamingMarkers } : m.structured_data)
               } : m))
             );
           } else if (evt.event === "message_end" || evt.event === "agent_thought") {
