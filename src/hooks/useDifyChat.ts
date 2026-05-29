@@ -377,13 +377,15 @@ export function useDifyChat(
       //  - 404 / "Conversation Not Exists": conversa removida no Dify.
       //  - 401 / "Access token is invalid" / "unauthorized": o conversation_id pertence
       //    a OUTRO workflow/app do Dify (API key trocada). Recriar conversa resolve.
-      if (!res.ok && initialConv) {
+      if (!res.ok) {
         const errText = await res.text().catch(() => "");
-        const stale =
-          res.status === 404 ||
-          res.status === 401 ||
-          /Conversation Not Exists|not_found|unauthorized|Access token is invalid/i.test(errText);
-        if (stale) {
+        const isStale =
+          initialConv &&
+          (res.status === 404 ||
+            res.status === 401 ||
+            /Conversation Not Exists|not_found|unauthorized|Access token is invalid/i.test(errText));
+        
+        if (isStale) {
           console.warn("[Chat Dify] conversation_id descartado (Dify rejeitou). Reabrindo conversa.", res.status, errText);
           conversationIdRef.current = "";
           await (supabase as any)
@@ -391,14 +393,14 @@ export function useDifyChat(
             .update({ dify_conversation_id: null })
             .eq("id", chatId);
           res = await callDify(undefined);
+          if (!res.ok) {
+            const finalErr = await res.text().catch(() => "");
+            throw new Error(`Dify ${res.status}: ${finalErr}`);
+          }
         } else {
+          // Se não for stale ou se já for uma nova conversa, lançamos erro direto
           throw new Error(`Dify ${res.status}: ${errText}`);
         }
-      }
-
-
-      if (!res.ok || !res.body) {
-        throw new Error(`Dify ${res.status}: ${await res.text().catch(() => "")}`);
       }
 
       console.groupCollapsed("[Chat Dify] Resposta do Dify");

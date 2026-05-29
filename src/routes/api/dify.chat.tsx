@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/dify/chat")({
 
         if (!upstream.ok) {
           const text = await upstream.text().catch(() => "");
-          if (upstream.status === 403 && /workspace.*archived|status is archived/i.test(text)) {
+          if ((upstream.status === 403 || upstream.status === 401) && /workspace.*archived|status is archived|invalid/i.test(text)) {
             invalidateDifyConfigCache();
             ({ baseUrl, apiKey } = await getDifyConfig(token, true));
             upstream = await sendToDify();
