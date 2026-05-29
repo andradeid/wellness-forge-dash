@@ -195,6 +195,7 @@ export type Database = {
       patient_exam_results: {
         Row: {
           analysis: string | null
+          category: string | null
           chat_id: string | null
           classification: string | null
           created_at: string
@@ -211,6 +212,7 @@ export type Database = {
         }
         Insert: {
           analysis?: string | null
+          category?: string | null
           chat_id?: string | null
           classification?: string | null
           created_at?: string
@@ -227,6 +229,7 @@ export type Database = {
         }
         Update: {
           analysis?: string | null
+          category?: string | null
           chat_id?: string | null
           classification?: string | null
           created_at?: string
