@@ -525,9 +525,11 @@ export function useDifyChat(
     }
 
     const processingMs = Math.round(performance.now() - startedAt);
-    const structured = markers
-      ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
-      : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs };
+    const structured = labReportError
+      ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
+      : (markers
+          ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
+          : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs });
 
     setMessages((prev) =>
       prev.map((m) =>
