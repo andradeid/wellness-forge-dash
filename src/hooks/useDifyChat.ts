@@ -403,8 +403,8 @@ export function useDifyChat(
         }
       }
 
-      console.groupCollapsed("[Chat Dify] Resposta do Dify");
-      console.log("Arquivos enviados:", difyFiles);
+      if (!res.body) throw new Error("Dify: corpo da resposta vazio");
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
