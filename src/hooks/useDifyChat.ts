@@ -372,13 +372,19 @@ export function useDifyChat(
 
       // Se o Dify rejeitar o conversation_id (404 / "Conversation Not Exists"),
       // limpamos a referência e abrimos uma nova conversa automaticamente.
+      // Se o Dify rejeitar o conversation_id, limpamos a referência e reabrimos automaticamente.
+      // Casos comuns:
+      //  - 404 / "Conversation Not Exists": conversa removida no Dify.
+      //  - 401 / "Access token is invalid" / "unauthorized": o conversation_id pertence
+      //    a OUTRO workflow/app do Dify (API key trocada). Recriar conversa resolve.
       if (!res.ok && initialConv) {
         const errText = await res.text().catch(() => "");
         const stale =
           res.status === 404 ||
-          /Conversation Not Exists|not_found/i.test(errText);
+          res.status === 401 ||
+          /Conversation Not Exists|not_found|unauthorized|Access token is invalid/i.test(errText);
         if (stale) {
-          console.warn("[Chat Dify] conversation_id descartado (Dify 404). Reabrindo conversa.");
+          console.warn("[Chat Dify] conversation_id descartado (Dify rejeitou). Reabrindo conversa.", res.status, errText);
           conversationIdRef.current = "";
           await (supabase as any)
             .from("patient_chats")
@@ -389,6 +395,7 @@ export function useDifyChat(
           throw new Error(`Dify ${res.status}: ${errText}`);
         }
       }
+
 
       if (!res.ok || !res.body) {
         throw new Error(`Dify ${res.status}: ${await res.text().catch(() => "")}`);
