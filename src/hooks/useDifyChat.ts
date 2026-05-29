@@ -59,16 +59,36 @@ function extractMarkersFromText(text: string): Marker[] {
 }
 
 function tryExtractLabReportError(text: string): string | null {
-  const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
-  let m: RegExpExecArray | null;
-  while ((m = blockRe.exec(text))) {
+  if (!text) return null;
+  const tryParse = (raw: string): string | null => {
     try {
-      const parsed = JSON.parse(m[1].trim());
+      const parsed = JSON.parse(raw);
       if (parsed?.error === true && parsed?.error_type === "not_a_lab_report") {
         return parsed.message || "Imagem não reconhecida como laudo laboratorial.";
       }
     } catch { /* ignore */ }
+    return null;
+  };
+
+  // 1) ```json blocks
+  const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(text))) {
+    const r = tryParse(m[1].trim());
+    if (r) return r;
   }
+
+  // 2) Raw JSON anywhere no texto contendo "not_a_lab_report"
+  const idx = text.indexOf('"not_a_lab_report"');
+  if (idx !== -1) {
+    const start = text.lastIndexOf("{", idx);
+    const end = text.indexOf("}", idx);
+    if (start !== -1 && end !== -1) {
+      const r = tryParse(text.slice(start, end + 1));
+      if (r) return r;
+    }
+  }
+
   return null;
 }
 
