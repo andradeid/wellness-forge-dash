@@ -534,28 +534,13 @@ function DashboardPage() {
         />
         <KpiCard
           icon={<Activity className="h-5 w-5" {...ICON_PROPS} />}
-          label={`Exames · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`}
+          label={`Exames avaliados · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`}
           value={stats.examsThisMonth}
-          hint={range === "all" ? "Histórico completo" : RANGE_OPTIONS.find((o) => o.key === range)?.label}
+          hint="Total de laudos, BIA, genético e outros"
           tone="brand"
           loading={loading}
         />
-        <KpiCard
-          icon={<AlertTriangle className="h-5 w-5" {...ICON_PROPS} />}
-          label="Alertas críticos (24h)"
-          value={stats.criticalLast24}
-          hint="Marcadores graves recentes"
-          tone={stats.criticalLast24 > 0 ? "danger" : "sage"}
-          loading={loading}
-        />
-        <KpiCard
-          icon={<TrendingDown className="h-5 w-5" {...ICON_PROPS} />}
-          label="Marcadores analisados"
-          value={stats.totalAnalyzed}
-          hint="Total auditado pela Lumma"
-          tone="neutral"
-          loading={loading}
-        />
+
       </div>
 
       {/* Bento grid */}
@@ -747,10 +732,60 @@ function DashboardPage() {
           )}
         </Card>
 
-        {/* Recent activity */}
+        {/* Perfil de Exames Avaliados */}
+        <Card className="p-4 sm:p-6 lg:col-span-1">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold">Perfil de Exames Avaliados</h2>
+            <PieChartIcon className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Distribuição por tipo de análise.
+          </p>
+          {loading ? (
+            <Skeleton className="h-56 w-full" />
+          ) : (
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Laboratorial", value: 65, color: "#e8a04c" },
+                      { name: "Genético", value: 15, color: "#e89bcf" },
+                      { name: "BIA", value: 10, color: "#7ba6c4" },
+                      { name: "Outros", value: 10, color: "#cbd5e1" },
+                    ]}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={2}
+                  >
+                    {[
+                      { name: "Laboratorial", value: 65, color: "#e8a04c" },
+                      { name: "Genético", value: 15, color: "#e89bcf" },
+                      { name: "BIA", value: 10, color: "#7ba6c4" },
+                      { name: "Outros", value: 10, color: "#cbd5e1" },
+                    ].map((d, i) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend
+                    wrapperStyle={{ fontSize: 10 }}
+                    iconType="circle"
+                    align="center"
+                    verticalAlign="bottom"
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+
+        {/* Recent activity: Agrupado por Paciente */}
         <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1">Últimas análises</h2>
-          <p className="text-xs text-muted-foreground mb-4">Mais recentes da Lumma.</p>
+          <p className="text-xs text-muted-foreground mb-4">Agrupado por paciente.</p>
           {loading ? (
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -761,24 +796,44 @@ function DashboardPage() {
             <EmptyState text="Nada por aqui no período selecionado." />
           ) : (
             <ul className="space-y-2 text-xs">
-              {filteredResults.slice(0, 6).map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2">
-                  <Link
-                    to="/app/evolution/$patientId"
-                    params={{ patientId: r.patient_id }}
-                    className="truncate hover:underline"
-                  >
-                    <span className="font-medium">{patientMap.get(r.patient_id) ?? "—"}</span>
-                    <span className="text-muted-foreground"> · {r.marker_name}</span>
-                  </Link>
-                  <span className="text-muted-foreground shrink-0">
-                    {format(new Date(r.measured_at), "dd/MM")}
-                  </span>
-                </li>
-              ))}
+              {Array.from(
+                filteredResults.reduce((acc, r) => {
+                  if (!acc.has(r.patient_id)) {
+                    acc.set(r.patient_id, {
+                      patient_id: r.patient_id,
+                      patientName: patientMap.get(r.patient_id) ?? "—",
+                      lastAt: r.measured_at,
+                      count: 1,
+                    });
+                  } else {
+                    const existing = acc.get(r.patient_id)!;
+                    existing.count++;
+                    if (r.measured_at > existing.lastAt) existing.lastAt = r.measured_at;
+                  }
+                  return acc;
+                }, new Map<string, { patient_id: string; patientName: string; lastAt: string; count: number }>()).values()
+              )
+                .sort((a, b) => b.lastAt.localeCompare(a.lastAt))
+                .slice(0, 6)
+                .map((p) => (
+                  <li key={p.patient_id} className="flex items-center justify-between gap-2">
+                    <Link
+                      to="/app/evolution/$patientId"
+                      params={{ patientId: p.patient_id }}
+                      className="truncate hover:underline"
+                    >
+                      <span className="font-medium">{p.patientName}</span>
+                      <span className="text-muted-foreground"> · {p.count} marcador{p.count > 1 ? 'es' : ''}</span>
+                    </Link>
+                    <span className="text-muted-foreground shrink-0">
+                      {format(new Date(p.lastAt), "dd/MM")}
+                    </span>
+                  </li>
+                ))}
             </ul>
           )}
-         </Card>
+        </Card>
+
 
         {/* Follow-up: pacientes sem exame há +60 dias */}
         <Card className="p-4 sm:p-6 lg:col-span-2">

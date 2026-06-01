@@ -270,23 +270,12 @@ function FaleComLummaPage() {
               Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
               Funcional e Integrativa.
             </p>
-            <div className="flex items-center gap-3 flex-wrap justify-center">
-              <Button
-                size="lg"
-                onClick={() => setIdentifyOpen(true)}
-                className="rounded-full px-8 h-12 text-white shadow-lg hover:shadow-xl transition-shadow border-0"
-                style={{
-                  background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-                }}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                {selectedPatient ? `Atendendo: ${selectedPatient.name}` : "Identificar paciente"}
-              </Button>
+            <div className="flex items-center gap-3 flex-wrap justify-center max-w-4xl">
               <Button
                 size="lg"
                 variant="outline"
                 onClick={() => setCreateOpen(true)}
-                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Criar paciente
@@ -294,28 +283,29 @@ function FaleComLummaPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <ClipboardList className="h-4 w-4 mr-2" />
-                Formulações e ou Planos Alimentares
+                Formulações Nutricionais
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <ClipboardList className="h-4 w-4 mr-2" />
+                Elaboração de Plano Alimentar
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <Microscope className="h-4 w-4 mr-2" />
                 Pesquisa Científica
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full px-8 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
-              >
-                <Pill className="h-4 w-4 mr-2" />
-                Cálculos e Prescrição
-              </Button>
             </div>
+
             {selectedPatient && (
               <button
                 type="button"
