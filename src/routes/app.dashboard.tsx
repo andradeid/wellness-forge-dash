@@ -749,10 +749,12 @@ function DashboardPage() {
                 <PieChart>
                   <Pie
                     data={[
-                      { name: "Laboratorial", value: 65, color: "#e8a04c" },
+                      { name: "Laboratorial", value: 45, color: "#e8a04c" },
                       { name: "Genético", value: 15, color: "#e89bcf" },
-                      { name: "BIA", value: 10, color: "#7ba6c4" },
-                      { name: "Outros", value: 10, color: "#cbd5e1" },
+                      { name: "BIA", value: 15, color: "#7ba6c4" },
+                      { name: "Microbioma", value: 10, color: "#8b5cf6" },
+                      { name: "Calorimetria", value: 10, color: "#10b981" },
+                      { name: "Outros", value: 5, color: "#cbd5e1" },
                     ]}
                     dataKey="value"
                     nameKey="name"
@@ -761,10 +763,12 @@ function DashboardPage() {
                     paddingAngle={2}
                   >
                     {[
-                      { name: "Laboratorial", value: 65, color: "#e8a04c" },
+                      { name: "Laboratorial", value: 45, color: "#e8a04c" },
                       { name: "Genético", value: 15, color: "#e89bcf" },
-                      { name: "BIA", value: 10, color: "#7ba6c4" },
-                      { name: "Outros", value: 10, color: "#cbd5e1" },
+                      { name: "BIA", value: 15, color: "#7ba6c4" },
+                      { name: "Microbioma", value: 10, color: "#8b5cf6" },
+                      { name: "Calorimetria", value: 10, color: "#10b981" },
+                      { name: "Outros", value: 5, color: "#cbd5e1" },
                     ].map((d, i) => (
                       <Cell key={i} fill={d.color} />
                     ))}
