@@ -780,9 +780,10 @@ function DashboardPage() {
               </ResponsiveContainer>
             </div>
           )}
-
+        </Card>
 
         {/* Recent activity: Agrupado por Paciente */}
+
         <Card className="p-4 sm:p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold mb-1">Últimas análises</h2>
           <p className="text-xs text-muted-foreground mb-4">Agrupado por paciente.</p>
