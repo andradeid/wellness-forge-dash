@@ -98,6 +98,7 @@ export function DifyAgentsPanel() {
     | { status: "success"; appName?: string | null }
     | { status: "error"; message: string };
   const [testState, setTestState] = useState<Record<string, TestState>>({});
+  const [lastAppName, setLastAppName] = useState<Record<string, string>>({});
 
   const runAgentTest = async (agent: DifyAgent) => {
     setTestState((s) => ({ ...s, [agent.id]: { status: "loading" } }));
@@ -114,10 +115,14 @@ export function DifyAgentsPanel() {
       });
       const json = await res.json().catch(() => ({ ok: false, error: "Resposta inválida" }));
       if (json?.ok) {
+        const name = (json.app_name ?? "").toString().trim();
         setTestState((s) => ({
           ...s,
-          [agent.id]: { status: "success", appName: json.app_name ?? null },
+          [agent.id]: { status: "success", appName: name || null },
         }));
+        if (name) {
+          setLastAppName((m) => ({ ...m, [agent.id]: name }));
+        }
       } else {
         setTestState((s) => ({
           ...s,
@@ -133,6 +138,7 @@ export function DifyAgentsPanel() {
       }, 4000);
     }
   };
+
 
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -443,17 +449,22 @@ export function DifyAgentsPanel() {
                   </div>
                   {(() => {
                     const ts = testState[agent.id];
-                    if (!ts || ts.status === "idle" || ts.status === "loading") return null;
-                    if (ts.status === "success") {
+                    const persistedName = lastAppName[agent.id];
+                    if (ts?.status === "error") {
+                      return (
+                        <p className="text-[11px] text-red-700 mt-1">{ts.message}</p>
+                      );
+                    }
+                    const name =
+                      (ts?.status === "success" ? ts.appName : null) ?? persistedName;
+                    if (name) {
                       return (
                         <p className="text-[11px] text-emerald-700 mt-1">
-                          ✓ {ts.appName ?? "Conectado"}
+                          ✓ {name}
                         </p>
                       );
                     }
-                    return (
-                      <p className="text-[11px] text-red-700 mt-1">{ts.message}</p>
-                    );
+                    return null;
                   })()}
                 </div>
 
