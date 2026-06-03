@@ -209,7 +209,7 @@ function FaleComLummaPage() {
                 >
                   <div className="relative shrink-0">
                     <Avatar className="h-9 w-9 border-2 border-white/20">
-                      <AvatarImage src={undefined} />
+                      <AvatarImage src={c.avatar_url || undefined} />
                       <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
                         {(c.patient_name || "??").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
