@@ -449,17 +449,22 @@ export function DifyAgentsPanel() {
                   </div>
                   {(() => {
                     const ts = testState[agent.id];
-                    if (!ts || ts.status === "idle" || ts.status === "loading") return null;
-                    if (ts.status === "success") {
+                    const persistedName = lastAppName[agent.id];
+                    if (ts?.status === "error") {
+                      return (
+                        <p className="text-[11px] text-red-700 mt-1">{ts.message}</p>
+                      );
+                    }
+                    const name =
+                      (ts?.status === "success" ? ts.appName : null) ?? persistedName;
+                    if (name) {
                       return (
                         <p className="text-[11px] text-emerald-700 mt-1">
-                          ✓ {ts.appName ?? "Conectado"}
+                          ✓ {name}
                         </p>
                       );
                     }
-                    return (
-                      <p className="text-[11px] text-red-700 mt-1">{ts.message}</p>
-                    );
+                    return null;
                   })()}
                 </div>
 
