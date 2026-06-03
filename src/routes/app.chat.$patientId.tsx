@@ -28,13 +28,14 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   component: ChatPage,
 });
 
-interface PatientCtx {
-
 const AGENT_BADGES: Record<string, { icon: string; label: string }> = {
   exam: { icon: "🔬", label: "Analisando Exame" },
   production: { icon: "🥗", label: "Plano & Formulação" },
   reasoning: { icon: "🤔", label: "Pergunta Clínica" },
 };
+
+interface PatientCtx {
+
 
   id: string;
   name: string;
