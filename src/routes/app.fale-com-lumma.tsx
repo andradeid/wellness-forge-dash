@@ -253,18 +253,29 @@ function FaleComLummaPage() {
                     }
                   }}
                   className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors group ${
-                    activeId === c.id
-                      ? "bg-white/15"
-                      : "hover:bg-white/10"
+                    activeId === c.id ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
                   <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 shrink-0 group-hover:text-white" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-white truncate">
-                      {c.title}
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium text-white truncate">
+                        {c.title}
+                      </div>
+                      {c.agent_type && (
+                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md bg-white/20 text-white/90 font-medium">
+                          {c.agent_type === "exam" && "🔬 Exame"}
+                          {c.agent_type === "production" && "🥗 Produção"}
+                          {c.agent_type === "reasoning" && "🤔 Clínico"}
+                          {c.agent_type === "research" && "🔍 Pesquisa"}
+                        </span>
+                      )}
                     </div>
                     <div className="text-[11px] text-white/55 mt-0.5">
-                      {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true, locale: ptBR })}
+                      {formatDistanceToNow(new Date(c.updated_at), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
                     </div>
                   </div>
                 </button>
