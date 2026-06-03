@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BirthDatePicker } from "@/components/BirthDatePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatHistory, type ChatItem } from "@/hooks/useChatHistory";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/fale-com-lumma")({
@@ -22,16 +23,6 @@ export const Route = createFileRoute("/app/fale-com-lumma")({
   }),
   component: FaleComLummaPage,
 });
-
-interface ChatItem {
-  id: string;
-  title: string;
-  updated_at: string;
-  patient_id: string | null;
-  patient_name: string | null;
-  agent_type?: string | null;
-  pinned_at: string | null;
-}
 
 interface PatientItem {
   id: string;
@@ -55,11 +46,10 @@ function FaleComLummaPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { module: searchModule } = Route.useSearch();
+  const { chats, loading: loadingChats } = useChatHistory(200);
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [chats, setChats] = useState<ChatItem[]>([]);
-  const [loadingChats, setLoadingChats] = useState(true);
   const [pendingModule, setPendingModule] = useState<string | undefined>(searchModule);
 
   // Estado: modais de paciente
@@ -133,56 +123,6 @@ function FaleComLummaPage() {
       ),
     [patients, patientQuery]
   );
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    (async () => {
-      setLoadingChats(true);
-      const { data } = await (supabase as any)
-        .from("patient_chats")
-        .select(`
-          id, 
-          title, 
-          updated_at, 
-          patient_id, 
-          pinned_at,
-          patients:patient_id(name),
-          chat_messages(agent_type)
-        `)
-        .eq("created_by", user.id)
-        .order("pinned_at", { ascending: false, nullsFirst: false })
-        .order("updated_at", { ascending: false })
-        .limit(200);
-      
-      if (cancelled) return;
-      
-      const mapped: ChatItem[] = (data ?? []).map((c: any) => {
-        // Pega o agent_type da última mensagem (a query retorna todas, precisamos da última)
-        // Como ordenamos o chat por updated_at, as mensagens geralmente seguem o fluxo.
-        // Mas a query acima pode ser ineficiente se houver muitas mensagens.
-        // Idealmente pegaríamos apenas a última.
-        const lastMsg = c.chat_messages && c.chat_messages.length > 0 
-          ? c.chat_messages[c.chat_messages.length - 1] 
-          : null;
-
-        return {
-          id: c.id,
-          title: c.title || c.patients?.name || "Conversa sem título",
-          updated_at: c.updated_at,
-          patient_id: c.patient_id ?? null,
-          patient_name: c.patients?.name ?? null,
-          agent_type: lastMsg?.agent_type ?? null,
-          pinned_at: c.pinned_at ?? null,
-        };
-      });
-      setChats(mapped);
-      setLoadingChats(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   const filtered = useMemo(
     () =>
