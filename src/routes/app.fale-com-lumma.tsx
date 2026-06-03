@@ -190,7 +190,12 @@ function FaleComLummaPage() {
 
 
   return (
-    <div className="relative h-full w-full overflow-hidden flex">
+    <div className="relative h-full w-full overflow-hidden flex bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+      <style>{`
+        .lumma-sidebar {
+          background: linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%);
+        }
+      `}</style>
       {/* Painel lateral: últimos chats */}
       <aside className="lumma-sidebar hidden md:flex w-72 shrink-0 flex-col border-r border-white/10 text-white">
         <div className="p-4 border-b border-white/10">
@@ -285,17 +290,8 @@ function FaleComLummaPage() {
         </ScrollArea>
       </aside>
 
-      {/* Área principal */}
+        {/* Área principal */}
       <div className="relative flex-1 overflow-hidden">
-        {/* Fundo gradiente aurora */}
-        <div
-          className="absolute inset-0 -z-10"
-          style={{
-            background:
-              "linear-gradient(to bottom right, #f3e8ff, #e0f2fe, #fce7f3)",
-          }}
-        />
-
         <div className="flex h-full flex-col items-center justify-between px-6 py-12">
           <div className="flex flex-1 flex-col items-center justify-center text-center max-w-2xl mx-auto">
             <img
