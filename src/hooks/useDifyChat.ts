@@ -598,6 +598,23 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
+  const switchAgent = useCallback((next: string) => {
+    setAgentType((prev) => {
+      if (prev === next) return prev;
+      // O conversation_id pertence à API key do agente anterior;
+      // reutilizar com outro agente faz o Dify rejeitar (401/404).
+      conversationIdRef.current = "";
+      if (chatId) {
+        (supabase as any)
+          .from("patient_chats")
+          .update({ dify_conversation_id: null })
+          .eq("id", chatId)
+          .then(() => {});
+      }
+      return next;
+    });
+  }, [chatId]);
+
   const setContext = useCallback((ctx: {
     patient_sex?: string;
     patient_profile?: string;
@@ -615,5 +632,5 @@ export function useDifyChat(
     };
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent };
 }
