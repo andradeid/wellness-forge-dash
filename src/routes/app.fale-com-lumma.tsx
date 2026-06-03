@@ -208,6 +208,21 @@ function FaleComLummaPage() {
     [chats, query]
   );
 
+  const greeting = (() => {
+    // Hora de Brasília (UTC−3), independente do fuso do navegador
+    const hourStr = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      hour12: false,
+    }).format(new Date());
+    const h = parseInt(hourStr, 10);
+    const t = h >= 5 && h < 12 ? "Bom dia" : h >= 12 && h < 18 ? "Boa tarde" : "Boa noite";
+    const name = profile?.full_name?.split(" ")[0] ?? "";
+    const pronoun = profile?.pronoun?.trim();
+    if (!name) return `${t}.`;
+    return pronoun ? `${t}, ${pronoun} ${name}.` : `${t}, ${name}.`;
+  })();
+
 
 
   return (
