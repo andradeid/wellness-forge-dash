@@ -385,8 +385,8 @@ function FaleComLummaPage() {
 
         {/* Área principal */}
       <div className="relative flex-1 overflow-hidden">
-        <div className="flex h-full flex-col items-center justify-between px-6 py-12">
-          <div className="flex flex-1 flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
+        <div className="flex h-full flex-col items-center justify-center px-6 py-12">
+          <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
             <img
               src={lummaSymbol}
               alt="Lumma"
@@ -395,13 +395,13 @@ function FaleComLummaPage() {
             <h1 className="text-5xl font-light tracking-tight text-foreground mb-6">
               Bem-vinda
             </h1>
-            <p className="text-lg text-foreground/70 leading-relaxed mb-4 max-w-xl">
+            <p className="text-lg text-foreground/70 leading-relaxed mb-12 max-w-xl">
               Sou sua mentora virtual, inspirada na metodologia da Ana Paula
               Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
               Funcional e Integrativa.
             </p>
             
-            <div className="w-full mt-8 space-y-8">
+            <div className="w-full space-y-12">
               {/* Linha 1: Análises e Uploads */}
               <div className="space-y-4">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Análises e Uploads</h3>
@@ -452,7 +452,10 @@ function FaleComLummaPage() {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Condutas e Entregas</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <button 
-                    onClick={() => startGeneralChat("reasoning")}
+                    onClick={() => {
+                      setPendingModule("reasoning");
+                      setIdentifyOpen(true);
+                    }}
                     className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
                   >
                     <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
@@ -498,110 +501,8 @@ function FaleComLummaPage() {
             )}
           </div>
 
-          {/* Barra de input */}
-          <div className="w-full max-w-3xl">
-            <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 p-4">
-              <div className="flex items-center gap-3">
-                <img src={lummaSymbol} alt="" className="h-6 w-6 shrink-0" />
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Escreva sua mensagem..."
-                  className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-base"
-                />
-              </div>
-              {searchModule && (
-                <div className="mb-2 flex justify-center">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
-                      >
-                        {(() => {
-                          const agent = AGENT_OPTIONS.find(a => a.id === searchModule) || AGENT_OPTIONS[3];
-                          const Icon = agent.icon;
-                          return <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />;
-                        })()}
-                        <span>{getActiveAgentLabel(searchModule)}</span>
-                        <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
-                        <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent 
-                      side="top" 
-                      align="center" 
-                      className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl"
-                    >
-                      <div className="space-y-1">
-                        {AGENT_OPTIONS.map((opt, idx) => {
-                          const Icon = opt.icon;
-                          const isActive = searchModule === opt.id;
-                          return (
-                            <div key={opt.id}>
-                              {idx === 3 && <div className="my-1 border-t border-slate-100" />}
-                              <button
-                                onClick={() => {
-                                  navigate({ to: "/app/fale-com-lumma", search: { module: opt.id } });
-                                }}
-                                className={cn(
-                                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
-                                  isActive 
-                                    ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20" 
-                                    : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
-                                )}
-                              >
-                                <div className={cn(
-                                  "p-1.5 rounded-lg transition-colors",
-                                  isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
-                                )}>
-                                  <Icon className="h-3.5 w-3.5" style={{ color: opt.color }} />
-                                </div>
-                                <span className="flex-1 text-left">{opt.title}</span>
-                                {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
-              <div className="flex items-center justify-between mt-3">
-                <button
-                  type="button"
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-white shadow-sm transition-opacity hover:opacity-90"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-                  }}
-                >
-                  <Paperclip className="h-4 w-4" />
-                </button>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="h-9 w-9 rounded-full flex items-center justify-center text-white shadow-sm transition-opacity hover:opacity-90"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-                    }}
-                  >
-                    <Mic className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    className="h-9 w-9 rounded-full flex items-center justify-center text-white/90 shadow-sm transition-opacity hover:opacity-90"
-                    style={{ background: "#f5c7d8" }}
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-3">
+          <div className="mt-12 text-center">
+            <p className="text-xs text-muted-foreground">
               Máximo de 10 arquivos de 20MB
             </p>
           </div>
