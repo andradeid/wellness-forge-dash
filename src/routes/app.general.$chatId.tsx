@@ -1,13 +1,19 @@
-import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
-import { ArrowLeft, Menu, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, Link, useParams, useSearch, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin } from "lucide-react";
+import { useState, useMemo } from "react";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { useGeneralChat } from "@/hooks/useGeneralChat";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatHistory } from "@/hooks/useChatHistory";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/general/$chatId")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -19,24 +25,138 @@ export const Route = createFileRoute("/app/general/$chatId")({
 function GeneralChatPage() {
   const { chatId } = useParams({ from: "/app/general/$chatId" });
   const { module: agentType } = Route.useSearch();
+  const navigate = useNavigate();
   const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { role } = useAuth();
+  const [query, setQuery] = useState("");
+  const { chats, loading: loadingChats } = useChatHistory(200);
+  const { role, user } = useAuth();
+
+  const filtered = useMemo(
+    () =>
+      chats.filter((c) =>
+        (c.patient_name || c.title || "").toLowerCase().includes(query.toLowerCase())
+      ),
+    [chats, query]
+  );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="relative h-screen w-full overflow-hidden flex bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+      <style>{`
+        .lumma-sidebar {
+          background: linear-gradient(135deg, #1a1040 0%, #2d1b69 100%);
+        }
+      `}</style>
+
+      {/* Painel lateral: últimos chats */}
+      <aside className="lumma-sidebar hidden md:flex w-72 shrink-0 flex-col border-r border-white/10 text-white">
+        <div className="p-4 border-b border-white/10">
+          <Link
+            to="/app/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors mb-3"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Voltar ao Dashboard
+          </Link>
+          <Button
+            onClick={() => navigate({ to: "/app/fale-com-lumma" })}
+            className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
+            style={{
+              background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nova conversa
+          </Button>
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar conversas..."
+              className="pl-8 h-9 text-sm rounded-lg bg-white/10 border-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+            />
+          </div>
+        </div>
+
+        <ScrollArea className="flex-1">
+          <div className="px-2 py-3 space-y-1">
+            <div className="px-2 pb-1 text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+              Recentes
+            </div>
+            {loadingChats ? (
+              <div className="flex items-center justify-center py-8 text-white/60">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-3 py-6 text-xs text-white/60 text-center">
+                Nenhuma conversa encontrada.
+              </div>
+            ) : (
+              filtered.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    if (c.patient_id) {
+                      navigate({
+                        to: "/app/chat/$patientId",
+                        params: { patientId: c.patient_id },
+                        search: { chatId: c.id },
+                      });
+                    } else {
+                      navigate({
+                        to: `/app/general/${c.id}`,
+                        search: { module: c.agent_type || 'research' }
+                      });
+                    }
+                  }}
+                  className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 group ${
+                    chatId === c.id 
+                      ? "bg-white/20 shadow-sm" 
+                      : "hover:bg-white/10"
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <Avatar className="h-9 w-9 border-2 border-white/20">
+                      <AvatarImage src={c.avatar_url || undefined} />
+                      <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
+                        {c.agent_type === 'research' ? '🔍' : c.agent_type === 'reasoning' ? '🤔' : (c.patient_name || "??").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {c.pinned_at && (
+                      <Pin className="absolute -top-1 -right-1 h-3 w-3 text-white fill-white drop-shadow-sm" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold text-white truncate leading-none">
+                        {c.patient_name || c.title}
+                      </div>
+                      {c.agent_type && (
+                        <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
+                          {c.agent_type === "exam" && "Exame"}
+                          {c.agent_type === "production" && "Produção"}
+                          {c.agent_type === "reasoning" && "Clínico"}
+                          {c.agent_type === "research" && "Pesquisa"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-white/60 mt-1 font-medium">
+                      {formatDistanceToNow(new Date(c.updated_at), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </aside>
+
+      {/* Área principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="shrink-0 h-10 w-10" 
-            onClick={() => {}} // Placeholder or navigation if needed
-            aria-label="Menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          
           <Link
             to="/app/fale-com-lumma"
             className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground shrink-0"
