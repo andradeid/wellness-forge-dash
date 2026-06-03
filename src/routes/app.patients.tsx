@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { ChevronDown, MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { EditPatientSheet, type EditablePatient } from "@/components/EditPatientSheet";
 import { BirthDatePicker } from "@/components/BirthDatePicker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +41,9 @@ interface Patient {
   phone: string | null;
   avatar_url: string | null;
   notes: string | null;
+  is_pregnant?: boolean;
+  gestational_weeks?: number;
+  pregnancy_type?: "single" | "multiple";
 }
 
 function PatientsPage() {
@@ -52,6 +56,9 @@ function PatientsPage() {
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<Patient["gender"]>(null);
+  const [isPregnant, setIsPregnant] = useState(false);
+  const [gestationalWeeks, setGestationalWeeks] = useState("");
+  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
   const [submitting, setSubmitting] = useState(false);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
@@ -109,7 +116,7 @@ function PatientsPage() {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("patients")
-      .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes")
+      .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes, is_pregnant, gestational_weeks, pregnancy_type")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setPatients((data as Patient[]) ?? []);
@@ -133,6 +140,9 @@ function PatientsPage() {
       name,
       birth_date: birthDate,
       gender,
+      is_pregnant: gender === "female" ? isPregnant : false,
+      gestational_weeks: gender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
+      pregnancy_type: gender === "female" && isPregnant ? pregnancyType : null,
     });
     setSubmitting(false);
     if (error) {
@@ -144,6 +154,9 @@ function PatientsPage() {
     setName("");
     setBirthDate("");
     setGender(null);
+    setIsPregnant(false);
+    setGestationalWeeks("");
+    setPregnancyType("single");
     load();
   };
 
@@ -209,6 +222,71 @@ function PatientsPage() {
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento *</Label>
                   <BirthDatePicker value={birthDate} onChange={setBirthDate} />
                 </div>
+
+                {gender === "female" && (
+                  <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Paciente está gestante?</Label>
+                      <div className="flex bg-white rounded-lg p-1 border border-muted shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => setIsPregnant(false)}
+                          className={cn(
+                            "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                            !isPregnant 
+                              ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm" 
+                              : "text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          Não
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsPregnant(true)}
+                          className={cn(
+                            "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                            isPregnant 
+                              ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm" 
+                              : "text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          Sim
+                        </button>
+                      </div>
+                    </div>
+
+                    {isPregnant && (
+                      <div className="grid grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas</Label>
+                          <Input
+                            id="weeks"
+                            type="number"
+                            min="1"
+                            max="42"
+                            value={gestationalWeeks}
+                            onChange={(e) => setGestationalWeeks(e.target.value)}
+                            placeholder="Ex: 24"
+                            className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
+                          <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                            <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="single">Única</SelectItem>
+                              <SelectItem value="multiple">Gemelar</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
                     <Select value={gender ?? undefined} onValueChange={(v) => setGender(v as Patient["gender"])}>
@@ -317,6 +395,7 @@ function PatientsPage() {
                       <TableHead>Nome</TableHead>
                       <TableHead>Nascimento</TableHead>
                       <TableHead>Gênero</TableHead>
+                      <TableHead>Gestação</TableHead>
                       <TableHead>Cadastrado em</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -337,6 +416,13 @@ function PatientsPage() {
                         </TableCell>
                         <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
                         <TableCell>{genderLabel(p.gender)}</TableCell>
+                        <TableCell>
+                          {p.is_pregnant ? (
+                            <span className="text-[#e8a04c] font-medium">
+                              Gestante {p.gestational_weeks ? `(${p.gestational_weeks}s)` : ""}
+                            </span>
+                          ) : "—"}
+                        </TableCell>
                         <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
