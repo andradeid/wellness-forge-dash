@@ -117,6 +117,12 @@ export function ChatMessageList({
       return;
     }
 
+    // Se a última mensagem for do usuário, resetamos o flag para forçar o scroll
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "user") {
+      userScrolledUp.current = false;
+    }
+
     if (!userScrolledUp.current) {
       bottomRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -124,6 +130,7 @@ export function ChatMessageList({
       });
     }
   }, [messages, thinking, highlightId]);
+
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
