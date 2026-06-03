@@ -30,6 +30,7 @@ interface ChatItem {
   patient_id: string | null;
   patient_name: string | null;
   agent_type?: string | null;
+  pinned_at: string | null;
 }
 
 interface PatientItem {
@@ -145,10 +146,11 @@ function FaleComLummaPage() {
           title, 
           updated_at, 
           patient_id, 
+          pinned_at,
           patients:patient_id(name),
           chat_messages(agent_type)
         `)
-        .eq("created_by", user.id)
+        .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
         .limit(50);
       
@@ -170,6 +172,7 @@ function FaleComLummaPage() {
           patient_id: c.patient_id ?? null,
           patient_name: c.patients?.name ?? null,
           agent_type: lastMsg?.agent_type ?? null,
+          pinned_at: c.pinned_at ?? null,
         };
       });
       setChats(mapped);
