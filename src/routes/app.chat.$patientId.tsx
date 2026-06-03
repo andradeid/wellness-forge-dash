@@ -307,14 +307,9 @@ function ChatPage() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
-      {/* Sidebar fixo — desktop */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-[280px] lg:border-r lg:shrink-0 lg:overflow-y-auto bg-white/40 backdrop-blur-md">
-        {SidebarContent}
-      </aside>
-
-      {/* Sheet — mobile */}
+      {/* Sheet — Sidebar acessível via hambúrguer */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white lg:hidden">
+        <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white">
           {SidebarContent}
         </SheetContent>
       </Sheet>
@@ -325,7 +320,7 @@ function ChatPage() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="lg:hidden shrink-0 h-10 w-10" 
+            className="shrink-0 h-10 w-10" 
             onClick={() => setMenuOpen(true)}
             aria-label="Abrir menu"
           >
