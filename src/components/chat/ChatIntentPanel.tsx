@@ -267,13 +267,8 @@ function ModuleButton({
         disabled && "opacity-40 grayscale cursor-not-allowed border-slate-200 bg-slate-50/70 text-slate-400"
       )}
     >
-      <span className="text-lg">{icon}</span>
+      <span className="text-xl">{icon}</span>
       {label}
-      {active && (
-        <span className="ml-1 text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-full bg-[#e89bcf]/20 text-[#e89bcf]">
-          Módulo Ativo
-        </span>
-      )}
     </button>
   );
 }
