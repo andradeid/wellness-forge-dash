@@ -1,11 +1,12 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEffect, useRef } from "react";
-import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown } from "lucide-react";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
