@@ -57,6 +57,7 @@ function PlaygroundPage() {
   const [conversationId, setConversationId] = useState<string>("");
   const [agents, setAgents] = useState<DifyAgentRow[]>([]);
   const [agentType, setAgentType] = useState<string>("exam");
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
