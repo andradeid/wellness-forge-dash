@@ -272,7 +272,7 @@ export function useDifyChat(
 
       const { data: msgs } = await (supabase as any)
         .from("chat_messages")
-        .select("id, role, content, structured_data, attachments, created_at")
+        .select("id, role, content, agent_type, structured_data, attachments, created_at")
         .eq("chat_id", id)
         .order("created_at", { ascending: true });
       if (!cancelled) setMessages((msgs as ChatMessage[]) ?? []);
@@ -383,6 +383,7 @@ export function useDifyChat(
       created_by: user.id,
       role: "user" as const,
       content: text,
+      agent_type: agentType,
       attachments: attachments.length ? attachments : null,
     };
     const { data: userInserted } = await (supabase as any)
@@ -397,7 +398,7 @@ export function useDifyChat(
 
     // 3) Placeholder assistant message
     const assistantId = crypto.randomUUID();
-    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "", created_at: new Date().toISOString() }]);
+    setMessages((prev) => [...prev, { ...userMsg, agent_type: agentType }, { id: assistantId, role: "assistant", content: "", agent_type: agentType, created_at: new Date().toISOString() }]);
 
     // 4) Stream from Dify proxy
     let assistantText = "";
@@ -453,6 +454,109 @@ export function useDifyChat(
       // Se o Dify rejeitar o conversation_id (404 / "Conversation Not Exists"),
       // limpamos a referência e abrimos uma nova conversa automaticamente.
       // Se o Dify rejeitar o conversation_id, limpamos a referência e reabrimos automaticamente.
+      if (res.status === 404) {
+        conversationIdRef.current = "";
+        res = await callDify(undefined);
+      }
+
+      if (!res.ok) {
+        setThinking(false);
+        setError(`Erro na Lumma (${res.status})`);
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setThinking(false);
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.event === "message" || data.event === "agent_message") {
+              const text = getDifyAnswer(data);
+              if (text) {
+                fullText += text;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, content: fullText } : m
+                  )
+                );
+              }
+            } else if (data.event === "message_end") {
+              if (data.conversation_id) {
+                conversationIdRef.current = data.conversation_id;
+                await (supabase as any)
+                  .from("patient_chats")
+                  .update({ dify_conversation_id: data.conversation_id })
+                  .eq("id", chatId);
+              }
+
+              // Extract markers if in exam mode
+              let markers: Marker[] | null = null;
+              if (agentType === "exam") {
+                markers = tryExtractMarkers(fullText);
+                if (markers) {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId
+                        ? { ...m, structured_data: { ...m.structured_data, markers } }
+                        : m
+                    )
+                  );
+                }
+              }
+
+              // Save final assistant message
+              const { data: assistantInserted } = await (supabase as any)
+                .from("chat_messages")
+                .insert({
+                  chat_id: chatId,
+                  created_by: user.id,
+                  role: "assistant",
+                  content: fullText,
+                  agent_type: agentType,
+                  structured_data: markers ? { markers } : null,
+                })
+                .select("id")
+                .single();
+
+              if (assistantInserted?.id) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, id: assistantInserted.id } : m
+                  )
+                );
+              }
+
+              if (markers && markers.length > 0 && agentType === "exam") {
+                await processAndPersistMarkers(markers, patientId, user.id, lastExamId);
+              }
+            }
+          } catch (e) {
+            console.error("Error parsing Dify stream:", e);
+          }
+        }
+      }
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setThinking(false);
+      setUploadProgress([]);
+    }
+  }, [chatId, patientId, readOnly, agentType, examContext]);
       // Casos comuns:
       //  - 404 / "Conversation Not Exists": conversa removida no Dify.
       //  - 401 / "Access token is invalid" / "unauthorized": o conversation_id pertence
