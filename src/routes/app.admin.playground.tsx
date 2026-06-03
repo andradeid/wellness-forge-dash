@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Paperclip, FileText, Type, Trash2, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChatThinking } from "@/components/chat/ChatThinking";
 import { toast } from "sonner";
 
@@ -29,6 +36,14 @@ interface RawEvent {
   payload: unknown;
 }
 
+interface DifyAgentRow {
+  agent_id: string;
+  label: string;
+  api_key: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
 function PlaygroundPage() {
   const { role, loading } = useAuth();
   const [mode, setMode] = useState<Mode>("pdf");
@@ -40,7 +55,41 @@ function PlaygroundPage() {
   const [rawEvents, setRawEvents] = useState<RawEvent[]>([]);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [conversationId, setConversationId] = useState<string>("");
+  const [agents, setAgents] = useState<DifyAgentRow[]>([]);
+  const [agentType, setAgentType] = useState<string>("exam");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (role !== "super_admin") return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("dify_agents")
+        .select("agent_id,label,api_key,sort_order,is_active")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) return;
+      const rows = (data ?? []) as DifyAgentRow[];
+      setAgents(rows);
+      const hasExam = rows.some((r) => r.agent_id === "exam" && r.api_key);
+      if (!hasExam) {
+        const firstEnabled = rows.find((r) => r.api_key);
+        if (firstEnabled) setAgentType(firstEnabled.agent_id);
+      }
+    })();
+  }, [role]);
+
+  const selectedAgent = useMemo(
+    () => agents.find((a) => a.agent_id === agentType),
+    [agents, agentType],
+  );
+
+  const handleAgentChange = (value: string) => {
+    setAgentType(value);
+    setTurns([]);
+    setRawEvents([]);
+    setConversationId("");
+    setLatencyMs(null);
+  };
 
   // Guard: super_admin only
   useEffect(() => {
