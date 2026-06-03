@@ -73,9 +73,10 @@ function AppLayout() {
 
 
   const isChat = pathname.startsWith("/app/chat/");
+  const isGeneralChat = pathname.startsWith("/app/general/");
   const isEvolution = pathname.startsWith("/app/evolution/");
   const isFaleComLumma = pathname.startsWith("/app/fale-com-lumma");
-  const immersive = isChat || isEvolution || isFaleComLumma;
+  const immersive = isChat || isGeneralChat || isEvolution || isFaleComLumma;
 
   const showStagingBanner = false;
 
