@@ -242,6 +242,62 @@ function GeneralChatPage() {
 
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
+            <div className="mb-2 flex justify-center">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
+                  >
+                    {(() => {
+                      const agent = AGENT_OPTIONS.find(a => a.id === agentType) || AGENT_OPTIONS[3];
+                      const Icon = agent.icon;
+                      return <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />;
+                    })()}
+                    <span>{getActiveAgentLabel(agentType)}</span>
+                    <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  side="top" 
+                  align="center" 
+                  className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl"
+                >
+                  <div className="space-y-1">
+                    {AGENT_OPTIONS.map((opt, idx) => {
+                      const Icon = opt.icon;
+                      const isActive = agentType === opt.id;
+                      return (
+                        <div key={opt.id}>
+                          {idx === 3 && <div className="my-1 border-t border-slate-100" />}
+                          <button
+                            onClick={() => {
+                              navigate({ to: `/app/general/${chatId}`, search: { module: opt.id } });
+                            }}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
+                              isActive 
+                                ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20" 
+                                : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                            )}
+                          >
+                            <div className={cn(
+                              "p-1.5 rounded-lg transition-colors",
+                              isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
+                            )}>
+                              <Icon className="h-3.5 w-3.5" style={{ color: opt.color }} />
+                            </div>
+                            <span className="flex-1 text-left">{opt.title}</span>
+                            {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
             <ChatInput onSubmit={(text) => sendMessage(text)} disabled={thinking} />
             <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
               Máximo de 10 arquivos de 20MB
