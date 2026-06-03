@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
+  Check,
   Eye,
   EyeOff,
   Loader2,
@@ -9,6 +10,8 @@ import {
   Plus,
   Power,
   Save,
+  Wifi,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +20,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -83,6 +92,48 @@ export function DifyAgentsPanel() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<Record<string, boolean>>({});
   const [togglingActive, setTogglingActive] = useState<Record<string, boolean>>({});
+  type TestState =
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "success"; appName?: string | null }
+    | { status: "error"; message: string };
+  const [testState, setTestState] = useState<Record<string, TestState>>({});
+
+  const runAgentTest = async (agent: DifyAgent) => {
+    setTestState((s) => ({ ...s, [agent.id]: { status: "loading" } }));
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      const res = await fetch("/api/dify/agent-test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ agent_id: agent.agent_id }),
+      });
+      const json = await res.json().catch(() => ({ ok: false, error: "Resposta inválida" }));
+      if (json?.ok) {
+        setTestState((s) => ({
+          ...s,
+          [agent.id]: { status: "success", appName: json.app_name ?? null },
+        }));
+      } else {
+        setTestState((s) => ({
+          ...s,
+          [agent.id]: { status: "error", message: json?.error ?? "Falha desconhecida" },
+        }));
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setTestState((s) => ({ ...s, [agent.id]: { status: "error", message: msg } }));
+    } finally {
+      setTimeout(() => {
+        setTestState((s) => ({ ...s, [agent.id]: { status: "idle" } }));
+      }, 4000);
+    }
+  };
+
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<AgentFormState>(emptyForm(1));
@@ -338,7 +389,72 @@ export function DifyAgentsPanel() {
                       )}
                       Salvar
                     </Button>
+                    {(() => {
+                      const ts = testState[agent.id] ?? { status: "idle" as const };
+                      const hasKey = isConfigured;
+                      const baseBtn = (
+                        <Button
+                          variant="outline"
+                          onClick={() => runAgentTest(agent)}
+                          disabled={!hasKey || ts.status === "loading"}
+                          className={cn(
+                            "rounded-full",
+                            ts.status === "success" &&
+                              "border-emerald-300 text-emerald-700 hover:text-emerald-700",
+                            ts.status === "error" &&
+                              "border-red-300 text-red-700 hover:text-red-700",
+                          )}
+                        >
+                          {ts.status === "loading" ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Testando...
+                            </>
+                          ) : ts.status === "success" ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Conectado
+                            </>
+                          ) : ts.status === "error" ? (
+                            <>
+                              <X className="h-4 w-4" />
+                              Falhou
+                            </>
+                          ) : (
+                            <>
+                              <Wifi className="h-4 w-4" />
+                              Testar
+                            </>
+                          )}
+                        </Button>
+                      );
+                      if (hasKey) return baseBtn;
+                      return (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0}>{baseBtn}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Configure a API Key primeiro</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
                   </div>
+                  {(() => {
+                    const ts = testState[agent.id];
+                    if (!ts || ts.status === "idle" || ts.status === "loading") return null;
+                    if (ts.status === "success") {
+                      return (
+                        <p className="text-[11px] text-emerald-700 mt-1">
+                          ✓ {ts.appName ?? "Conectado"}
+                        </p>
+                      );
+                    }
+                    return (
+                      <p className="text-[11px] text-red-700 mt-1">{ts.message}</p>
+                    );
+                  })()}
                 </div>
 
                 {/* Right: status + menu */}

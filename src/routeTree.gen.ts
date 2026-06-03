@@ -33,6 +33,7 @@ import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
+import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
 import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
@@ -156,6 +157,11 @@ const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
   path: '/api/dify/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDifyAgentTestRoute = ApiDifyAgentTestRouteImport.update({
+  id: '/api/dify/agent-test',
+  path: '/api/dify/agent-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
   id: '/api/audit/structured',
   path: '/api/audit/structured',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
+  '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
+  '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
+  '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/'
     | '/api/audit/structured'
+    | '/api/dify/agent-test'
     | '/api/dify/chat'
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app'
     | '/api/audit/structured'
+    | '/api/dify/agent-test'
     | '/api/dify/chat'
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/'
     | '/api/audit/structured'
+    | '/api/dify/agent-test'
     | '/api/dify/chat'
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
+  ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
   ApiDifyResetConversationsRoute: typeof ApiDifyResetConversationsRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
@@ -508,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDifyChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/dify/agent-test': {
+      id: '/api/dify/agent-test'
+      path: '/api/dify/agent-test'
+      fullPath: '/api/dify/agent-test'
+      preLoaderRoute: typeof ApiDifyAgentTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/audit/structured': {
       id: '/api/audit/structured'
       path: '/api/audit/structured'
@@ -564,6 +584,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
+  ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
   ApiDifyResetConversationsRoute: ApiDifyResetConversationsRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
