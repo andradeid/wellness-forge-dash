@@ -145,6 +145,7 @@ export function useDifyChat(
   const [thinking, setThinking] = useState(false);
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
+  const [agentType, setAgentType] = useState<string>("exam");
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
   const metaRef = useRef<{
@@ -398,6 +399,7 @@ export function useDifyChat(
           conversation_id: convId,
           files: difyFiles,
           meta: metaRef.current,
+          agent_type: agentType,
         }),
       });
 
@@ -577,7 +579,7 @@ export function useDifyChat(
 
     setThinking(false);
     window.setTimeout(() => setUploadProgress([]), 4000);
-  }, [chatId, patientId, readOnly]);
+  }, [chatId, patientId, readOnly, agentType]);
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;
@@ -592,6 +594,7 @@ export function useDifyChat(
     conversationIdRef.current = "";
     setMessages([]);
     setError(null);
+    setAgentType("exam");
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
@@ -612,5 +615,5 @@ export function useDifyChat(
     };
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType };
 }
