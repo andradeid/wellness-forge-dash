@@ -153,7 +153,7 @@ function FaleComLummaPage() {
         .eq("created_by", user.id)
         .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
-        .limit(50);
+        .limit(200);
       
       if (cancelled) return;
       
