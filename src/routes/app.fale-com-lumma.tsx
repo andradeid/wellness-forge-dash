@@ -336,6 +336,28 @@ function FaleComLummaPage() {
                               <Edit2 className="h-3 w-3 text-white/70" />
                             </button>
                           )}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const isPinned = !!c.pinned_at;
+                              const table = c.patient_id ? 'patient_chats' : 'general_chats';
+                              const { error } = await supabase
+                                .from(table)
+                                .update({ pinned_at: isPinned ? null : new Date().toISOString() })
+                                .eq('id', c.id);
+                              
+                              if (!error) {
+                                await refreshHistory();
+                                toast.success(isPinned ? "Conversa desfixada" : "Conversa fixada");
+                              }
+                            }}
+                            className={cn(
+                              "p-1 hover:bg-white/20 rounded transition-opacity shrink-0 mt-0.5",
+                              c.pinned_at ? "opacity-100" : "opacity-0 group-hover/item:opacity-100"
+                            )}
+                          >
+                            <Pin className={cn("h-3 w-3", c.pinned_at ? "text-white fill-white" : "text-white/70")} />
+                          </button>
                         </div>
                       )}
                       {c.agent_type && (
