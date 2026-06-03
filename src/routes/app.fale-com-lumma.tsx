@@ -124,8 +124,29 @@ function FaleComLummaPage() {
     [patients, patientQuery]
   );
 
-  const filtered = useMemo(
-    () =>
+  const startGeneralChat = async (agentType: string) => {
+    if (!user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('general_chats')
+      .insert({
+        agent_type: agentType,
+        title: agentType === 'research' 
+          ? 'Pesquisa Científica' 
+          : 'Pergunta Clínica',
+        created_by: user.id
+      })
+      .select('id')
+      .single();
+
+    if (error || !data) {
+      console.error("Error creating general chat:", error);
+      return;
+    }
+    
+    navigate({ to: `/app/general/${data.id}`, search: { module: agentType } });
+  };
+
       chats.filter((c) =>
         c.title.toLowerCase().includes(query.toLowerCase())
       ),
