@@ -416,6 +416,13 @@ function PatientsPage() {
                         </TableCell>
                         <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
                         <TableCell>{genderLabel(p.gender)}</TableCell>
+                        <TableCell>
+                          {p.is_pregnant ? (
+                            <span className="text-[#e8a04c] font-medium">
+                              Gestante {p.gestational_weeks ? `(${p.gestational_weeks}s)` : ""}
+                            </span>
+                          ) : "—"}
+                        </TableCell>
                         <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
