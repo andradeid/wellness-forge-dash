@@ -146,14 +146,10 @@ export async function getDifyAgentConfig(
     if (cached && cached.expires > now) return cached.data;
   }
 
-  const serviceClient = makeServiceClient();
-  if (!serviceClient) {
-    throw new Error(
-      "Configuração de servidor indisponível (SUPABASE_SERVICE_ROLE_KEY).",
-    );
-  }
+  const client: SupabaseClient =
+    makeServiceClient() ?? makeUserClient(userToken);
 
-  const { data, error } = await serviceClient
+  const { data, error } = await client
     .from("dify_agents")
     .select("agent_id, api_key, endpoint, is_active")
     .eq("agent_id", agentId)
