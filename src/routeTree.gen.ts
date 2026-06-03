@@ -20,6 +20,7 @@ import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppChatsRouteImport } from './routes/app.chats'
+import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
@@ -89,6 +90,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
 const AppChatsRoute = AppChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
+  id: '/general/$chatId',
+  path: '/general/$chatId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
+  '/app/general/$chatId': typeof AppGeneralChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
+  '/app/general/$chatId': typeof AppGeneralChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
+  '/app/general/$chatId': typeof AppGeneralChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
+    | '/app/general/$chatId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
+    | '/app/general/$chatId'
   id:
     | '__root__'
     | '/'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
+    | '/app/general/$chatId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -428,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/chats'
       fullPath: '/app/chats'
       preLoaderRoute: typeof AppChatsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/general/$chatId': {
+      id: '/app/general/$chatId'
+      path: '/general/$chatId'
+      fullPath: '/app/general/$chatId'
+      preLoaderRoute: typeof AppGeneralChatIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/evolution/$patientId': {
@@ -555,6 +574,7 @@ interface AppRouteChildren {
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
+  AppGeneralChatIdRoute: typeof AppGeneralChatIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -574,6 +594,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
+  AppGeneralChatIdRoute: AppGeneralChatIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

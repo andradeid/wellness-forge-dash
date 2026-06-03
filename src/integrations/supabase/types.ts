@@ -127,6 +127,68 @@ export type Database = {
         }
         Relationships: []
       }
+      general_chat_messages: {
+        Row: {
+          agent_type: string | null
+          chat_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          role: string
+        }
+        Insert: {
+          agent_type?: string | null
+          chat_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          role: string
+        }
+        Update: {
+          agent_type?: string | null
+          chat_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "general_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "general_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      general_chats: {
+        Row: {
+          agent_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       integration_logs: {
         Row: {
           created_at: string

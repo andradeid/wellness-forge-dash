@@ -124,6 +124,29 @@ function FaleComLummaPage() {
     [patients, patientQuery]
   );
 
+  const startGeneralChat = async (agentType: string) => {
+    if (!user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('general_chats')
+      .insert({
+        agent_type: agentType,
+        title: agentType === 'research' 
+          ? 'Pesquisa Científica' 
+          : 'Pergunta Clínica',
+        created_by: user.id
+      })
+      .select('id')
+      .single();
+
+    if (error || !data) {
+      console.error("Error creating general chat:", error);
+      return;
+    }
+    
+    navigate({ to: `/app/general/${data.id}`, search: { module: agentType } });
+  };
+
   const filtered = useMemo(
     () =>
       chats.filter((c) =>
@@ -131,6 +154,7 @@ function FaleComLummaPage() {
       ),
     [chats, query]
   );
+
 
 
   return (
@@ -199,6 +223,11 @@ function FaleComLummaPage() {
                         params: { patientId: c.patient_id },
                         search: { chatId: c.id },
                       });
+                    } else {
+                      navigate({
+                        to: `/app/general/${c.id}`,
+                        search: { module: c.agent_type || 'research' }
+                      });
                     }
                   }}
                   className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 group ${
@@ -211,7 +240,7 @@ function FaleComLummaPage() {
                     <Avatar className="h-9 w-9 border-2 border-white/20">
                       <AvatarImage src={c.avatar_url || undefined} />
                       <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
-                        {(c.patient_name || "??").slice(0, 2).toUpperCase()}
+                        {c.agent_type === 'research' ? '🔍' : c.agent_type === 'reasoning' ? '🤔' : (c.patient_name || "??").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     {c.pinned_at && (
@@ -282,47 +311,41 @@ function FaleComLummaPage() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => setCreateOpen(true)}
-                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Criar paciente
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
                 onClick={() => {
                   setPendingModule("production");
                   setIdentifyOpen(true);
                 }}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
-                <ClipboardList className="h-4 w-4 mr-2" />
-                Formulações Nutricionais
+                <span className="mr-2">🥗</span>
+                Plano Alimentar & Formulações
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => {
-                  setPendingModule("production");
-                  setIdentifyOpen(true);
-                }}
+                onClick={() => startGeneralChat("reasoning")}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
-                <ClipboardList className="h-4 w-4 mr-2" />
-                Elaboração de Plano Alimentar
+                <span className="mr-2">🤔</span>
+                Perguntas Clínicas
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => {
-                  setPendingModule("research");
-                  setIdentifyOpen(true);
-                }}
+                onClick={() => startGeneralChat("research")}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
-                <Microscope className="h-4 w-4 mr-2" />
+                <span className="mr-2">🔍</span>
                 Pesquisa Científica
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                disabled
+                className="rounded-full px-6 h-12 border-2 border-slate-200 text-slate-400 bg-slate-50/70 cursor-not-allowed"
+              >
+                <span className="mr-2">🧮</span>
+                Cálculos e Prescrição (em breve)
               </Button>
             </div>
 
