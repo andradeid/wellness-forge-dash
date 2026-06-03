@@ -150,6 +150,7 @@ function FaleComLummaPage() {
           patients:patient_id(name),
           chat_messages(agent_type)
         `)
+        .eq("created_by", user.id)
         .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
         .limit(50);
