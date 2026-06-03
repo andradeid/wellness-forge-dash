@@ -315,7 +315,7 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3] transition-colors duration-500">
       {/* Sheet — Sidebar acessível via hambúrguer */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white">
@@ -325,7 +325,27 @@ function ChatPage() {
 
       {/* Conteúdo principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
+        {showModuleSelector && (
+          <div className="absolute top-4 left-6 z-30 flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-white/40 backdrop-blur-md border border-white/60 hover:bg-white/60"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Link
+              to="/app/patients"
+              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-white/40 backdrop-blur-md px-3 py-2 rounded-full border border-white/60 transition-all"
+            >
+              <ArrowLeft className="h-3 w-3" /> Pacientes
+            </Link>
+          </div>
+        )}
+
+        {!showModuleSelector && (
+          <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -403,7 +423,8 @@ function ChatPage() {
           {error && (
             <p className="text-[11px] sm:text-xs text-rose-600 line-clamp-1 max-w-[200px] shrink-0">{error}</p>
           )}
-        </header>
+          </header>
+        )}
 
         <main className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
