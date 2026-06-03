@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageSquare, Search, Clock, FileText, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,106 +11,31 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useChatHistory, type ChatItem } from "@/hooks/useChatHistory";
 
 export const Route = createFileRoute("/app/chats")({
   component: ChatsCentralPage,
 });
 
-interface ChatRow {
-  id: string;
-  patient_id: string;
-  title: string | null;
-  created_at: string;
-  updated_at: string;
-  pinned_at: string | null;
-  patient: { id: string; name: string; avatar_url: string | null } | null;
-  last_message: { content: string; role: string; created_at: string } | null;
-  message_count: number;
-  exam_count: number;
-}
-
 function ChatsCentralPage() {
-  const { user } = useAuth();
-  const [rows, setRows] = useState<ChatRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { chats: rows, loading, refresh } = useChatHistory(200);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      setLoading(true);
-      const { data: chats } = await (supabase as any)
-        .from("patient_chats")
-        .select("id, patient_id, title, created_at, updated_at, pinned_at, patients:patient_id(id, name, avatar_url)")
-        .eq("created_by", user.id)
-        .order("pinned_at", { ascending: false, nullsFirst: false })
-        .order("updated_at", { ascending: false })
-        .limit(200);
-
-      const chatIds = (chats ?? []).map((c: any) => c.id);
-      let msgsByChat: Record<string, any[]> = {};
-      let examsByChat: Record<string, number> = {};
-
-      if (chatIds.length > 0) {
-        const { data: msgs } = await (supabase as any)
-          .from("chat_messages")
-          .select("chat_id, content, role, created_at")
-          .in("chat_id", chatIds)
-          .order("created_at", { ascending: false });
-        for (const m of msgs ?? []) {
-          (msgsByChat[m.chat_id] ||= []).push(m);
-        }
-
-        const { data: exams } = await (supabase as any)
-          .from("patient_exams")
-          .select("chat_id")
-          .in("chat_id", chatIds);
-        for (const e of exams ?? []) {
-          examsByChat[e.chat_id] = (examsByChat[e.chat_id] ?? 0) + 1;
-        }
-      }
-
-      const mapped: ChatRow[] = (chats ?? []).map((c: any) => {
-        const ms = msgsByChat[c.id] ?? [];
-        return {
-          id: c.id,
-          patient_id: c.patient_id,
-          title: c.title,
-          created_at: c.created_at,
-          updated_at: c.updated_at,
-          pinned_at: c.pinned_at ?? null,
-          patient: c.patients ?? null,
-          last_message: ms[0]
-            ? { content: ms[0].content ?? "", role: ms[0].role, created_at: ms[0].created_at }
-            : null,
-          message_count: ms.length,
-          exam_count: examsByChat[c.id] ?? 0,
-        };
-      });
-
-      setRows(mapped);
-      setLoading(false);
-    })();
-  }, [user]);
-
-  const togglePin = async (e: React.MouseEvent, chat: ChatRow) => {
+  const togglePin = async (e: React.MouseEvent, chat: ChatItem) => {
     e.preventDefault();
     e.stopPropagation();
     const next = chat.pinned_at ? null : new Date().toISOString();
-    setRows((rs) =>
-      [...rs.map((r) => (r.id === chat.id ? { ...r, pinned_at: next } : r))].sort(sortRows),
-    );
+    
     const { error } = await (supabase as any)
       .from("patient_chats")
       .update({ pinned_at: next })
       .eq("id", chat.id);
+
     if (error) {
       toast.error("Não foi possível atualizar a fixação.");
-      setRows((rs) =>
-        [...rs.map((r) => (r.id === chat.id ? { ...r, pinned_at: chat.pinned_at } : r))].sort(sortRows),
-      );
     } else {
       toast.success(next ? "Conversa fixada no topo." : "Conversa desafixada.");
+      refresh();
     }
   };
 
@@ -120,7 +44,7 @@ function ChatsCentralPage() {
     if (!q) return rows;
     return rows.filter(
       (r) =>
-        r.patient?.name?.toLowerCase().includes(q) ||
+        r.patient_name?.toLowerCase().includes(q) ||
         r.last_message?.content?.toLowerCase().includes(q),
     );
   }, [rows, search]);
@@ -131,8 +55,8 @@ function ChatsCentralPage() {
       const d = new Date(r.updated_at).getTime();
       return Date.now() - d < 7 * 24 * 60 * 60 * 1000;
     }).length;
-    const withExams = rows.filter((r) => r.exam_count > 0).length;
-    const totalMessages = rows.reduce((a, r) => a + r.message_count, 0);
+    const withExams = rows.filter((r) => (r.exam_count ?? 0) > 0).length;
+    const totalMessages = rows.reduce((a, r) => a + (r.message_count ?? 0), 0);
     return { total, last7, withExams, totalMessages };
   }, [rows]);
 
@@ -190,28 +114,28 @@ function ChatsCentralPage() {
             <li key={r.id}>
               <Link
                 to="/app/chat/$patientId"
-                params={{ patientId: r.patient_id }}
+                params={{ patientId: r.patient_id || "" }}
                 className="block"
               >
                 <Card className={cn("p-4 hover:bg-accent/40 transition-colors", r.pinned_at && "border-amber-300 bg-amber-50/40")}>
                   <div className="flex items-start gap-4">
                     <Avatar className="h-11 w-11 shrink-0">
-                      <AvatarImage src={r.patient?.avatar_url ?? undefined} />
+                      <AvatarImage src={r.avatar_url ?? undefined} />
                       <AvatarFallback className="bg-gradient-brand text-white text-xs font-semibold">
-                        {(r.patient?.name || "??").slice(0, 2).toUpperCase()}
+                        {(r.patient_name || "??").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         {r.pinned_at && <Pin className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />}
                         <span className="font-medium truncate">
-                          {r.patient?.name ?? "Paciente removido"}
+                          {r.patient_name ?? "Paciente removido"}
                         </span>
                         <StatusBadge updatedAt={r.updated_at} />
-                        {r.exam_count > 0 && (
+                        {(r.exam_count ?? 0) > 0 && (
                           <Badge variant="secondary" className="gap-1">
                             <FileText className="h-3 w-3" />
-                            {r.exam_count} exame{r.exam_count > 1 ? "s" : ""}
+                            {r.exam_count} exame{(r.exam_count ?? 0) > 1 ? "s" : ""}
                           </Badge>
                         )}
                       </div>
@@ -315,12 +239,4 @@ function formatWhen(iso: string) {
   const days = Math.floor(h / 24);
   if (days < 7) return `há ${days}d`;
   return d.toLocaleDateString("pt-BR");
-}
-
-function sortRows(a: ChatRow, b: ChatRow) {
-  if (!!a.pinned_at !== !!b.pinned_at) return a.pinned_at ? -1 : 1;
-  if (a.pinned_at && b.pinned_at) {
-    return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
-  }
-  return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
 }
