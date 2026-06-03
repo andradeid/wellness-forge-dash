@@ -169,8 +169,8 @@ function GeneralChatPage() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <span className="text-sm font-semibold text-white truncate leading-tight">
+                        <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                          <span className="text-sm font-semibold text-white leading-tight break-words overflow-hidden">
                             {c.title || c.patient_name}
                           </span>
                           {!c.patient_id && (
@@ -180,7 +180,7 @@ function GeneralChatPage() {
                                 setEditingChatId(c.id);
                                 setEditTitle(c.title || "");
                               }}
-                              className="opacity-0 group-hover/item:opacity-100 p-1 hover:bg-white/20 rounded transition-opacity shrink-0"
+                              className="opacity-0 group-hover/item:opacity-100 p-1 hover:bg-white/20 rounded transition-opacity shrink-0 mt-0.5"
                             >
                               <Edit2 className="h-3 w-3 text-white/70" />
                             </button>
