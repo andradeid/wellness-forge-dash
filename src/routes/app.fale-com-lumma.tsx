@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -264,7 +264,12 @@ function FaleComLummaPage() {
                     activeId === c.id ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
-                  <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 shrink-0 group-hover:text-white" />
+                  <div className="relative shrink-0">
+                    <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 group-hover:text-white" />
+                    {c.pinned_at && (
+                      <Pin className="absolute -top-1 -right-1 h-2 w-2 text-white fill-white" />
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-medium text-white truncate">
