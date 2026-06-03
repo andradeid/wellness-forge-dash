@@ -117,7 +117,7 @@ export function ChatMessageList({
       return;
     }
 
-    if (!userScrolledUp.current || thinking) {
+    if (!userScrolledUp.current) {
       bottomRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "end",
