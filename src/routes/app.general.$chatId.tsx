@@ -146,7 +146,7 @@ function GeneralChatPage() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 group/item">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full">
                       {editingChatId === c.id ? (
                         <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
                           <Input
@@ -162,17 +162,17 @@ function GeneralChatPage() {
                           />
                           <button 
                             onClick={() => handleUpdateTitle(c.id)}
-                            className="p-1 hover:bg-white/20 rounded text-emerald-400"
+                            className="p-1 hover:bg-white/20 rounded text-emerald-400 shrink-0"
                             disabled={isUpdatingTitle}
                           >
                             <Check className="h-3 w-3" />
                           </button>
                         </div>
                       ) : (
-                        <>
-                          <div className="text-sm font-semibold text-white truncate leading-none flex-1">
-                            {c.title}
-                          </div>
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <span className="text-sm font-semibold text-white truncate leading-tight">
+                            {c.title || c.patient_name}
+                          </span>
                           {!c.patient_id && (
                             <button
                               onClick={(e) => {
@@ -180,12 +180,12 @@ function GeneralChatPage() {
                                 setEditingChatId(c.id);
                                 setEditTitle(c.title || "");
                               }}
-                              className="opacity-0 group-hover/item:opacity-100 p-1 hover:bg-white/20 rounded transition-opacity"
+                              className="opacity-0 group-hover/item:opacity-100 p-1 hover:bg-white/20 rounded transition-opacity shrink-0"
                             >
                               <Edit2 className="h-3 w-3 text-white/70" />
                             </button>
                           )}
-                        </>
+                        </div>
                       )}
                       {c.agent_type && (
                         <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
