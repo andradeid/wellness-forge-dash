@@ -26,7 +26,7 @@ function GeneralChatPage() {
         <ChatMessageList messages={messages} thinking={thinking} />
       </div>
       <div className="p-4 bg-white border-t">
-        <ChatInput onSend={(text) => sendMessage(text)} disabled={thinking} />
+        <ChatInput onSubmit={(text) => sendMessage(text)} disabled={thinking} />
       </div>
     </div>
   );

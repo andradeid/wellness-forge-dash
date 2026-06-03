@@ -30,30 +30,43 @@ export function useChatHistory(limit = 50) {
     setLoading(true);
     
     try {
-      const { data: chatsData, error: chatsError } = await (supabase as any)
-        .from("patient_chats")
-        .select(`
-          id, 
-          title, 
-          updated_at, 
-          patient_id, 
-          pinned_at,
-          patients:patient_id(id, name, avatar_url),
-          chat_messages(content, role, created_at)
-        `)
-        .eq("created_by", user.id)
-        .order("pinned_at", { ascending: false, nullsFirst: false })
-        .order("updated_at", { ascending: false })
-        .limit(limit);
+      const [patientChatsRes, generalChatsRes] = await Promise.all([
+        (supabase as any)
+          .from("patient_chats")
+          .select(`
+            id, 
+            title, 
+            updated_at, 
+            patient_id, 
+            pinned_at,
+            patients:patient_id(id, name, avatar_url),
+            chat_messages(content, role, created_at)
+          `)
+          .eq("created_by", user.id)
+          .order("pinned_at", { ascending: false, nullsFirst: false })
+          .order("updated_at", { ascending: false })
+          .limit(limit),
+        supabase
+          .from("general_chats")
+          .select(`
+            id,
+            title,
+            updated_at,
+            agent_type,
+            general_chat_messages(content, role, created_at)
+          `)
+          .eq("created_by", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(limit)
+      ]);
 
-      if (chatsError) {
-        console.error("[useChatHistory] error:", chatsError);
-        throw chatsError;
-      }
+      if (patientChatsRes.error) throw patientChatsRes.error;
+      if (generalChatsRes.error) throw generalChatsRes.error;
 
-      console.log("[useChatHistory] raw:", chatsData);
+      const pChats = patientChatsRes.data ?? [];
+      const gChats = generalChatsRes.data ?? [];
 
-      const chatIds = (chatsData ?? []).map((c: any) => c.id);
+      const chatIds = pChats.map((c: any) => c.id);
       let examsByChat: Record<string, number> = {};
 
       if (chatIds.length > 0) {
@@ -67,24 +80,19 @@ export function useChatHistory(limit = 50) {
         }
       }
 
-      const mapped: ChatItem[] = (chatsData ?? []).map((c: any) => {
+      const mappedPChats: ChatItem[] = pChats.map((c: any) => {
         const patient = Array.isArray(c.patients) ? c.patients[0] : c.patients;
         const msgs = Array.isArray(c.chat_messages) ? c.chat_messages : [];
-        
         const sortedMsgs = [...msgs].sort((a: any, b: any) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
-        
         const lastMsg = sortedMsgs[0] || null;
-        const agentType = null;
-
         return {
           id: c.id,
           title: c.title || patient?.name || "Conversa sem título",
           updated_at: c.updated_at,
           patient_id: c.patient_id ?? null,
           patient_name: patient?.name ?? null,
-          agent_type: agentType,
           pinned_at: c.pinned_at ?? null,
           avatar_url: patient?.avatar_url ?? null,
           last_message: lastMsg ? {
@@ -97,8 +105,37 @@ export function useChatHistory(limit = 50) {
         };
       });
 
-      console.log("[useChatHistory] mapped:", mapped);
-      setChats(mapped);
+      const mappedGChats: ChatItem[] = gChats.map((c: any) => {
+        const msgs = Array.isArray(c.general_chat_messages) ? c.general_chat_messages : [];
+        const sortedMsgs = [...msgs].sort((a: any, b: any) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        const lastMsg = sortedMsgs[0] || null;
+        const agentType = c.agent_type;
+        return {
+          id: c.id,
+          title: c.title || (agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica'),
+          updated_at: c.updated_at,
+          patient_id: null,
+          patient_name: agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica',
+          agent_type: agentType,
+          pinned_at: null,
+          avatar_url: null, // Será tratado no componente via agent_type
+          last_message: lastMsg ? {
+            content: lastMsg.content,
+            role: lastMsg.role,
+            created_at: lastMsg.created_at
+          } : null,
+          message_count: msgs.length,
+          exam_count: 0,
+        };
+      });
+
+      const combined = [...mappedPChats, ...mappedGChats].sort((a, b) => 
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      ).slice(0, limit);
+
+      setChats(combined);
     } catch (error) {
       console.error("Error fetching chat history:", error);
     } finally {
