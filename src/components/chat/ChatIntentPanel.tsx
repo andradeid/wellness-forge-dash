@@ -1,5 +1,6 @@
-import { FileText, Search, Utensils, Lock } from "lucide-react";
+import { FileText, Search, Utensils, Lock, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
+import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export type FaseCiclo = "folicular" | "ovulatoria" | "lutea" | "menopausa";
 
