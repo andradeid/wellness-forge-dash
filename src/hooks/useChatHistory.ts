@@ -39,7 +39,7 @@ export function useChatHistory(limit = 50) {
           patient_id, 
           pinned_at,
           patients:patient_id(id, name, avatar_url),
-          chat_messages(agent_type, content, role, created_at)
+          chat_messages(content, role, created_at)
         `)
         .eq("created_by", user.id)
         .order("pinned_at", { ascending: false, nullsFirst: false })
@@ -76,7 +76,7 @@ export function useChatHistory(limit = 50) {
         );
         
         const lastMsg = sortedMsgs[0] || null;
-        const agentType = msgs.find((m: any) => m.agent_type)?.agent_type || null;
+        const agentType = null;
 
         return {
           id: c.id,

@@ -46,6 +46,7 @@ export type Database = {
       }
       chat_messages: {
         Row: {
+          agent_type: string | null
           attachments: Json | null
           chat_id: string
           content: string
@@ -56,6 +57,7 @@ export type Database = {
           structured_data: Json | null
         }
         Insert: {
+          agent_type?: string | null
           attachments?: Json | null
           chat_id: string
           content?: string
@@ -66,6 +68,7 @@ export type Database = {
           structured_data?: Json | null
         }
         Update: {
+          agent_type?: string | null
           attachments?: Json | null
           chat_id?: string
           content?: string
