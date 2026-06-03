@@ -195,6 +195,7 @@ function PlaygroundPage() {
           query: composedQuery,
           conversation_id: conversationId || undefined,
           files: difyFiles,
+          agent_type: agentType,
         }),
       });
       if (!res.ok || !res.body) {
