@@ -280,19 +280,19 @@ function FaleComLummaPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <div className="text-sm font-medium text-white truncate">
-                        {c.title}
+                      <div className="text-sm font-semibold text-white truncate leading-none">
+                        {c.patient_name || c.title}
                       </div>
                       {c.agent_type && (
-                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md bg-white/20 text-white/90 font-medium">
-                          {c.agent_type === "exam" && "🔬 Exame"}
-                          {c.agent_type === "production" && "🥗 Produção"}
-                          {c.agent_type === "reasoning" && "🤔 Clínico"}
-                          {c.agent_type === "research" && "🔍 Pesquisa"}
+                        <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
+                          {c.agent_type === "exam" && "Exame"}
+                          {c.agent_type === "production" && "Produção"}
+                          {c.agent_type === "reasoning" && "Clínico"}
+                          {c.agent_type === "research" && "Pesquisa"}
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-white/55 mt-0.5">
+                    <div className="text-[10px] text-white/60 mt-1 font-medium">
                       {formatDistanceToNow(new Date(c.updated_at), {
                         addSuffix: true,
                         locale: ptBR,
