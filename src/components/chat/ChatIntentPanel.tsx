@@ -107,235 +107,183 @@ export function ChatIntentPanel({
   const selectAgent = (t: AgentType) => onAgentChange?.(t);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-8">
-      <header className="text-center mb-8">
-        <h2
-          className="text-3xl md:text-4xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
-          style={{ fontFamily: "'Instrument Serif', serif" }}
-        >
-          Olá, {userName || "Nutricionista"}! O que você deseja fazer hoje?
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Selecione um módulo abaixo para iniciar o atendimento.
+    <div className="flex h-full flex-col items-center justify-center px-6 py-12">
+      <div className="flex flex-1 flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
+        <img
+          src={lummaSymbol}
+          alt="Lumma"
+          className="h-20 w-20 mb-8 drop-shadow-sm"
+        />
+        <h1 className="text-5xl font-light tracking-tight text-foreground mb-6">
+          Bem-vinda
+        </h1>
+        <p className="text-lg text-foreground/70 leading-relaxed mb-4 max-w-xl mx-auto text-center">
+          Sou sua mentora virtual, inspirada na metodologia da Ana Paula
+          Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
+          Funcional e Integrativa.
         </p>
-      </header>
+        <p className="text-sm text-foreground/60 mb-8 max-w-lg mx-auto text-center">
+          Faça o upload de PDFs ou imagens de laudos laboratoriais para análise estruturada.
+        </p>
 
-      {/* 1 — Interpretar Exame Clínico */}
-      <ActiveCard
-        selected={agentType === "exam"}
-        onSelect={() => selectAgent("exam")}
-        icon={<FileText className="h-5 w-5" />}
-        title="📑 Interpretar Exame Clínico"
-        description="Faça o upload de PDFs ou imagens de laudos laboratoriais para análise estruturada com base no método."
-      >
+        <div className="flex items-center gap-3 flex-wrap justify-center max-w-4xl mb-8">
+          <ModuleButton
+            active={agentType === "exam"}
+            onClick={() => selectAgent("exam")}
+            icon="🔬"
+            label="Interpretar Exame Clínico"
+          />
+          <ModuleButton
+            active={agentType === "production"}
+            onClick={() => selectAgent("production")}
+            icon="🥗"
+            label="Plano Alimentar & Formulações"
+          />
+          <ModuleButton
+            active={agentType === "reasoning"}
+            onClick={() => selectAgent("reasoning")}
+            icon="🤔"
+            label="Perguntas Clínicas"
+          />
+          <ModuleButton
+            disabled
+            icon="🔍"
+            label="Pesquisa Científica"
+          />
+          <ModuleButton
+            disabled
+            icon="🧮"
+            label="Cálculos e Prescrição (em breve)"
+          />
+        </div>
+
+        {/* Painel de filtros (exclusivo para o módulo de exames) */}
         {agentType === "exam" && (
-          <div className="space-y-4 mt-5">
-            {(filters.publico as string === "adulto" || filters.publico === null || filters.publico === "gestante") && (
-              <FilterRow label="Público">
-                <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
-                  Adulto
-                </Pill>
-                <Pill active={filters.publico === "gestante"} onClick={() => update({ publico: "gestante", sexo: "feminino", faseCiclo: null })}>
-                  Gestante
-                </Pill>
-                <Pill disabled>Criança (Em breve)</Pill>
-              </FilterRow>
-            )}
-
-            {filters.publico === "gestante" && (
-              <FilterRow label="Sexo biológico">
-                <Pill active={filters.sexo === "feminino"} disabled>
-                  Feminino
-                </Pill>
-              </FilterRow>
-            )}
-
-            {!filters.sexo && (
-              <FilterRow label="Sexo biológico">
-                <Pill
-                  active={filters.sexo === "masculino"}
-                  onClick={() => update({ sexo: "masculino", faseCiclo: null })}
-                >
-                  Masculino
-                </Pill>
-                <Pill active={filters.sexo === "feminino"} onClick={() => update({ sexo: "feminino" })}>
-                  Feminino
-                </Pill>
-              </FilterRow>
-            )}
-
-            {filters.publico === "adulto" && filters.sexo === "feminino" && (
-              <FilterRow label="Fase do ciclo">
-                <Pill active={filters.faseCiclo === null} onClick={() => update({ faseCiclo: null })}>Não informada</Pill>
-                <Pill active={filters.faseCiclo === "folicular"} onClick={() => update({ faseCiclo: "folicular" })}>Folicular (dias 1–13)</Pill>
-                <Pill active={filters.faseCiclo === "ovulatoria"} onClick={() => update({ faseCiclo: "ovulatoria" })}>Ovulatória (dias 14–16)</Pill>
-                <Pill active={filters.faseCiclo === "lutea"} onClick={() => update({ faseCiclo: "lutea" })}>Lútea (dias 17–28)</Pill>
-                <Pill active={filters.faseCiclo === "menopausa"} onClick={() => update({ faseCiclo: "menopausa" })}>Menopausa</Pill>
-              </FilterRow>
-            )}
-
-            {filters.publico === "gestante" && (
-              <>
-                <FilterRow label="Tipo de gestação">
-                  <Pill active={filters.gestanteTipo === "monofetal"} onClick={() => update({ gestanteTipo: "monofetal" })}>Monofetal</Pill>
-                  <Pill active={filters.gestanteTipo === "gemelar"} onClick={() => update({ gestanteTipo: "gemelar" })}>Gemelar</Pill>
+          <div className="w-full max-w-3xl bg-white/60 backdrop-blur-xl rounded-2xl border border-[#e8a04c]/20 p-6 shadow-sm animate-in fade-in zoom-in duration-300">
+            <div className="space-y-4">
+              {(filters.publico === null || filters.publico === "gestante" || (filters.publico as string) === "adulto") && (
+                <FilterRow label="Público">
+                  <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
+                    Adulto
+                  </Pill>
+                  <Pill active={filters.publico === "gestante"} onClick={() => update({ publico: "gestante", sexo: "feminino", faseCiclo: null })}>
+                    Gestante
+                  </Pill>
+                  <Pill disabled>Criança (Em breve)</Pill>
                 </FilterRow>
-                <FilterRow label="Período">
-                  <Pill active={filters.gestantePeriodo === "1t"} onClick={() => update({ gestantePeriodo: "1t" })}>1º Trimestre</Pill>
-                  <Pill active={filters.gestantePeriodo === "2t"} onClick={() => update({ gestantePeriodo: "2t" })}>2º Trimestre</Pill>
-                  <Pill active={filters.gestantePeriodo === "3t"} onClick={() => update({ gestantePeriodo: "3t" })}>3º Trimestre</Pill>
+              )}
+
+              {filters.publico === "gestante" && (
+                <FilterRow label="Sexo biológico">
+                  <Pill active={filters.sexo === "feminino"} disabled>
+                    Feminino
+                  </Pill>
                 </FilterRow>
-              </>
-            )}
+              )}
 
-            <FilterRow label="Data do exame">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="data-exame" className="sr-only">Data de Realização do Exame</label>
-                <input
-                  id="data-exame"
-                  type="date"
-                  value={filters.dataExame}
-                  max={todayISO()}
-                  onChange={(e) => update({ dataExame: e.target.value || todayISO() })}
-                  className="rounded-full px-4 py-1.5 text-xs font-medium bg-white/80 text-foreground border border-white shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#e8a04c]/40 transition-all"
-                />
-                <span className="text-[10px] text-muted-foreground px-1">
-                  Data de realização do exame · usada na linha do tempo clínica
-                </span>
-              </div>
-            </FilterRow>
+              {!filters.sexo && (
+                <FilterRow label="Sexo biológico">
+                  <Pill
+                    active={filters.sexo === "masculino"}
+                    onClick={() => update({ sexo: "masculino", faseCiclo: null })}
+                  >
+                    Masculino
+                  </Pill>
+                  <Pill active={filters.sexo === "feminino"} onClick={() => update({ sexo: "feminino" })}>
+                    Feminino
+                  </Pill>
+                </FilterRow>
+              )}
 
-            <div className="mt-2 pt-5 border-t border-muted/40 flex items-center justify-between flex-wrap gap-3">
-              <p className="text-xs text-muted-foreground">
-                Use o campo de mensagem abaixo para anexar o exame e enviar à Lumma.
-              </p>
-              <div className="text-[11px] text-muted-foreground/80">
-                ↓ Anexar PDF ou imagem · Enviar pelo painel inferior
-              </div>
+              {filters.publico === "adulto" && filters.sexo === "feminino" && (
+                <FilterRow label="Fase do ciclo">
+                  <Pill active={filters.faseCiclo === null} onClick={() => update({ faseCiclo: null })}>Não informada</Pill>
+                  <Pill active={filters.faseCiclo === "folicular"} onClick={() => update({ faseCiclo: "folicular" })}>Folicular (dias 1–13)</Pill>
+                  <Pill active={filters.faseCiclo === "ovulatoria"} onClick={() => update({ faseCiclo: "ovulatoria" })}>Ovulatória (dias 14–16)</Pill>
+                  <Pill active={filters.faseCiclo === "lutea"} onClick={() => update({ faseCiclo: "lutea" })}>Lútea (dias 17–28)</Pill>
+                  <Pill active={filters.faseCiclo === "menopausa"} onClick={() => update({ faseCiclo: "menopausa" })}>Menopausa</Pill>
+                </FilterRow>
+              )}
+
+              {filters.publico === "gestante" && (
+                <>
+                  <FilterRow label="Tipo de gestação">
+                    <Pill active={filters.gestanteTipo === "monofetal"} onClick={() => update({ gestanteTipo: "monofetal" })}>Monofetal</Pill>
+                    <Pill active={filters.gestanteTipo === "gemelar"} onClick={() => update({ gestanteTipo: "gemelar" })}>Gemelar</Pill>
+                  </FilterRow>
+                  <FilterRow label="Período">
+                    <Pill active={filters.gestantePeriodo === "1t"} onClick={() => update({ gestantePeriodo: "1t" })}>1º Trimestre</Pill>
+                    <Pill active={filters.gestantePeriodo === "2t"} onClick={() => update({ gestantePeriodo: "2t" })}>2º Trimestre</Pill>
+                    <Pill active={filters.gestantePeriodo === "3t"} onClick={() => update({ gestantePeriodo: "3t" })}>3º Trimestre</Pill>
+                  </FilterRow>
+                </>
+              )}
+
+              <FilterRow label="Data do exame">
+                <div className="flex flex-col gap-1 items-start">
+                  <input
+                    type="date"
+                    value={filters.dataExame}
+                    max={todayISO()}
+                    onChange={(e) => update({ dataExame: e.target.value || todayISO() })}
+                    className="rounded-full px-4 py-1.5 text-xs font-medium bg-white/80 text-foreground border border-white shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#e8a04c]/40 transition-all"
+                  />
+                  <span className="text-[10px] text-muted-foreground px-1">
+                    Data de realização do exame · usada na linha do tempo clínica
+                  </span>
+                </div>
+              </FilterRow>
             </div>
           </div>
         )}
-      </ActiveCard>
-
-      {/* 2 — Plano Alimentar & Formulações */}
-      <ActiveCard
-        selected={agentType === "production"}
-        onSelect={() => selectAgent("production")}
-        icon={<Utensils className="h-5 w-5" />}
-        title="🥗 Plano Alimentar & Formulações"
-        description="Elabore planos alimentares quantitativos, receitas culinárias e formulações nutricionais personalizadas."
-      />
-
-      {/* 3 — Perguntas Clínicas */}
-      <ActiveCard
-        selected={agentType === "reasoning"}
-        onSelect={() => selectAgent("reasoning")}
-        icon={<span className="text-lg">🤔</span>}
-        title="🤔 Perguntas Clínicas"
-        description="Tire dúvidas clínicas sobre hormônios, tireoide, glicemia, microbiota e raciocínio integrativo funcional."
-      />
-
-      {/* Disabled future cards */}
-      <div className="grid sm:grid-cols-2 gap-4 mt-4">
-        <FutureCard
-          icon={<Search className="h-5 w-5" />}
-          title="🔍 Pesquisa Científica Avançada"
-          desc="Busca direta e resumos automáticos no PubMed, Cochrane e Scopus baseados no método."
-        />
-        <FutureCard
-          icon={<Utensils className="h-5 w-5" />}
-          title="🍽️ Cálculos e Prescrição"
-          desc="Cálculo preciso de refeições, macronutrientes e Taxa Metabólica Basal pela Equação de Mueller."
-        />
       </div>
     </div>
   );
 }
 
-function ActiveCard({
-  selected,
-  onSelect,
+function ModuleButton({
+  active,
+  disabled,
+  onClick,
   icon,
-  title,
-  description,
-  children,
+  label,
 }: {
-  selected: boolean;
-  onSelect: () => void;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  children?: React.ReactNode;
+  active?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  icon: string | React.ReactNode;
+  label: string;
 }) {
   return (
-    <article
-      onClick={!selected ? onSelect : undefined}
+    <button
+      onClick={onClick}
+      disabled={disabled}
       className={cn(
-        "rounded-2xl bg-white/85 backdrop-blur-xl border shadow-md p-6 mb-4 transition-all",
-        selected
-          ? "border-[#e8a04c]/40 ring-2 ring-[#e8a04c]/30"
-          : "border-white/70 cursor-pointer hover:border-[#e8a04c]/30 hover:shadow-lg",
+        "inline-flex items-center gap-2 rounded-full px-6 h-12 border-2 transition-all duration-300 bg-white/70 backdrop-blur-sm text-sm font-medium",
+        active
+          ? "border-[#e89bcf] text-foreground shadow-md bg-white scale-105"
+          : "border-[#e89bcf]/40 text-foreground/80 hover:bg-white hover:shadow-sm hover:border-[#e89bcf]/60",
+        disabled && "opacity-40 grayscale cursor-not-allowed border-slate-200 bg-slate-50/70 text-slate-400"
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white flex items-center justify-center shrink-0">
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold text-foreground">
-            {title}
-            <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 align-middle">
-              Módulo Ativo
-            </span>
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{description}</p>
-        </div>
-      </div>
-      {children}
-    </article>
+      <span className="text-lg">{icon}</span>
+      {label}
+      {active && (
+        <span className="ml-1 text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-full bg-[#e89bcf]/20 text-[#e89bcf]">
+          Módulo Ativo
+        </span>
+      )}
+    </button>
   );
 }
 
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:w-40 shrink-0">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:w-40 shrink-0 text-left">
         {label}
       </span>
       <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
-  );
-}
-
-function FutureCard({
-  icon,
-  title,
-  desc,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div
-      aria-disabled
-      className="relative rounded-2xl bg-muted/40 border border-dashed border-muted-foreground/20 p-5 opacity-70 cursor-not-allowed select-none"
-    >
-      <Lock className="absolute top-3 right-3 h-3.5 w-3.5 text-muted-foreground/60" />
-      <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <h4 className="text-sm font-semibold text-muted-foreground">
-            {title}
-            <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-              Em breve
-            </span>
-          </h4>
-          <p className="text-xs text-muted-foreground/80 mt-1 leading-relaxed">{desc}</p>
-        </div>
-      </div>
     </div>
   );
 }
