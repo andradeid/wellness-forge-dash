@@ -169,7 +169,9 @@ export function ChatMessageList({
             <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
               <img src={lummaSymbol} alt="" className="h-10 w-10 mb-3 opacity-70" />
               <p className="text-sm max-w-md">
-                Envie uma mensagem ou arraste um exame em PDF/imagem para a Lumma analisar.
+                {agentType === 'research' 
+                  ? "Explore evidências científicas, analise artigos e aprofunde seus conhecimentos acadêmicos com a Lumma."
+                  : "Envie uma mensagem ou arraste um exame em PDF/imagem para a Lumma analisar."}
               </p>
             </div>
           )}
