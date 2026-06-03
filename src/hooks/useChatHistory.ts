@@ -117,7 +117,7 @@ export function useChatHistory(limit = 50) {
           title: c.title || (agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica'),
           updated_at: c.updated_at,
           patient_id: null,
-          patient_name: agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica',
+          patient_name: c.title || (agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica'),
           agent_type: agentType,
           pinned_at: null,
           avatar_url: null, // Será tratado no componente via agent_type
