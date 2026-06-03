@@ -101,7 +101,7 @@ function FaleComLummaPage() {
     setLoadingPatients(true);
     const { data } = await (supabase as any)
       .from("patients")
-      .select("id, name, birth_date, gender, avatar_url")
+      .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .eq("created_by", user.id)
       .order("name", { ascending: true });
     setPatients((data as PatientItem[]) ?? []);
