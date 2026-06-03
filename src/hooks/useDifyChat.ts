@@ -413,6 +413,12 @@ export function useDifyChat(
       if (ctx.otimos.length > 0) {
         lines.push(`Marcadores ótimos: ${ctx.otimos.join(", ")}`);
       }
+      // Fallback: se não temos marcadores estruturados, injeta a análise textual completa
+      // do exame para que o agente tenha contexto clínico real para trabalhar.
+      if (ctx.alteracoes.length === 0 && ctx.otimos.length === 0 && ctx.resumo_texto) {
+        lines.push(`Análise do exame anterior:`);
+        lines.push(ctx.resumo_texto);
+      }
       lines.push(`[FIM DO CONTEXTO]`);
       lines.push(""); // linha em branco antes da pergunta
       return lines.join("\n");
