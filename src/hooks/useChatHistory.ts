@@ -132,9 +132,16 @@ export function useChatHistory(limit = 50) {
         };
       });
 
-      const combined = [...mappedPChats, ...mappedGChats].sort((a, b) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      ).slice(0, limit);
+      const combined = [...mappedPChats, ...mappedGChats].sort((a, b) => {
+        // Ordenação prioritária: pinned_at DESC, depois updated_at DESC
+        if (a.pinned_at && !b.pinned_at) return -1;
+        if (!a.pinned_at && b.pinned_at) return 1;
+        if (a.pinned_at && b.pinned_at) {
+          const pinDiff = new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+          if (pinDiff !== 0) return pinDiff;
+        }
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }).slice(0, limit);
 
       setChats(combined);
     } catch (error) {
