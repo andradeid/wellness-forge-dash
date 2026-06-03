@@ -395,6 +395,7 @@ function PatientsPage() {
                       <TableHead>Nome</TableHead>
                       <TableHead>Nascimento</TableHead>
                       <TableHead>Gênero</TableHead>
+                      <TableHead>Gestação</TableHead>
                       <TableHead>Cadastrado em</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
