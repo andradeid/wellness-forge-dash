@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp } from "lucide-react";
+import { ArrowLeft, ClipboardList, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useReactToPrint } from "react-to-print";
@@ -58,7 +58,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
@@ -436,6 +436,14 @@ function ChatPage() {
                     </div>
                   );
                 })()}
+                {agentType !== "exam" && examContext && (
+                  <div className="mb-2 text-center animate-in fade-in slide-in-from-bottom-1 duration-300">
+                    <span className="text-[10px] text-muted-foreground inline-flex items-center justify-center gap-1 bg-white/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-muted/20">
+                      <ClipboardList className="h-3 w-3 text-muted-foreground/70" />
+                      Usando contexto do exame de {examContext.patient_name}
+                    </span>
+                  </div>
+                )}
                 <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} uploadProgress={uploadProgress} />
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
