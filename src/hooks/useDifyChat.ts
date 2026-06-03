@@ -19,6 +19,7 @@ export interface ExamContext {
   alteracoes: string[];
   otimos: string[];
   resumo_clinico: string;
+  resumo_texto?: string; // fallback: análise textual completa quando não há marcadores estruturados
 }
 
 interface DifyFileRef {
@@ -412,6 +413,12 @@ export function useDifyChat(
       if (ctx.otimos.length > 0) {
         lines.push(`Marcadores ótimos: ${ctx.otimos.join(", ")}`);
       }
+      // Fallback: se não temos marcadores estruturados, injeta a análise textual completa
+      // do exame para que o agente tenha contexto clínico real para trabalhar.
+      if (ctx.alteracoes.length === 0 && ctx.otimos.length === 0 && ctx.resumo_texto) {
+        lines.push(`Análise do exame anterior:`);
+        lines.push(ctx.resumo_texto);
+      }
       lines.push(`[FIM DO CONTEXTO]`);
       lines.push(""); // linha em branco antes da pergunta
       return lines.join("\n");
@@ -611,24 +618,29 @@ export function useDifyChat(
         .eq("id", chatId);
     }
 
-    if (agentType === "exam" && markers && markers.length) {
+    // Salva contexto após resposta do agente de exame — mesmo quando não há
+    // marcadores estruturados, persistimos a análise textual como fallback.
+    if (agentType === "exam" && assistantText.trim() && !labReportError) {
+      const safeMarkers = markers ?? [];
       const newCtx: ExamContext = {
         patient_name: metaRef.current.patient_name,
         patient_profile: metaRef.current.patient_profile,
         patient_sex: metaRef.current.patient_sex,
-        exam_date: new Date().toISOString(), // Dify doesn't return meta.exam_date directly in some cases, so fallback to now
-        alteracoes: markers
+        exam_date: new Date().toISOString(),
+        alteracoes: safeMarkers
           .filter(m => {
             const visual = classificationVisualState(m.classification);
-            return visual !== "otimo" && visual !== "normal";
+            return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
           })
           .map(m => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
-        otimos: markers
+        otimos: safeMarkers
           .filter(m => classificationVisualState(m.classification) === "otimo")
           .map(m => `${m.name}: ${m.value} ${m.unit || ""}`),
-        resumo_clinico: markers
+        resumo_clinico: safeMarkers
           .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
           .join(" | "),
+        // Limite generoso (~4k chars) para caber em prompts do Dify sem estourar
+        resumo_texto: assistantText.slice(0, 4000),
       };
       setExamContext(newCtx);
       await (supabase as any)
@@ -639,7 +651,7 @@ export function useDifyChat(
 
     setThinking(false);
     window.setTimeout(() => setUploadProgress([]), 4000);
-  }, [chatId, patientId, readOnly, agentType]);
+  }, [chatId, patientId, readOnly, agentType, examContext]);
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;
