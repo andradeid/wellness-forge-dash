@@ -129,7 +129,7 @@ export function ChatIntentPanel({
       >
         {agentType === "exam" && (
           <div className="space-y-4 mt-5">
-            {(filters.publico === null || filters.publico === "gestante") && (
+            {(filters.publico as string === "adulto" || filters.publico === null || filters.publico === "gestante") && (
               <FilterRow label="Público">
                 <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
                   Adulto
