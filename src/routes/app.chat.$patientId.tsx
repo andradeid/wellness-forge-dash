@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ClipboardList, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp } from "lucide-react";
+import { ArrowLeft, ClipboardList, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useReactToPrint } from "react-to-print";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,11 +31,23 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   component: ChatPage,
 });
 
-const AGENT_BADGES: Record<string, { icon: string; label: string }> = {
-  exam: { icon: "🔬", label: "Analisando Exame" },
-  production: { icon: "🥗", label: "Plano & Formulação" },
-  reasoning: { icon: "🤔", label: "Pergunta Clínica" },
+const AGENT_BADGES: Record<string, { icon: any; label: string }> = {
+  exam: { icon: Droplet, label: "Analisando Exame" },
+  metabolism: { icon: Scale, label: "Composição e Metabolismo" },
+  genetics: { icon: Dna, label: "Genética e Microbioma" },
+  reasoning: { icon: ClipboardList, label: "Casos Clínicos & Sintomas" },
+  production: { icon: Apple, label: "Elaborando Plano & Receitas" },
+  research: { icon: BookOpen, label: "Pesquisa Científica" },
 };
+
+const AGENT_OPTIONS = [
+  { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
+  { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
+  { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
+  { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
+  { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
+  { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
+];
 
 interface PatientCtx {
 
@@ -464,19 +478,62 @@ function ChatPage() {
             ) : (
               <>
                 {(() => {
-                  const meta = AGENT_BADGES[agentType] ?? AGENT_BADGES.exam;
+                  const activeMeta = AGENT_BADGES[agentType] ?? AGENT_BADGES.exam;
+                  const ActiveIcon = activeMeta.icon;
                   return (
-                    <div className="mb-2 flex justify-center">
-                      <button
-                        type="button"
-                        onClick={() => setShowModuleSelector(true)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition"
-                        title="Trocar de módulo"
-                      >
-                        <span>{meta.icon}</span>
-                        <span>{meta.label}</span>
-                        <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
-                      </button>
+                    <div className="mb-2 flex justify-center relative">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
+                            title="Trocar de módulo"
+                          >
+                            <ActiveIcon className="h-3.5 w-3.5 text-[#e8a04c]" />
+                            <span>{activeMeta.label}</span>
+                            <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
+                            <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent 
+                          side="top" 
+                          align="center" 
+                          className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
+                        >
+                          <div className="space-y-1">
+                            {AGENT_OPTIONS.map((opt, idx) => {
+                              const Icon = opt.icon;
+                              const isActive = agentType === opt.id;
+                              return (
+                                <div key={opt.id}>
+                                  {idx === 3 && <div className="my-1 border-t border-slate-100" />}
+                                  <button
+                                    onClick={() => {
+                                      setAgentType(opt.id);
+                                      // Fechar popover automaticamente via estado não é necessário com Radix se usarmos PopoverTrigger asChild
+                                    }}
+                                    className={cn(
+                                      "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
+                                      isActive 
+                                        ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20" 
+                                        : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                                    )}
+                                  >
+                                    <div className={cn(
+                                      "p-1.5 rounded-lg transition-colors",
+                                      isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
+                                    )}>
+                                      <Icon className="h-3.5 w-3.5" style={{ color: opt.color }} />
+                                    </div>
+                                    <span className="flex-1 text-left">{opt.title}</span>
+                                    {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   );
                 })()}

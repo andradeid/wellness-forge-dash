@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -145,6 +147,23 @@ function FaleComLummaPage() {
       ),
     [patients, patientQuery]
   );
+
+  const AGENT_OPTIONS = [
+    { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
+    { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
+    { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
+    { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
+    { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
+    { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
+  ];
+
+  const getActiveAgentLabel = (id: string | undefined) => {
+    const agent = AGENT_OPTIONS.find(a => a.id === id);
+    if (!agent) return "Pergunta Clínica";
+    if (agent.id === "exam") return "Analisando Exame";
+    if (agent.id === "production") return "Elaborando Plano & Receitas";
+    return agent.title;
+  };
 
   const startGeneralChat = async (agentType: string) => {
     if (!user?.id) return;
@@ -457,6 +476,62 @@ function FaleComLummaPage() {
                   placeholder="Escreva sua mensagem..."
                   className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-base"
                 />
+              </div>
+              <div className="mb-2 flex justify-center">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
+                    >
+                      {(() => {
+                        const agent = AGENT_OPTIONS.find(a => a.id === searchModule) || AGENT_OPTIONS[3];
+                        const Icon = agent.icon;
+                        return <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />;
+                      })()}
+                      <span>{getActiveAgentLabel(searchModule)}</span>
+                      <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    side="top" 
+                    align="center" 
+                    className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl"
+                  >
+                    <div className="space-y-1">
+                      {AGENT_OPTIONS.map((opt, idx) => {
+                        const Icon = opt.icon;
+                        const isActive = searchModule === opt.id || (!searchModule && opt.id === 'reasoning');
+                        return (
+                          <div key={opt.id}>
+                            {idx === 3 && <div className="my-1 border-t border-slate-100" />}
+                            <button
+                              onClick={() => {
+                                navigate({ to: "/app/fale-com-lumma", search: { module: opt.id } });
+                              }}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
+                                isActive 
+                                  ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20" 
+                                  : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                              )}
+                            >
+                              <div className={cn(
+                                "p-1.5 rounded-lg transition-colors",
+                                isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
+                              )}>
+                                <Icon className="h-3.5 w-3.5" style={{ color: opt.color }} />
+                              </div>
+                              <span className="flex-1 text-left">{opt.title}</span>
+                              {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="flex items-center justify-between mt-3">
                 <button
