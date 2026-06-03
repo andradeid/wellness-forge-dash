@@ -13,6 +13,7 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
+  agent_type?: string;
   structured_data?: {
     markers?: Marker[];
     indexed?: boolean;
@@ -87,11 +88,15 @@ export function ChatMessageList({
   thinking,
   thinkingMode = "analysis",
   highlightId,
+  isStreaming,
+  agentType,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
   thinkingMode?: "analysis" | "simple";
   highlightId?: string;
+  isStreaming?: boolean;
+  agentType?: string;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -108,9 +113,9 @@ export function ChatMessageList({
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
-    // Show button if user is more than 200px away from bottom
-    const isNearBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 200;
-    setShowScrollButton(!isNearBottom);
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+    userScrolledUp.current = !isAtBottom;
+    setShowScrollButton(!isAtBottom);
   };
 
   // Scroll inicial ao abrir a conversa (primeira carga de mensagens)
@@ -132,14 +137,25 @@ export function ChatMessageList({
     }
   }, [highlightId]);
 
-  // Scroll automático SOMENTE quando o nutricionista envia uma nova mensagem.
+  const userScrolledUp = useRef(false);
+
+  // Scroll automático durante streaming
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role === "user" && lastMessage.id !== lastUserMsgIdRef.current) {
-      lastUserMsgIdRef.current = lastMessage.id;
+    if (!userScrolledUp.current || isStreaming) {
       scrollToBottom();
     }
-  }, [messages]);
+    if (!isStreaming) {
+      userScrolledUp.current = false;
+    }
+  }, [messages, isStreaming]);
+
+  // Highlight de mensagem específica (busca / navegação)
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId]);
+
 
   return (
     <div className="flex-1 relative overflow-hidden flex flex-col">
@@ -200,7 +216,9 @@ export function ChatMessageList({
                       </div>
                     </div>
                   )}
-                  {m.structured_data?.markers && m.structured_data.markers.length > 0 && (
+                  {m.structured_data?.markers && 
+                   m.structured_data.markers.length > 0 && 
+                   (m.agent_type === 'exam' || (!m.agent_type && agentType === 'exam')) && (
                     <div className="mb-4">
                       <ExamResultCard markers={m.structured_data.markers} />
                     </div>
