@@ -500,12 +500,6 @@ function FaleComLummaPage() {
               </button>
             )}
           </div>
-
-          <div className="mt-12 text-center">
-            <p className="text-xs text-muted-foreground">
-              Máximo de 10 arquivos de 20MB
-            </p>
-          </div>
         </div>
       </div>
 
