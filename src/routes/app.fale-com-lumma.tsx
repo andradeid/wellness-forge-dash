@@ -48,7 +48,7 @@ function calcAge(birth: string | null): number | null {
 }
 
 function FaleComLummaPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { module: searchModule } = Route.useSearch();
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
