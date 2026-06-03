@@ -44,7 +44,7 @@ function ChatsCentralPage() {
     if (!q) return rows;
     return rows.filter(
       (r) =>
-        r.patient_name?.toLowerCase().includes(q) ||
+        (r.title || r.patient_name || "").toLowerCase().includes(q) ||
         r.last_message?.content?.toLowerCase().includes(q),
     );
   }, [rows, search]);
@@ -130,7 +130,7 @@ function ChatsCentralPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         {r.pinned_at && <Pin className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />}
                         <span className="font-medium truncate">
-                          {r.patient_name ?? "Paciente removido"}
+                          {r.title || r.patient_name || "Conversa sem título"}
                         </span>
                         <StatusBadge updatedAt={r.updated_at} />
                         {(r.exam_count ?? 0) > 0 && (
