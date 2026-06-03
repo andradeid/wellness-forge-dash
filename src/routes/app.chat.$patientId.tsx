@@ -24,6 +24,7 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   validateSearch: (s: Record<string, unknown>) => ({
     chatId: typeof s.chatId === "string" ? s.chatId : undefined,
     messageId: typeof s.messageId === "string" ? s.messageId : undefined,
+    module: typeof s.module === "string" ? s.module : undefined,
   }),
   component: ChatPage,
 });
@@ -46,7 +47,8 @@ interface PatientCtx {
 
 function ChatPage() {
   const { patientId } = Route.useParams();
-  const { chatId: forceChatId, messageId: highlightId } = Route.useSearch();
+  const { chatId: forceChatId, messageId: highlightId, module: initialModule } = Route.useSearch();
+  const navigate = useNavigate();
   const { role, profile } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
@@ -62,7 +64,18 @@ function ChatPage() {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
-  const [showModuleSelector, setShowModuleSelector] = useState(false);
+  const [showModuleSelector, setShowModuleSelector] = useState(!initialModule);
+
+  useEffect(() => {
+    if (initialModule && ["exam", "production", "reasoning", "research"].includes(initialModule)) {
+      setAgentType(initialModule);
+      setShowModuleSelector(false);
+      // Limpa o parâmetro da URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("module");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [initialModule, setAgentType]);
 
   useEffect(() => {
     const patientProfile =

@@ -17,6 +17,9 @@ import { useAuth } from "@/hooks/useAuth";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/fale-com-lumma")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    module: typeof s.module === "string" ? s.module : undefined,
+  }),
   component: FaleComLummaPage,
 });
 
@@ -26,6 +29,7 @@ interface ChatItem {
   updated_at: string;
   patient_id: string | null;
   patient_name: string | null;
+  agent_type?: string | null;
 }
 
 interface PatientItem {
@@ -49,11 +53,13 @@ function calcAge(birth: string | null): number | null {
 function FaleComLummaPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { module: searchModule } = Route.useSearch();
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
+  const [pendingModule, setPendingModule] = useState<string | undefined>(searchModule);
 
   // Estado: modais de paciente
   const [identifyOpen, setIdentifyOpen] = useState(false);
@@ -134,18 +140,38 @@ function FaleComLummaPage() {
       setLoadingChats(true);
       const { data } = await (supabase as any)
         .from("patient_chats")
-        .select("id, title, updated_at, patient_id, patients:patient_id(name)")
+        .select(`
+          id, 
+          title, 
+          updated_at, 
+          patient_id, 
+          patients:patient_id(name),
+          chat_messages(agent_type)
+        `)
         .eq("created_by", user.id)
         .order("updated_at", { ascending: false })
         .limit(50);
+      
       if (cancelled) return;
-      const mapped: ChatItem[] = (data ?? []).map((c: any) => ({
-        id: c.id,
-        title: c.title || c.patients?.name || "Conversa sem título",
-        updated_at: c.updated_at,
-        patient_id: c.patient_id ?? null,
-        patient_name: c.patients?.name ?? null,
-      }));
+      
+      const mapped: ChatItem[] = (data ?? []).map((c: any) => {
+        // Pega o agent_type da última mensagem (a query retorna todas, precisamos da última)
+        // Como ordenamos o chat por updated_at, as mensagens geralmente seguem o fluxo.
+        // Mas a query acima pode ser ineficiente se houver muitas mensagens.
+        // Idealmente pegaríamos apenas a última.
+        const lastMsg = c.chat_messages && c.chat_messages.length > 0 
+          ? c.chat_messages[c.chat_messages.length - 1] 
+          : null;
+
+        return {
+          id: c.id,
+          title: c.title || c.patients?.name || "Conversa sem título",
+          updated_at: c.updated_at,
+          patient_id: c.patient_id ?? null,
+          patient_name: c.patients?.name ?? null,
+          agent_type: lastMsg?.agent_type ?? null,
+        };
+      });
       setChats(mapped);
       setLoadingChats(false);
     })();
@@ -176,6 +202,10 @@ function FaleComLummaPage() {
             Voltar ao Dashboard
           </Link>
           <Button
+            onClick={() => {
+              setPendingModule(undefined);
+              setIdentifyOpen(true);
+            }}
             className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
             style={{
               background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
@@ -283,6 +313,10 @@ function FaleComLummaPage() {
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => {
+                  setPendingModule("production");
+                  setIdentifyOpen(true);
+                }}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <ClipboardList className="h-4 w-4 mr-2" />
@@ -291,6 +325,10 @@ function FaleComLummaPage() {
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => {
+                  setPendingModule("production");
+                  setIdentifyOpen(true);
+                }}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <ClipboardList className="h-4 w-4 mr-2" />
@@ -299,6 +337,10 @@ function FaleComLummaPage() {
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => {
+                  setPendingModule("research");
+                  setIdentifyOpen(true);
+                }}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 <Microscope className="h-4 w-4 mr-2" />
@@ -419,6 +461,11 @@ function FaleComLummaPage() {
                             setSelectedPatient(p);
                             setIdentifyOpen(false);
                             toast.success(`Paciente ${p.name} selecionado`);
+                            navigate({
+                              to: "/app/chat/$patientId",
+                              params: { patientId: p.id },
+                              search: pendingModule ? { module: pendingModule } : undefined,
+                            });
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
                         >
