@@ -160,9 +160,9 @@ export function ChatIntentPanel({
 
         {/* Painel de filtros (exclusivo para o módulo de exames) */}
         {agentType === "exam" && (
-          <div className="w-full max-w-3xl bg-white/60 backdrop-blur-xl rounded-2xl border border-[#e8a04c]/20 p-6 shadow-sm animate-in fade-in zoom-in duration-300">
-            <div className="space-y-4">
-              {(filters.publico === null || filters.publico === "gestante" || (filters.publico as string) === "adulto") && (
+          <div className="w-full max-w-2xl bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 p-8 shadow-sm animate-in fade-in zoom-in duration-300 mx-auto">
+            <div className="space-y-6">
+              {(filters.publico as string === "adulto" || filters.publico === null || filters.publico === "gestante") && (
                 <FilterRow label="Público">
                   <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
                     Adulto
