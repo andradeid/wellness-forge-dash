@@ -389,7 +389,72 @@ export function DifyAgentsPanel() {
                       )}
                       Salvar
                     </Button>
+                    {(() => {
+                      const ts = testState[agent.id] ?? { status: "idle" as const };
+                      const hasKey = isConfigured;
+                      const baseBtn = (
+                        <Button
+                          variant="outline"
+                          onClick={() => runAgentTest(agent)}
+                          disabled={!hasKey || ts.status === "loading"}
+                          className={cn(
+                            "rounded-full",
+                            ts.status === "success" &&
+                              "border-emerald-300 text-emerald-700 hover:text-emerald-700",
+                            ts.status === "error" &&
+                              "border-red-300 text-red-700 hover:text-red-700",
+                          )}
+                        >
+                          {ts.status === "loading" ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Testando...
+                            </>
+                          ) : ts.status === "success" ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Conectado
+                            </>
+                          ) : ts.status === "error" ? (
+                            <>
+                              <X className="h-4 w-4" />
+                              Falhou
+                            </>
+                          ) : (
+                            <>
+                              <Wifi className="h-4 w-4" />
+                              Testar
+                            </>
+                          )}
+                        </Button>
+                      );
+                      if (hasKey) return baseBtn;
+                      return (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0}>{baseBtn}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Configure a API Key primeiro</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
                   </div>
+                  {(() => {
+                    const ts = testState[agent.id];
+                    if (!ts || ts.status === "idle" || ts.status === "loading") return null;
+                    if (ts.status === "success") {
+                      return (
+                        <p className="text-[11px] text-emerald-700 mt-1">
+                          ✓ {ts.appName ?? "Conectado"}
+                        </p>
+                      );
+                    }
+                    return (
+                      <p className="text-[11px] text-red-700 mt-1">{ts.message}</p>
+                    );
+                  })()}
                 </div>
 
                 {/* Right: status + menu */}
