@@ -15,6 +15,7 @@ import {
   TrendingUp,
   PieChart as PieChartIcon,
   Lightbulb,
+  Pin,
 } from "lucide-react";
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
