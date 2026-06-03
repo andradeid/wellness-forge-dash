@@ -94,42 +94,31 @@ export function ChatMessageList({
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
-  const userScrolledUp = useRef(false);
+  const lastUserMsgIdRef = useRef<string | null>(null);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    // Consideramos "fundo" se estiver a menos de 100px do final
-    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-    userScrolledUp.current = !isAtBottom;
+  const handleScroll = (_e: React.UIEvent<HTMLDivElement>) => {
+    // Scroll é livre para o nutricionista — sem auto-follow durante streaming.
   };
 
-  useEffect(() => {
-    if (!thinking) {
-      userScrolledUp.current = false;
-    }
-  }, [thinking]);
-
+  // Highlight de mensagem específica (busca / navegação) mantém scroll automático
   useEffect(() => {
     if (highlightId && highlightRef.current) {
       highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
     }
+  }, [highlightId]);
 
-    // Se a última mensagem for do usuário, resetamos o flag para forçar o scroll
+  // Scroll automático SOMENTE quando o nutricionista envia uma nova mensagem.
+  // Durante o streaming da resposta da Lumma a posição é mantida — o usuário
+  // rola manualmente quando quiser acompanhar a resposta gerada abaixo.
+  useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role === "user") {
-      userScrolledUp.current = false;
+    if (lastMessage?.role === "user" && lastMessage.id !== lastUserMsgIdRef.current) {
+      lastUserMsgIdRef.current = lastMessage.id;
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-
-    if (!userScrolledUp.current) {
-      bottomRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }
-  }, [messages, thinking, highlightId]);
+  }, [messages]);
 
 
   return (
