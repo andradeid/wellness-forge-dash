@@ -95,6 +95,8 @@ function ChatPage() {
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
+      // Garante que o painel de módulos não esconda a animação "Lumma está pensando…"
+      setShowModuleSelector(false);
       const ctx = files.length > 0 ? filtersToContext(filters) : null;
       if (files.length > 0 && ctx) {
         // 1) Envia o exame primeiro e aguarda a resposta da Lumma
@@ -390,7 +392,7 @@ function ChatPage() {
             </div>
           )}
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {(showModuleSelector || (messages.length === 0 && !thinking && role === "nutri")) ? (
+            {(!thinking && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <ChatIntentPanel
                   filters={filters}
