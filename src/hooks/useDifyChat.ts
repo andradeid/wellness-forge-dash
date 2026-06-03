@@ -453,7 +453,6 @@ export function useDifyChat(
 
       // Se o Dify rejeitar o conversation_id (404 / "Conversation Not Exists"),
       // limpamos a referência e abrimos uma nova conversa automaticamente.
-      // Se o Dify rejeitar o conversation_id, limpamos a referência e reabrimos automaticamente.
       if (res.status === 404) {
         conversationIdRef.current = "";
         res = await callDify(undefined);
@@ -508,16 +507,16 @@ export function useDifyChat(
               let markers: Marker[] | null = null;
               if (agentType === "exam") {
                 markers = tryExtractMarkers(fullText);
-                if (markers) {
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.id === assistantId
-                        ? { ...m, structured_data: { ...m.structured_data, markers } }
-                        : m
-                    )
-                  );
-                }
               }
+
+              const processingMs = Math.round(performance.now() - startedAt);
+              const labReportError = agentType === "exam" ? tryExtractLabReportError(fullText) : null;
+              
+              const structured = labReportError
+                ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
+                : (markers
+                    ? { markers, processing_ms: processingMs }
+                    : { processing_ms: processingMs });
 
               // Save final assistant message
               const { data: assistantInserted } = await (supabase as any)
@@ -528,7 +527,7 @@ export function useDifyChat(
                   role: "assistant",
                   content: fullText,
                   agent_type: agentType,
-                  structured_data: markers ? { markers } : null,
+                  structured_data: structured,
                 })
                 .select("id")
                 .single();
@@ -536,13 +535,49 @@ export function useDifyChat(
               if (assistantInserted?.id) {
                 setMessages((prev) =>
                   prev.map((m) =>
-                    m.id === assistantId ? { ...m, id: assistantInserted.id } : m
+                    m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
                   )
                 );
               }
 
               if (markers && markers.length > 0 && agentType === "exam") {
-                await processAndPersistMarkers(markers, patientId, user.id, lastExamId);
+                await processAndPersistMarkers({
+                  userId: user.id,
+                  patientId,
+                  examId: lastExamId,
+                  chatId,
+                  rawMarkers: markers as unknown as RawMarker[],
+                  source: "chat",
+                });
+              }
+
+              // Salva contexto após resposta do agente de exame
+              if (agentType === "exam" && fullText.trim() && !labReportError) {
+                const safeMarkers = markers ?? [];
+                const newCtx: ExamContext = {
+                  patient_name: metaRef.current.patient_name,
+                  patient_profile: metaRef.current.patient_profile,
+                  patient_sex: metaRef.current.patient_sex,
+                  exam_date: new Date().toISOString(),
+                  alteracoes: safeMarkers
+                    .filter(m => {
+                      const visual = classificationVisualState(m.classification);
+                      return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
+                    })
+                    .map(m => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
+                  otimos: safeMarkers
+                    .filter(m => classificationVisualState(m.classification) === "otimo")
+                    .map(m => `${m.name}: ${m.value} ${m.unit || ""}`),
+                  resumo_clinico: safeMarkers
+                    .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
+                    .join(" | "),
+                  resumo_texto: fullText.slice(0, 4000),
+                };
+                setExamContext(newCtx);
+                await (supabase as any)
+                  .from("patient_chats")
+                  .update({ exam_context: newCtx })
+                  .eq("id", chatId);
               }
             }
           } catch (e) {
@@ -557,205 +592,59 @@ export function useDifyChat(
       setUploadProgress([]);
     }
   }, [chatId, patientId, readOnly, agentType, examContext]);
-      // Casos comuns:
-      //  - 404 / "Conversation Not Exists": conversa removida no Dify.
-      //  - 401 / "Access token is invalid" / "unauthorized": o conversation_id pertence
-      //    a OUTRO workflow/app do Dify (API key trocada). Recriar conversa resolve.
-      if (!res.ok) {
-        const errText = await res.text().catch(() => "");
-        const isStale =
-          initialConv &&
-          (res.status === 404 ||
-            res.status === 401 ||
-            /Conversation Not Exists|not_found|unauthorized|Access token is invalid/i.test(errText));
-        
-        if (isStale) {
-          console.warn("[Chat Dify] conversation_id descartado (Dify rejeitou). Reabrindo conversa.", res.status, errText);
-          conversationIdRef.current = "";
-          await (supabase as any)
-            .from("patient_chats")
-            .update({ dify_conversation_id: null })
-            .eq("id", chatId);
-          res = await callDify(undefined);
-          if (!res.ok) {
-            const finalErr = await res.text().catch(() => "");
-            throw new Error(`Dify ${res.status}: ${finalErr}`);
-          }
-        } else {
-          // Se não for stale ou se já for uma nova conversa, lançamos erro direto
-          throw new Error(`Dify ${res.status}: ${errText}`);
-        }
+
+  const resetChat = useCallback(async () => {
+    if (readOnly) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: created, error: cErr } = await (supabase as any)
+      .from("patient_chats")
+      .insert({ patient_id: patientId, created_by: user.id })
+      .select("id")
+      .single();
+    if (cErr) { setError(cErr.message); return; }
+    conversationIdRef.current = "";
+    setMessages([]);
+    setError(null);
+    setAgentType("exam");
+    setExamContext(null);
+    setChatId(created.id as string);
+  }, [patientId, readOnly]);
+
+  const switchAgent = useCallback((next: string) => {
+    setAgentType((prev) => {
+      if (prev === next) return prev;
+      conversationIdRef.current = "";
+      if (chatId) {
+        (supabase as any)
+          .from("patient_chats")
+          .update({ dify_conversation_id: null })
+          .eq("id", chatId)
+          .then(() => {});
       }
-
-      if (!res.body) throw new Error("Dify: corpo da resposta vazio");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      const processLine = (line: string) => {
-        const l = line.trim();
-        if (!l.startsWith("data:")) return;
-        const payload = l.slice(5).trim();
-        if (!payload || payload === "[DONE]") return;
-        try {
-          const evt = JSON.parse(payload);
-          console.log("Evento recebido:", evt.event, evt);
-          if (evt.event === "message" || evt.event === "agent_message") {
-            assistantText += getDifyAnswer(evt);
-            
-            // Tenta detectar se não é um laudo ou extrair marcadores durante o streaming
-            const labReportError = tryExtractLabReportError(assistantText);
-            const streamingMarkers = !labReportError ? tryExtractMarkers(assistantText) : null;
-            
-            setMessages((prev) =>
-              prev.map((m) => (m.id === assistantId ? { 
-                ...m, 
-                content: assistantText,
-                structured_data: labReportError 
-                  ? { not_a_lab_report_error: labReportError }
-                  : (streamingMarkers ? { markers: streamingMarkers } : m.structured_data)
-              } : m))
-            );
-          } else if (evt.event === "message_end" || evt.event === "agent_thought") {
-            if (evt.conversation_id) conversationIdRef.current = evt.conversation_id;
-          } else if (evt.event === "error") {
-            throw new Error(evt.message ?? "Erro do Dify");
-          }
-        } catch { /* ignore non-JSON lines */ }
-      };
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        lines.forEach(processLine);
-      }
-      if (buffer.trim()) processLine(buffer);
-      console.log("Texto final extraído:", assistantText);
-      console.groupEnd();
-    } catch (e) {
-      console.groupEnd();
-      const msg = e instanceof Error ? e.message : "Erro desconhecido";
-      setError(msg);
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId ? { ...m, content: `⚠️ ${msg}` } : m
-        )
-      );
-      setThinking(false);
-      return;
-    }
-
-    // 5) Detect structured markers + persist
-    if (!assistantText.trim()) {
-      const msg = "O Dify recebeu o arquivo, mas não retornou texto de análise. Tente reenviar o exame; os detalhes estão no console.";
-      setError(msg);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === assistantId ? { ...m, content: `⚠️ ${msg}` } : m))
-      );
-      setThinking(false);
-      return;
-    }
-
-    const labReportError = tryExtractLabReportError(assistantText);
-    const markers = !labReportError ? tryExtractMarkers(assistantText) : null;
-    let indexed = false;
-    let parseError = false;
-
-    if (markers && markers.length) {
-      try {
-        const result = await processAndPersistMarkers({
-          userId: user.id,
-          patientId,
-          examId: lastExamId,
-          chatId,
-          rawMarkers: markers as unknown as RawMarker[],
-          source: "chat",
-        });
-        indexed = result.inserted > 0 && result.invalid.length === 0;
-        if (result.invalid.length > 0) parseError = true;
-      } catch (e) {
-        console.error("[Chat] Falha no pipeline de marcadores:", e);
-        parseError = true;
-      }
-    } else if (/```(?:json)?/i.test(assistantText)) {
-      // JSON-looking block but couldn't parse → audit it
-      parseError = true;
-      await logStructuredAudit({
-        source: "chat",
-        event: "structured_data.parse_failed",
-        status: "error",
-        message: "Bloco JSON detectado no texto, mas não foi possível extrair marcadores válidos.",
-        data: { patient_id: patientId, chat_id: chatId, text_sample: assistantText.slice(0, 2000) },
-      });
-    }
-
-    const processingMs = Math.round(performance.now() - startedAt);
-    if (labReportError) {
-      toast.warning(labReportError, { duration: 5000 });
-    }
-    const structured = labReportError
-      ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
-      : (markers
-          ? { markers, indexed, parse_error: parseError, processing_ms: processingMs }
-          : { ...(parseError ? { parse_error: true } : {}), processing_ms: processingMs });
-
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === assistantId ? { ...m, content: assistantText, structured_data: structured } : m
-      )
-    );
-
-    await (supabase as any).from("chat_messages").insert({
-      chat_id: chatId,
-      created_by: user.id,
-      role: "assistant",
-      content: assistantText,
-      structured_data: structured,
+      return next;
     });
+  }, [chatId]);
 
-    if (conversationIdRef.current) {
-      await (supabase as any)
-        .from("patient_chats")
-        .update({ dify_conversation_id: conversationIdRef.current })
-        .eq("id", chatId);
-    }
+  const setContext = useCallback((ctx: {
+    patient_sex?: string;
+    patient_profile?: string;
+    gestante_tipo?: string;
+    gestante_periodo?: string;
+    fase_ciclo?: string;
+  }) => {
+    metaRef.current = {
+      ...metaRef.current,
+      patient_sex: ctx.patient_sex ?? "",
+      patient_profile: ctx.patient_profile ?? "",
+      gestante_tipo: ctx.gestante_tipo ?? "",
+      gestante_periodo: ctx.gestante_periodo ?? "",
+      fase_ciclo: ctx.fase_ciclo ?? "",
+    };
+  }, []);
 
-    // Salva contexto após resposta do agente de exame — mesmo quando não há
-    // marcadores estruturados, persistimos a análise textual como fallback.
-    if (agentType === "exam" && assistantText.trim() && !labReportError) {
-      const safeMarkers = markers ?? [];
-      const newCtx: ExamContext = {
-        patient_name: metaRef.current.patient_name,
-        patient_profile: metaRef.current.patient_profile,
-        patient_sex: metaRef.current.patient_sex,
-        exam_date: new Date().toISOString(),
-        alteracoes: safeMarkers
-          .filter(m => {
-            const visual = classificationVisualState(m.classification);
-            return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
-          })
-          .map(m => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
-        otimos: safeMarkers
-          .filter(m => classificationVisualState(m.classification) === "otimo")
-          .map(m => `${m.name}: ${m.value} ${m.unit || ""}`),
-        resumo_clinico: safeMarkers
-          .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
-          .join(" | "),
-        // Limite generoso (~4k chars) para caber em prompts do Dify sem estourar
-        resumo_texto: assistantText.slice(0, 4000),
-      };
-      setExamContext(newCtx);
-      await (supabase as any)
-        .from("patient_chats")
-        .update({ exam_context: newCtx })
-        .eq("id", chatId);
-    }
-
-    setThinking(false);
-    window.setTimeout(() => setUploadProgress([]), 4000);
-  }, [chatId, patientId, readOnly, agentType, examContext]);
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
+}
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;
