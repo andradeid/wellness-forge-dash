@@ -195,6 +195,7 @@ export type Database = {
           created_at: string
           created_by: string
           dify_conversation_id: string | null
+          exam_context: Json | null
           id: string
           patient_id: string
           pinned_at: string | null
@@ -205,6 +206,7 @@ export type Database = {
           created_at?: string
           created_by: string
           dify_conversation_id?: string | null
+          exam_context?: Json | null
           id?: string
           patient_id: string
           pinned_at?: string | null
@@ -215,6 +217,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           dify_conversation_id?: string | null
+          exam_context?: Json | null
           id?: string
           patient_id?: string
           pinned_at?: string | null
