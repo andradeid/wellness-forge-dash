@@ -52,8 +52,9 @@ function ChatsCentralPage() {
     e.stopPropagation();
     const next = chat.pinned_at ? null : new Date().toISOString();
     
+    const table = chat.patient_id ? "patient_chats" : "general_chats";
     const { error } = await (supabase as any)
-      .from("patient_chats")
+      .from(table)
       .update({ pinned_at: next })
       .eq("id", chat.id);
 
