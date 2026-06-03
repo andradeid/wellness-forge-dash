@@ -340,7 +340,14 @@ function PlaygroundPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chat */}
         <Card className="rounded-lg flex flex-col h-[60vh]">
-          <div className="px-4 py-3 border-b text-sm font-medium">Chat de teste</div>
+          <div className="px-4 py-3 border-b">
+            <div className="text-sm font-medium">Chat de teste</div>
+            {selectedAgent && (
+              <Badge variant="outline" className="mt-1.5 gap-1 font-mono text-[10px]">
+                🤖 {selectedAgent.label} · {selectedAgent.agent_id}
+              </Badge>
+            )}
+          </div>
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             {turns.length === 0 && !running && (
               <p className="text-xs text-muted-foreground text-center py-8">
