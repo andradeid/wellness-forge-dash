@@ -221,6 +221,71 @@ function PatientsPage() {
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nascimento *</Label>
                   <BirthDatePicker value={birthDate} onChange={setBirthDate} />
                 </div>
+
+                {gender === "female" && (
+                  <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Paciente está gestante?</Label>
+                      <div className="flex bg-white rounded-lg p-1 border border-muted shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => setIsPregnant(false)}
+                          className={cn(
+                            "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                            !isPregnant 
+                              ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm" 
+                              : "text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          Não
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsPregnant(true)}
+                          className={cn(
+                            "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                            isPregnant 
+                              ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm" 
+                              : "text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          Sim
+                        </button>
+                      </div>
+                    </div>
+
+                    {isPregnant && (
+                      <div className="grid grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas</Label>
+                          <Input
+                            id="weeks"
+                            type="number"
+                            min="1"
+                            max="42"
+                            value={gestationalWeeks}
+                            onChange={(e) => setGestationalWeeks(e.target.value)}
+                            placeholder="Ex: 24"
+                            className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
+                          <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                            <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="single">Única</SelectItem>
+                              <SelectItem value="multiple">Gemelar</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
                     <Select value={gender ?? undefined} onValueChange={(v) => setGender(v as Patient["gender"])}>
