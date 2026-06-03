@@ -245,8 +245,8 @@ function FaleComLummaPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <div className="text-sm font-semibold text-white truncate leading-none">
-                        {c.patient_name || c.title}
+                      <div className="text-sm font-semibold text-white leading-tight break-words overflow-hidden">
+                        {c.title || c.patient_name}
                       </div>
                       {c.agent_type && (
                         <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
