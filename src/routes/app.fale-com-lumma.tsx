@@ -267,6 +267,18 @@ function FaleComLummaPage() {
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => {
+                  setPendingModule("exam");
+                  setIdentifyOpen(true);
+                }}
+                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <span className="mr-2">🔬</span>
+                Interpretar Exame Clínico
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
                 onClick={() => setCreateOpen(true)}
                 className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
               >
