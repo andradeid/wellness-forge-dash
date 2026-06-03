@@ -428,9 +428,7 @@ function ChatPage() {
             )}
           </div>
         </main>
-      </div>
-    </div>
-  );
+
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
             {readOnly ? (
@@ -497,38 +495,38 @@ function ChatPage() {
             )}
           </div>
         </div>
-      </section>
 
-      {/* Off-screen printable layout for "Gerar Laudo PDF" */}
-      <div
-        style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
-        aria-hidden
-      >
-        <div ref={printRef}>
-          {branding && patient && reportMarkers.length > 0 && (
-            <PatientReportPDF
-              branding={branding}
-              patient={{
-                name: patient.name,
-                birth_date: patient.birth_date,
-                gender: patient.gender,
-              }}
-              markers={reportMarkers as any}
-            />
-          )}
-        </div>
-        <div ref={conversationRef}>
-          {branding && patient && messages.length > 0 && (
-            <ChatConversationPDF
-              branding={branding}
-              patient={{
-                name: patient.name,
-                birth_date: patient.birth_date,
-                gender: patient.gender,
-              }}
-              messages={messages}
-            />
-          )}
+        {/* Off-screen printable layout for "Gerar Laudo PDF" */}
+        <div
+          style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+          aria-hidden
+        >
+          <div ref={printRef}>
+            {branding && patient && reportMarkers.length > 0 && (
+              <PatientReportPDF
+                branding={branding}
+                patient={{
+                  name: patient.name,
+                  birth_date: patient.birth_date,
+                  gender: patient.gender,
+                }}
+                markers={reportMarkers as any}
+              />
+            )}
+          </div>
+          <div ref={conversationRef}>
+            {branding && patient && messages.length > 0 && (
+              <ChatConversationPDF
+                branding={branding}
+                patient={{
+                  name: patient.name,
+                  birth_date: patient.birth_date,
+                  gender: patient.gender,
+                }}
+                messages={messages}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
