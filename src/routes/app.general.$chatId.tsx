@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin } from "lucide-react";
+import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -28,8 +28,30 @@ function GeneralChatPage() {
   const navigate = useNavigate();
   const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType);
   const [query, setQuery] = useState("");
-  const { chats, loading: loadingChats } = useChatHistory(200);
+  const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const { role, user } = useAuth();
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
+
+  const handleUpdateTitle = async (id: string) => {
+    if (!editTitle.trim()) return;
+    setIsUpdatingTitle(true);
+    try {
+      const { error } = await supabase
+        .from("general_chats")
+        .update({ title: editTitle.trim() })
+        .eq("id", id);
+      
+      if (error) throw error;
+      await refreshHistory();
+      setEditingChatId(null);
+    } catch (err) {
+      console.error("Erro ao atualizar título:", err);
+    } finally {
+      setIsUpdatingTitle(false);
+    }
+  };
 
   const filtered = useMemo(
     () =>
@@ -122,11 +144,48 @@ function GeneralChatPage() {
                       <Pin className="absolute -top-1 -right-1 h-3 w-3 text-white fill-white drop-shadow-sm" />
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 group/item">
                     <div className="flex items-center gap-2">
-                      <div className="text-sm font-semibold text-white truncate leading-none">
-                        {c.patient_name || c.title}
-                      </div>
+                      {editingChatId === c.id ? (
+                        <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+                          <Input
+                            autoFocus
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleUpdateTitle(c.id);
+                              if (e.key === 'Escape') setEditingChatId(null);
+                            }}
+                            className="h-6 text-xs bg-white/10 border-white/20 text-white p-1"
+                            disabled={isUpdatingTitle}
+                          />
+                          <button 
+                            onClick={() => handleUpdateTitle(c.id)}
+                            className="p-1 hover:bg-white/20 rounded text-emerald-400"
+                            disabled={isUpdatingTitle}
+                          >
+                            <Check className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-sm font-semibold text-white truncate leading-none flex-1">
+                            {c.title}
+                          </div>
+                          {!c.patient_id && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingChatId(c.id);
+                                setEditTitle(c.title || "");
+                              }}
+                              className="opacity-0 group-hover/item:opacity-100 p-1 hover:bg-white/20 rounded transition-opacity"
+                            >
+                              <Edit2 className="h-3 w-3 text-white/70" />
+                            </button>
+                          )}
+                        </>
+                      )}
                       {c.agent_type && (
                         <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
                           {c.agent_type === "exam" && "Exame"}
@@ -152,21 +211,6 @@ function GeneralChatPage() {
 
       {/* Área principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
-          <Link
-            to="/app/fale-com-lumma"
-            className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground shrink-0"
-          >
-            <ArrowLeft className="h-3 w-3" /> Início
-          </Link>
-          
-          <div className="flex-1">
-            <h1 className="text-sm font-semibold text-slate-800 leading-tight">
-              {agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica'}
-            </h1>
-          </div>
-        </header>
-
         <main className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           <ChatMessageList 
             messages={messages} 
