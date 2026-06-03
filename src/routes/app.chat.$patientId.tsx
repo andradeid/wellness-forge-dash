@@ -315,7 +315,7 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3] transition-colors duration-500">
       {/* Sheet — Sidebar acessível via hambúrguer */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white">
