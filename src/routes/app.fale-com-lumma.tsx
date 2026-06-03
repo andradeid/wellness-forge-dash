@@ -143,6 +143,9 @@ function FaleComLummaPage() {
     setNewName("");
     setNewBirthDate("");
     setNewGender(null);
+    setIsPregnant(false);
+    setGestationalWeeks("");
+    setPregnancyType("single");
     if (data) {
       setSelectedPatient(data as PatientItem);
       setPatients((prev) => [...prev, data as PatientItem]);
