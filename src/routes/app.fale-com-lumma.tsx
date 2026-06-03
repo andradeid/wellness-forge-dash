@@ -32,6 +32,9 @@ interface PatientItem {
   birth_date: string | null;
   gender: "male" | "female" | "other" | null;
   avatar_url: string | null;
+  is_pregnant?: boolean;
+  gestational_weeks?: number;
+  pregnancy_type?: "single" | "multiple";
 }
 
 type Gender = "male" | "female" | "other";
@@ -88,6 +91,9 @@ function FaleComLummaPage() {
   const [newName, setNewName] = useState("");
   const [newBirthDate, setNewBirthDate] = useState("");
   const [newGender, setNewGender] = useState<Gender | null>(null);
+  const [isPregnant, setIsPregnant] = useState(false);
+  const [gestationalWeeks, setGestationalWeeks] = useState("");
+  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
   const [creating, setCreating] = useState(false);
 
   const loadPatients = async () => {
@@ -95,7 +101,7 @@ function FaleComLummaPage() {
     setLoadingPatients(true);
     const { data } = await (supabase as any)
       .from("patients")
-      .select("id, name, birth_date, gender, avatar_url")
+      .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .eq("created_by", user.id)
       .order("name", { ascending: true });
     setPatients((data as PatientItem[]) ?? []);
@@ -121,8 +127,11 @@ function FaleComLummaPage() {
         name: newName,
         birth_date: newBirthDate,
         gender: newGender,
+        is_pregnant: newGender === "female" ? isPregnant : false,
+        gestational_weeks: newGender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
+        pregnancy_type: newGender === "female" && isPregnant ? pregnancyType : null,
       })
-      .select("id, name, birth_date, gender, avatar_url")
+      .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .single();
     setCreating(false);
     if (error) {
@@ -134,6 +143,9 @@ function FaleComLummaPage() {
     setNewName("");
     setNewBirthDate("");
     setNewGender(null);
+    setIsPregnant(false);
+    setGestationalWeeks("");
+    setPregnancyType("single");
     if (data) {
       setSelectedPatient(data as PatientItem);
       setPatients((prev) => [...prev, data as PatientItem]);
@@ -643,9 +655,15 @@ function FaleComLummaPage() {
                               {p.name}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {age !== null ? `${age} anos` : "Idade não informada"}
-                              {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : p.gender === "other" ? " • Outro" : ""}
-                            </div>
+                                {age !== null ? `${age} anos` : "Idade não informada"}
+                                {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : p.gender === "other" ? " • Outro" : ""}
+                                {p.is_pregnant && (
+                                  <span className="text-[#e8a04c] font-medium">
+                                    {" • Gestante"}
+                                    {p.gestational_weeks ? ` (${p.gestational_weeks}s)` : ""}
+                                  </span>
+                                )}
+                              </div>
                           </div>
                         </button>
                       </li>
@@ -719,6 +737,52 @@ function FaleComLummaPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {newGender === "female" && (
+              <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is-pregnant" className="text-sm font-medium">Está gestante?</Label>
+                  <input
+                    id="is-pregnant"
+                    type="checkbox"
+                    checked={isPregnant}
+                    onChange={(e) => setIsPregnant(e.target.checked)}
+                    className="h-5 w-5 rounded border-muted text-[#e8a04c] focus:ring-[#e8a04c]/30"
+                  />
+                </div>
+
+                {isPregnant && (
+                  <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas de gestação</Label>
+                      <Input
+                        id="weeks"
+                        type="number"
+                        min="1"
+                        max="42"
+                        value={gestationalWeeks}
+                        onChange={(e) => setGestationalWeeks(e.target.value)}
+                        placeholder="Ex: 24"
+                        className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo de gestação</Label>
+                      <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                        <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="single">Única</SelectItem>
+                          <SelectItem value="multiple">Gemelar ou múltipla</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <DialogFooter className="pt-2">
               <Button
                 type="submit"
