@@ -146,7 +146,8 @@ export function ChatIntentPanel({
             label="Perguntas Clínicas"
           />
           <ModuleButton
-            disabled
+            active={agentType === "research"}
+            onClick={() => selectAgent("research")}
             icon="🔍"
             label="Pesquisa Científica"
           />
