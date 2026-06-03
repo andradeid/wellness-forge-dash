@@ -382,12 +382,17 @@ function ChatPage() {
             </div>
           )}
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {messages.length === 0 && !thinking && role === "nutri" ? (
+            {(showModuleSelector || (messages.length === 0 && !thinking && role === "nutri")) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <ChatIntentPanel
                   filters={filters}
                   onChange={setFilters}
                   userName={profile?.full_name?.split(" ")[0]}
+                  agentType={agentType as any}
+                  onAgentChange={(t) => {
+                    setAgentType(t);
+                    setShowModuleSelector(false);
+                  }}
                 />
               </div>
             ) : (
