@@ -96,12 +96,34 @@ export function ChatMessageList({
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
   const lastUserMsgIdRef = useRef<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasInitialScrolled = useRef(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
 
-  const handleScroll = (_e: React.UIEvent<HTMLDivElement>) => {
-    // Scroll é livre para o nutricionista — sem auto-follow durante streaming.
+  const scrollToBottom = (smooth = true) => {
+    bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
   };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    // Show button if user is more than 200px away from bottom
+    const isNearBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 200;
+    setShowScrollButton(!isNearBottom);
+  };
+
+  // Scroll inicial ao abrir a conversa (primeira carga de mensagens)
+  useEffect(() => {
+    if (messages.length > 0 && !hasInitialScrolled.current) {
+      // Pequeno timeout para garantir que o layout renderizou
+      const timer = setTimeout(() => {
+        scrollToBottom(false);
+        hasInitialScrolled.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [messages]);
 
   // Highlight de mensagem específica (busca / navegação) mantém scroll automático
   useEffect(() => {
@@ -111,19 +133,20 @@ export function ChatMessageList({
   }, [highlightId]);
 
   // Scroll automático SOMENTE quando o nutricionista envia uma nova mensagem.
-  // Durante o streaming da resposta da Lumma a posição é mantida — o usuário
-  // rola manualmente quando quiser acompanhar a resposta gerada abaixo.
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === "user" && lastMessage.id !== lastUserMsgIdRef.current) {
       lastUserMsgIdRef.current = lastMessage.id;
-      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      scrollToBottom();
     }
   }, [messages]);
 
-
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
+    <div 
+      ref={scrollContainerRef}
+      className="flex-1 overflow-y-auto px-4 py-6 relative" 
+      onScroll={handleScroll}
+    >
 
       <div className="mx-auto w-full max-w-3xl space-y-5">
         {messages.length === 0 && !thinking && (
