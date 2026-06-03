@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -333,7 +333,7 @@ function FaleComLummaPage() {
         {/* Área principal */}
       <div className="relative flex-1 overflow-hidden">
         <div className="flex h-full flex-col items-center justify-between px-6 py-12">
-          <div className="flex flex-1 flex-col items-center justify-center text-center max-w-2xl mx-auto">
+          <div className="flex flex-1 flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
             <img
               src={lummaSymbol}
               alt="Lumma"
@@ -347,70 +347,100 @@ function FaleComLummaPage() {
               Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
               Funcional e Integrativa.
             </p>
-            <p className="text-sm text-foreground/60 mb-8 max-w-lg">
-              Faça o upload de PDFs ou imagens de laudos laboratoriais para análise estruturada.
-            </p>
-            <div className="flex items-center gap-3 flex-wrap justify-center max-w-4xl">
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  setPendingModule("exam");
-                  setIdentifyOpen(true);
-                }}
-                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
-              >
-                <span className="mr-2">🔬</span>
-                Interpretar Exame Clínico
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  setPendingModule("production");
-                  setIdentifyOpen(true);
-                }}
-                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
-              >
-                <span className="mr-2">🥗</span>
-                Plano Alimentar & Formulações
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => startGeneralChat("reasoning")}
-                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
-              >
-                <span className="mr-2">🤔</span>
-                Perguntas Clínicas
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => startGeneralChat("research")}
-                className="rounded-full px-6 h-12 border-2 border-[#e89bcf]/40 text-foreground bg-white/70 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-shadow"
-              >
-                <span className="mr-2">🔍</span>
-                Pesquisa Científica
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                disabled
-                className="rounded-full px-6 h-12 border-2 border-slate-200 text-slate-400 bg-slate-50/70 cursor-not-allowed"
-              >
-                <span className="mr-2">🧮</span>
-                Cálculos e Prescrição (em breve)
-              </Button>
+            
+            <div className="w-full mt-8 space-y-8">
+              {/* Linha 1: Análises e Uploads */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Análises e Uploads</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <button 
+                    onClick={() => {
+                      setPendingModule("exam");
+                      setIdentifyOpen(true);
+                    }}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                      <Droplet className="h-6 w-6 text-[#e89bcf]" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80">Exames de Sangue</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setPendingModule("exam");
+                      setIdentifyOpen(true);
+                    }}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                      <Scale className="h-6 w-6 text-[#e89bcf]" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80 text-center">Composição e Metabolismo</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setPendingModule("exam");
+                      setIdentifyOpen(true);
+                    }}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                      <Dna className="h-6 w-6 text-[#e89bcf]" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80">Genética e Microbioma</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Linha 2: Condutas e Entregas */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Condutas e Entregas</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <button 
+                    onClick={() => startGeneralChat("reasoning")}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                      <ClipboardList className="h-6 w-6 text-[#e8a04c]" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80">Casos Clínicos & Sintomas</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setPendingModule("production");
+                      setIdentifyOpen(true);
+                    }}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                      <Apple className="h-6 w-6 text-[#e8a04c]" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80">Plano Alimentar & Receitas</span>
+                  </button>
+
+                  <button 
+                    onClick={() => startGeneralChat("research")}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                      <Search className="h-6 w-6 text-[#e8a04c]" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80">Pesquisa Científica</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {selectedPatient && (
               <button
                 type="button"
                 onClick={() => setSelectedPatient(null)}
-                className="mt-3 text-xs text-foreground/60 hover:text-foreground underline underline-offset-2"
+                className="mt-6 text-xs text-foreground/60 hover:text-foreground underline underline-offset-2"
               >
-                Limpar paciente
+                Limpar paciente selecionado: {selectedPatient.name}
               </button>
             )}
           </div>
