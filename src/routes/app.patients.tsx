@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { ChevronDown, MessageSquare, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { EditPatientSheet, type EditablePatient } from "@/components/EditPatientSheet";
 import { BirthDatePicker } from "@/components/BirthDatePicker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
