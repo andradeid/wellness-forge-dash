@@ -120,7 +120,7 @@ export function useChatHistory(limit = 50) {
           patient_id: null,
           patient_name: c.title || (agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica'),
           agent_type: agentType,
-          pinned_at: null,
+          pinned_at: c.pinned_at ?? null,
           avatar_url: null, // Será tratado no componente via agent_type
           last_message: lastMsg ? {
             content: lastMsg.content,
