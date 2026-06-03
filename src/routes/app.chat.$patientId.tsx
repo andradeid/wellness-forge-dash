@@ -378,19 +378,6 @@ function ChatPage() {
 
 
         <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
-          {role === "nutri" && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none z-0"
-            >
-              <span
-                className="text-[clamp(1.25rem,8vw,5rem)] font-black uppercase tracking-widest text-black/[0.045] whitespace-nowrap"
-                style={{ transform: "rotate(-25deg)" }}
-              >
-                AMBIENTE DE TESTES — VERSÃO 2.0 (MOTOR)
-              </span>
-            </div>
-          )}
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
             {(!thinking && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">

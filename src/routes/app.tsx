@@ -77,7 +77,7 @@ function AppLayout() {
   const isFaleComLumma = pathname.startsWith("/app/fale-com-lumma");
   const immersive = isChat || isEvolution || isFaleComLumma;
 
-  const showStagingBanner = role === "nutri";
+  const showStagingBanner = false;
 
   return (
     <SidebarProvider>
