@@ -19,6 +19,7 @@ export interface ExamContext {
   alteracoes: string[];
   otimos: string[];
   resumo_clinico: string;
+  resumo_texto?: string; // fallback: análise textual completa quando não há marcadores estruturados
 }
 
 interface DifyFileRef {
