@@ -655,9 +655,15 @@ function FaleComLummaPage() {
                               {p.name}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {age !== null ? `${age} anos` : "Idade não informada"}
-                              {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : p.gender === "other" ? " • Outro" : ""}
-                            </div>
+                                {age !== null ? `${age} anos` : "Idade não informada"}
+                                {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : p.gender === "other" ? " • Outro" : ""}
+                                {p.is_pregnant && (
+                                  <span className="text-[#e8a04c] font-medium">
+                                    {" • Gestante"}
+                                    {p.gestational_weeks ? ` (${p.gestational_weeks}s)` : ""}
+                                  </span>
+                                )}
+                              </div>
                           </div>
                         </button>
                       </li>
