@@ -308,6 +308,27 @@ function PlaygroundPage() {
         </TabsContent>
       </Tabs>
 
+      <div className="flex items-center gap-3 flex-wrap">
+        <label className="text-sm font-medium">Agente:</label>
+        <Select value={agentType} onValueChange={handleAgentChange}>
+          <SelectTrigger className="w-[320px] rounded-lg">
+            <SelectValue placeholder="Selecione um agente…" />
+          </SelectTrigger>
+          <SelectContent>
+            {agents.map((a) => (
+              <SelectItem
+                key={a.agent_id}
+                value={a.agent_id}
+                disabled={!a.api_key}
+              >
+                {a.label} · {a.agent_id}
+                {!a.api_key ? " (pendente)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <input
         ref={fileInputRef}
         type="file"
