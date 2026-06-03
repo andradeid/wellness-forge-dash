@@ -32,6 +32,9 @@ interface PatientItem {
   birth_date: string | null;
   gender: "male" | "female" | "other" | null;
   avatar_url: string | null;
+  is_pregnant?: boolean;
+  gestational_weeks?: number;
+  pregnancy_type?: "single" | "multiple";
 }
 
 type Gender = "male" | "female" | "other";
