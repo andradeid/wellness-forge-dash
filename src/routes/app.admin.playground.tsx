@@ -427,9 +427,29 @@ function PlaygroundPage() {
         <Card className="rounded-lg flex flex-col h-[60vh]">
           <div className="px-4 py-3 border-b flex items-center justify-between">
             <span className="text-sm font-medium">Resposta da API (eventos brutos)</span>
-            <Badge variant="outline" className="font-mono text-[10px]">
-              {rawEvents.length} eventos
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="font-mono text-[10px]">
+                {rawEvents.length} eventos
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={rawEvents.length === 0}
+                onClick={async () => {
+                  const header = `[LUMMA] agente: "${agentType}"${selectedAgent ? ` — "${selectedAgent.label}"` : ""}\n\n`;
+                  const body = rawEvents.map((e) =>
+                    `// ${new Date(e.ts).toISOString().slice(11, 23)} · ${e.event}\n${typeof e.payload === "string" ? e.payload : JSON.stringify(e.payload, null, 2)}\n\n`,
+                  ).join("");
+                  await navigator.clipboard.writeText(header + body);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="h-7 gap-1 text-xs"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copiado!" : "Copiar"}
+              </Button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto bg-[#0f1729]">
             {rawEvents.length === 0 ? (
