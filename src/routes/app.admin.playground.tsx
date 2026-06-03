@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Paperclip, FileText, Type, Trash2, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChatThinking } from "@/components/chat/ChatThinking";
 import { toast } from "sonner";
 
@@ -29,6 +36,14 @@ interface RawEvent {
   payload: unknown;
 }
 
+interface DifyAgentRow {
+  agent_id: string;
+  label: string;
+  api_key: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
 function PlaygroundPage() {
   const { role, loading } = useAuth();
   const [mode, setMode] = useState<Mode>("pdf");
@@ -40,7 +55,41 @@ function PlaygroundPage() {
   const [rawEvents, setRawEvents] = useState<RawEvent[]>([]);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [conversationId, setConversationId] = useState<string>("");
+  const [agents, setAgents] = useState<DifyAgentRow[]>([]);
+  const [agentType, setAgentType] = useState<string>("exam");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (role !== "super_admin") return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("dify_agents")
+        .select("agent_id,label,api_key,sort_order,is_active")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) return;
+      const rows = (data ?? []) as DifyAgentRow[];
+      setAgents(rows);
+      const hasExam = rows.some((r) => r.agent_id === "exam" && r.api_key);
+      if (!hasExam) {
+        const firstEnabled = rows.find((r) => r.api_key);
+        if (firstEnabled) setAgentType(firstEnabled.agent_id);
+      }
+    })();
+  }, [role]);
+
+  const selectedAgent = useMemo(
+    () => agents.find((a) => a.agent_id === agentType),
+    [agents, agentType],
+  );
+
+  const handleAgentChange = (value: string) => {
+    setAgentType(value);
+    setTurns([]);
+    setRawEvents([]);
+    setConversationId("");
+    setLatencyMs(null);
+  };
 
   // Guard: super_admin only
   useEffect(() => {
@@ -146,6 +195,7 @@ function PlaygroundPage() {
           query: composedQuery,
           conversation_id: conversationId || undefined,
           files: difyFiles,
+          agent_type: agentType,
         }),
       });
       if (!res.ok || !res.body) {
@@ -258,6 +308,27 @@ function PlaygroundPage() {
         </TabsContent>
       </Tabs>
 
+      <div className="flex items-center gap-3 flex-wrap">
+        <label className="text-sm font-medium">Agente:</label>
+        <Select value={agentType} onValueChange={handleAgentChange}>
+          <SelectTrigger className="w-[320px] rounded-lg">
+            <SelectValue placeholder="Selecione um agente…" />
+          </SelectTrigger>
+          <SelectContent>
+            {agents.map((a) => (
+              <SelectItem
+                key={a.agent_id}
+                value={a.agent_id}
+                disabled={!a.api_key}
+              >
+                {a.label} · {a.agent_id}
+                {!a.api_key ? " (pendente)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <input
         ref={fileInputRef}
         type="file"
@@ -269,7 +340,14 @@ function PlaygroundPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chat */}
         <Card className="rounded-lg flex flex-col h-[60vh]">
-          <div className="px-4 py-3 border-b text-sm font-medium">Chat de teste</div>
+          <div className="px-4 py-3 border-b">
+            <div className="text-sm font-medium">Chat de teste</div>
+            {selectedAgent && (
+              <Badge variant="outline" className="mt-1.5 gap-1 font-mono text-[10px]">
+                🤖 {selectedAgent.label} · {selectedAgent.agent_id}
+              </Badge>
+            )}
+          </div>
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             {turns.length === 0 && !running && (
               <p className="text-xs text-muted-foreground text-center py-8">
@@ -359,7 +437,8 @@ function PlaygroundPage() {
               </p>
             ) : (
               <pre className="text-[11px] font-mono text-emerald-200 p-4 leading-relaxed">
-{rawEvents.map((e, i) => (
+{`[LUMMA] agente: "${agentType}"${selectedAgent ? ` — "${selectedAgent.label}"` : ""}\n\n`}
+{rawEvents.map((e) => (
 `// ${new Date(e.ts).toISOString().slice(11, 23)} · ${e.event}
 ${typeof e.payload === "string" ? e.payload : JSON.stringify(e.payload, null, 2)}
 
