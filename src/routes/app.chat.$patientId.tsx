@@ -64,7 +64,16 @@ function ChatPage() {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
-  const [showModuleSelector, setShowModuleSelector] = useState(!initialModule);
+  const [showModuleSelector, setShowModuleSelector] = useState(false);
+
+  // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
+  useEffect(() => {
+    if (messages.length === 0 && !initialModule && role === "nutri" && !thinking) {
+      setShowModuleSelector(true);
+    } else if (messages.length > 0) {
+      setShowModuleSelector(false);
+    }
+  }, [messages.length, initialModule, role, thinking]);
 
   useEffect(() => {
     if (initialModule && ["exam", "production", "reasoning", "research"].includes(initialModule)) {
