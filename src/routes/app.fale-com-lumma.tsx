@@ -91,6 +91,9 @@ function FaleComLummaPage() {
   const [newName, setNewName] = useState("");
   const [newBirthDate, setNewBirthDate] = useState("");
   const [newGender, setNewGender] = useState<Gender | null>(null);
+  const [isPregnant, setIsPregnant] = useState(false);
+  const [gestationalWeeks, setGestationalWeeks] = useState("");
+  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
   const [creating, setCreating] = useState(false);
 
   const loadPatients = async () => {
