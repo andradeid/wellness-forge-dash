@@ -53,6 +53,7 @@ export function useChatHistory(limit = 50) {
             title,
             updated_at,
             agent_type,
+            pinned_at,
             general_chat_messages(content, role, created_at)
           `)
           .eq("created_by", user.id)
