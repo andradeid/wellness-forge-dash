@@ -28,7 +28,15 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   component: ChatPage,
 });
 
+const AGENT_BADGES: Record<string, { icon: string; label: string }> = {
+  exam: { icon: "🔬", label: "Analisando Exame" },
+  production: { icon: "🥗", label: "Plano & Formulação" },
+  reasoning: { icon: "🤔", label: "Pergunta Clínica" },
+};
+
 interface PatientCtx {
+
+
   id: string;
   name: string;
   birth_date: string | null;
@@ -50,10 +58,11 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+  const [showModuleSelector, setShowModuleSelector] = useState(false);
 
   useEffect(() => {
     const patientProfile =
@@ -381,12 +390,17 @@ function ChatPage() {
             </div>
           )}
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {messages.length === 0 && !thinking && role === "nutri" ? (
+            {(showModuleSelector || (messages.length === 0 && !thinking && role === "nutri")) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <ChatIntentPanel
                   filters={filters}
                   onChange={setFilters}
                   userName={profile?.full_name?.split(" ")[0]}
+                  agentType={agentType as any}
+                  onAgentChange={(t) => {
+                    setAgentType(t);
+                    setShowModuleSelector(false);
+                  }}
                 />
               </div>
             ) : (
@@ -403,6 +417,23 @@ function ChatPage() {
               </div>
             ) : (
               <>
+                {(() => {
+                  const meta = AGENT_BADGES[agentType] ?? AGENT_BADGES.exam;
+                  return (
+                    <div className="mb-2 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowModuleSelector(true)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition"
+                        title="Trocar de módulo"
+                      >
+                        <span>{meta.icon}</span>
+                        <span>{meta.label}</span>
+                        <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
+                      </button>
+                    </div>
+                  );
+                })()}
                 <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} uploadProgress={uploadProgress} />
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
