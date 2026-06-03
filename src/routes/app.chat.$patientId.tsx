@@ -306,20 +306,32 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-full max-h-full w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
-      {/* Main: chat */}
-      <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+      {/* Sidebar fixo — desktop */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-[280px] lg:border-r lg:shrink-0 lg:overflow-y-auto bg-white/40 backdrop-blur-md">
+        {SidebarContent}
+      </aside>
+
+      {/* Sheet — mobile */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white lg:hidden">
+          {SidebarContent}
+        </SheetContent>
+      </Sheet>
+
+      {/* Conteúdo principal */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 h-10 w-10" aria-label="Histórico de exames">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white">
-              {SidebarContent}
-            </SheetContent>
-          </Sheet>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="lg:hidden shrink-0 h-10 w-10" 
+            onClick={() => setMenuOpen(true)}
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
           <Link
             to="/app/patients"
             className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground shrink-0"
@@ -389,8 +401,7 @@ function ChatPage() {
           )}
         </header>
 
-
-        <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
+        <main className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
             {(!thinking && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
@@ -406,10 +417,18 @@ function ChatPage() {
                 />
               </div>
             ) : (
-              <ChatMessageList messages={messages} thinking={thinking} thinkingMode={thinkingMode} highlightId={highlightId} />
+              <ChatMessageList 
+                messages={messages} 
+                thinking={thinking} 
+                thinkingMode={thinkingMode} 
+                highlightId={highlightId} 
+                isStreaming={thinking}
+                agentType={agentType}
+              />
             )}
           </div>
-        </div>
+        </main>
+
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
             {readOnly ? (
@@ -476,38 +495,38 @@ function ChatPage() {
             )}
           </div>
         </div>
-      </section>
 
-      {/* Off-screen printable layout for "Gerar Laudo PDF" */}
-      <div
-        style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
-        aria-hidden
-      >
-        <div ref={printRef}>
-          {branding && patient && reportMarkers.length > 0 && (
-            <PatientReportPDF
-              branding={branding}
-              patient={{
-                name: patient.name,
-                birth_date: patient.birth_date,
-                gender: patient.gender,
-              }}
-              markers={reportMarkers as any}
-            />
-          )}
-        </div>
-        <div ref={conversationRef}>
-          {branding && patient && messages.length > 0 && (
-            <ChatConversationPDF
-              branding={branding}
-              patient={{
-                name: patient.name,
-                birth_date: patient.birth_date,
-                gender: patient.gender,
-              }}
-              messages={messages}
-            />
-          )}
+        {/* Off-screen printable layout for "Gerar Laudo PDF" */}
+        <div
+          style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+          aria-hidden
+        >
+          <div ref={printRef}>
+            {branding && patient && reportMarkers.length > 0 && (
+              <PatientReportPDF
+                branding={branding}
+                patient={{
+                  name: patient.name,
+                  birth_date: patient.birth_date,
+                  gender: patient.gender,
+                }}
+                markers={reportMarkers as any}
+              />
+            )}
+          </div>
+          <div ref={conversationRef}>
+            {branding && patient && messages.length > 0 && (
+              <ChatConversationPDF
+                branding={branding}
+                patient={{
+                  name: patient.name,
+                  birth_date: patient.birth_date,
+                  gender: patient.gender,
+                }}
+                messages={messages}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
