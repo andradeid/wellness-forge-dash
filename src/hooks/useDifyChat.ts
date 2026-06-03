@@ -7,8 +7,19 @@ import type { Marker } from "@/components/chat/ExamResultCard";
 import {
   processAndPersistMarkers,
   logStructuredAudit,
+  classificationVisualState,
   type RawMarker,
 } from "@/lib/exam-markers";
+
+export interface ExamContext {
+  patient_name: string;
+  patient_profile: string;
+  patient_sex: string;
+  exam_date: string;
+  alteracoes: string[];
+  otimos: string[];
+  resumo_clinico: string;
+}
 
 interface DifyFileRef {
   type: "image" | "document";
@@ -146,6 +157,7 @@ export function useDifyChat(
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
   const [agentType, setAgentType] = useState<string>("exam");
+  const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
   const metaRef = useRef<{
@@ -185,25 +197,25 @@ export function useDifyChat(
       // Se forceChatId for passado, carrega exatamente aquele chat.
       // Caso contrário, prefere o chat com MAIOR atividade (última mensagem
       // mais recente) — assim "Novo Chat" vazio não esconde o histórico antigo.
-      let chosenChat: { id: string; dify_conversation_id: string | null } | null = null;
+      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any } | null = null;
 
       if (forceChatId) {
         const { data } = await (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, created_by")
+          .select("id, dify_conversation_id, exam_context, created_by")
           .eq("patient_id", patientId)
           .eq("id", forceChatId)
           .maybeSingle();
-        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id };
+        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context };
       } else {
         let listQuery = (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, created_by, created_at")
+          .select("id, dify_conversation_id, exam_context, created_by, created_at")
           .eq("patient_id", patientId)
           .order("created_at", { ascending: false });
         if (!readOnly) listQuery = listQuery.eq("created_by", user.id);
         const { data: chats } = await listQuery;
-        const list = (chats as Array<{ id: string; dify_conversation_id: string | null }>) ?? [];
+        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any }>) ?? [];
         if (list.length > 0) {
           const { data: lastMsg } = await (supabase as any)
             .from("chat_messages")
@@ -252,6 +264,7 @@ export function useDifyChat(
         id = created.id;
       } else {
         conversationIdRef.current = chosenChat!.dify_conversation_id ?? "";
+        if (chosenChat!.exam_context) setExamContext(chosenChat!.exam_context as ExamContext);
       }
       if (cancelled || !id) return;
       setChatId(id);
@@ -387,6 +400,27 @@ export function useDifyChat(
 
     // 4) Stream from Dify proxy
     let assistantText = "";
+    const buildContextPrefix = (ctx: ExamContext): string => {
+      const lines = [
+        `[CONTEXTO DO PACIENTE]`,
+        `Paciente: ${ctx.patient_name}`,
+        `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}`,
+      ];
+      if (ctx.alteracoes.length > 0) {
+        lines.push(`Marcadores alterados: ${ctx.alteracoes.join(", ")}`);
+      }
+      if (ctx.otimos.length > 0) {
+        lines.push(`Marcadores ótimos: ${ctx.otimos.join(", ")}`);
+      }
+      lines.push(`[FIM DO CONTEXTO]`);
+      lines.push(""); // linha em branco antes da pergunta
+      return lines.join("\n");
+    };
+
+    const finalQuery = (agentType !== "exam" && examContext)
+      ? buildContextPrefix(examContext) + text
+      : text;
+
     const callDify = async (convId: string | undefined) =>
       fetch("/api/dify/chat", {
         method: "POST",
@@ -395,7 +429,7 @@ export function useDifyChat(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: text || "Analise o exame anexado.",
+          query: finalQuery || "Analise o exame anexado.",
           conversation_id: convId,
           files: difyFiles,
           meta: metaRef.current,
@@ -577,6 +611,32 @@ export function useDifyChat(
         .eq("id", chatId);
     }
 
+    if (agentType === "exam" && markers && markers.length) {
+      const newCtx: ExamContext = {
+        patient_name: metaRef.current.patient_name,
+        patient_profile: metaRef.current.patient_profile,
+        patient_sex: metaRef.current.patient_sex,
+        exam_date: new Date().toISOString(), // Dify doesn't return meta.exam_date directly in some cases, so fallback to now
+        alteracoes: markers
+          .filter(m => {
+            const visual = classificationVisualState(m.classification);
+            return visual !== "otimo" && visual !== "normal";
+          })
+          .map(m => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
+        otimos: markers
+          .filter(m => classificationVisualState(m.classification) === "otimo")
+          .map(m => `${m.name}: ${m.value} ${m.unit || ""}`),
+        resumo_clinico: markers
+          .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
+          .join(" | "),
+      };
+      setExamContext(newCtx);
+      await (supabase as any)
+        .from("patient_chats")
+        .update({ exam_context: newCtx })
+        .eq("id", chatId);
+    }
+
     setThinking(false);
     window.setTimeout(() => setUploadProgress([]), 4000);
   }, [chatId, patientId, readOnly, agentType]);
@@ -595,6 +655,7 @@ export function useDifyChat(
     setMessages([]);
     setError(null);
     setAgentType("exam");
+    setExamContext(null);
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
@@ -632,5 +693,5 @@ export function useDifyChat(
     };
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
 }
