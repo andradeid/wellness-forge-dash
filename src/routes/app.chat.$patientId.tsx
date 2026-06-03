@@ -325,7 +325,8 @@ function ChatPage() {
 
       {/* Conteúdo principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
+        {!showModuleSelector && (
+          <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="icon" 
