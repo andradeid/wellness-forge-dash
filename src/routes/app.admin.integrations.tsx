@@ -656,11 +656,13 @@ function IntegrationsPage() {
                             ) : (
                               <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
                             )}
-                            {f.label ?? f.key}
+                            {f.key === "dify_endpoint" ? "Endpoint Global Dify" : (f.label ?? f.key)}
                           </Label>
-                          {f.description && (
+                          {(f.key === "dify_endpoint" || f.description) && (
                             <span className="text-[11px] text-muted-foreground text-right max-w-[60%]">
-                              {f.description}
+                              {f.key === "dify_endpoint"
+                                ? "URL base compartilhada por todos os agentes — Dify Cloud (https://api.dify.ai/v1) ou sua VPS"
+                                : f.description}
                             </span>
                           )}
                         </div>
