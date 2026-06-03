@@ -153,7 +153,7 @@ function FaleComLummaPage() {
         .eq("created_by", user.id)
         .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
-        .limit(50);
+        .limit(200);
       
       if (cancelled) return;
       
@@ -261,31 +261,38 @@ function FaleComLummaPage() {
                       });
                     }
                   }}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors group ${
-                    activeId === c.id ? "bg-white/15" : "hover:bg-white/10"
+                  className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 group ${
+                    activeId === c.id 
+                      ? "bg-white/20 shadow-sm" 
+                      : "hover:bg-white/10"
                   }`}
                 >
                   <div className="relative shrink-0">
-                    <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 group-hover:text-white" />
+                    <Avatar className="h-9 w-9 border-2 border-white/20">
+                      <AvatarImage src={undefined} />
+                      <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
+                        {(c.patient_name || "??").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     {c.pinned_at && (
-                      <Pin className="absolute -top-1 -right-1 h-2 w-2 text-white fill-white" />
+                      <Pin className="absolute -top-1 -right-1 h-3 w-3 text-white fill-white drop-shadow-sm" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <div className="text-sm font-medium text-white truncate">
-                        {c.title}
+                      <div className="text-sm font-semibold text-white truncate leading-none">
+                        {c.patient_name || c.title}
                       </div>
                       {c.agent_type && (
-                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md bg-white/20 text-white/90 font-medium">
-                          {c.agent_type === "exam" && "🔬 Exame"}
-                          {c.agent_type === "production" && "🥗 Produção"}
-                          {c.agent_type === "reasoning" && "🤔 Clínico"}
-                          {c.agent_type === "research" && "🔍 Pesquisa"}
+                        <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
+                          {c.agent_type === "exam" && "Exame"}
+                          {c.agent_type === "production" && "Produção"}
+                          {c.agent_type === "reasoning" && "Clínico"}
+                          {c.agent_type === "research" && "Pesquisa"}
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-white/55 mt-0.5">
+                    <div className="text-[10px] text-white/60 mt-1 font-medium">
                       {formatDistanceToNow(new Date(c.updated_at), {
                         addSuffix: true,
                         locale: ptBR,
