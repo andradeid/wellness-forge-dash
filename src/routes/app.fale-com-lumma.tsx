@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -48,7 +48,7 @@ function calcAge(birth: string | null): number | null {
 }
 
 function FaleComLummaPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { module: searchModule } = Route.useSearch();
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
@@ -207,6 +207,21 @@ function FaleComLummaPage() {
       ),
     [chats, query]
   );
+
+  const greeting = (() => {
+    // Hora de Brasília (UTC−3), independente do fuso do navegador
+    const hourStr = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      hour12: false,
+    }).format(new Date());
+    const h = parseInt(hourStr, 10);
+    const t = h >= 5 && h < 12 ? "Bom dia" : h >= 12 && h < 18 ? "Boa tarde" : "Boa noite";
+    const name = profile?.full_name?.split(" ")[0] ?? "";
+    const pronoun = profile?.pronoun?.trim();
+    if (!name) return `${t}.`;
+    return pronoun ? `${t}, ${pronoun} ${name}.` : `${t}, ${name}.`;
+  })();
 
 
 
@@ -392,8 +407,11 @@ function FaleComLummaPage() {
               alt="Lumma"
               className="h-20 w-20 mb-8 drop-shadow-sm"
             />
-            <h1 className="text-5xl font-light tracking-tight text-foreground mb-6">
-              Bem-vinda
+            <h1 
+              className="text-4xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-4"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              {greeting}
             </h1>
             <p className="text-lg text-foreground/70 leading-relaxed mb-12 max-w-xl">
               Sou sua mentora virtual, inspirada na metodologia da Ana Paula
