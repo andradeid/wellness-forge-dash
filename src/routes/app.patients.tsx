@@ -153,6 +153,9 @@ function PatientsPage() {
     setName("");
     setBirthDate("");
     setGender(null);
+    setIsPregnant(false);
+    setGestationalWeeks("");
+    setPregnancyType("single");
     load();
   };
 
