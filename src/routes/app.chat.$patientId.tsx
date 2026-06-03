@@ -392,7 +392,7 @@ function ChatPage() {
             </div>
           )}
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {(showModuleSelector || (messages.length === 0 && !thinking && role === "nutri")) ? (
+            {(!thinking && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <ChatIntentPanel
                   filters={filters}
