@@ -437,7 +437,8 @@ function PlaygroundPage() {
               </p>
             ) : (
               <pre className="text-[11px] font-mono text-emerald-200 p-4 leading-relaxed">
-{rawEvents.map((e, i) => (
+{`[LUMMA] agente: "${agentType}"${selectedAgent ? ` — "${selectedAgent.label}"` : ""}\n\n`}
+{rawEvents.map((e) => (
 `// ${new Date(e.ts).toISOString().slice(11, 23)} · ${e.event}
 ${typeof e.payload === "string" ? e.payload : JSON.stringify(e.payload, null, 2)}
 
