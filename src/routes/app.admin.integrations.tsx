@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { DifyAgentsPanel } from "@/components/admin/DifyAgentsPanel";
 
 export const Route = createFileRoute("/app/admin/integrations")({
   component: IntegrationsPage,
@@ -631,7 +632,17 @@ function IntegrationsPage() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="p-6 space-y-5">
+                <CardContent className="p-6 space-y-6">
+                  {c.category === "ai" && (
+                    <>
+                      <DifyAgentsPanel />
+                      <div className="border-t pt-5">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+                          Configuração legada (fallback)
+                        </p>
+                      </div>
+                    </>
+                  )}
                   {fields.map((f) => {
                     const revealed = reveal[f.id];
                     const draft = drafts[f.id] ?? "";

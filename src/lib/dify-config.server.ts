@@ -111,4 +111,97 @@ export async function getDifyConfig(
 
 export function invalidateDifyConfigCache() {
   cache = null;
+  agentCache.clear();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Multi-agent support (dify_agents table)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const agentCache = new Map<string, { data: DifyConfig; expires: number }>();
+
+interface DifyAgentRow {
+  agent_id: string;
+  api_key: string | null;
+  endpoint: string | null;
+  is_active: boolean;
+}
+
+/**
+ * Loads config for a specific Dify agent (multi-agent architecture).
+ * Cached per agentId for 60s.
+ *
+ * Compatibility fallback: if agentId === 'exam' and the row has no
+ * api_key, falls back to the legacy `integrations.dify_api_key` value
+ * (via getDifyConfig). This keeps the existing exam flow working.
+ */
+export async function getDifyAgentConfig(
+  agentId: string,
+  userToken: string,
+  force = false,
+): Promise<DifyConfig> {
+  const now = Date.now();
+  if (!force) {
+    const cached = agentCache.get(agentId);
+    if (cached && cached.expires > now) return cached.data;
+  }
+
+  const serviceClient = makeServiceClient();
+  if (!serviceClient) {
+    throw new Error(
+      "Configuração de servidor indisponível (SUPABASE_SERVICE_ROLE_KEY).",
+    );
+  }
+
+  const { data, error } = await serviceClient
+    .from("dify_agents")
+    .select("agent_id, api_key, endpoint, is_active")
+    .eq("agent_id", agentId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`[dify-config] agent '${agentId}' lookup failed:`, error);
+    throw new Error(
+      `Falha ao consultar agente '${agentId}': ${error.message}`,
+    );
+  }
+
+  const row = data as DifyAgentRow | null;
+  let apiKey = row?.api_key?.trim() ?? "";
+  let baseUrl = row?.endpoint?.trim() || DEFAULT_BASE_URL;
+
+  // Compatibility fallback: 'exam' agent can use legacy integrations row
+  if (!apiKey && agentId === "exam") {
+    try {
+      const legacy = await getDifyConfig(userToken);
+      if (legacy.apiKey) {
+        apiKey = legacy.apiKey;
+        if (!row?.endpoint) baseUrl = legacy.baseUrl;
+        console.log(
+          "[dify-config] agent 'exam' using legacy integrations.dify_api_key fallback",
+        );
+      }
+    } catch (e) {
+      console.error("[dify-config] legacy fallback for 'exam' failed:", e);
+    }
+  }
+
+  if (!apiKey) {
+    throw new Error(
+      `Agente '${agentId}' não configurado. Adicione a API Key em Integrações & APIs.`,
+    );
+  }
+
+  if (row && row.is_active === false) {
+    throw new Error(
+      `Agente '${agentId}' está desativado. Reative-o em Integrações & APIs.`,
+    );
+  }
+
+  const config: DifyConfig = {
+    baseUrl: normalizeBaseUrl(baseUrl),
+    apiKey,
+  };
+  agentCache.set(agentId, { data: config, expires: now + TTL_MS });
+  return config;
 }

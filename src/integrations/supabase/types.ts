@@ -85,6 +85,45 @@ export type Database = {
           },
         ]
       }
+      dify_agents: {
+        Row: {
+          agent_id: string
+          api_key: string | null
+          created_at: string
+          description: string | null
+          endpoint: string
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          api_key?: string | null
+          created_at?: string
+          description?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          api_key?: string | null
+          created_at?: string
+          description?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integration_logs: {
         Row: {
           created_at: string
