@@ -193,8 +193,9 @@ function DashboardPage() {
           .limit(2000),
         (supabase as any)
           .from("patient_chats")
-          .select("id, patient_id, title, updated_at")
+          .select("id, patient_id, title, updated_at, pinned_at")
           .eq("created_by", user.id)
+          .order("pinned_at", { ascending: false, nullsFirst: false })
           .order("updated_at", { ascending: false })
           .limit(5),
       ]);
