@@ -46,7 +46,12 @@ export function useChatHistory(limit = 50) {
         .order("updated_at", { ascending: false })
         .limit(limit);
 
-      if (chatsError) throw chatsError;
+      if (chatsError) {
+        console.error("[useChatHistory] error:", chatsError);
+        throw chatsError;
+      }
+
+      console.log("[useChatHistory] raw:", chatsData);
 
       const chatIds = (chatsData ?? []).map((c: any) => c.id);
       let examsByChat: Record<string, number> = {};
@@ -63,22 +68,25 @@ export function useChatHistory(limit = 50) {
       }
 
       const mapped: ChatItem[] = (chatsData ?? []).map((c: any) => {
-        const msgs = c.chat_messages ?? [];
-        const lastMsg = msgs.length > 0 
-          ? msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-          : null;
+        const patient = Array.isArray(c.patients) ? c.patients[0] : c.patients;
+        const msgs = Array.isArray(c.chat_messages) ? c.chat_messages : [];
         
+        const sortedMsgs = [...msgs].sort((a: any, b: any) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        
+        const lastMsg = sortedMsgs[0] || null;
         const agentType = msgs.find((m: any) => m.agent_type)?.agent_type || null;
 
         return {
           id: c.id,
-          title: c.title || c.patients?.name || "Conversa sem título",
+          title: c.title || patient?.name || "Conversa sem título",
           updated_at: c.updated_at,
           patient_id: c.patient_id ?? null,
-          patient_name: c.patients?.name ?? null,
+          patient_name: patient?.name ?? null,
           agent_type: agentType,
           pinned_at: c.pinned_at ?? null,
-          avatar_url: c.patients?.avatar_url ?? null,
+          avatar_url: patient?.avatar_url ?? null,
           last_message: lastMsg ? {
             content: lastMsg.content,
             role: lastMsg.role,
@@ -89,6 +97,7 @@ export function useChatHistory(limit = 50) {
         };
       });
 
+      console.log("[useChatHistory] mapped:", mapped);
       setChats(mapped);
     } catch (error) {
       console.error("Error fetching chat history:", error);
