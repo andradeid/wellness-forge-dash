@@ -113,8 +113,9 @@ function ChatsCentralPage() {
           {filtered.map((r) => (
             <li key={r.id}>
               <Link
-                to="/app/chat/$patientId"
-                params={{ patientId: r.patient_id || "" }}
+                to={r.patient_id ? "/app/chat/$patientId" : "/app/general/$chatId"}
+                params={r.patient_id ? { patientId: r.patient_id } : { chatId: r.id }}
+                search={r.patient_id ? {} : { module: r.agent_type }}
                 className="block"
               >
                 <Card className={cn("p-4 hover:bg-accent/40 transition-colors", r.pinned_at && "border-amber-300 bg-amber-50/40")}>
@@ -122,7 +123,7 @@ function ChatsCentralPage() {
                     <Avatar className="h-11 w-11 shrink-0">
                       <AvatarImage src={r.avatar_url ?? undefined} />
                       <AvatarFallback className="bg-gradient-brand text-white text-xs font-semibold">
-                        {(r.patient_name || "??").slice(0, 2).toUpperCase()}
+                        {r.agent_type === 'research' ? '🔍' : r.agent_type === 'reasoning' ? '🤔' : (r.patient_name || "??").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
