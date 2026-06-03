@@ -147,11 +147,14 @@ function FaleComLummaPage() {
     navigate({ to: `/app/general/${data.id}`, search: { module: agentType } });
   };
 
+  const filtered = useMemo(
+    () =>
       chats.filter((c) =>
         c.title.toLowerCase().includes(query.toLowerCase())
       ),
     [chats, query]
   );
+
 
 
   return (
