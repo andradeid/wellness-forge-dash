@@ -407,8 +407,11 @@ function FaleComLummaPage() {
               alt="Lumma"
               className="h-20 w-20 mb-8 drop-shadow-sm"
             />
-            <h1 className="text-5xl font-light tracking-tight text-foreground mb-6">
-              Bem-vinda
+            <h1 
+              className="text-4xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-4"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              {greeting}
             </h1>
             <p className="text-lg text-foreground/70 leading-relaxed mb-12 max-w-xl">
               Sou sua mentora virtual, inspirada na metodologia da Ana Paula
