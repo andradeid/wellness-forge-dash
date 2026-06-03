@@ -92,20 +92,49 @@ export function ChatMessageList({
   thinkingMode?: "analysis" | "simple";
   highlightId?: string;
 }) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    // Consideramos "fundo" se estiver a menos de 100px do final
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    userScrolledUp.current = !isAtBottom;
+  };
+
+  useEffect(() => {
+    if (!thinking) {
+      userScrolledUp.current = false;
+    }
+  }, [thinking]);
+
   useEffect(() => {
     if (highlightId && highlightRef.current) {
       highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    // Se a última mensagem for do usuário, resetamos o flag para forçar o scroll
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "user") {
+      userScrolledUp.current = false;
+    }
+
+    if (!userScrolledUp.current) {
+      bottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
   }, [messages, thinking, highlightId]);
 
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6">
+    <div className="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
+
       <div className="mx-auto w-full max-w-3xl space-y-5">
         {messages.length === 0 && !thinking && (
           <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
@@ -227,7 +256,7 @@ export function ChatMessageList({
             </div>
           </div>
         )}
-        <div ref={endRef} />
+        <div ref={bottomRef} />
       </div>
     </div>
   );
