@@ -15,6 +15,7 @@ import {
   TrendingUp,
   PieChart as PieChartIcon,
   Lightbulb,
+  Pin,
 } from "lucide-react";
 
 // Ícones com peso visual leve e tamanho uniforme em toda a página
@@ -193,8 +194,9 @@ function DashboardPage() {
           .limit(2000),
         (supabase as any)
           .from("patient_chats")
-          .select("id, patient_id, title, updated_at")
+          .select("id, patient_id, title, updated_at, pinned_at")
           .eq("created_by", user.id)
+          .order("pinned_at", { ascending: false, nullsFirst: false })
           .order("updated_at", { ascending: false })
           .limit(5),
       ]);
@@ -998,22 +1000,51 @@ function DashboardPage() {
             <EmptyState text="Nenhuma conversa registrada ainda." />
           ) : (
             <ul className="space-y-2">
-              {lastChats.map((c) => (
+              {lastChats.map((c: any) => (
                 <li key={c.id}>
                   <Link
                     to="/app/chat/$patientId"
                     params={{ patientId: c.patient_id }}
-                    className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 transition-colors"
+                    className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 transition-colors group"
                   >
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium truncate">{c.patientName}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-xs font-medium truncate">{c.patientName}</div>
+                        {c.pinned_at && (
+                          <Pin className="h-2.5 w-2.5 text-[#e8a04c] fill-[#e8a04c]" />
+                        )}
+                      </div>
                       <div className="text-[11px] text-muted-foreground truncate">
                         {c.title ?? "Conversa com a Lumma"}
                       </div>
                     </div>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
-                      {format(new Date(c.updated_at), "dd/MM")}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(c.updated_at), "dd/MM")}
+                      </span>
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const isPinned = !!c.pinned_at;
+                          const { error } = await supabase
+                            .from('patient_chats')
+                            .update({ pinned_at: isPinned ? null : new Date().toISOString() })
+                            .eq('id', c.id);
+                          
+                          if (!error) {
+                            // Recarrega localmente ou via window.reload para simplicidade no dashboard
+                            window.location.reload();
+                          }
+                        }}
+                        className={cn(
+                          "p-1 hover:bg-muted rounded transition-opacity",
+                          c.pinned_at ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}
+                      >
+                        <Pin className={cn("h-3 w-3", c.pinned_at ? "text-[#e8a04c] fill-[#e8a04c]" : "text-muted-foreground")} />
+                      </button>
+                    </div>
                   </Link>
                 </li>
               ))}

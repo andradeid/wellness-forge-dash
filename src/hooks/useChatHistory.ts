@@ -53,6 +53,7 @@ export function useChatHistory(limit = 50) {
             title,
             updated_at,
             agent_type,
+            pinned_at,
             general_chat_messages(content, role, created_at)
           `)
           .eq("created_by", user.id)
@@ -119,7 +120,7 @@ export function useChatHistory(limit = 50) {
           patient_id: null,
           patient_name: c.title || (agentType === 'research' ? 'Pesquisa Científica' : 'Pergunta Clínica'),
           agent_type: agentType,
-          pinned_at: null,
+          pinned_at: c.pinned_at ?? null,
           avatar_url: null, // Será tratado no componente via agent_type
           last_message: lastMsg ? {
             content: lastMsg.content,
@@ -131,9 +132,16 @@ export function useChatHistory(limit = 50) {
         };
       });
 
-      const combined = [...mappedPChats, ...mappedGChats].sort((a, b) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      ).slice(0, limit);
+      const combined = [...mappedPChats, ...mappedGChats].sort((a, b) => {
+        // Ordenação prioritária: pinned_at DESC, depois updated_at DESC
+        if (a.pinned_at && !b.pinned_at) return -1;
+        if (!a.pinned_at && b.pinned_at) return 1;
+        if (a.pinned_at && b.pinned_at) {
+          const pinDiff = new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+          if (pinDiff !== 0) return pinDiff;
+        }
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }).slice(0, limit);
 
       setChats(combined);
     } catch (error) {
