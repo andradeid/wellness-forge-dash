@@ -258,10 +258,13 @@ function FaleComLummaPage() {
             <h1 className="text-5xl font-light tracking-tight text-foreground mb-6">
               Bem-vinda
             </h1>
-            <p className="text-lg text-foreground/70 leading-relaxed mb-10 max-w-xl">
+            <p className="text-lg text-foreground/70 leading-relaxed mb-4 max-w-xl">
               Sou sua mentora virtual, inspirada na metodologia da Ana Paula
               Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
               Funcional e Integrativa.
+            </p>
+            <p className="text-sm text-foreground/60 mb-8 max-w-lg">
+              Faça o upload de PDFs ou imagens de laudos laboratoriais para análise estruturada.
             </p>
             <div className="flex items-center gap-3 flex-wrap justify-center max-w-4xl">
               <Button
