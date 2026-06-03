@@ -50,10 +50,11 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
   });
+  const [showModuleSelector, setShowModuleSelector] = useState(false);
 
   useEffect(() => {
     const patientProfile =
