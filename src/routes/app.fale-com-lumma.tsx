@@ -266,9 +266,14 @@ function FaleComLummaPage() {
                   }`}
                 >
                   <div className="relative shrink-0">
-                    <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 group-hover:text-white" />
+                    <Avatar className="h-9 w-9 border-2 border-white/20">
+                      <AvatarImage src={undefined} />
+                      <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
+                        {(c.patient_name || "??").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     {c.pinned_at && (
-                      <Pin className="absolute -top-1 -right-1 h-2 w-2 text-white fill-white" />
+                      <Pin className="absolute -top-1 -right-1 h-3 w-3 text-white fill-white drop-shadow-sm" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
