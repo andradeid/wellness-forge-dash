@@ -29,11 +29,23 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   component: ChatPage,
 });
 
-const AGENT_BADGES: Record<string, { icon: string; label: string }> = {
-  exam: { icon: "🔬", label: "Analisando Exame" },
-  production: { icon: "🥗", label: "Plano & Formulação" },
-  reasoning: { icon: "🤔", label: "Pergunta Clínica" },
+const AGENT_BADGES: Record<string, { icon: any; label: string }> = {
+  exam: { icon: Droplet, label: "Analisando Exame" },
+  metabolism: { icon: Scale, label: "Composição e Metabolismo" },
+  genetics: { icon: Dna, label: "Genética e Microbioma" },
+  reasoning: { icon: ClipboardList, label: "Casos Clínicos & Sintomas" },
+  production: { icon: Apple, label: "Elaborando Plano & Receitas" },
+  research: { icon: BookOpen, label: "Pesquisa Científica" },
 };
+
+const AGENT_OPTIONS = [
+  { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
+  { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
+  { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
+  { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
+  { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
+  { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
+];
 
 interface PatientCtx {
 
