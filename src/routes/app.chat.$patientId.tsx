@@ -95,6 +95,8 @@ function ChatPage() {
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
+      // Garante que o painel de módulos não esconda a animação "Lumma está pensando…"
+      setShowModuleSelector(false);
       const ctx = files.length > 0 ? filtersToContext(filters) : null;
       if (files.length > 0 && ctx) {
         // 1) Envia o exame primeiro e aguarda a resposta da Lumma
