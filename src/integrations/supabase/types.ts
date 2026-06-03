@@ -418,10 +418,13 @@ export type Database = {
           created_by: string
           email: string | null
           gender: Database["public"]["Enums"]["gender_type"] | null
+          gestational_weeks: number | null
           id: string
+          is_pregnant: boolean | null
           name: string
           notes: string | null
           phone: string | null
+          pregnancy_type: string | null
           updated_at: string
         }
         Insert: {
@@ -431,10 +434,13 @@ export type Database = {
           created_by: string
           email?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          gestational_weeks?: number | null
           id?: string
+          is_pregnant?: boolean | null
           name: string
           notes?: string | null
           phone?: string | null
+          pregnancy_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -444,10 +450,13 @@ export type Database = {
           created_by?: string
           email?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          gestational_weeks?: number | null
           id?: string
+          is_pregnant?: boolean | null
           name?: string
           notes?: string | null
           phone?: string | null
+          pregnancy_type?: string | null
           updated_at?: string
         }
         Relationships: []
