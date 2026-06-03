@@ -148,6 +148,23 @@ function FaleComLummaPage() {
     [patients, patientQuery]
   );
 
+  const AGENT_OPTIONS = [
+    { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
+    { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
+    { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
+    { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
+    { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
+    { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
+  ];
+
+  const getActiveAgentLabel = (id: string | undefined) => {
+    const agent = AGENT_OPTIONS.find(a => a.id === id);
+    if (!agent) return "Pergunta Clínica";
+    if (agent.id === "exam") return "Analisando Exame";
+    if (agent.id === "production") return "Elaborando Plano & Receitas";
+    return agent.title;
+  };
+
   const startGeneralChat = async (agentType: string) => {
     if (!user?.id) return;
     
