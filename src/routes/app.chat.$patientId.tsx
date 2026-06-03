@@ -325,6 +325,25 @@ function ChatPage() {
 
       {/* Conteúdo principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {showModuleSelector && (
+          <div className="absolute top-4 left-6 z-30 flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-white/40 backdrop-blur-md border border-white/60 hover:bg-white/60"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Link
+              to="/app/patients"
+              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-white/40 backdrop-blur-md px-3 py-2 rounded-full border border-white/60 transition-all"
+            >
+              <ArrowLeft className="h-3 w-3" /> Pacientes
+            </Link>
+          </div>
+        )}
+
         {!showModuleSelector && (
           <header className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2 border-b border-white/40 bg-white/70 backdrop-blur-md flex items-center gap-3">
           <Button 
