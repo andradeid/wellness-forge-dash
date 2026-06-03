@@ -129,28 +129,39 @@ export function ChatIntentPanel({
       >
         {agentType === "exam" && (
           <div className="space-y-4 mt-5">
-            <FilterRow label="Público">
-              <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
-                Adulto
-              </Pill>
-              <Pill active={filters.publico === "gestante"} onClick={() => update({ publico: "gestante", sexo: "feminino", faseCiclo: null })}>
-                Gestante
-              </Pill>
-              <Pill disabled>Criança (Em breve)</Pill>
-            </FilterRow>
+            {(filters.publico as string === "adulto" || filters.publico === null || filters.publico === "gestante") && (
+              <FilterRow label="Público">
+                <Pill active={filters.publico === "adulto"} onClick={() => update({ publico: "adulto", gestanteTipo: null, gestantePeriodo: null })}>
+                  Adulto
+                </Pill>
+                <Pill active={filters.publico === "gestante"} onClick={() => update({ publico: "gestante", sexo: "feminino", faseCiclo: null })}>
+                  Gestante
+                </Pill>
+                <Pill disabled>Criança (Em breve)</Pill>
+              </FilterRow>
+            )}
 
-            <FilterRow label="Sexo biológico">
-              <Pill
-                active={filters.sexo === "masculino"}
-                disabled={filters.publico === "gestante"}
-                onClick={() => update({ sexo: "masculino", faseCiclo: null })}
-              >
-                Masculino
-              </Pill>
-              <Pill active={filters.sexo === "feminino"} onClick={() => update({ sexo: "feminino" })}>
-                Feminino
-              </Pill>
-            </FilterRow>
+            {filters.publico === "gestante" && (
+              <FilterRow label="Sexo biológico">
+                <Pill active={filters.sexo === "feminino"} disabled>
+                  Feminino
+                </Pill>
+              </FilterRow>
+            )}
+
+            {!filters.sexo && (
+              <FilterRow label="Sexo biológico">
+                <Pill
+                  active={filters.sexo === "masculino"}
+                  onClick={() => update({ sexo: "masculino", faseCiclo: null })}
+                >
+                  Masculino
+                </Pill>
+                <Pill active={filters.sexo === "feminino"} onClick={() => update({ sexo: "feminino" })}>
+                  Feminino
+                </Pill>
+              </FilterRow>
+            )}
 
             {filters.publico === "adulto" && filters.sexo === "feminino" && (
               <FilterRow label="Fase do ciclo">
