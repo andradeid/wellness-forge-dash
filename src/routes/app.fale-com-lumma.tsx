@@ -127,8 +127,11 @@ function FaleComLummaPage() {
         name: newName,
         birth_date: newBirthDate,
         gender: newGender,
+        is_pregnant: newGender === "female" ? isPregnant : false,
+        gestational_weeks: newGender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
+        pregnancy_type: newGender === "female" && isPregnant ? pregnancyType : null,
       })
-      .select("id, name, birth_date, gender, avatar_url")
+      .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .single();
     setCreating(false);
     if (error) {
