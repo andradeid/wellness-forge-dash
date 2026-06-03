@@ -92,6 +92,48 @@ export function DifyAgentsPanel() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<Record<string, boolean>>({});
   const [togglingActive, setTogglingActive] = useState<Record<string, boolean>>({});
+  type TestState =
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "success"; appName?: string | null }
+    | { status: "error"; message: string };
+  const [testState, setTestState] = useState<Record<string, TestState>>({});
+
+  const runAgentTest = async (agent: DifyAgent) => {
+    setTestState((s) => ({ ...s, [agent.id]: { status: "loading" } }));
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      const res = await fetch("/api/dify/agent-test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ agent_id: agent.agent_id }),
+      });
+      const json = await res.json().catch(() => ({ ok: false, error: "Resposta inválida" }));
+      if (json?.ok) {
+        setTestState((s) => ({
+          ...s,
+          [agent.id]: { status: "success", appName: json.app_name ?? null },
+        }));
+      } else {
+        setTestState((s) => ({
+          ...s,
+          [agent.id]: { status: "error", message: json?.error ?? "Falha desconhecida" },
+        }));
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setTestState((s) => ({ ...s, [agent.id]: { status: "error", message: msg } }));
+    } finally {
+      setTimeout(() => {
+        setTestState((s) => ({ ...s, [agent.id]: { status: "idle" } }));
+      }, 4000);
+    }
+  };
+
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<AgentFormState>(emptyForm(1));
