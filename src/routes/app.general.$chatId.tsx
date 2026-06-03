@@ -41,11 +41,7 @@ function GeneralChatPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden flex bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
-      <style>{`
-        .lumma-sidebar {
-          background: linear-gradient(135deg, #1a1040 0%, #2d1b69 100%);
-        }
-      `}</style>
+      {/* Painel lateral: últimos chats */}
 
       {/* Painel lateral: últimos chats */}
       <aside className="lumma-sidebar hidden md:flex w-72 shrink-0 flex-col border-r border-white/10 text-white">
