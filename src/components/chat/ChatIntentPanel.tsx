@@ -4,7 +4,7 @@ import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export type FaseCiclo = "folicular" | "ovulatoria" | "lutea" | "menopausa";
 
-export type AgentType = "exam" | "production" | "reasoning";
+export type AgentType = "exam" | "production" | "reasoning" | "research";
 
 export type ExamFilters = {
   publico: "adulto" | "gestante" | null;
