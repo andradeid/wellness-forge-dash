@@ -731,6 +731,52 @@ function FaleComLummaPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {newGender === "female" && (
+              <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is-pregnant" className="text-sm font-medium">Está gestante?</Label>
+                  <input
+                    id="is-pregnant"
+                    type="checkbox"
+                    checked={isPregnant}
+                    onChange={(e) => setIsPregnant(e.target.checked)}
+                    className="h-5 w-5 rounded border-muted text-[#e8a04c] focus:ring-[#e8a04c]/30"
+                  />
+                </div>
+
+                {isPregnant && (
+                  <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas de gestação</Label>
+                      <Input
+                        id="weeks"
+                        type="number"
+                        min="1"
+                        max="42"
+                        value={gestationalWeeks}
+                        onChange={(e) => setGestationalWeeks(e.target.value)}
+                        placeholder="Ex: 24"
+                        className="rounded-xl h-11 bg-white border-muted focus-visible:ring-[#e8a04c]/30"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo de gestação</Label>
+                      <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                        <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="single">Única</SelectItem>
+                          <SelectItem value="multiple">Gemelar ou múltipla</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <DialogFooter className="pt-2">
               <Button
                 type="submit"
