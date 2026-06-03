@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -30,6 +30,7 @@ interface ChatItem {
   patient_id: string | null;
   patient_name: string | null;
   agent_type?: string | null;
+  pinned_at: string | null;
 }
 
 interface PatientItem {
@@ -145,10 +146,12 @@ function FaleComLummaPage() {
           title, 
           updated_at, 
           patient_id, 
+          pinned_at,
           patients:patient_id(name),
           chat_messages(agent_type)
         `)
         .eq("created_by", user.id)
+        .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
         .limit(50);
       
@@ -170,6 +173,7 @@ function FaleComLummaPage() {
           patient_id: c.patient_id ?? null,
           patient_name: c.patients?.name ?? null,
           agent_type: lastMsg?.agent_type ?? null,
+          pinned_at: c.pinned_at ?? null,
         };
       });
       setChats(mapped);
@@ -261,7 +265,12 @@ function FaleComLummaPage() {
                     activeId === c.id ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
-                  <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 shrink-0 group-hover:text-white" />
+                  <div className="relative shrink-0">
+                    <MessageSquare className="h-4 w-4 mt-0.5 text-white/60 group-hover:text-white" />
+                    {c.pinned_at && (
+                      <Pin className="absolute -top-1 -right-1 h-2 w-2 text-white fill-white" />
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-medium text-white truncate">
