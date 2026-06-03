@@ -739,22 +739,41 @@ function FaleComLummaPage() {
             </div>
 
             {newGender === "female" && (
-              <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50">
+              <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50 animate-in fade-in duration-300">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="is-pregnant" className="text-sm font-medium">Está gestante?</Label>
-                  <input
-                    id="is-pregnant"
-                    type="checkbox"
-                    checked={isPregnant}
-                    onChange={(e) => setIsPregnant(e.target.checked)}
-                    className="h-5 w-5 rounded border-muted text-[#e8a04c] focus:ring-[#e8a04c]/30"
-                  />
+                  <Label className="text-sm font-medium">Paciente está gestante?</Label>
+                  <div className="flex bg-white rounded-lg p-1 border border-muted shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setIsPregnant(false)}
+                      className={cn(
+                        "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                        !isPregnant 
+                          ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm" 
+                          : "text-muted-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      Não
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsPregnant(true)}
+                      className={cn(
+                        "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                        isPregnant 
+                          ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm" 
+                          : "text-muted-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      Sim
+                    </button>
+                  </div>
                 </div>
 
                 {isPregnant && (
-                  <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="grid grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="space-y-1.5">
-                      <Label htmlFor="weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas de gestação</Label>
+                      <Label htmlFor="weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas</Label>
                       <Input
                         id="weeks"
                         type="number"
@@ -768,14 +787,14 @@ function FaleComLummaPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo de gestação</Label>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
                       <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
                         <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="single">Única</SelectItem>
-                          <SelectItem value="multiple">Gemelar ou múltipla</SelectItem>
+                          <SelectItem value="multiple">Gemelar</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
