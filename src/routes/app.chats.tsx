@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { MessageSquare, Search, Clock, FileText, Pin, PinOff } from "lucide-react";
+import { MessageSquare, Search, Clock, FileText, Pin, PinOff, Edit2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,32 @@ export const Route = createFileRoute("/app/chats")({
 function ChatsCentralPage() {
   const { chats: rows, loading, refresh } = useChatHistory(200);
   const [search, setSearch] = useState("");
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
+
+  const handleUpdateTitle = async (e: React.MouseEvent | React.KeyboardEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!editTitle.trim()) return;
+    setIsUpdatingTitle(true);
+    try {
+      const { error } = await supabase
+        .from("general_chats")
+        .update({ title: editTitle.trim() })
+        .eq("id", id);
+      
+      if (error) throw error;
+      toast.success("Título atualizado com sucesso.");
+      await refresh();
+      setEditingChatId(null);
+    } catch (err) {
+      console.error("Erro ao atualizar título:", err);
+      toast.error("Erro ao atualizar título.");
+    } finally {
+      setIsUpdatingTitle(false);
+    }
+  };
 
   const togglePin = async (e: React.MouseEvent, chat: ChatItem) => {
     e.preventDefault();
@@ -129,9 +155,62 @@ function ChatsCentralPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         {r.pinned_at && <Pin className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />}
-                        <span className="font-medium truncate">
-                          {r.title || r.patient_name || "Conversa sem título"}
-                        </span>
+                        {editingChatId === r.id ? (
+                          <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+                            <Input
+                              autoFocus
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateTitle(e, r.id);
+                                if (e.key === 'Escape') setEditingChatId(null);
+                              }}
+                              className="h-7 text-sm bg-white border-amber-200 focus-visible:ring-amber-500"
+                              disabled={isUpdatingTitle}
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              onClick={(e) => handleUpdateTitle(e, r.id)}
+                              disabled={isUpdatingTitle}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditingChatId(null);
+                              }}
+                              disabled={isUpdatingTitle}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1 group/title">
+                            <span className="font-medium truncate">
+                              {r.title || r.patient_name || "Conversa sem título"}
+                            </span>
+                            {!r.patient_id && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setEditingChatId(r.id);
+                                  setEditTitle(r.title || "");
+                                }}
+                                className="opacity-0 group-hover/title:opacity-100 p-1 hover:bg-accent rounded transition-opacity shrink-0"
+                              >
+                                <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <StatusBadge updatedAt={r.updated_at} />
                         {(r.exam_count ?? 0) > 0 && (
                           <Badge variant="secondary" className="gap-1">
