@@ -261,8 +261,10 @@ function FaleComLummaPage() {
                       });
                     }
                   }}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors group ${
-                    activeId === c.id ? "bg-white/15" : "hover:bg-white/10"
+                  className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 group ${
+                    activeId === c.id 
+                      ? "bg-white/20 shadow-sm" 
+                      : "hover:bg-white/10"
                   }`}
                 >
                   <div className="relative shrink-0">
