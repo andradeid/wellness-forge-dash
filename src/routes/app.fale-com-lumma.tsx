@@ -229,23 +229,26 @@ function FaleComLummaPage() {
   const [showCards, setShowCards] = useState(false);
 
   useEffect(() => {
-    // Som de entrada premium
-    const playIntroSound = () => {
-      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3");
-      audio.volume = 0.2;
+    // Som de saudação enviado pelo usuário
+    const playGreetingSound = () => {
+      const audio = new Audio("/audio/saudacao-lumma.mp3");
+      audio.volume = 0.5;
       audio.play().catch(err => console.log("Autoplay blocked or audio error:", err));
     };
 
     let i = 0;
     const interval = setInterval(() => {
-      if (i === 0) playIntroSound();
+      if (i === 0) {
+        // Pequeno delay para garantir que a página "respirou"
+        setTimeout(playGreetingSound, 200);
+      }
       setDisplayText(greeting.slice(0, i));
       i++;
       if (i > greeting.length) {
         clearInterval(interval);
-        setTimeout(() => setShowSubtitle(true), 400); // Mais lento
+        setTimeout(() => setShowSubtitle(true), 400);
       }
-    }, 70); // Mais lento (70ms por letra)
+    }, 70);
     return () => clearInterval(interval);
   }, [greeting]);
 
