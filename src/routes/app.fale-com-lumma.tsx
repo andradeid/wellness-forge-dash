@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -227,13 +227,25 @@ function FaleComLummaPage() {
   const [displayText, setDisplayText] = useState("");
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [showCards, setShowCards] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(() => {
+    const saved = localStorage.getItem("lumma_audio_enabled");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   useEffect(() => {
     // Som de saudação enviado pelo usuário
     const playGreetingSound = () => {
+      if (!audioEnabled) return;
+
       const audio = new Audio("/audio/saudacao-lumma.mp3");
       audio.volume = 0.5;
-      audio.play().catch(err => console.log("Autoplay blocked or audio error:", err));
+      audio.play().catch(err => {
+        console.log("Autoplay blocked or audio error:", err);
+        if (err.name === "NotAllowedError") {
+          setAudioBlocked(true);
+        }
+      });
     };
 
     let i = 0;
@@ -250,7 +262,20 @@ function FaleComLummaPage() {
       }
     }, 70);
     return () => clearInterval(interval);
-  }, [greeting]);
+  }, [greeting, audioEnabled]);
+
+  const toggleAudio = (enabled: boolean) => {
+    setAudioEnabled(enabled);
+    localStorage.setItem("lumma_audio_enabled", String(enabled));
+    if (!enabled) setAudioBlocked(false);
+  };
+
+  const handleManualPlay = () => {
+    setAudioBlocked(false);
+    const audio = new Audio("/audio/saudacao-lumma.mp3");
+    audio.volume = 0.5;
+    audio.play().catch(console.error);
+  };
 
 
 
@@ -429,6 +454,37 @@ function FaleComLummaPage() {
 
         {/* Área principal */}
       <div className="relative flex-1 overflow-hidden">
+        {/* Controle de Áudio Flutuante */}
+        <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => toggleAudio(!audioEnabled)}
+            className="rounded-full bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40 transition-all shadow-sm"
+          >
+            {audioEnabled ? (
+              <Volume2 className="h-4 w-4 text-foreground/70" />
+            ) : (
+              <VolumeX className="h-4 w-4 text-foreground/40" />
+            )}
+          </Button>
+
+          <AnimatePresence>
+            {audioBlocked && audioEnabled && (
+              <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                onClick={handleManualPlay}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-[#e8a04c]/30 shadow-sm text-[10px] font-semibold text-[#e8a04c] hover:bg-white transition-colors animate-pulse"
+              >
+                Clique para ouvir a saudação
+                <Sparkles className="h-3 w-3" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
         <div className="flex h-full flex-col items-center justify-center px-6 py-12">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
             <motion.img
