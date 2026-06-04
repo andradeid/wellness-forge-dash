@@ -229,15 +229,23 @@ function FaleComLummaPage() {
   const [showCards, setShowCards] = useState(false);
 
   useEffect(() => {
+    // Som de entrada premium
+    const playIntroSound = () => {
+      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3");
+      audio.volume = 0.2;
+      audio.play().catch(err => console.log("Autoplay blocked or audio error:", err));
+    };
+
     let i = 0;
     const interval = setInterval(() => {
+      if (i === 0) playIntroSound();
       setDisplayText(greeting.slice(0, i));
       i++;
       if (i > greeting.length) {
         clearInterval(interval);
-        setTimeout(() => setShowSubtitle(true), 200);
+        setTimeout(() => setShowSubtitle(true), 400); // Mais lento
       }
-    }, 50);
+    }, 70); // Mais lento (70ms por letra)
     return () => clearInterval(interval);
   }, [greeting]);
 
@@ -455,105 +463,83 @@ function FaleComLummaPage() {
               {/* Linha 1: Análises e Uploads */}
               <AnimatePresence>
                 {showCards && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="space-y-4"
-                  >
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Análises e Uploads</h3>
+                  <div className="space-y-4">
+                    <motion.h3 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
+                    >
+                      Análises e Uploads
+                    </motion.h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <button 
-                        onClick={() => {
-                          setPendingModule("exam");
-                          setIdentifyOpen(true);
-                        }}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                      >
-                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                          <Droplet className="h-6 w-6 text-[#e89bcf]" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground/80">Exames de Sangue</span>
-                      </button>
-
-                      <button 
-                        onClick={() => {
-                          setPendingModule("exam");
-                          setIdentifyOpen(true);
-                        }}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                      >
-                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                          <Scale className="h-6 w-6 text-[#e89bcf]" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground/80 text-center">Composição e Metabolismo</span>
-                      </button>
-
-                      <button 
-                        onClick={() => {
-                          setPendingModule("exam");
-                          setIdentifyOpen(true);
-                        }}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                      >
-                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                          <Dna className="h-6 w-6 text-[#e89bcf]" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground/80">Genética e Microbioma</span>
-                      </button>
+                      {[
+                        { id: "exam", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
+                        { id: "metabolism", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
+                        { id: "genetics", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" }
+                      ].map((card, idx) => (
+                        <motion.button 
+                          key={card.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: idx * 0.2, ease: "easeOut" }}
+                          onClick={() => {
+                            setPendingModule("exam");
+                            setIdentifyOpen(true);
+                          }}
+                          className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                        >
+                          <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                            <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                          </div>
+                          <span className="text-sm font-medium text-foreground/80">{card.title}</span>
+                        </motion.button>
+                      ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
 
               {/* Linha 2: Condutas e Entregas */}
               <AnimatePresence>
                 {showCards && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="space-y-4"
-                  >
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Condutas e Entregas</h3>
+                  <div className="space-y-4">
+                    <motion.h3 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5, delay: 0.6 }}
+                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
+                    >
+                      Condutas e Entregas
+                    </motion.h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <button 
-                        onClick={() => {
-                          setPendingModule("reasoning");
-                          setIdentifyOpen(true);
-                        }}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                      >
-                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                          <ClipboardList className="h-6 w-6 text-[#e8a04c]" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground/80">Casos Clínicos & Sintomas</span>
-                      </button>
-
-                      <button 
-                        onClick={() => {
-                          setPendingModule("production");
-                          setIdentifyOpen(true);
-                        }}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                      >
-                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                          <Apple className="h-6 w-6 text-[#e8a04c]" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground/80">Plano Alimentar & Receitas</span>
-                      </button>
-
-                      <button 
-                        onClick={() => startGeneralChat("research")}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                      >
-                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                          <Search className="h-6 w-6 text-[#e8a04c]" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground/80">Pesquisa Científica</span>
-                      </button>
+                      {[
+                        { id: "reasoning", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
+                        { id: "production", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
+                        { id: "research", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" }
+                      ].map((card, idx) => (
+                        <motion.button 
+                          key={card.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: 0.8 + (idx * 0.2), ease: "easeOut" }}
+                          onClick={() => {
+                            if (card.id === "research") startGeneralChat("research");
+                            else {
+                              setPendingModule(card.id);
+                              setIdentifyOpen(true);
+                            }
+                          }}
+                          className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                        >
+                          <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                            <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                          </div>
+                          <span className="text-sm font-medium text-foreground/80">{card.title}</span>
+                        </motion.button>
+                      ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
