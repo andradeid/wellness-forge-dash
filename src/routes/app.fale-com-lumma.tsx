@@ -224,6 +224,23 @@ function FaleComLummaPage() {
     return pronoun ? `${t}, ${pronoun} ${name}.` : `${t}, ${name}.`;
   })();
 
+  const [displayText, setDisplayText] = useState("");
+  const [showSubtitle, setShowSubtitle] = useState(false);
+  const [showCards, setShowCards] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayText(greeting.slice(0, i));
+      i++;
+      if (i > greeting.length) {
+        clearInterval(interval);
+        setTimeout(() => setShowSubtitle(true), 200);
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [greeting]);
+
 
 
   return (
