@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -223,6 +224,23 @@ function FaleComLummaPage() {
     return pronoun ? `${t}, ${pronoun} ${name}.` : `${t}, ${name}.`;
   })();
 
+  const [displayText, setDisplayText] = useState("");
+  const [showSubtitle, setShowSubtitle] = useState(false);
+  const [showCards, setShowCards] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayText(greeting.slice(0, i));
+      i++;
+      if (i > greeting.length) {
+        clearInterval(interval);
+        setTimeout(() => setShowSubtitle(true), 200);
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [greeting]);
+
 
 
   return (
@@ -402,110 +420,142 @@ function FaleComLummaPage() {
       <div className="relative flex-1 overflow-hidden">
         <div className="flex h-full flex-col items-center justify-center px-6 py-12">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
-            <img
+            <motion.img
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
               src={lummaSymbol}
               alt="Lumma"
               className="h-20 w-20 mb-8 drop-shadow-sm"
             />
             <h1 
-              className="text-4xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-4"
+              className="text-4xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-4 min-h-[1.2em]"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              {greeting}
+              {displayText}
             </h1>
-            <p className="text-lg text-foreground/70 leading-relaxed mb-12 max-w-xl">
-              Sou sua mentora virtual, inspirada na metodologia da Ana Paula
-              Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
-              Funcional e Integrativa.
-            </p>
+            
+            <AnimatePresence>
+              {showSubtitle && (
+                <motion.p 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  onAnimationComplete={() => setShowCards(true)}
+                  className="text-lg text-foreground/70 leading-relaxed mb-12 max-w-xl"
+                >
+                  Sou sua mentora virtual, inspirada na metodologia da Ana Paula
+                  Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
+                  Funcional e Integrativa.
+                </motion.p>
+              )}
+            </AnimatePresence>
             
             <div className="w-full space-y-12">
               {/* Linha 1: Análises e Uploads */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Análises e Uploads</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <button 
-                    onClick={() => {
-                      setPendingModule("exam");
-                      setIdentifyOpen(true);
-                    }}
-                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+              <AnimatePresence>
+                {showCards && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="space-y-4"
                   >
-                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                      <Droplet className="h-6 w-6 text-[#e89bcf]" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground/80">Exames de Sangue</span>
-                  </button>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Análises e Uploads</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <button 
+                        onClick={() => {
+                          setPendingModule("exam");
+                          setIdentifyOpen(true);
+                        }}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                          <Droplet className="h-6 w-6 text-[#e89bcf]" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80">Exames de Sangue</span>
+                      </button>
 
-                  <button 
-                    onClick={() => {
-                      setPendingModule("exam");
-                      setIdentifyOpen(true);
-                    }}
-                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                  >
-                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                      <Scale className="h-6 w-6 text-[#e89bcf]" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground/80 text-center">Composição e Metabolismo</span>
-                  </button>
+                      <button 
+                        onClick={() => {
+                          setPendingModule("exam");
+                          setIdentifyOpen(true);
+                        }}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                          <Scale className="h-6 w-6 text-[#e89bcf]" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80 text-center">Composição e Metabolismo</span>
+                      </button>
 
-                  <button 
-                    onClick={() => {
-                      setPendingModule("exam");
-                      setIdentifyOpen(true);
-                    }}
-                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                  >
-                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                      <Dna className="h-6 w-6 text-[#e89bcf]" />
+                      <button 
+                        onClick={() => {
+                          setPendingModule("exam");
+                          setIdentifyOpen(true);
+                        }}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                          <Dna className="h-6 w-6 text-[#e89bcf]" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80">Genética e Microbioma</span>
+                      </button>
                     </div>
-                    <span className="text-sm font-medium text-foreground/80">Genética e Microbioma</span>
-                  </button>
-                </div>
-              </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Linha 2: Condutas e Entregas */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Condutas e Entregas</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <button 
-                    onClick={() => {
-                      setPendingModule("reasoning");
-                      setIdentifyOpen(true);
-                    }}
-                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+              <AnimatePresence>
+                {showCards && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="space-y-4"
                   >
-                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                      <ClipboardList className="h-6 w-6 text-[#e8a04c]" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground/80">Casos Clínicos & Sintomas</span>
-                  </button>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2">Condutas e Entregas</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <button 
+                        onClick={() => {
+                          setPendingModule("reasoning");
+                          setIdentifyOpen(true);
+                        }}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                          <ClipboardList className="h-6 w-6 text-[#e8a04c]" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80">Casos Clínicos & Sintomas</span>
+                      </button>
 
-                  <button 
-                    onClick={() => {
-                      setPendingModule("production");
-                      setIdentifyOpen(true);
-                    }}
-                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                  >
-                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                      <Apple className="h-6 w-6 text-[#e8a04c]" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground/80">Plano Alimentar & Receitas</span>
-                  </button>
+                      <button 
+                        onClick={() => {
+                          setPendingModule("production");
+                          setIdentifyOpen(true);
+                        }}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                          <Apple className="h-6 w-6 text-[#e8a04c]" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80">Plano Alimentar & Receitas</span>
+                      </button>
 
-                  <button 
-                    onClick={() => startGeneralChat("research")}
-                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                  >
-                    <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                      <Search className="h-6 w-6 text-[#e8a04c]" />
+                      <button 
+                        onClick={() => startGeneralChat("research")}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                          <Search className="h-6 w-6 text-[#e8a04c]" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80">Pesquisa Científica</span>
+                      </button>
                     </div>
-                    <span className="text-sm font-medium text-foreground/80">Pesquisa Científica</span>
-                  </button>
-                </div>
-              </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {selectedPatient && (
