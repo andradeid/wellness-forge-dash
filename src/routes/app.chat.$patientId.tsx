@@ -113,23 +113,27 @@ function ChatPage() {
   }, [filters.publico, filters.sexo]);
 
   useEffect(() => {
-    if (pendingModule && patientProfile) {
-      const agent = getAgentForCard(pendingModule, patientProfile);
-      if (agent) {
-        setAgentType(agent.agent_id);
-        setShowModuleSelector(false);
-        setPendingModule(null);
-        
-        // Limpa o parâmetro da URL apenas se ele ainda existir
-        const params = new URLSearchParams(window.location.search);
-        if (params.has("module")) {
-          params.delete("module");
-          const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
-          window.history.replaceState({}, "", newUrl);
-        }
-      }
+    // Só executa quando:
+    // 1. Tem módulo pendente da URL
+    // 2. patientProfile já foi calculado (não está mais vazio)
+    if (!pendingModuleFromUrl) return;
+    if (!patientProfile) return;
+
+    // Agora patientProfile está disponível
+    // getAgentForCard pode decidir corretamente
+    const agent = getAgentForCard(pendingModuleFromUrl, patientProfile);
+
+    if (agent) {
+      setAgentType(agent.agent_id);
+      setShowModuleSelector(false);
     }
-  }, [pendingModule, patientProfile, getAgentForCard, setAgentType]);
+
+    // Limpa o módulo pendente para não executar novamente
+    setPendingModuleFromUrl(null);
+
+    // Limpa o ?module da URL
+    navigate({ search: {} }, { replace: true });
+  }, [pendingModuleFromUrl, patientProfile, getAgentForCard, setAgentType, navigate]);
 
   useEffect(() => {
     const patientProfile =
