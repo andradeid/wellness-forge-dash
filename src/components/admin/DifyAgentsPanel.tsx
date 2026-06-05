@@ -598,36 +598,69 @@ export function DifyAgentsPanel() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome do agente *</Label>
-              <Input
-                value={createForm.label}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCreateForm((f) => ({
-                    ...f,
-                    label: v,
-                    agent_id: agentIdEdited ? f.agent_id : slugify(v),
-                  }));
-                }}
-                placeholder="Ex: App de Exames"
-                className="rounded-lg"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Nome do agente *</Label>
+                <Input
+                  value={createForm.label}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCreateForm((f) => ({
+                      ...f,
+                      label: v,
+                      agent_id: agentIdEdited ? f.agent_id : slugify(v),
+                    }));
+                  }}
+                  placeholder="Ex: App de Exames"
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Identificador (agent_id) *</Label>
+                <Input
+                  value={createForm.agent_id}
+                  onChange={(e) => {
+                    setAgentIdEdited(true);
+                    setCreateForm((f) => ({ ...f, agent_id: slugify(e.target.value) }));
+                  }}
+                  placeholder="exam"
+                  className="rounded-lg font-mono"
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Identificador (agent_id) *</Label>
-              <Input
-                value={createForm.agent_id}
-                onChange={(e) => {
-                  setAgentIdEdited(true);
-                  setCreateForm((f) => ({ ...f, agent_id: slugify(e.target.value) }));
-                }}
-                placeholder="exam"
-                className="rounded-lg font-mono"
+              <Label>Card que aciona este agente</Label>
+              <Select
+                value={createForm.card_trigger}
+                onValueChange={(v) =>
+                  setCreateForm((f) => ({ ...f, card_trigger: v }))
+                }
+              >
+                <SelectTrigger className="rounded-lg">
+                  <SelectValue placeholder="Selecione um card" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CARD_TRIGGER_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+              <div className="space-y-0.5">
+                <Label>Requer seleção de paciente</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Se desativado, o chat abre sem precisar selecionar um paciente
+                </p>
+              </div>
+              <Switch
+                checked={createForm.patient_required}
+                onCheckedChange={(v) =>
+                  setCreateForm((f) => ({ ...f, patient_required: v }))
+                }
               />
-              <p className="text-[11px] text-muted-foreground">
-                Usado no código para selecionar este agente. Apenas letras, números e _.
-              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Descrição</Label>
