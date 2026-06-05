@@ -132,7 +132,13 @@ function ChatPage() {
     setPendingModuleFromUrl(null);
 
     // Limpa o ?module da URL
-    navigate({ search: (prev) => ({ ...prev, module: undefined }) });
+    navigate({
+      search: {
+        chatId: forceChatId,
+        messageId: highlightId,
+        module: undefined
+      } as any
+    });
   }, [pendingModuleFromUrl, patientProfile, getAgentForCard, setAgentType, navigate]);
 
   useEffect(() => {
