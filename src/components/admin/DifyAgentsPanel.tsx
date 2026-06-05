@@ -756,22 +756,72 @@ export function DifyAgentsPanel() {
           </DialogHeader>
           {editForm && (
             <div className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <Label>Nome do agente *</Label>
-                <Input
-                  value={editForm.label}
-                  onChange={(e) =>
-                    setEditForm((f) => (f ? { ...f, label: e.target.value } : f))
-                  }
-                  className="rounded-lg"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Nome do agente *</Label>
+                  <Input
+                    value={editForm.label}
+                    onChange={(e) =>
+                      setEditForm((f) => (f ? { ...f, label: e.target.value } : f))
+                    }
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Identificador (agent_id)</Label>
+                  <Input
+                    value={editForm.agent_id}
+                    readOnly
+                    className="rounded-lg font-mono bg-muted/40"
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Identificador (agent_id)</Label>
-                <Input
-                  value={editForm.agent_id}
-                  readOnly
-                  className="rounded-lg font-mono bg-muted/40"
+                <Label>Card que aciona este agente</Label>
+                <Select
+                  value={editForm.card_trigger}
+                  onValueChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, card_trigger: v } : f))
+                  }
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue placeholder="Selecione um card" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CARD_TRIGGER_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+                <div className="space-y-0.5">
+                  <Label>Requer seleção de paciente</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Se desativado, o chat abre sem precisar selecionar um paciente
+                  </p>
+                </div>
+                <Switch
+                  checked={editForm.patient_required}
+                  onCheckedChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, patient_required: v } : f))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+                <div className="space-y-0.5">
+                  <Label>Agente ativo</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Agentes inativos não recebem chamadas do frontend
+                  </p>
+                </div>
+                <Switch
+                  checked={editForm.is_active}
+                  onCheckedChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, is_active: v } : f))
+                  }
                 />
               </div>
               <div className="space-y-1.5">
