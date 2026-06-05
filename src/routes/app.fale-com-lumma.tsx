@@ -152,6 +152,20 @@ function FaleComLummaPage() {
     if (data) {
       setSelectedPatient(data as PatientItem);
       setPatients((prev) => [...prev, data as PatientItem]);
+      
+      // Navega automaticamente para o chat com o novo paciente
+      if (pendingModule) {
+        navigate({
+          to: "/app/chat/$patientId",
+          params: { patientId: data.id },
+          search: { module: pendingModule },
+        });
+      } else {
+        navigate({
+          to: "/app/chat/$patientId",
+          params: { patientId: data.id },
+        });
+      }
     }
   };
 
