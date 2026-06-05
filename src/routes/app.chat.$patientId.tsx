@@ -102,15 +102,19 @@ function ChatPage() {
   }, [messages.length, initialModule, role, thinking]);
 
   useEffect(() => {
-    if (initialModule && ["exam", "production", "reasoning", "research"].includes(initialModule)) {
-      setAgentType(initialModule);
-      setShowModuleSelector(false);
-      // Limpa o parâmetro da URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("module");
-      window.history.replaceState({}, "", url.toString());
+    if (initialModule) {
+      // Find agent in config to ensure it's valid
+      const agent = agents.find(a => a.agent_id === initialModule);
+      if (agent) {
+        setAgentType(initialModule);
+        setShowModuleSelector(false);
+        // Limpa o parâmetro da URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete("module");
+        window.history.replaceState({}, "", url.toString());
+      }
     }
-  }, [initialModule, setAgentType]);
+  }, [initialModule, setAgentType, agents]);
 
   useEffect(() => {
     const patientProfile =
