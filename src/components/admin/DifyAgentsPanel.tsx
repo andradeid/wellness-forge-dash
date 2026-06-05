@@ -180,6 +180,10 @@ export function DifyAgentsPanel() {
   const [editTarget, setEditTarget] = useState<DifyAgent | null>(null);
   const [editForm, setEditForm] = useState<AgentFormState | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [agentIdRiskAccepted, setAgentIdRiskAccepted] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<DifyAgent | null>(null);
+  const [deletingAgent, setDeletingAgent] = useState(false);
 
   const nextSort = useMemo(
     () => (agents.length === 0 ? 1 : Math.max(...agents.map((a) => a.sort_order)) + 1),
