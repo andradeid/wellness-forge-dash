@@ -530,9 +530,26 @@ function ChatPage() {
             ) : (
               <>
                 {(() => {
+                {(() => {
                   const currentAgent = agents.find(a => a.agent_id === agentType);
-                  const activeLabel = currentAgent?.label || "Módulo";
-                  const ActiveIcon = currentAgent?.card_trigger ? AGENT_ICONS[currentAgent.card_trigger] || Sparkles : Sparkles;
+                  const cardTrigger = currentAgent?.card_trigger;
+                  const activeLabel = cardTrigger ? CARD_LABELS[cardTrigger] || currentAgent.label : currentAgent?.label || "Módulo";
+                  const ActiveIcon = cardTrigger ? CARD_ICONS[cardTrigger] || Sparkles : Sparkles;
+                  
+                  // Agrupar agentes por card_trigger únicos
+                  const cardOptions = Array.from(
+                    new Map(
+                      agents
+                        .filter(a => a.is_active && a.card_trigger)
+                        .map(a => [a.card_trigger, {
+                          trigger: a.card_trigger as string,
+                          label: CARD_LABELS[a.card_trigger as string] || a.card_trigger,
+                          icon: CARD_ICONS[a.card_trigger as string] || Sparkles,
+                          color: CARD_COLORS[a.card_trigger as string] || "#e8a04c"
+                        }])
+                    ).values()
+                  );
+
                   return (
                     <div className="mb-2 flex justify-center relative">
                       <Popover>
@@ -554,17 +571,19 @@ function ChatPage() {
                           className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
                         >
                           <div className="space-y-1">
-                            {agents.filter(a => a.is_active).map((opt, idx) => {
-                              const Icon = opt.card_trigger ? AGENT_ICONS[opt.card_trigger] || Sparkles : Sparkles;
-                              const iconColor = opt.card_trigger ? AGENT_COLORS[opt.card_trigger] || "#e8a04c" : "#e8a04c";
-                              const isActive = agentType === opt.agent_id;
+                            {cardOptions.map((opt, idx) => {
+                              const Icon = opt.icon;
+                              const iconColor = opt.color;
+                              const isActive = cardTrigger === opt.trigger;
                               return (
-                                <div key={opt.id}>
+                                <div key={opt.trigger}>
                                   {idx === 3 && <div className="my-1 border-t border-slate-100" />}
                                   <button
                                     onClick={() => {
-                                      setAgentType(opt.agent_id);
-                                      // Fechar popover automaticamente via estado não é necessário com Radix se usarmos PopoverTrigger asChild
+                                      const bestAgent = getAgentForCard(opt.trigger, patientProfile);
+                                      if (bestAgent) {
+                                        setAgentType(bestAgent.agent_id);
+                                      }
                                     }}
                                     className={cn(
                                       "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
