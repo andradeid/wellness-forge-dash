@@ -12,6 +12,8 @@ import {
   Save,
   Wifi,
   X,
+  User,
+  UserMinus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +22,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -51,9 +61,21 @@ export interface DifyAgent {
   endpoint: string;
   is_active: boolean;
   sort_order: number;
+  card_trigger: string | null;
+  patient_required: boolean;
 }
 
 const DEFAULT_ENDPOINT = "https://api.dify.ai/v1";
+
+const CARD_TRIGGER_OPTIONS = [
+  { value: "exames_de_sangue", label: "Exames de Sangue" },
+  { value: "composicao_metabolismo", label: "Composição e Metabolismo" },
+  { value: "genetica_microbioma", label: "Genética e Microbioma" },
+  { value: "casos_clinicos", label: "Casos Clínicos & Sintomas" },
+  { value: "plano_alimentar", label: "Plano Alimentar & Receitas" },
+  { value: "pesquisa_cientifica", label: "Pesquisa Científica" },
+  { value: "geral", label: "Geral (sem card específico)" },
+];
 
 function slugify(input: string): string {
   return input
@@ -72,6 +94,9 @@ interface AgentFormState {
   api_key: string;
   endpoint: string;
   sort_order: number;
+  card_trigger: string;
+  patient_required: boolean;
+  is_active: boolean;
 }
 
 function emptyForm(nextSort: number): AgentFormState {
@@ -82,6 +107,9 @@ function emptyForm(nextSort: number): AgentFormState {
     api_key: "",
     endpoint: DEFAULT_ENDPOINT,
     sort_order: nextSort,
+    card_trigger: "geral",
+    patient_required: true,
+    is_active: true,
   };
 }
 
@@ -193,14 +221,19 @@ export function DifyAgentsPanel() {
       return;
     }
     setCreatingAgent(true);
-    const { error } = await (supabase as any).from("dify_agents").insert({
-      label,
-      agent_id,
-      description: form.description.trim() || null,
-      api_key: form.api_key.trim() || null,
-      endpoint: form.endpoint.trim() || DEFAULT_ENDPOINT,
-      sort_order: form.sort_order,
-    });
+    const { error } = await (supabase as any)
+      .from("dify_agents")
+      .insert({
+        label,
+        agent_id,
+        description: form.description.trim() || null,
+        api_key: form.api_key.trim() || null,
+        endpoint: form.endpoint.trim() || DEFAULT_ENDPOINT,
+        sort_order: form.sort_order,
+        card_trigger: form.card_trigger,
+        patient_required: form.patient_required,
+        is_active: form.is_active,
+      });
     setCreatingAgent(false);
     if (error) {
       toast.error("Não foi possível criar o agente.", { description: error.message });
@@ -259,6 +292,9 @@ export function DifyAgentsPanel() {
       api_key: agent.api_key ?? "",
       endpoint: agent.endpoint || DEFAULT_ENDPOINT,
       sort_order: agent.sort_order,
+      card_trigger: agent.card_trigger || "geral",
+      patient_required: agent.patient_required,
+      is_active: agent.is_active,
     });
   };
 
@@ -278,6 +314,9 @@ export function DifyAgentsPanel() {
         api_key: editForm.api_key.trim() || null,
         endpoint: editForm.endpoint.trim() || DEFAULT_ENDPOINT,
         sort_order: editForm.sort_order,
+        card_trigger: editForm.card_trigger,
+        patient_required: editForm.patient_required,
+        is_active: editForm.is_active,
       })
       .eq("id", editTarget.id);
     setSavingEdit(false);
@@ -337,20 +376,50 @@ export function DifyAgentsPanel() {
               >
                 {/* Left: label + description + id */}
                 <div className="space-y-1 min-w-0">
-                  <div className="font-medium text-sm text-foreground truncate">
+                  <div className="font-medium text-sm text-foreground truncate flex items-center gap-2">
                     {agent.label}
+                    {agent.patient_required ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <User className="h-3 w-3 text-slate-400" />
+                          </TooltipTrigger>
+                          <TooltipContent>Requer paciente</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <UserMinus className="h-3 w-3 text-slate-300" />
+                          </TooltipTrigger>
+                          <TooltipContent>Livre (não requer paciente)</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                   {agent.description && (
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {agent.description}
                     </p>
                   )}
-                  <Badge
-                    variant="outline"
-                    className="font-mono text-[10px] mt-1 rounded-md"
-                  >
-                    {agent.agent_id}
-                  </Badge>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-[10px] mt-1 rounded-md"
+                    >
+                      {agent.agent_id}
+                    </Badge>
+                    {agent.card_trigger && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] mt-1 rounded-md bg-slate-100 text-slate-600"
+                      >
+                        {CARD_TRIGGER_OPTIONS.find((o) => o.value === agent.card_trigger)
+                          ?.label || agent.card_trigger}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 {/* Middle: api_key input */}
@@ -529,36 +598,69 @@ export function DifyAgentsPanel() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome do agente *</Label>
-              <Input
-                value={createForm.label}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCreateForm((f) => ({
-                    ...f,
-                    label: v,
-                    agent_id: agentIdEdited ? f.agent_id : slugify(v),
-                  }));
-                }}
-                placeholder="Ex: App de Exames"
-                className="rounded-lg"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Nome do agente *</Label>
+                <Input
+                  value={createForm.label}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCreateForm((f) => ({
+                      ...f,
+                      label: v,
+                      agent_id: agentIdEdited ? f.agent_id : slugify(v),
+                    }));
+                  }}
+                  placeholder="Ex: App de Exames"
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Identificador (agent_id) *</Label>
+                <Input
+                  value={createForm.agent_id}
+                  onChange={(e) => {
+                    setAgentIdEdited(true);
+                    setCreateForm((f) => ({ ...f, agent_id: slugify(e.target.value) }));
+                  }}
+                  placeholder="exam"
+                  className="rounded-lg font-mono"
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Identificador (agent_id) *</Label>
-              <Input
-                value={createForm.agent_id}
-                onChange={(e) => {
-                  setAgentIdEdited(true);
-                  setCreateForm((f) => ({ ...f, agent_id: slugify(e.target.value) }));
-                }}
-                placeholder="exam"
-                className="rounded-lg font-mono"
+              <Label>Card que aciona este agente</Label>
+              <Select
+                value={createForm.card_trigger}
+                onValueChange={(v) =>
+                  setCreateForm((f) => ({ ...f, card_trigger: v }))
+                }
+              >
+                <SelectTrigger className="rounded-lg">
+                  <SelectValue placeholder="Selecione um card" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CARD_TRIGGER_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+              <div className="space-y-0.5">
+                <Label>Requer seleção de paciente</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Se desativado, o chat abre sem precisar selecionar um paciente
+                </p>
+              </div>
+              <Switch
+                checked={createForm.patient_required}
+                onCheckedChange={(v) =>
+                  setCreateForm((f) => ({ ...f, patient_required: v }))
+                }
               />
-              <p className="text-[11px] text-muted-foreground">
-                Usado no código para selecionar este agente. Apenas letras, números e _.
-              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Descrição</Label>
@@ -654,22 +756,72 @@ export function DifyAgentsPanel() {
           </DialogHeader>
           {editForm && (
             <div className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <Label>Nome do agente *</Label>
-                <Input
-                  value={editForm.label}
-                  onChange={(e) =>
-                    setEditForm((f) => (f ? { ...f, label: e.target.value } : f))
-                  }
-                  className="rounded-lg"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Nome do agente *</Label>
+                  <Input
+                    value={editForm.label}
+                    onChange={(e) =>
+                      setEditForm((f) => (f ? { ...f, label: e.target.value } : f))
+                    }
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Identificador (agent_id)</Label>
+                  <Input
+                    value={editForm.agent_id}
+                    readOnly
+                    className="rounded-lg font-mono bg-muted/40"
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Identificador (agent_id)</Label>
-                <Input
-                  value={editForm.agent_id}
-                  readOnly
-                  className="rounded-lg font-mono bg-muted/40"
+                <Label>Card que aciona este agente</Label>
+                <Select
+                  value={editForm.card_trigger}
+                  onValueChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, card_trigger: v } : f))
+                  }
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue placeholder="Selecione um card" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CARD_TRIGGER_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+                <div className="space-y-0.5">
+                  <Label>Requer seleção de paciente</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Se desativado, o chat abre sem precisar selecionar um paciente
+                  </p>
+                </div>
+                <Switch
+                  checked={editForm.patient_required}
+                  onCheckedChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, patient_required: v } : f))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+                <div className="space-y-0.5">
+                  <Label>Agente ativo</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Agentes inativos não recebem chamadas do frontend
+                  </p>
+                </div>
+                <Switch
+                  checked={editForm.is_active}
+                  onCheckedChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, is_active: v } : f))
+                  }
                 />
               </div>
               <div className="space-y-1.5">
