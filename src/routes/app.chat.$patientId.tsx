@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ClipboardList, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search } from "lucide-react";
+import { ArrowLeft, ClipboardList, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,6 +21,7 @@ import { ChatConversationPDF } from "@/components/chat/ChatConversationPDF";
 import { PatientChatHistory } from "@/components/chat/PatientChatHistory";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
+import { useAgentConfig } from "@/hooks/useAgentConfig";
 
 export const Route = createFileRoute("/app/chat/$patientId")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -31,23 +32,25 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   component: ChatPage,
 });
 
-const AGENT_BADGES: Record<string, { icon: any; label: string }> = {
-  exam: { icon: Droplet, label: "Analisando Exame" },
-  metabolism: { icon: Scale, label: "Composição e Metabolismo" },
-  genetics: { icon: Dna, label: "Genética e Microbioma" },
-  reasoning: { icon: ClipboardList, label: "Casos Clínicos & Sintomas" },
-  production: { icon: Apple, label: "Elaborando Plano & Receitas" },
-  research: { icon: BookOpen, label: "Pesquisa Científica" },
+const AGENT_ICONS: Record<string, any> = {
+  exames_de_sangue: Droplet,
+  composicao_metabolismo: Scale,
+  genetica_microbioma: Dna,
+  casos_clinicos: ClipboardList,
+  plano_alimentar: Apple,
+  pesquisa_cientifica: BookOpen,
+  geral: Sparkles,
 };
 
-const AGENT_OPTIONS = [
-  { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
-  { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
-  { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
-  { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
-  { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
-  { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
-];
+const AGENT_COLORS: Record<string, string> = {
+  exames_de_sangue: "#e89bcf",
+  composicao_metabolismo: "#e89bcf",
+  genetica_microbioma: "#e89bcf",
+  casos_clinicos: "#e8a04c",
+  plano_alimentar: "#e8a04c",
+  pesquisa_cientifica: "#e8a04c",
+  geral: "#e8a04c",
+};
 
 interface PatientCtx {
   id: string;
@@ -75,6 +78,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
+  const { agents } = useAgentConfig();
   const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
@@ -508,8 +512,9 @@ function ChatPage() {
             ) : (
               <>
                 {(() => {
-                  const activeMeta = AGENT_BADGES[agentType] ?? AGENT_BADGES.exam;
-                  const ActiveIcon = activeMeta.icon;
+                  const currentAgent = agents.find(a => a.agent_id === agentType);
+                  const activeLabel = currentAgent?.label || "Módulo";
+                  const ActiveIcon = currentAgent?.card_trigger ? AGENT_ICONS[currentAgent.card_trigger] || Sparkles : Sparkles;
                   return (
                     <div className="mb-2 flex justify-center relative">
                       <Popover>
@@ -520,7 +525,7 @@ function ChatPage() {
                             title="Trocar de módulo"
                           >
                             <ActiveIcon className="h-3.5 w-3.5 text-[#e8a04c]" />
-                            <span>{activeMeta.label}</span>
+                            <span>{activeLabel}</span>
                             <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
                             <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                           </button>
@@ -531,15 +536,16 @@ function ChatPage() {
                           className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
                         >
                           <div className="space-y-1">
-                            {AGENT_OPTIONS.map((opt, idx) => {
-                              const Icon = opt.icon;
+                            {agents.filter(a => a.is_active).map((opt, idx) => {
+                              const Icon = opt.card_trigger ? AGENT_ICONS[opt.card_trigger] || Sparkles : Sparkles;
+                              const iconColor = opt.card_trigger ? AGENT_COLORS[opt.card_trigger] || "#e8a04c" : "#e8a04c";
                               const isActive = agentType === opt.id;
                               return (
                                 <div key={opt.id}>
                                   {idx === 3 && <div className="my-1 border-t border-slate-100" />}
                                   <button
                                     onClick={() => {
-                                      setAgentType(opt.id);
+                                      setAgentType(opt.agent_id);
                                       // Fechar popover automaticamente via estado não é necessário com Radix se usarmos PopoverTrigger asChild
                                     }}
                                     className={cn(
@@ -553,9 +559,9 @@ function ChatPage() {
                                       "p-1.5 rounded-lg transition-colors",
                                       isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
                                     )}>
-                                      <Icon className="h-3.5 w-3.5" style={{ color: opt.color }} />
+                                      <Icon className="h-3.5 w-3.5" style={{ color: iconColor }} />
                                     </div>
-                                    <span className="flex-1 text-left">{opt.title}</span>
+                                    <span className="flex-1 text-left">{opt.label}</span>
                                     {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
                                   </button>
                                 </div>
