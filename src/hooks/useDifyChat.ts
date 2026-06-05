@@ -15,6 +15,8 @@ export interface ExamContext {
   patient_name: string;
   patient_profile: string;
   patient_sex: string;
+  gestante_tipo: string;
+  gestante_periodo: string;
   exam_date: string;
   alteracoes: string[];
   otimos: string[];

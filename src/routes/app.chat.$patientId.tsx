@@ -50,13 +50,14 @@ const AGENT_OPTIONS = [
 ];
 
 interface PatientCtx {
-
-
   id: string;
   name: string;
   birth_date: string | null;
-  gender: string | null;
+  gender: "male" | "female" | "other" | null;
   avatar_url: string | null;
+  is_pregnant?: boolean;
+  gestational_weeks?: number;
+  pregnancy_type?: "single" | "multiple";
 }
 
 function ChatPage() {
