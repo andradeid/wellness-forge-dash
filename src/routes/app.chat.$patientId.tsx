@@ -454,6 +454,20 @@ function ChatPage() {
               <p className="text-[11px] text-slate-500 leading-tight truncate">
                 {age !== null ? `${age} anos` : "—"}
                 {patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
+                {patient?.is_pregnant && (
+                  <>
+                    <span className="text-[#7c3aed] font-medium"> · 🤰 Gestante</span>
+                    {patient.gestational_weeks !== undefined && (
+                      <span>
+                        {` · ${patient.gestational_weeks} sem (${
+                          patient.gestational_weeks <= 12 ? "1ºT" : 
+                          patient.gestational_weeks <= 27 ? "2ºT" : "3ºT"
+                        })`}
+                      </span>
+                    )}
+                    {patient.pregnancy_type === 'multiple' && " · Gemelar"}
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -570,8 +584,21 @@ function ChatPage() {
                             className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
                             title="Trocar de módulo"
                           >
-                            <ActiveIcon className="h-3.5 w-3.5 text-[#e8a04c]" />
-                            <span>{activeLabel}</span>
+                            {(() => {
+                              const currentAgent = agents.find(a => a.agent_id === agentType);
+                              const cardTrigger = currentAgent?.card_trigger;
+                              const label = cardTrigger ? CARD_LABELS[cardTrigger] : (agentType ? currentAgent?.label : "Selecionar módulo");
+                              const Icon = cardTrigger ? CARD_ICONS[cardTrigger] : Sparkles;
+                              
+                              if (loadingAgents) return <span>Carregando...</span>;
+                              
+                              return (
+                                <>
+                                  <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />
+                                  <span>{label || "Selecionar módulo"}</span>
+                                </>
+                              );
+                            })()}
                             <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
                             <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                           </button>
