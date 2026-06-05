@@ -539,7 +539,7 @@ function ChatPage() {
                             {agents.filter(a => a.is_active).map((opt, idx) => {
                               const Icon = opt.card_trigger ? AGENT_ICONS[opt.card_trigger] || Sparkles : Sparkles;
                               const iconColor = opt.card_trigger ? AGENT_COLORS[opt.card_trigger] || "#e8a04c" : "#e8a04c";
-                              const isActive = agentType === opt.id;
+                              const isActive = agentType === opt.agent_id;
                               return (
                                 <div key={opt.id}>
                                   {idx === 3 && <div className="my-1 border-t border-slate-100" />}
