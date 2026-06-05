@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatHistory, type ChatItem } from "@/hooks/useChatHistory";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
+import { useAgentConfig } from "@/hooks/useAgentConfig";
 
 export const Route = createFileRoute("/app/fale-com-lumma")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -54,6 +55,7 @@ function FaleComLummaPage() {
   const { module: searchModule } = Route.useSearch();
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const [message, setMessage] = useState("");
+  const { agents, getAgentForCard, requiresPatient, loading: loadingAgents } = useAgentConfig();
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
@@ -161,21 +163,12 @@ function FaleComLummaPage() {
     [patients, patientQuery]
   );
 
-  const AGENT_OPTIONS = [
-    { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
-    { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
-    { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
-    { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
-    { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
-    { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
-  ];
-
   const getActiveAgentLabel = (id: string | undefined) => {
-    const agent = AGENT_OPTIONS.find(a => a.id === id);
+    const agent = agents.find(a => a.agent_id === id);
     if (!agent) return "Pergunta Clínica";
-    if (agent.id === "exam") return "Analisando Exame";
-    if (agent.id === "production") return "Elaborando Plano & Receitas";
-    return agent.title;
+    if (agent.agent_id === "exam") return "Analisando Exame";
+    if (agent.agent_id === "production") return "Elaborando Plano & Receitas";
+    return agent.label;
   };
 
   const startGeneralChat = async (agentType: string) => {
@@ -533,27 +526,36 @@ function FaleComLummaPage() {
                     </motion.h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
-                        { id: "exam", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
-                        { id: "metabolism", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
-                        { id: "genetics", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" }
-                      ].map((card, idx) => (
-                        <motion.button 
-                          key={card.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: idx * 0.2, ease: "easeOut" }}
-                          onClick={() => {
-                            setPendingModule("exam");
-                            setIdentifyOpen(true);
-                          }}
-                          className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                        >
-                          <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                            <card.icon className="h-6 w-6" style={{ color: card.color }} />
-                          </div>
-                          <span className="text-sm font-medium text-foreground/80">{card.title}</span>
-                        </motion.button>
-                      ))}
+                        { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
+                        { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
+                        { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" }
+                      ].map((card, idx) => {
+                        const agent = getAgentForCard(card.trigger);
+                        if (!agent) return null;
+                        
+                        return (
+                          <motion.button 
+                            key={card.trigger}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: idx * 0.2, ease: "easeOut" }}
+                            onClick={() => {
+                              if (requiresPatient(agent.agent_id)) {
+                                setPendingModule(agent.agent_id);
+                                setIdentifyOpen(true);
+                              } else {
+                                startGeneralChat(agent.agent_id);
+                              }
+                            }}
+                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                          >
+                            <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                              <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                            </div>
+                            <span className="text-sm font-medium text-foreground/80">{card.title}</span>
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -573,30 +575,36 @@ function FaleComLummaPage() {
                     </motion.h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
-                        { id: "reasoning", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
-                        { id: "production", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
-                        { id: "research", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" }
-                      ].map((card, idx) => (
-                        <motion.button 
-                          key={card.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: 0.8 + (idx * 0.2), ease: "easeOut" }}
-                          onClick={() => {
-                            if (card.id === "research") startGeneralChat("research");
-                            else {
-                              setPendingModule(card.id);
-                              setIdentifyOpen(true);
-                            }
-                          }}
-                          className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
-                        >
-                          <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                            <card.icon className="h-6 w-6" style={{ color: card.color }} />
-                          </div>
-                          <span className="text-sm font-medium text-foreground/80">{card.title}</span>
-                        </motion.button>
-                      ))}
+                        { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
+                        { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
+                        { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" }
+                      ].map((card, idx) => {
+                        const agent = getAgentForCard(card.trigger);
+                        if (!agent) return null;
+                        
+                        return (
+                          <motion.button 
+                            key={card.trigger}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.8 + (idx * 0.2), ease: "easeOut" }}
+                            onClick={() => {
+                              if (requiresPatient(agent.agent_id)) {
+                                setPendingModule(agent.agent_id);
+                                setIdentifyOpen(true);
+                              } else {
+                                startGeneralChat(agent.agent_id);
+                              }
+                            }}
+                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                          >
+                            <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                              <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                            </div>
+                            <span className="text-sm font-medium text-foreground/80">{card.title}</span>
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
