@@ -91,30 +91,45 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
+  const [pendingModule, setPendingModule] = useState<string | null>(initialModule || null);
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
   useEffect(() => {
-    if (messages.length === 0 && !initialModule && role === "nutri" && !thinking) {
+    if (messages.length === 0 && !pendingModule && role === "nutri" && !thinking) {
       setShowModuleSelector(true);
     } else if (messages.length > 0) {
       setShowModuleSelector(false);
     }
-  }, [messages.length, initialModule, role, thinking]);
+  }, [messages.length, pendingModule, role, thinking]);
+
+  const patientProfile = useMemo(() => {
+    return filters.publico === "gestante"
+      ? "gestante"
+      : filters.publico === "adulto" && filters.sexo === "feminino"
+      ? "adulto_feminino"
+      : filters.publico === "adulto" && filters.sexo === "masculino"
+      ? "adulto_masculino"
+      : "";
+  }, [filters.publico, filters.sexo]);
 
   useEffect(() => {
-    if (initialModule) {
-      // Find agent in config to ensure it's valid
-      const agent = agents.find(a => a.agent_id === initialModule);
+    if (pendingModule && patientProfile) {
+      const agent = getAgentForCard(pendingModule, patientProfile);
       if (agent) {
-        setAgentType(initialModule);
+        setAgentType(agent.agent_id);
         setShowModuleSelector(false);
-        // Limpa o parâmetro da URL
-        const url = new URL(window.location.href);
-        url.searchParams.delete("module");
-        window.history.replaceState({}, "", url.toString());
+        setPendingModule(null);
+        
+        // Limpa o parâmetro da URL apenas se ele ainda existir
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("module")) {
+          params.delete("module");
+          const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+          window.history.replaceState({}, "", newUrl);
+        }
       }
     }
-  }, [initialModule, setAgentType, agents]);
+  }, [pendingModule, patientProfile, getAgentForCard, setAgentType]);
 
   useEffect(() => {
     const patientProfile =
@@ -139,15 +154,7 @@ function ChatPage() {
     });
   }, [filters, setContext]);
 
-  const patientProfile = useMemo(() => {
-    return filters.publico === "gestante"
-      ? "gestante"
-      : filters.publico === "adulto" && filters.sexo === "feminino"
-      ? "adulto_feminino"
-      : filters.publico === "adulto" && filters.sexo === "masculino"
-      ? "adulto_masculino"
-      : "";
-  }, [filters.publico, filters.sexo]);
+  // patientProfile useMemo moved up to be available for the pendingModule logic
 
   const handleNewChat = useCallback(async () => {
     if (thinking) return;
