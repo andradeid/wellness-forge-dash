@@ -335,6 +335,7 @@ export function DifyAgentsPanel() {
       .from("dify_agents")
       .update({
         label,
+        agent_id: slugify(editForm.agent_id),
         description: editForm.description.trim() || null,
         api_key: editForm.api_key.trim() || null,
         endpoint: editForm.endpoint.trim() || DEFAULT_ENDPOINT,
