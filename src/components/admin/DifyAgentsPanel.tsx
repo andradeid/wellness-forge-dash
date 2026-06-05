@@ -61,9 +61,21 @@ export interface DifyAgent {
   endpoint: string;
   is_active: boolean;
   sort_order: number;
+  card_trigger: string | null;
+  patient_required: boolean;
 }
 
 const DEFAULT_ENDPOINT = "https://api.dify.ai/v1";
+
+const CARD_TRIGGER_OPTIONS = [
+  { value: "exames_de_sangue", label: "Exames de Sangue" },
+  { value: "composicao_metabolismo", label: "Composição e Metabolismo" },
+  { value: "genetica_microbioma", label: "Genética e Microbioma" },
+  { value: "casos_clinicos", label: "Casos Clínicos & Sintomas" },
+  { value: "plano_alimentar", label: "Plano Alimentar & Receitas" },
+  { value: "pesquisa_cientifica", label: "Pesquisa Científica" },
+  { value: "geral", label: "Geral (sem card específico)" },
+];
 
 function slugify(input: string): string {
   return input
@@ -82,6 +94,9 @@ interface AgentFormState {
   api_key: string;
   endpoint: string;
   sort_order: number;
+  card_trigger: string;
+  patient_required: boolean;
+  is_active: boolean;
 }
 
 function emptyForm(nextSort: number): AgentFormState {
@@ -92,6 +107,9 @@ function emptyForm(nextSort: number): AgentFormState {
     api_key: "",
     endpoint: DEFAULT_ENDPOINT,
     sort_order: nextSort,
+    card_trigger: "geral",
+    patient_required: true,
+    is_active: true,
   };
 }
 
