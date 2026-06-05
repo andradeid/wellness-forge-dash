@@ -376,20 +376,50 @@ export function DifyAgentsPanel() {
               >
                 {/* Left: label + description + id */}
                 <div className="space-y-1 min-w-0">
-                  <div className="font-medium text-sm text-foreground truncate">
+                  <div className="font-medium text-sm text-foreground truncate flex items-center gap-2">
                     {agent.label}
+                    {agent.patient_required ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <User className="h-3 w-3 text-slate-400" />
+                          </TooltipTrigger>
+                          <TooltipContent>Requer paciente</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <UserMinus className="h-3 w-3 text-slate-300" />
+                          </TooltipTrigger>
+                          <TooltipContent>Livre (não requer paciente)</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                   {agent.description && (
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {agent.description}
                     </p>
                   )}
-                  <Badge
-                    variant="outline"
-                    className="font-mono text-[10px] mt-1 rounded-md"
-                  >
-                    {agent.agent_id}
-                  </Badge>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-[10px] mt-1 rounded-md"
+                    >
+                      {agent.agent_id}
+                    </Badge>
+                    {agent.card_trigger && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] mt-1 rounded-md bg-slate-100 text-slate-600"
+                      >
+                        {CARD_TRIGGER_OPTIONS.find((o) => o.value === agent.card_trigger)
+                          ?.label || agent.card_trigger}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 {/* Middle: api_key input */}
