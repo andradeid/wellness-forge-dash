@@ -4,40 +4,46 @@ import { useAuth } from "@/hooks/useAuth";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
 import { toast } from "sonner";
 
-export interface ExamContext {
-  patient_name: string;
-  patient_profile: string;
-  patient_sex: string;
-  exam_date: string;
-  alteracoes: string[];
-  otimos: string[];
-  resumo_clinico: string;
-}
-
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const conversationIdRef = useRef<string>("");
 
+  // Load messages and conversation ID
   useEffect(() => {
     if (!chatId) return;
-    const loadMessages = async () => {
-      const { data } = await supabase
+    const init = async () => {
+      // Load chat info (conversation ID)
+      const { data: chatData } = await supabase
+        .from("general_chats")
+        .select("dify_conversation_id")
+        .eq("id", chatId)
+        .maybeSingle();
+      
+      if (chatData?.dify_conversation_id) {
+        conversationIdRef.current = chatData.dify_conversation_id;
+      }
+
+      // Load messages
+      const { data: msgData } = await supabase
         .from("general_chat_messages")
         .select("id, role, content, created_at")
         .eq("chat_id", chatId)
         .order("created_at", { ascending: true });
       
-      setMessages((data as ChatMessage[]) ?? []);
+      setMessages((msgData as ChatMessage[]) ?? []);
     };
-    loadMessages();
+    init();
   }, [chatId]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!chatId || !user) return;
     
     setThinking(true);
+    setStreamingContent("");
+    
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
@@ -61,28 +67,102 @@ export function useGeneralChat(chatId: string, agentType: string) {
         }),
       });
 
-      if (!res.ok) throw new Error("Falha ao comunicar com agente");
-      
-      const json = await res.json();
-      if (json.conversation_id) conversationIdRef.current = json.conversation_id;
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Falha ao comunicar com agente");
+      }
 
-      const assistantMsg: ChatMessage = {
-        id: crypto.randomUUID(),
+      if (!res.body) throw new Error("Resposta sem corpo");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullAssistantText = "";
+
+      // Add a placeholder message for the assistant that we'll update with streaming content
+      const assistantId = crypto.randomUUID();
+      setMessages((prev) => [...prev, {
+        id: assistantId,
         role: "assistant",
-        content: json.answer ?? "",
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+        content: "",
+        created_at: new Date().toISOString()
+      }]);
 
-      // Save to DB
-      await supabase.from("general_chat_messages").insert([
-        { chat_id: chatId, role: "user", content: text, agent_type: agentType },
-        { chat_id: chatId, role: "assistant", content: assistantMsg.content, agent_type: agentType }
-      ]);
-      await supabase.from("general_chats").update({ updated_at: new Date().toISOString() }).eq("id", chatId);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-    } catch (e) {
-      toast.error("Erro na comunicação");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const cleanLine = line.trim();
+          if (!cleanLine || !cleanLine.startsWith("data: ")) continue;
+          
+          const jsonStr = cleanLine.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            
+            if (parsed.event === "agent_message" || parsed.event === "message") {
+              const chunk = parsed.answer ?? "";
+              fullAssistantText += chunk;
+              
+              // Update the last message (the assistant one) in the state
+              setMessages((prev) => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (updated[lastIdx].role === "assistant") {
+                  updated[lastIdx] = { ...updated[lastIdx], content: fullAssistantText };
+                }
+                return updated;
+              });
+            }
+
+            if (parsed.event === "message_end") {
+              if (parsed.conversation_id && parsed.conversation_id !== conversationIdRef.current) {
+                conversationIdRef.current = parsed.conversation_id;
+                // Sync to DB
+                await supabase
+                  .from("general_chats")
+                  .update({ dify_conversation_id: parsed.conversation_id })
+                  .eq("id", chatId);
+              }
+
+              // Save messages to DB
+              await supabase.from("general_chat_messages").insert([
+                { chat_id: chatId, role: "user", content: text, agent_type: agentType },
+                { chat_id: chatId, role: "assistant", content: fullAssistantText, agent_type: agentType }
+              ]);
+
+              await supabase
+                .from("general_chats")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", chatId);
+            }
+
+            if (parsed.event === "error") {
+              throw new Error(parsed.message || "Erro no Dify");
+            }
+          } catch (e) {
+            // Ignore parse errors for partial lines
+          }
+        }
+      }
+
+    } catch (e: any) {
+      console.error("Chat error:", e);
+      toast.error(e.message || "Erro na comunicação");
+      // Remove the last assistant message if it's empty and there was an error
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && !last.content) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
     } finally {
       setThinking(false);
     }
