@@ -14,8 +14,11 @@ import {
   X,
   User,
   UserMinus,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -177,6 +180,10 @@ export function DifyAgentsPanel() {
   const [editTarget, setEditTarget] = useState<DifyAgent | null>(null);
   const [editForm, setEditForm] = useState<AgentFormState | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [agentIdRiskAccepted, setAgentIdRiskAccepted] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<DifyAgent | null>(null);
+  const [deletingAgent, setDeletingAgent] = useState(false);
 
   const nextSort = useMemo(
     () => (agents.length === 0 ? 1 : Math.max(...agents.map((a) => a.sort_order)) + 1),
@@ -285,6 +292,7 @@ export function DifyAgentsPanel() {
 
   const openEdit = (agent: DifyAgent) => {
     setEditTarget(agent);
+    setAgentIdRiskAccepted(false);
     setEditForm({
       label: agent.label,
       agent_id: agent.agent_id,
@@ -296,6 +304,23 @@ export function DifyAgentsPanel() {
       patient_required: agent.patient_required,
       is_active: agent.is_active,
     });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingAgent(true);
+    const { error } = await (supabase as any)
+      .from("dify_agents")
+      .delete()
+      .eq("id", deleteTarget.id);
+    setDeletingAgent(false);
+    if (error) {
+      toast.error("Não foi possível excluir o agente.", { description: error.message });
+      return;
+    }
+    toast.success(`Agente "${deleteTarget.label}" excluído.`);
+    setDeleteTarget(null);
+    load();
   };
 
   const handleSaveEdit = async () => {
@@ -310,6 +335,7 @@ export function DifyAgentsPanel() {
       .from("dify_agents")
       .update({
         label,
+        agent_id: slugify(editForm.agent_id),
         description: editForm.description.trim() || null,
         api_key: editForm.api_key.trim() || null,
         endpoint: editForm.endpoint.trim() || DEFAULT_ENDPOINT,
@@ -579,6 +605,13 @@ export function DifyAgentsPanel() {
                         <Power className="h-4 w-4" />
                         {agent.is_active ? "Desativar agente" : "Reativar agente"}
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeleteTarget(agent)}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Excluir agente
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -751,7 +784,7 @@ export function DifyAgentsPanel() {
           <DialogHeader>
             <DialogTitle>Editar Agente</DialogTitle>
             <DialogDescription>
-              Atualize as informações do agente. O identificador não pode ser alterado.
+              Atualize as informações do agente. Alterar o identificador requer cuidado.
             </DialogDescription>
           </DialogHeader>
           {editForm && (
@@ -768,12 +801,43 @@ export function DifyAgentsPanel() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Identificador (agent_id)</Label>
+                  <Label>Identificador (agent_id) *</Label>
                   <Input
                     value={editForm.agent_id}
-                    readOnly
-                    className="rounded-lg font-mono bg-muted/40"
+                    disabled={!agentIdRiskAccepted}
+                    onChange={(e) =>
+                      setEditForm((f) =>
+                        f ? { ...f, agent_id: slugify(e.target.value) } : f,
+                      )
+                    }
+                    className={cn(
+                      "rounded-lg font-mono",
+                      !agentIdRiskAccepted && "bg-muted/40 opacity-70",
+                    )}
                   />
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-100 rounded-lg p-3 space-y-2">
+                <p className="text-[11px] text-red-800 leading-relaxed flex gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    <strong>Atenção:</strong> alterar o identificador pode quebrar conversas 
+                    existentes que usam este agente. Só altere se souber o que está fazendo.
+                  </span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="risk-accepted"
+                    checked={agentIdRiskAccepted}
+                    onCheckedChange={(v) => setAgentIdRiskAccepted(!!v)}
+                  />
+                  <Label
+                    htmlFor="risk-accepted"
+                    className="text-[11px] font-medium text-red-900 cursor-pointer"
+                  >
+                    Entendo os riscos e quero editar o identificador
+                  </Label>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -849,7 +913,50 @@ export function DifyAgentsPanel() {
                   }
                   className="rounded-lg font-mono"
                 />
-              </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => {
+          if (!o) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="rounded-lg sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Excluir Agente
+            </DialogTitle>
+            <DialogDescription className="py-2">
+              Tem certeza que deseja excluir o agente <strong>{deleteTarget?.label}</strong>? 
+              Esta ação não pode ser desfeita e pode quebrar conversas existentes.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deletingAgent}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              className="rounded-full"
+              onClick={handleDelete}
+              disabled={deletingAgent}
+            >
+              {deletingAgent ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Excluir mesmo assim"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5 col-span-2">
                   <Label>Endpoint</Label>
