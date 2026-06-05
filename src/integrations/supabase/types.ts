@@ -173,6 +173,7 @@ export type Database = {
           agent_type: string
           created_at: string | null
           created_by: string | null
+          dify_conversation_id: string | null
           id: string
           pinned_at: string | null
           title: string | null
@@ -182,6 +183,7 @@ export type Database = {
           agent_type?: string
           created_at?: string | null
           created_by?: string | null
+          dify_conversation_id?: string | null
           id?: string
           pinned_at?: string | null
           title?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           agent_type?: string
           created_at?: string | null
           created_by?: string | null
+          dify_conversation_id?: string | null
           id?: string
           pinned_at?: string | null
           title?: string | null
