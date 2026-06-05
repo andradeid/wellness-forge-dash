@@ -605,6 +605,13 @@ export function DifyAgentsPanel() {
                         <Power className="h-4 w-4" />
                         {agent.is_active ? "Desativar agente" : "Reativar agente"}
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeleteTarget(agent)}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Excluir agente
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
