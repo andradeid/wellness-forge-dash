@@ -530,7 +530,6 @@ function ChatPage() {
             ) : (
               <>
                 {(() => {
-                {(() => {
                   const currentAgent = agents.find(a => a.agent_id === agentType);
                   const cardTrigger = currentAgent?.card_trigger;
                   const activeLabel = cardTrigger ? CARD_LABELS[cardTrigger] || currentAgent.label : currentAgent?.label || "Módulo";
