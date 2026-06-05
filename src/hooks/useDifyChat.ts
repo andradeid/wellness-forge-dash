@@ -425,8 +425,25 @@ export function useDifyChat(
       return lines.join("\n");
     };
 
-    const finalQuery = (agentType !== "exam" && examContext)
-      ? buildContextPrefix(examContext) + text
+    const buildMinimalPrefix = (): string => {
+      const meta = metaRef.current;
+      if (!meta.patient_name && !meta.patient_profile) return "";
+      
+      return [
+        `[CONTEXTO DO PACIENTE]`,
+        `Paciente: ${meta.patient_name}`,
+        `Perfil: ${meta.patient_profile}`,
+        `Sexo: ${meta.patient_sex}`,
+        meta.gestante_tipo 
+          ? `Gestação: ${meta.gestante_tipo} — ${meta.gestante_periodo}` 
+          : "",
+        `[FIM DO CONTEXTO]`,
+        ""
+      ].filter(Boolean).join("\n");
+    };
+
+    const finalQuery = (agentType !== "exam")
+      ? (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix()) + text
       : text;
 
     const callDify = async (convId: string | undefined) =>
@@ -558,6 +575,8 @@ export function useDifyChat(
                   patient_name: metaRef.current.patient_name,
                   patient_profile: metaRef.current.patient_profile,
                   patient_sex: metaRef.current.patient_sex,
+                  gestante_tipo: metaRef.current.gestante_tipo,
+                  gestante_periodo: metaRef.current.gestante_periodo,
                   exam_date: new Date().toISOString(),
                   alteracoes: safeMarkers
                     .filter(m => {

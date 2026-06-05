@@ -155,23 +155,52 @@ function ChatPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("patients")
-        .select("id, name, birth_date, gender, avatar_url")
+        .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
         .eq("id", patientId)
         .maybeSingle();
       setPatient(data as PatientCtx | null);
     })();
   }, [patientId]);
 
-  // Pré-popula sexo/público a partir da ficha do paciente, evitando que a Lumma
-  // pergunte dados que já temos cadastrados (ex.: "está gestante?" para homem).
+  // Auto-popular filtros do banco
   useEffect(() => {
     if (!patient) return;
-    setFilters((prev) => {
-      const sexo: ExamFilters["sexo"] =
-        prev.sexo ?? (patient.gender === "female" ? "feminino" : patient.gender === "male" ? "masculino" : null);
-      const publico: ExamFilters["publico"] = prev.publico ?? (sexo ? "adulto" : null);
-      return { ...prev, sexo, publico };
-    });
+
+    // Sexo
+    const sexo: ExamFilters["sexo"] = 
+      patient.gender === "male" 
+        ? "masculino" 
+        : patient.gender === "female" 
+        ? "feminino" 
+        : null;
+
+    // Gestante
+    const isPregnant = 
+      patient.gender === "female" && 
+      patient.is_pregnant === true;
+
+    // Público
+    const publico: ExamFilters["publico"] = isPregnant ? "gestante" : "adulto";
+
+    // Tipo de gestação
+    const gestanteTipo: ExamFilters["gestanteTipo"] = patient.pregnancy_type === "multiple" 
+      ? "gemelar" 
+      : "monofetal";
+
+    // Trimestre calculado automaticamente
+    const weeks = patient.gestational_weeks ?? 0;
+    const gestantePeriodo: ExamFilters["gestantePeriodo"] = 
+      weeks <= 12 ? "1t" : 
+      weeks <= 27 ? "2t" : "3t";
+
+    // Seta os filtros que alimentam o metaRef
+    setFilters(prev => ({
+      ...prev,
+      sexo: prev.sexo ?? sexo,
+      publico: prev.publico ?? publico,
+      gestanteTipo: isPregnant ? (prev.gestanteTipo ?? gestanteTipo) : prev.gestanteTipo,
+      gestantePeriodo: isPregnant ? (prev.gestantePeriodo ?? gestantePeriodo) : prev.gestantePeriodo,
+    }));
   }, [patient]);
 
   const reloadExams = useCallback(async () => {
