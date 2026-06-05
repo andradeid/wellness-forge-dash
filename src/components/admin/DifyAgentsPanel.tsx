@@ -784,7 +784,7 @@ export function DifyAgentsPanel() {
           <DialogHeader>
             <DialogTitle>Editar Agente</DialogTitle>
             <DialogDescription>
-              Atualize as informações do agente. O identificador não pode ser alterado.
+              Atualize as informações do agente. Alterar o identificador requer cuidado.
             </DialogDescription>
           </DialogHeader>
           {editForm && (
@@ -801,12 +801,43 @@ export function DifyAgentsPanel() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Identificador (agent_id)</Label>
+                  <Label>Identificador (agent_id) *</Label>
                   <Input
                     value={editForm.agent_id}
-                    readOnly
-                    className="rounded-lg font-mono bg-muted/40"
+                    disabled={!agentIdRiskAccepted}
+                    onChange={(e) =>
+                      setEditForm((f) =>
+                        f ? { ...f, agent_id: slugify(e.target.value) } : f,
+                      )
+                    }
+                    className={cn(
+                      "rounded-lg font-mono",
+                      !agentIdRiskAccepted && "bg-muted/40 opacity-70",
+                    )}
                   />
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-100 rounded-lg p-3 space-y-2">
+                <p className="text-[11px] text-red-800 leading-relaxed flex gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    <strong>Atenção:</strong> alterar o identificador pode quebrar conversas 
+                    existentes que usam este agente. Só altere se souber o que está fazendo.
+                  </span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="risk-accepted"
+                    checked={agentIdRiskAccepted}
+                    onCheckedChange={(v) => setAgentIdRiskAccepted(!!v)}
+                  />
+                  <Label
+                    htmlFor="risk-accepted"
+                    className="text-[11px] font-medium text-red-900 cursor-pointer"
+                  >
+                    Entendo os riscos e quero editar o identificador
+                  </Label>
                 </div>
               </div>
               <div className="space-y-1.5">
