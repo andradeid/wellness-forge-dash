@@ -91,16 +91,16 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
-  const [pendingModule, setPendingModule] = useState<string | null>(initialModule || null);
+  const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
   useEffect(() => {
-    if (messages.length === 0 && !pendingModule && role === "nutri" && !thinking) {
+    if (messages.length === 0 && !pendingModuleFromUrl && role === "nutri" && !thinking) {
       setShowModuleSelector(true);
     } else if (messages.length > 0) {
       setShowModuleSelector(false);
     }
-  }, [messages.length, pendingModule, role, thinking]);
+  }, [messages.length, pendingModuleFromUrl, role, thinking]);
 
   const patientProfile = useMemo(() => {
     return filters.publico === "gestante"
@@ -113,23 +113,33 @@ function ChatPage() {
   }, [filters.publico, filters.sexo]);
 
   useEffect(() => {
-    if (pendingModule && patientProfile) {
-      const agent = getAgentForCard(pendingModule, patientProfile);
-      if (agent) {
-        setAgentType(agent.agent_id);
-        setShowModuleSelector(false);
-        setPendingModule(null);
-        
-        // Limpa o parâmetro da URL apenas se ele ainda existir
-        const params = new URLSearchParams(window.location.search);
-        if (params.has("module")) {
-          params.delete("module");
-          const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
-          window.history.replaceState({}, "", newUrl);
-        }
-      }
+    // Só executa quando:
+    // 1. Tem módulo pendente da URL
+    // 2. patientProfile já foi calculado (não está mais vazio)
+    if (!pendingModuleFromUrl) return;
+    if (!patientProfile) return;
+
+    // Agora patientProfile está disponível
+    // getAgentForCard pode decidir corretamente
+    const agent = getAgentForCard(pendingModuleFromUrl, patientProfile);
+
+    if (agent) {
+      setAgentType(agent.agent_id);
+      setShowModuleSelector(false);
     }
-  }, [pendingModule, patientProfile, getAgentForCard, setAgentType]);
+
+    // Limpa o módulo pendente para não executar novamente
+    setPendingModuleFromUrl(null);
+
+    // Limpa o ?module da URL
+    navigate({
+      search: {
+        chatId: forceChatId,
+        messageId: highlightId,
+        module: undefined
+      } as any
+    });
+  }, [pendingModuleFromUrl, patientProfile, getAgentForCard, setAgentType, navigate]);
 
   useEffect(() => {
     const patientProfile =
