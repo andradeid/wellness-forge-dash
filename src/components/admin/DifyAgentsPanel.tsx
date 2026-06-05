@@ -292,6 +292,9 @@ export function DifyAgentsPanel() {
       api_key: agent.api_key ?? "",
       endpoint: agent.endpoint || DEFAULT_ENDPOINT,
       sort_order: agent.sort_order,
+      card_trigger: agent.card_trigger || "geral",
+      patient_required: agent.patient_required,
+      is_active: agent.is_active,
     });
   };
 
@@ -311,6 +314,9 @@ export function DifyAgentsPanel() {
         api_key: editForm.api_key.trim() || null,
         endpoint: editForm.endpoint.trim() || DEFAULT_ENDPOINT,
         sort_order: editForm.sort_order,
+        card_trigger: editForm.card_trigger,
+        patient_required: editForm.patient_required,
+        is_active: editForm.is_active,
       })
       .eq("id", editTarget.id);
     setSavingEdit(false);
