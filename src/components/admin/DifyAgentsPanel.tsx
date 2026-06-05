@@ -221,14 +221,19 @@ export function DifyAgentsPanel() {
       return;
     }
     setCreatingAgent(true);
-    const { error } = await (supabase as any).from("dify_agents").insert({
-      label,
-      agent_id,
-      description: form.description.trim() || null,
-      api_key: form.api_key.trim() || null,
-      endpoint: form.endpoint.trim() || DEFAULT_ENDPOINT,
-      sort_order: form.sort_order,
-    });
+    const { error } = await (supabase as any)
+      .from("dify_agents")
+      .insert({
+        label,
+        agent_id,
+        description: form.description.trim() || null,
+        api_key: form.api_key.trim() || null,
+        endpoint: form.endpoint.trim() || DEFAULT_ENDPOINT,
+        sort_order: form.sort_order,
+        card_trigger: form.card_trigger,
+        patient_required: form.patient_required,
+        is_active: form.is_active,
+      });
     setCreatingAgent(false);
     if (error) {
       toast.error("Não foi possível criar o agente.", { description: error.message });
