@@ -32,24 +32,31 @@ export const Route = createFileRoute("/app/chat/$patientId")({
   component: ChatPage,
 });
 
-const AGENT_ICONS: Record<string, any> = {
+const CARD_ICONS: Record<string, any> = {
   exames_de_sangue: Droplet,
   composicao_metabolismo: Scale,
   genetica_microbioma: Dna,
   casos_clinicos: ClipboardList,
   plano_alimentar: Apple,
-  pesquisa_cientifica: BookOpen,
-  geral: Sparkles,
+  pesquisa_cientifica: Search,
 };
 
-const AGENT_COLORS: Record<string, string> = {
+const CARD_LABELS: Record<string, string> = {
+  exames_de_sangue: "Exames de Sangue",
+  plano_alimentar: "Plano Alimentar & Receitas",
+  casos_clinicos: "Casos Clínicos & Sintomas",
+  pesquisa_cientifica: "Pesquisa Científica",
+  composicao_metabolismo: "Composição e Metabolismo",
+  genetica_microbioma: "Genética e Microbioma",
+};
+
+const CARD_COLORS: Record<string, string> = {
   exames_de_sangue: "#e89bcf",
   composicao_metabolismo: "#e89bcf",
   genetica_microbioma: "#e89bcf",
   casos_clinicos: "#e8a04c",
   plano_alimentar: "#e8a04c",
   pesquisa_cientifica: "#e8a04c",
-  geral: "#e8a04c",
 };
 
 interface PatientCtx {
