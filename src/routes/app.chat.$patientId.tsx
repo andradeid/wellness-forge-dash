@@ -327,7 +327,8 @@ function ChatPage() {
             </div>
             <div className="text-xs text-muted-foreground">
               {age !== null ? `${age} anos` : "—"}
-              {patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
+              {patient?.is_pregnant ? " · Gestante" : patient?.gender && ` · ${patient.gender === "female" ? "Feminino" : patient.gender === "male" ? "Masculino" : "Outro"}`}
+              {patient?.is_pregnant && patient?.gestational_weeks !== undefined && ` · ${patient.gestational_weeks} sem`}
             </div>
           </div>
         </div>
