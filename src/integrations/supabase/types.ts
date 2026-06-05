@@ -92,36 +92,42 @@ export type Database = {
         Row: {
           agent_id: string
           api_key: string | null
+          card_trigger: string | null
           created_at: string
           description: string | null
           endpoint: string
           id: string
           is_active: boolean
           label: string
+          patient_required: boolean | null
           sort_order: number
           updated_at: string
         }
         Insert: {
           agent_id: string
           api_key?: string | null
+          card_trigger?: string | null
           created_at?: string
           description?: string | null
           endpoint?: string
           id?: string
           is_active?: boolean
           label: string
+          patient_required?: boolean | null
           sort_order?: number
           updated_at?: string
         }
         Update: {
           agent_id?: string
           api_key?: string | null
+          card_trigger?: string | null
           created_at?: string
           description?: string | null
           endpoint?: string
           id?: string
           is_active?: boolean
           label?: string
+          patient_required?: boolean | null
           sort_order?: number
           updated_at?: string
         }
