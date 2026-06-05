@@ -91,16 +91,16 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
-  const [pendingModule, setPendingModule] = useState<string | null>(initialModule || null);
+  const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
   useEffect(() => {
-    if (messages.length === 0 && !pendingModule && role === "nutri" && !thinking) {
+    if (messages.length === 0 && !pendingModuleFromUrl && role === "nutri" && !thinking) {
       setShowModuleSelector(true);
     } else if (messages.length > 0) {
       setShowModuleSelector(false);
     }
-  }, [messages.length, pendingModule, role, thinking]);
+  }, [messages.length, pendingModuleFromUrl, role, thinking]);
 
   const patientProfile = useMemo(() => {
     return filters.publico === "gestante"
