@@ -292,6 +292,7 @@ export function DifyAgentsPanel() {
 
   const openEdit = (agent: DifyAgent) => {
     setEditTarget(agent);
+    setAgentIdRiskAccepted(false);
     setEditForm({
       label: agent.label,
       agent_id: agent.agent_id,
@@ -303,6 +304,23 @@ export function DifyAgentsPanel() {
       patient_required: agent.patient_required,
       is_active: agent.is_active,
     });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingAgent(true);
+    const { error } = await (supabase as any)
+      .from("dify_agents")
+      .delete()
+      .eq("id", deleteTarget.id);
+    setDeletingAgent(false);
+    if (error) {
+      toast.error("Não foi possível excluir o agente.", { description: error.message });
+      return;
+    }
+    toast.success(`Agente "${deleteTarget.label}" excluído.`);
+    setDeleteTarget(null);
+    load();
   };
 
   const handleSaveEdit = async () => {
