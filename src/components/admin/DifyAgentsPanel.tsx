@@ -913,7 +913,50 @@ export function DifyAgentsPanel() {
                   }
                   className="rounded-lg font-mono"
                 />
-              </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => {
+          if (!o) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="rounded-lg sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Excluir Agente
+            </DialogTitle>
+            <DialogDescription className="py-2">
+              Tem certeza que deseja excluir o agente <strong>{deleteTarget?.label}</strong>? 
+              Esta ação não pode ser desfeita e pode quebrar conversas existentes.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deletingAgent}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              className="rounded-full"
+              onClick={handleDelete}
+              disabled={deletingAgent}
+            >
+              {deletingAgent ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Excluir mesmo assim"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5 col-span-2">
                   <Label>Endpoint</Label>
