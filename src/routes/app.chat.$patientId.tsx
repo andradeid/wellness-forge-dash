@@ -121,6 +121,7 @@ function ChatPage() {
         : filters.publico === "adulto" && filters.sexo === "masculino"
         ? "adulto_masculino"
         : "";
+
     setContext({
       patient_sex: filters.sexo ?? "",
       patient_profile: patientProfile,
@@ -133,6 +134,16 @@ function ChatPage() {
       fase_ciclo: faseCicloToInput(filters),
     });
   }, [filters, setContext]);
+
+  const patientProfile = useMemo(() => {
+    return filters.publico === "gestante"
+      ? "gestante"
+      : filters.publico === "adulto" && filters.sexo === "feminino"
+      ? "adulto_feminino"
+      : filters.publico === "adulto" && filters.sexo === "masculino"
+      ? "adulto_masculino"
+      : "";
+  }, [filters.publico, filters.sexo]);
 
   const handleNewChat = useCallback(async () => {
     if (thinking) return;
