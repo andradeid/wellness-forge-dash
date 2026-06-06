@@ -180,14 +180,19 @@ export function ChatMessageList({
             </div>
           )}
 
-          {messages.map((m) => {
+          {messages.map((m, i) => {
             const isUser = m.role === "user";
+            const isLastUserMessage = 
+              isUser && 
+              i === messages.findLastIndex(msg => msg.role === "user");
+            
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
+
             return (
               <div
                 key={m.id}
-                ref={isHighlighted ? highlightRef : undefined}
+                ref={isHighlighted ? highlightRef : (isLastUserMessage ? lastUserMessageRef : undefined)}
                 className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
