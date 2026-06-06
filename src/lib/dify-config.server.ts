@@ -168,15 +168,9 @@ export async function getDifyAgentConfig(
 
   // Fallback 'exam' removed as per request to avoid usage of inactive/legacy agents.
 
-  if (!apiKey) {
+  if (!apiKey || (row && row.is_active === false)) {
     throw new Error(
-      `Agente '${agentId}' não configurado. Adicione a API Key em Integrações & APIs.`,
-    );
-  }
-
-  if (row && row.is_active === false) {
-    throw new Error(
-      `Agente '${agentId}' está desativado. Reative-o em Integrações & APIs.`,
+      `Agente '${agentId}' não encontrado ou inativo. Verifique as configurações em Integrações & APIs.`,
     );
   }
 
