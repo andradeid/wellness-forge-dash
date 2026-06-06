@@ -37,6 +37,7 @@ interface PatientItem {
   is_pregnant?: boolean;
   gestational_weeks?: number;
   pregnancy_type?: "single" | "multiple";
+  profile?: string;
 }
 
 type Gender = "male" | "female" | "other";
@@ -107,7 +108,13 @@ function FaleComLummaPage() {
       .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .eq("created_by", user.id)
       .order("name", { ascending: true });
-    setPatients((data as PatientItem[]) ?? []);
+    
+    const mapped = (data as any[])?.map(p => ({
+      ...p,
+      profile: p.is_pregnant ? 'gestante' : p.gender === 'male' ? 'adulto_masculino' : p.gender === 'female' ? 'adulto_feminino' : undefined
+    }));
+
+    setPatients(mapped ?? []);
     setLoadingPatients(false);
   };
 
@@ -150,8 +157,12 @@ function FaleComLummaPage() {
     setGestationalWeeks("");
     setPregnancyType("single");
     if (data) {
-      setSelectedPatient(data as PatientItem);
-      setPatients((prev) => [...prev, data as PatientItem]);
+      const patientWithProfile = {
+        ...data,
+        profile: data.is_pregnant ? 'gestante' : data.gender === 'male' ? 'adulto_masculino' : data.gender === 'female' ? 'adulto_feminino' : undefined
+      } as PatientItem;
+      setSelectedPatient(patientWithProfile);
+      setPatients((prev) => [...prev, patientWithProfile]);
       
       // Navega automaticamente para o chat com o novo paciente
       if (pendingModule) {
