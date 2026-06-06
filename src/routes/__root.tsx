@@ -8,7 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
-import appCss from "../styles.css?url";
+import "@/styles.css?url";
+const appCss = "/src/styles.css";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { AuthProvider } from "@/hooks/useAuth";
 
