@@ -66,20 +66,16 @@ export const Route = createFileRoute("/api/dify/chat")({
         const displayUser = buildDisplayUser();
 
         const mergedInputs = {
+          nutritionist_name: nutriName || "",
+          nutritionist_email: sanitize(meta?.nutritionist_email) || "",
+          patient_name: patientName || "",
+          patient_id: sanitize(meta?.patient_id) || "",
+          patient_sex: sanitize(meta?.patient_sex) || "",
+          patient_profile: sanitize(meta?.patient_profile) || "",
+          gestante_tipo: sanitize(meta?.gestante_tipo) || "",
+          gestante_periodo: sanitize(meta?.gestante_periodo) || "",
+          fase_ciclo: sanitize(meta?.fase_ciclo) || "",
           ...(inputs ?? {}),
-          ...(meta
-            ? {
-                nutritionist_name: nutriName,
-                nutritionist_email: sanitize(meta.nutritionist_email),
-                patient_name: patientName,
-                patient_id: sanitize(meta.patient_id),
-                patient_sex: sanitize(meta.patient_sex),
-                patient_profile: sanitize(meta.patient_profile),
-                gestante_tipo: sanitize(meta.gestante_tipo),
-                gestante_periodo: sanitize(meta.gestante_periodo),
-                fase_ciclo: sanitize(meta.fase_ciclo),
-              }
-            : {}),
         };
 
         const sendToDify = () =>
@@ -96,7 +92,6 @@ export const Route = createFileRoute("/api/dify/chat")({
               conversation_id: conversation_id ?? "",
               user: displayUser,
               files: files ?? [],
-              auto_generate_name: true,
             }),
           });
 
