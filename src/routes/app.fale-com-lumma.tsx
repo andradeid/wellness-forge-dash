@@ -555,7 +555,7 @@ function FaleComLummaPage() {
                         { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
                         { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" }
                       ].map((card, idx) => {
-                        const agent = getAgentForCard(card.trigger, selectedPatient?.profile as any, selectedPatient?.pregnancy_type);
+                        const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
                         if (!agent) return null;
                         
                         return (
@@ -604,7 +604,7 @@ function FaleComLummaPage() {
                         { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
                         { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" }
                       ].map((card, idx) => {
-                        const agent = getAgentForCard(card.trigger, selectedPatient?.profile as any, selectedPatient?.pregnancy_type);
+                        const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
                         if (!agent) return null;
                         
                         return (
