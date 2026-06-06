@@ -166,31 +166,11 @@ export async function getDifyAgentConfig(
   let apiKey = row?.api_key?.trim() ?? "";
   let baseUrl = row?.endpoint?.trim() || DEFAULT_BASE_URL;
 
-  // Compatibility fallback: 'exam' agent can use legacy integrations row
-  if (!apiKey && agentId === "exam") {
-    try {
-      const legacy = await getDifyConfig(userToken);
-      if (legacy.apiKey) {
-        apiKey = legacy.apiKey;
-        if (!row?.endpoint) baseUrl = legacy.baseUrl;
-        console.log(
-          "[dify-config] agent 'exam' using legacy integrations.dify_api_key fallback",
-        );
-      }
-    } catch (e) {
-      console.error("[dify-config] legacy fallback for 'exam' failed:", e);
-    }
-  }
+  // Fallback 'exam' removed as per request to avoid usage of inactive/legacy agents.
 
-  if (!apiKey) {
+  if (!apiKey || (row && row.is_active === false)) {
     throw new Error(
-      `Agente '${agentId}' não configurado. Adicione a API Key em Integrações & APIs.`,
-    );
-  }
-
-  if (row && row.is_active === false) {
-    throw new Error(
-      `Agente '${agentId}' está desativado. Reative-o em Integrações & APIs.`,
+      `Agente '${agentId}' não encontrado ou inativo. Verifique as configurações em Integrações & APIs.`,
     );
   }
 
