@@ -182,18 +182,11 @@ function ChatPage() {
     async (text: string, files: File[]) => {
       // Garante que o painel de módulos não esconda a animação "Lumma está pensando…"
       setShowModuleSelector(false);
-      const ctx = files.length > 0 ? filtersToContext(filters) : null;
-      if (files.length > 0 && ctx) {
-        // 1) Envia o exame primeiro e aguarda a resposta da Lumma
-        const firstText = text?.trim() || "Analise o exame anexado.";
-        await sendMessage(firstText, files);
-        // 2) Só então envia as perguntas pré-selecionadas como segunda mensagem
-        await sendMessage(ctx, []);
-        return;
-      }
-      await sendMessage(text, files);
+      
+      const finalChatText = text?.trim() || (files.length > 0 ? "Analise o exame anexado." : "");
+      await sendMessage(finalChatText, files);
     },
-    [filters, sendMessage],
+    [sendMessage],
   );
 
   useEffect(() => {
