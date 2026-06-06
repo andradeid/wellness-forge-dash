@@ -180,21 +180,22 @@ export function ChatMessageList({
             </div>
           )}
 
-          {messages.map((m, i) => {
-            const isUser = m.role === "user";
-            const isLastUserMessage = 
-              isUser && 
-              i === messages.findLastIndex(msg => msg.role === "user");
+          {(() => {
+            const lastUserIndex = messages.reduce((acc, msg, idx) => (msg.role === "user" ? idx : acc), -1);
             
-            const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
-            const isHighlighted = highlightId === m.id;
+            return messages.map((m, i) => {
+              const isUser = m.role === "user";
+              const isLastUserMessage = isUser && i === lastUserIndex;
+              
+              const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
+              const isHighlighted = highlightId === m.id;
 
-            return (
-              <div
-                key={m.id}
-                ref={isHighlighted ? highlightRef : (isLastUserMessage ? lastUserMessageRef : undefined)}
-                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-              >
+              return (
+                <div
+                  key={m.id}
+                  ref={isHighlighted ? highlightRef : (isLastUserMessage ? lastUserMessageRef : undefined)}
+                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                >
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md transition-all ${
                     isUser
