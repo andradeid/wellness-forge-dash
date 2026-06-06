@@ -596,7 +596,12 @@ function ChatPage() {
                         <PopoverTrigger asChild>
                           <button
                             type="button"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-full backdrop-blur-sm border px-3 py-1 text-[11px] font-medium shadow-sm transition group",
+                              !agentType 
+                                ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 animate-pulse" 
+                                : "bg-white/80 border-[#e8a04c]/30 text-foreground hover:bg-white"
+                            )}
                             title="Trocar de módulo"
                           >
                             {(() => {
