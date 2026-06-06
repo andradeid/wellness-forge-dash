@@ -139,18 +139,19 @@ export function ChatMessageList({
 
   const userScrolledUp = useRef(false);
 
-  // Acompanha streaming
+  // Rola para a última mensagem do usuário (âncora no topo)
   useEffect(() => {
-    if (!userScrolledUp.current) {
-      bottomRef.current?.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "end" 
+    const lastUserMsg = messages
+      .filter(m => m.role === 'user')
+      .at(-1);
+    
+    if (lastUserMsg) {
+      lastUserMessageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
       });
     }
-    if (!isStreaming) {
-      userScrolledUp.current = false;
-    }
-  }, [messages, isStreaming]);
+  }, [messages.filter(m => m.role === 'user').length]);
 
   // Highlight de mensagem específica (busca / navegação)
   useEffect(() => {
