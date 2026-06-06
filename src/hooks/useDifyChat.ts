@@ -345,6 +345,7 @@ export function useDifyChat(
       // Dify
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("agent_type", agentType);
       fd.append("nutritionist_name", metaRef.current.nutritionist_name);
       fd.append("patient_name", metaRef.current.patient_name);
       const res = await fetch("/api/dify/upload", {
