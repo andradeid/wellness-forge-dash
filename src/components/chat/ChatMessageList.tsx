@@ -112,8 +112,8 @@ export function ChatMessageList({
   };
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+    const el = e.currentTarget;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     userScrolledUp.current = !isAtBottom;
     setShowScrollButton(!isAtBottom);
   };
@@ -139,10 +139,13 @@ export function ChatMessageList({
 
   const userScrolledUp = useRef(false);
 
-  // Scroll automático durante streaming
+  // Acompanha streaming
   useEffect(() => {
-    if (!userScrolledUp.current || isStreaming) {
-      scrollToBottom();
+    if (!userScrolledUp.current) {
+      bottomRef.current?.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "end" 
+      });
     }
     if (!isStreaming) {
       userScrolledUp.current = false;

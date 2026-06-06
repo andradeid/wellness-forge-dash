@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { AlertCircle, ArrowUp, CheckCircle2, FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
+import { AlertCircle, ArrowUp, CheckCircle2, Loader2, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,7 +64,6 @@ export function ChatInput({
       if (f.size > MAX_FILE_SIZE) { oversized += 1; continue; }
       const ok = ALLOWED_MIME.test(f.type) || ALLOWED_EXT.test(f.name);
       if (!ok) unknown += 1;
-      // Aceita mesmo sem MIME/extensão reconhecidos (comum no Android) — valida no envio
       valid.push(f);
     }
     if (oversized) toast.error("Arquivo acima do limite de 20MB.");
@@ -74,7 +73,6 @@ export function ChatInput({
       const slots = Math.max(0, MAX_FILES - prev.length);
       const accepted = valid.slice(0, slots);
       if (accepted.length < valid.length) toast.warning("Limite de 10 arquivos por mensagem.");
-      toast.success(`${accepted.length} ${accepted.length === 1 ? "arquivo anexado" : "arquivos anexados"}`);
       return [...prev, ...accepted.map((file) => ({ file }))];
     });
   }, []);
@@ -122,8 +120,6 @@ export function ChatInput({
     }
   };
 
-  const canSend = !disabled && (text.trim().length > 0 || files.length > 0);
-
   // Itens pendentes (recém-anexados) que ainda não têm progresso real
   const progressNames = new Set(uploadProgress.map((p) => p.name));
   const pendingItems: AttachmentProgressItem[] = files
@@ -137,8 +133,10 @@ export function ChatInput({
       progress: 12,
       message: "pronto para envio",
     }));
+
   const allProgress = [...pendingItems, ...uploadProgress];
-  const hasAnyProgress = allProgress.length > 0;
+  const isAnyFileLoading = allProgress.some((p) => p.stage === "enviando" || p.stage === "processando");
+  const canSend = !disabled && !isAnyFileLoading && (text.trim().length > 0 || files.length > 0);
 
   return (
     <div
@@ -156,92 +154,50 @@ export function ChatInput({
         className="hidden"
         onChange={handleNativePick}
       />
-      {files.length > 0 && (
-        <div className="mb-3 space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              {files.length} {files.length === 1 ? "arquivo anexado" : "arquivos anexados"}
-            </span>
-            <button
-              type="button"
-              onClick={() => setFiles([])}
-              className="text-[11px] text-muted-foreground hover:text-foreground underline"
-            >
-              Remover todos
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {files.map((f, i) => {
-              const isImg = f.file.type.startsWith("image/");
-              const sizeStr = formatFileSize(f.file.size);
-              const previewUrl = isImg ? URL.createObjectURL(f.file) : null;
-              return (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 rounded-2xl border border-[#e8a04c]/20 bg-gradient-to-br from-[#fff7ed] to-[#fef2f8] px-3 py-2 shadow-sm"
-                >
-                  <div className="h-10 w-10 shrink-0 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-white shadow-inner">
-                    {isImg && previewUrl ? (
-                      <img src={previewUrl} alt={f.file.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <FileText className="h-5 w-5 text-[#e8a04c]" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-medium text-foreground" title={f.file.name}>
-                      {f.file.name}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      {isImg ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                      {sizeStr} · pronto para envio
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setFiles((p) => p.filter((_, idx) => idx !== i))}
-                    className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/60 transition"
-                    aria-label={`Remover ${f.file.name}`}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      {hasAnyProgress && (
-        <div className="mb-3 space-y-2 rounded-2xl border border-[#e8a04c]/25 bg-white/85 p-3 shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Status dos arquivos
-          </div>
+
+      {allProgress.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
           {allProgress.map((item) => {
-            const meta = getProgressMeta(item.stage);
-            const Icon = meta.icon;
-            const isLoading = item.stage === "enviando" || item.stage === "processando";
-            const pct = item.progress > 0 ? item.progress : meta.pct;
+            const isLoading = item.stage === "enviando" || item.stage === "processando" || item.stage === "pendente";
+            const sizeStr = formatFileSize(item.size);
+            
             return (
-              <div key={item.id} className="space-y-1.5">
-                <div className="flex items-center gap-2 text-xs">
-                  <Icon className={`h-3.5 w-3.5 shrink-0 ${meta.className} ${isLoading ? "animate-spin" : ""}`} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">{item.name}</span>
-                  <span className={`shrink-0 text-[10px] ${meta.className}`}>{meta.label}</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-[#e8a04c]/15">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] transition-all"
-                    style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                  <span>{item.message ?? meta.label}</span>
-                  <span>{formatFileSize(item.size)}</span>
-                </div>
+              <div
+                key={item.id}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-all ${
+                  isLoading ? "bg-muted/30 opacity-60" : "bg-muted/50 border-muted-foreground/10"
+                }`}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                ) : (
+                  <Paperclip className="h-3 w-3 text-muted-foreground" />
+                )}
+                
+                <span className="max-w-[200px] truncate font-medium text-foreground" title={item.name}>
+                  {item.name}
+                </span>
+                
+                <span className="text-[10px] text-muted-foreground">
+                  · {sizeStr}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiles((p) => p.filter((f) => f.file.name !== item.name));
+                  }}
+                  className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/10 transition-colors"
+                  aria-label={`Remover ${item.name}`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })}
         </div>
       )}
+
       <Textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
