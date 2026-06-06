@@ -100,12 +100,13 @@ export function ChatMessageList({
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
-  const lastUserMsgIdRef = useRef<string | null>(null);
+  const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasInitialScrolled = useRef(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
+  const lastUserIndex = messages.reduce((acc, msg, idx) => (msg.role === "user" ? idx : acc), -1);
 
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
@@ -139,18 +140,15 @@ export function ChatMessageList({
 
   const userScrolledUp = useRef(false);
 
-  // Acompanha streaming
+  // Rola para a última mensagem do usuário (âncora no topo)
   useEffect(() => {
-    if (!userScrolledUp.current) {
-      bottomRef.current?.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "end" 
+    if (lastUserIndex !== -1) {
+      lastUserMessageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
       });
     }
-    if (!isStreaming) {
-      userScrolledUp.current = false;
-    }
-  }, [messages, isStreaming]);
+  }, [lastUserIndex]);
 
   // Highlight de mensagem específica (busca / navegação)
   useEffect(() => {
@@ -179,14 +177,17 @@ export function ChatMessageList({
             </div>
           )}
 
-          {messages.map((m) => {
+          {messages.map((m, i) => {
             const isUser = m.role === "user";
+            const isLastUserMessage = isUser && i === lastUserIndex;
+            
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
+
             return (
               <div
                 key={m.id}
-                ref={isHighlighted ? highlightRef : undefined}
+                ref={isHighlighted ? highlightRef : (isLastUserMessage ? lastUserMessageRef : undefined)}
                 className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
