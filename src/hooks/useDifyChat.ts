@@ -159,7 +159,7 @@ export function useDifyChat(
   const [thinking, setThinking] = useState(false);
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
-  const [agentType, setAgentType] = useState<string>("exam");
+  const [agentType, setAgentType] = useState<string>("");
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
@@ -277,7 +277,13 @@ export function useDifyChat(
         .select("id, role, content, agent_type, structured_data, attachments, created_at")
         .eq("chat_id", id)
         .order("created_at", { ascending: true });
-      if (!cancelled) setMessages((msgs as ChatMessage[]) ?? []);
+      if (!cancelled) {
+        setMessages((msgs as ChatMessage[]) ?? []);
+        const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
+        if (lastMsgWithAgent) {
+          setAgentType(lastMsgWithAgent.agent_type);
+        }
+      }
     };
     init();
     return () => { cancelled = true; };
