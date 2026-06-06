@@ -282,6 +282,8 @@ export function useDifyChat(
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
         if (lastMsgWithAgent) {
           setAgentType(lastMsgWithAgent.agent_type);
+        } else {
+          setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
       }
     };

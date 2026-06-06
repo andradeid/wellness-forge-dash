@@ -687,7 +687,7 @@ function ChatPage() {
                 )}
                 <ChatInput 
                   onSubmit={wrappedSend} 
-                  disabled={thinking || !chatId} 
+                  disabled={thinking || !chatId || !agentType} 
                   hasModule={!!agentType}
                   uploadProgress={uploadProgress} 
                 />
