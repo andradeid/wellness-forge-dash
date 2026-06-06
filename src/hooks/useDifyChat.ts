@@ -444,7 +444,7 @@ export function useDifyChat(
       ].filter(Boolean).join("\n");
     };
 
-    const finalQuery = (agentType !== "exam")
+    const finalQuery = !agentType.startsWith("exam")
       ? (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix()) + text
       : text;
 
