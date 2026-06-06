@@ -35,7 +35,17 @@ export const Route = createFileRoute("/api/dify/upload")({
         const agentType =
           typeof agentTypeRaw === "string" && agentTypeRaw.trim()
             ? agentTypeRaw.trim()
-            : "exam";
+            : null;
+
+        if (!agentType) {
+          return new Response(
+            JSON.stringify({ error: "agent_type é obrigatório no upload" }),
+            { 
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            }
+          );
+        }
 
         let baseUrl: string;
         let apiKey: string;
