@@ -106,6 +106,7 @@ export function ChatMessageList({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
+  const lastUserIndex = messages.reduce((acc, msg, idx) => (msg.role === "user" ? idx : acc), -1);
 
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
