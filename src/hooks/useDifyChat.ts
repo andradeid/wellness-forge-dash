@@ -22,7 +22,6 @@ export interface ExamContext {
   otimos: string[];
   resumo_clinico: string;
   resumo_texto?: string; // fallback: análise textual completa quando não há marcadores estruturados
-  agent_id?: string; // log do agente usado
 }
 
 interface DifyFileRef {
@@ -160,7 +159,7 @@ export function useDifyChat(
   const [thinking, setThinking] = useState(false);
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
-  const [agentType, setAgentType] = useState<string>("exam_masculino");
+  const [agentType, setAgentType] = useState<string>("exam");
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
@@ -445,7 +444,7 @@ export function useDifyChat(
       ].filter(Boolean).join("\n");
     };
 
-    const finalQuery = (!agentType.startsWith("exam"))
+    const finalQuery = (agentType !== "exam")
       ? (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix()) + text
       : text;
 
@@ -462,7 +461,6 @@ export function useDifyChat(
           files: difyFiles,
           meta: metaRef.current,
           agent_type: agentType,
-          test_log: true,
         }),
       });
 
@@ -526,12 +524,12 @@ export function useDifyChat(
 
               // Extract markers if in exam mode
               let markers: Marker[] | null = null;
-              if (agentType.startsWith("exam")) {
+              if (agentType === "exam") {
                 markers = tryExtractMarkers(fullText);
               }
 
               const processingMs = Math.round(performance.now() - startedAt);
-              const labReportError = agentType.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
+              const labReportError = agentType === "exam" ? tryExtractLabReportError(fullText) : null;
               
               const structured = labReportError
                 ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
@@ -561,7 +559,7 @@ export function useDifyChat(
                 );
               }
 
-              if (markers && markers.length > 0 && agentType.startsWith("exam")) {
+              if (markers && markers.length > 0 && agentType === "exam") {
                 await processAndPersistMarkers({
                   userId: user.id,
                   patientId,
@@ -573,7 +571,7 @@ export function useDifyChat(
               }
 
               // Salva contexto após resposta do agente de exame
-              if (agentType.startsWith("exam") && fullText.trim() && !labReportError) {
+              if (agentType === "exam" && fullText.trim() && !labReportError) {
                 const safeMarkers = markers ?? [];
                 const newCtx: ExamContext = {
                   patient_name: metaRef.current.patient_name,
@@ -629,7 +627,7 @@ export function useDifyChat(
     conversationIdRef.current = "";
     setMessages([]);
     setError(null);
-    setAgentType("exam_masculino");
+    setAgentType("exam");
     setExamContext(null);
     setChatId(created.id as string);
   }, [patientId, readOnly]);
