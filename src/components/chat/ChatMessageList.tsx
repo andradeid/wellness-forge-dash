@@ -290,7 +290,8 @@ export function ChatMessageList({
                 </div>
               </div>
             );
-          })()}
+          });
+        })()}
 
           {thinking && (
             <div className="flex justify-start">
