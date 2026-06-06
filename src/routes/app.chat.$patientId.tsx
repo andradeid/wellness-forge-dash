@@ -121,7 +121,11 @@ function ChatPage() {
 
     // Agora patientProfile está disponível
     // getAgentForCard pode decidir corretamente
-    const agent = getAgentForCard(pendingModuleFromUrl, patientProfile);
+    const agent = getAgentForCard(
+      pendingModuleFromUrl, 
+      patientProfile,
+      patient?.pregnancy_type
+    );
 
     if (agent) {
       setAgentType(agent.agent_id);
@@ -139,7 +143,7 @@ function ChatPage() {
         module: undefined
       } as any
     });
-  }, [pendingModuleFromUrl, patientProfile, getAgentForCard, setAgentType, navigate]);
+  }, [pendingModuleFromUrl, patientProfile, patient, getAgentForCard, setAgentType, navigate]);
 
   useEffect(() => {
     const patientProfile =
@@ -628,7 +632,7 @@ function ChatPage() {
                                   {idx === 3 && <div className="my-1 border-t border-slate-100" />}
                                   <button
                                     onClick={() => {
-                                      const bestAgent = getAgentForCard(opt.trigger, patientProfile);
+                                      const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
                                       if (bestAgent) {
                                         setAgentType(bestAgent.agent_id);
                                       }
