@@ -22,6 +22,7 @@ export interface ExamContext {
   otimos: string[];
   resumo_clinico: string;
   resumo_texto?: string; // fallback: análise textual completa quando não há marcadores estruturados
+  agent_type?: string;
 }
 
 interface DifyFileRef {
