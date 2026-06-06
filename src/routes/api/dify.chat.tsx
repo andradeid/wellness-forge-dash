@@ -45,7 +45,11 @@ export const Route = createFileRoute("/api/dify/chat")({
           ({ baseUrl, apiKey } = await getDifyAgentConfig(agentType, token));
         } catch (e: unknown) {
           const message = e instanceof Error ? e.message : String(e);
-          return new Response(message, { status: 500 });
+          const status = message.includes("não encontrado") || message.includes("desativado") ? 404 : 500;
+          return new Response(JSON.stringify({ error: message }), { 
+            status,
+            headers: { "Content-Type": "application/json" }
+          });
         }
 
         const { query, conversation_id, inputs, files, meta } = body ?? {};
