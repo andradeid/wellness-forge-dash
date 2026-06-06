@@ -35,17 +35,28 @@ export function useAgentConfig() {
     return agents.filter(a => a.card_trigger === cardTrigger);
   }, [agents]);
 
-  const getAgentForCard = useCallback((cardTrigger: string, patientProfile?: string) => {
+  const getAgentForCard = useCallback((cardTrigger: string, patientProfile?: string, pregnancyType?: string) => {
     const matchingAgents = getAgentsForCard(cardTrigger);
     
     if (matchingAgents.length === 0) return null;
     
     // Special case: exames_de_sangue
     if (cardTrigger === 'exames_de_sangue' && patientProfile) {
+      if (patientProfile === 'adulto_masculino') {
+        return matchingAgents.find(a => a.agent_id === 'exam_masculino') || matchingAgents[0];
+      }
+      
+      if (patientProfile === 'adulto_feminino') {
+        return matchingAgents.find(a => a.agent_id === 'exam_feminino') || matchingAgents[0];
+      }
+
       if (patientProfile === 'gestante') {
-        return matchingAgents.find(a => a.agent_id === 'exam_gestante') || matchingAgents[0];
-      } else {
-        return matchingAgents.find(a => a.agent_id === 'exam_adulto') || matchingAgents[0];
+        if (pregnancyType === 'gemelar' || pregnancyType === 'Gemelar' || pregnancyType === 'multiple') {
+          return matchingAgents.find(a => a.agent_id === 'exam_gestante_gem') || matchingAgents[0];
+        } else {
+          // monofetal ou não informado -> mono como default
+          return matchingAgents.find(a => a.agent_id === 'exam_gestante_mono') || matchingAgents[0];
+        }
       }
     }
 
