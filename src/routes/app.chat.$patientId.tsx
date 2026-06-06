@@ -592,7 +592,7 @@ function ChatPage() {
 
                   return (
                     <div className="mb-2 flex justify-center relative">
-                      <Popover>
+                      <Popover open={moduleOpen} onOpenChange={setModuleOpen}>
                         <PopoverTrigger asChild>
                           <button
                             type="button"
@@ -636,6 +636,7 @@ function ChatPage() {
                                       const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
                                       if (bestAgent) {
                                         setAgentType(bestAgent.agent_id);
+                                        setModuleOpen(false);
                                       }
                                     }}
                                     className={cn(
