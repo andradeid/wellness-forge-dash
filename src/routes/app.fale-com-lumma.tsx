@@ -81,7 +81,7 @@ function FaleComLummaPage() {
       setIsUpdatingTitle(false);
     }
   };
-  const [pendingModule, setPendingModule] = useState<string | undefined>(searchModule);
+  const [pendingTrigger, setPendingTrigger] = useState<string | undefined>(searchModule);
 
   // Estado: modais de paciente
   const [identifyOpen, setIdentifyOpen] = useState(false);
@@ -165,11 +165,11 @@ function FaleComLummaPage() {
       setPatients((prev) => [...prev, patientWithProfile]);
       
       // Navega automaticamente para o chat com o novo paciente
-      if (pendingModule) {
+      if (pendingTrigger) {
         navigate({
           to: "/app/chat/$patientId",
           params: { patientId: data.id },
-          search: { module: pendingModule },
+          search: { module: pendingTrigger },
         });
       } else {
         navigate({
@@ -312,7 +312,7 @@ function FaleComLummaPage() {
           </Link>
           <Button
             onClick={() => {
-              setPendingModule(undefined);
+              setPendingTrigger(undefined);
               setIdentifyOpen(true);
             }}
             className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
@@ -566,7 +566,7 @@ function FaleComLummaPage() {
                             transition={{ duration: 0.6, delay: idx * 0.2, ease: "easeOut" }}
                             onClick={() => {
                               if (requiresPatient(agent.agent_id)) {
-                                setPendingModule(agent.agent_id);
+                                setPendingTrigger(card.trigger);
                                 setIdentifyOpen(true);
                               } else {
                                 startGeneralChat(agent.agent_id);
@@ -615,7 +615,7 @@ function FaleComLummaPage() {
                             transition={{ duration: 0.6, delay: 0.8 + (idx * 0.2), ease: "easeOut" }}
                             onClick={() => {
                               if (requiresPatient(agent.agent_id)) {
-                                setPendingModule(agent.agent_id);
+                                setPendingTrigger(card.trigger);
                                 setIdentifyOpen(true);
                               } else {
                                 startGeneralChat(agent.agent_id);
@@ -702,7 +702,7 @@ function FaleComLummaPage() {
                             navigate({
                               to: "/app/chat/$patientId",
                               params: { patientId: p.id },
-                              search: pendingModule ? { module: pendingModule } : undefined,
+                              search: pendingTrigger ? { module: pendingTrigger } : undefined,
                             });
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
