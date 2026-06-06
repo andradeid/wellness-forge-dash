@@ -143,8 +143,8 @@ export function ChatMessageList({
   useEffect(() => {
     if (!userScrolledUp.current) {
       bottomRef.current?.scrollIntoView({ 
-        behavior: \"smooth\", 
-        block: \"end\" 
+        behavior: "smooth", 
+        block: "end" 
       });
     }
     if (!isStreaming) {
