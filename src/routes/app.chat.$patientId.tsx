@@ -602,15 +602,23 @@ function ChatPage() {
                             {(() => {
                               const currentAgent = agents.find(a => a.agent_id === agentType);
                               const cardTrigger = currentAgent?.card_trigger;
-                              const label = cardTrigger ? CARD_LABELS[cardTrigger] : (agentType ? currentAgent?.label : "Selecionar módulo");
+                              const label = cardTrigger ? CARD_LABELS[cardTrigger] : (agentType ? currentAgent?.label : "Selecione uma tarefa");
                               const Icon = cardTrigger ? CARD_ICONS[cardTrigger] : Sparkles;
                               
                               if (loadingAgents) return <span>Carregando...</span>;
                               
                               return (
                                 <>
-                                  <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />
-                                  <span>{label || "Selecionar módulo"}</span>
+                                  {!agentType ? (
+                                    <span className="flex items-center gap-1.5">
+                                      <span>⚠️ {label}</span>
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />
+                                      <span>{label}</span>
+                                    </>
+                                  )}
                                 </>
                               );
                             })()}
@@ -672,7 +680,12 @@ function ChatPage() {
                     </span>
                   </div>
                 )}
-                <ChatInput onSubmit={wrappedSend} disabled={thinking || !chatId} uploadProgress={uploadProgress} />
+                <ChatInput 
+                  onSubmit={wrappedSend} 
+                  disabled={thinking || !chatId} 
+                  hasModule={!!agentType}
+                  uploadProgress={uploadProgress} 
+                />
                 <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                   Máximo de 10 arquivos de 20MB
                 </p>

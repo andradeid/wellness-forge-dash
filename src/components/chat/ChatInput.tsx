@@ -42,10 +42,12 @@ function getProgressMeta(stage: AttachmentProgressStage) {
 export function ChatInput({
   onSubmit,
   disabled,
+  hasModule = true,
   uploadProgress = [],
 }: {
   onSubmit: (text: string, files: File[]) => Promise<void> | void;
   disabled?: boolean;
+  hasModule?: boolean;
   uploadProgress?: AttachmentProgressItem[];
 }) {
   const [text, setText] = useState("");
@@ -245,9 +247,9 @@ export function ChatInput({
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
-        placeholder="Pergunte à Lumma sobre o paciente ou anexe um exame..."
+        placeholder={hasModule ? "Pergunte à Lumma sobre o paciente ou anexe um exame..." : "Selecione uma tarefa acima para iniciar a conversa"}
         className="min-h-[36px] max-h-40 resize-none border-0 bg-transparent px-1 py-1 shadow-none focus-visible:ring-0 text-[15px]"
-        disabled={disabled}
+        disabled={disabled || !hasModule}
       />
       <div className="mt-2 flex items-center justify-between">
         <Button
@@ -256,7 +258,7 @@ export function ChatInput({
           size="icon"
           className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm"
           onClick={openPicker}
-          disabled={disabled}
+          disabled={disabled || !hasModule}
           aria-label="Anexar exame"
         >
           <Paperclip className="h-4 w-4" />
@@ -264,7 +266,7 @@ export function ChatInput({
         <Button
           type="button"
           onClick={send}
-          disabled={!canSend}
+          disabled={!canSend || !hasModule}
           aria-label="Enviar"
           className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50"
         >
