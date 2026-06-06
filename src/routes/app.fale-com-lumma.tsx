@@ -191,7 +191,7 @@ function FaleComLummaPage() {
   const getActiveAgentLabel = (id: string | undefined) => {
     const agent = agents.find(a => a.agent_id === id);
     if (!agent) return "Pergunta Clínica";
-    if (agent.agent_id === "exam") return "Analisando Exame";
+    if (agent.agent_id.startsWith("exam")) return "Analisando Exame";
     if (agent.agent_id === "production") return "Elaborando Plano & Receitas";
     return agent.label;
   };

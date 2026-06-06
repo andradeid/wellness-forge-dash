@@ -22,10 +22,10 @@ async function authUser(request: Request): Promise<{ userId: string; token: stri
 function resolveAgentType(body: any): string {
   const explicit = typeof body?.agent_type === "string" ? body.agent_type.trim() : "";
   if (explicit) return explicit;
-  if (Array.isArray(body?.files) && body.files.length > 0) return "exam";
+  if (Array.isArray(body?.files) && body.files.length > 0) return "exam_masculino";
   const metaTask = typeof body?.meta?.task_type === "string" ? body.meta.task_type.trim() : "";
   if (metaTask) return metaTask;
-  return "exam";
+  return "exam_masculino";
 }
 
 export const Route = createFileRoute("/api/dify/chat")({
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/api/dify/chat")({
         const { userId, token } = auth;
 
         const body = await request.json();
+        const testLog = body?.test_log === true;
         const agentType = resolveAgentType(body);
 
         let baseUrl: string;
@@ -103,6 +104,7 @@ export const Route = createFileRoute("/api/dify/chat")({
 
         if (!upstream.ok) {
           const text = await upstream.text().catch(() => "");
+          if (testLog) console.log(`[DIFY-TEST-LOG] agent=${agentType} status=${upstream.status} res=${text.slice(0, 100)}`);
           if (
             (upstream.status === 403 || upstream.status === 401) &&
             /workspace.*archived|status is archived|invalid/i.test(text)
@@ -139,6 +141,8 @@ export const Route = createFileRoute("/api/dify/chat")({
           const text = await upstream.text().catch(() => "");
           return new Response(text || "Dify error", { status: upstream.status });
         }
+
+        if (testLog) console.log(`[DIFY-TEST-LOG] SUCCESS agent=${agentType}`);
 
         return new Response(upstream.body, {
           status: 200,
