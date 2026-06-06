@@ -100,7 +100,7 @@ export function ChatMessageList({
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
-  const lastUserMsgIdRef = useRef<string | null>(null);
+  const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasInitialScrolled = useRef(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
