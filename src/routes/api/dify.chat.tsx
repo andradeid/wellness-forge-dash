@@ -103,6 +103,13 @@ export const Route = createFileRoute("/api/dify/chat")({
 
         if (!upstream.ok) {
           const text = await upstream.text().catch(() => "");
+          
+          console.error('[DIFY ERROR]', {
+            status: upstream.status,
+            agent: agentType,
+            body: text
+          });
+
           if (
             (upstream.status === 403 || upstream.status === 401) &&
             /workspace.*archived|status is archived|invalid/i.test(text)
@@ -132,7 +139,18 @@ export const Route = createFileRoute("/api/dify/chat")({
               { status: upstream.status },
             );
           }
-          return new Response(text || "Dify error", { status: upstream.status });
+          
+          return new Response(
+            JSON.stringify({ 
+              error: text,
+              status: upstream.status,
+              agent: agentType
+            }),
+            { 
+              status: upstream.status,
+              headers: { "Content-Type": "application/json" }
+            }
+          );
         }
 
         if (!upstream.ok || !upstream.body) {
