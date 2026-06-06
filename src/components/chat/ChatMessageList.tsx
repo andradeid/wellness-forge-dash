@@ -142,17 +142,13 @@ export function ChatMessageList({
 
   // Rola para a última mensagem do usuário (âncora no topo)
   useEffect(() => {
-    const lastUserMsg = messages
-      .filter(m => m.role === 'user')
-      .at(-1);
-    
-    if (lastUserMsg) {
+    if (lastUserIndex !== -1) {
       lastUserMessageRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
     }
-  }, [messages.filter(m => m.role === 'user').length]);
+  }, [lastUserIndex]);
 
   // Highlight de mensagem específica (busca / navegação)
   useEffect(() => {
