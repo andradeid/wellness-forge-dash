@@ -22,6 +22,7 @@ export interface ExamContext {
   otimos: string[];
   resumo_clinico: string;
   resumo_texto?: string; // fallback: análise textual completa quando não há marcadores estruturados
+  agent_type?: string;
 }
 
 interface DifyFileRef {
@@ -533,12 +534,12 @@ export function useDifyChat(
 
               // Extract markers if in exam mode
               let markers: Marker[] | null = null;
-              if (agentType === "exam") {
+              if (agentType?.startsWith("exam")) {
                 markers = tryExtractMarkers(fullText);
               }
 
               const processingMs = Math.round(performance.now() - startedAt);
-              const labReportError = agentType === "exam" ? tryExtractLabReportError(fullText) : null;
+              const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
               
               const structured = labReportError
                 ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
@@ -568,7 +569,7 @@ export function useDifyChat(
                 );
               }
 
-              if (markers && markers.length > 0 && agentType === "exam") {
+              if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
                 await processAndPersistMarkers({
                   userId: user.id,
                   patientId,
@@ -576,11 +577,12 @@ export function useDifyChat(
                   chatId,
                   rawMarkers: markers as unknown as RawMarker[],
                   source: "chat",
+                  agentType, // Passamos o agentType para ser salvo
                 });
               }
 
               // Salva contexto após resposta do agente de exame
-              if (agentType === "exam" && fullText.trim() && !labReportError) {
+              if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
                 const safeMarkers = markers ?? [];
                 const newCtx: ExamContext = {
                   patient_name: metaRef.current.patient_name,
@@ -602,6 +604,7 @@ export function useDifyChat(
                     .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
                     .join(" | "),
                   resumo_texto: fullText.slice(0, 4000),
+                  agent_type: agentType,
                 };
                 setExamContext(newCtx);
                 await (supabase as any)

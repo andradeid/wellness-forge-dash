@@ -167,6 +167,7 @@ export async function persistMarkers(args: {
   chatId?: string | null;
   markers: NormalizedMarker[];
   measuredAt?: string;
+  agentType?: string;
 }): Promise<{ inserted: number; error?: string }> {
   if (!args.markers.length) return { inserted: 0 };
   const rows = args.markers.map((m) => ({
@@ -174,6 +175,7 @@ export async function persistMarkers(args: {
     exam_id: args.examId ?? null,
     chat_id: args.chatId ?? null,
     created_by: args.userId,
+    agent_type: args.agentType || null,
     marker_name: m.name,
     marker_value: m.value_numeric,
     marker_value_raw: m.value,
@@ -206,6 +208,7 @@ export async function processAndPersistMarkers(args: {
   chatId?: string | null;
   rawMarkers: RawMarker[];
   source?: string;
+  agentType?: string;
 }): Promise<MarkerValidation & { inserted: number }> {
   const { valid, invalid } = validateMarkers(args.rawMarkers);
 
@@ -240,6 +243,7 @@ export async function processAndPersistMarkers(args: {
       examId: args.examId ?? null,
       chatId: args.chatId ?? null,
       markers: valid,
+      agentType: args.agentType,
     });
     inserted = r.inserted;
   }

@@ -313,6 +313,7 @@ export type Database = {
       }
       patient_exam_results: {
         Row: {
+          agent_type: string | null
           analysis: string | null
           category: string | null
           chat_id: string | null
@@ -330,6 +331,7 @@ export type Database = {
           reference_value: string | null
         }
         Insert: {
+          agent_type?: string | null
           analysis?: string | null
           category?: string | null
           chat_id?: string | null
@@ -347,6 +349,7 @@ export type Database = {
           reference_value?: string | null
         }
         Update: {
+          agent_type?: string | null
           analysis?: string | null
           category?: string | null
           chat_id?: string | null
