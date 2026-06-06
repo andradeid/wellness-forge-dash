@@ -91,6 +91,7 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
+  const [moduleOpen, setModuleOpen] = useState(false);
   const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
