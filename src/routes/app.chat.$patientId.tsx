@@ -91,6 +91,7 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
+  const [moduleOpen, setModuleOpen] = useState(false);
   const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
@@ -591,7 +592,7 @@ function ChatPage() {
 
                   return (
                     <div className="mb-2 flex justify-center relative">
-                      <Popover>
+                      <Popover open={moduleOpen} onOpenChange={setModuleOpen}>
                         <PopoverTrigger asChild>
                           <button
                             type="button"
@@ -635,6 +636,7 @@ function ChatPage() {
                                       const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
                                       if (bestAgent) {
                                         setAgentType(bestAgent.agent_id);
+                                        setModuleOpen(false);
                                       }
                                     }}
                                     className={cn(
