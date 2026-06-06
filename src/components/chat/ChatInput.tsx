@@ -122,7 +122,8 @@ export function ChatInput({
     }
   };
 
-  const canSend = !disabled && (text.trim().length > 0 || files.length > 0);
+  const isAnyFileLoading = allProgress.some((p) => p.stage === \"enviando\" || p.stage === \"processando\");
+  const canSend = !disabled && !isAnyFileLoading && (text.trim().length > 0 || files.length > 0);
 
   // Itens pendentes (recém-anexados) que ainda não têm progresso real
   const progressNames = new Set(uploadProgress.map((p) => p.name));
