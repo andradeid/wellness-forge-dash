@@ -164,6 +164,8 @@ export function useDifyChat(
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
+  const researchSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const researchSavedRef = useRef<boolean>(false);
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -289,7 +291,12 @@ export function useDifyChat(
       }
     };
     init();
-    return () => { cancelled = true; };
+    return () => { 
+      cancelled = true; 
+      if (researchSaveTimeoutRef.current) {
+        clearTimeout(researchSaveTimeoutRef.current);
+      }
+    };
   }, [patientId, readOnly, forceChatId]);
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
@@ -511,7 +518,45 @@ export function useDifyChat(
 
       const decoder = new TextDecoder();
       let fullText = "";
+      researchSavedRef.current = false;
 
+      const saveMessageToSupabase = async (content: string, convId?: string) => {
+        if (researchSavedRef.current || !content.trim()) return;
+        
+        if (convId) {
+          conversationIdRef.current = convId;
+          await (supabase as any)
+            .from("patient_chats")
+            .update({ dify_conversation_id: convId })
+            .eq("id", chatId);
+        }
+
+        const processingMs = Math.round(performance.now() - startedAt);
+        const structured = { processing_ms: processingMs };
+
+        const { data: assistantInserted } = await (supabase as any)
+          .from("chat_messages")
+          .insert({
+            chat_id: chatId,
+            created_by: user.id,
+            role: "assistant",
+            content: content,
+            agent_type: agentType,
+            structured_data: structured,
+          })
+          .select("id")
+          .single();
+
+        if (assistantInserted?.id) {
+          researchSavedRef.current = true;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
+            )
+          );
+        }
+      };
+      
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -532,95 +577,116 @@ export function useDifyChat(
                     m.id === assistantId ? { ...m, content: fullText } : m
                   )
                 );
+
+                // AJUSTE: Estratégia de save por timeout para o agente research
+                if (agentType === 'research') {
+                  if (researchSaveTimeoutRef.current) {
+                    clearTimeout(researchSaveTimeoutRef.current);
+                  }
+                  
+                  researchSaveTimeoutRef.current = setTimeout(async () => {
+                    if (fullText.length > 100 && !researchSavedRef.current) {
+                      console.log("[RESEARCH] Timeout save triggered");
+                      await saveMessageToSupabase(fullText, conversationIdRef.current || undefined);
+                    }
+                  }, 3000);
+                }
               }
             } else if (data.event === "message_end") {
-              if (data.conversation_id) {
-                conversationIdRef.current = data.conversation_id;
-                await (supabase as any)
-                  .from("patient_chats")
-                  .update({ dify_conversation_id: data.conversation_id })
-                  .eq("id", chatId);
+              if (researchSaveTimeoutRef.current) {
+                clearTimeout(researchSaveTimeoutRef.current);
               }
 
-              // Extract markers if in exam mode
-              let markers: Marker[] | null = null;
-              if (agentType?.startsWith("exam")) {
-                markers = tryExtractMarkers(fullText);
-              }
+              if (agentType === "research") {
+                await saveMessageToSupabase(fullText, data.conversation_id);
+              } else {
+                if (data.conversation_id) {
+                  conversationIdRef.current = data.conversation_id;
+                  await (supabase as any)
+                    .from("patient_chats")
+                    .update({ dify_conversation_id: data.conversation_id })
+                    .eq("id", chatId);
+                }
 
-              const processingMs = Math.round(performance.now() - startedAt);
-              const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
-              
-              const structured = labReportError
-                ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
-                : (markers
-                    ? { markers, processing_ms: processingMs }
-                    : { processing_ms: processingMs });
+                // Extract markers if in exam mode
+                const markers: Marker[] | null = agentType?.startsWith("exam") 
+                  ? tryExtractMarkers(fullText) 
+                  : null;
 
-              // Save final assistant message
-              const { data: assistantInserted } = await (supabase as any)
-                .from("chat_messages")
-                .insert({
-                  chat_id: chatId,
-                  created_by: user.id,
-                  role: "assistant",
-                  content: fullText,
-                  agent_type: agentType,
-                  structured_data: structured,
-                })
-                .select("id")
-                .single();
+                const processingMs = Math.round(performance.now() - startedAt);
+                const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
+                
+                const structured = labReportError
+                  ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
+                  : (markers
+                      ? { markers, processing_ms: processingMs }
+                      : { processing_ms: processingMs });
 
-              if (assistantInserted?.id) {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
-                  )
-                );
-              }
+                // Save final assistant message
+                const { data: assistantInserted } = await (supabase as any)
+                  .from("chat_messages")
+                  .insert({
+                    chat_id: chatId,
+                    created_by: user.id,
+                    role: "assistant",
+                    content: fullText,
+                    agent_type: agentType,
+                    structured_data: structured,
+                  })
+                  .select("id")
+                  .single();
 
-              if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
-                await processAndPersistMarkers({
-                  userId: user.id,
-                  patientId,
-                  examId: lastExamId,
-                  chatId,
-                  rawMarkers: markers as unknown as RawMarker[],
-                  source: "chat",
-                  agentType, // Passamos o agentType para ser salvo
-                });
-              }
+                if (assistantInserted?.id) {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
+                    )
+                  );
+                }
 
-              // Salva contexto após resposta do agente de exame
-              if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
-                const safeMarkers = markers ?? [];
-                const newCtx: ExamContext = {
-                  patient_name: metaRef.current.patient_name,
-                  patient_profile: metaRef.current.patient_profile,
-                  patient_sex: metaRef.current.patient_sex,
-                  gestante_tipo: metaRef.current.gestante_tipo,
-                  gestante_periodo: metaRef.current.gestante_periodo,
-                  exam_date: new Date().toISOString(),
-                  alteracoes: safeMarkers
-                    .filter(m => {
-                      const visual = classificationVisualState(m.classification);
-                      return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
-                    })
-                    .map(m => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
-                  otimos: safeMarkers
-                    .filter(m => classificationVisualState(m.classification) === "otimo")
-                    .map(m => `${m.name}: ${m.value} ${m.unit || ""}`),
-                  resumo_clinico: safeMarkers
-                    .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
-                    .join(" | "),
-                  resumo_texto: fullText.slice(0, 4000),
-                  agent_type: agentType,
-                };
-                setExamContext(newCtx);
-                await (supabase as any)
-                  .from("patient_chats")
-                  .update({ exam_context: newCtx })
-                  .eq("id", chatId);
+                if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
+                  await processAndPersistMarkers({
+                    userId: user.id,
+                    patientId,
+                    examId: lastExamId,
+                    chatId,
+                    rawMarkers: markers as unknown as RawMarker[],
+                    source: "chat",
+                    agentType,
+                  });
+                }
+
+                // Salva contexto após resposta do agente de exame
+                if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
+                  const safeMarkers = markers ?? [];
+                  const newCtx: ExamContext = {
+                    patient_name: metaRef.current.patient_name,
+                    patient_profile: metaRef.current.patient_profile,
+                    patient_sex: metaRef.current.patient_sex,
+                    gestante_tipo: metaRef.current.gestante_tipo,
+                    gestante_periodo: metaRef.current.gestante_periodo,
+                    exam_date: new Date().toISOString(),
+                    alteracoes: safeMarkers
+                      .filter((m: Marker) => {
+                        const visual = classificationVisualState(m.classification);
+                        return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
+                      })
+                      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
+                    otimos: safeMarkers
+                      .filter((m: Marker) => classificationVisualState(m.classification) === "otimo")
+                      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""}`),
+                    resumo_clinico: safeMarkers
+                      .map((m: Marker) => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
+                      .join(" | "),
+                    resumo_texto: fullText.slice(0, 4000),
+                    agent_type: agentType,
+                  };
+                  setExamContext(newCtx);
+                  await (supabase as any)
+                    .from("patient_chats")
+                    .update({ exam_context: newCtx })
+                    .eq("id", chatId);
+                }
               }
             }
           } catch (e) {
