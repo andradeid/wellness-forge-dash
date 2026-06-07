@@ -131,6 +131,15 @@ export function useGeneralChat(chatId: string, agentType: string) {
                   .eq("id", chatId);
               }
 
+              // AJUSTE 3: Se for research e for a primeira mensagem (não havia mensagens antes da atual), define o título
+              if (messages.length === 0 && agentType === 'research') {
+                const title = text.slice(0, 60);
+                await (supabase as any)
+                  .from("general_chats")
+                  .update({ title })
+                  .eq("id", chatId);
+              }
+
               // Save messages to DB
               await supabase.from("general_chat_messages").insert([
                 { chat_id: chatId, role: "user", content: text, agent_type: agentType },
