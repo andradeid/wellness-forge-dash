@@ -24,11 +24,12 @@ export function ChatThinking({ mode = "analysis", agentType }: { mode?: "analysi
 
   useEffect(() => {
     if (mode !== "analysis") return;
+    const steps = agentType === 'research' ? RESEARCH_STEPS : STEPS;
     const id = setInterval(() => {
-      setIdx((i) => (i + 1) % STEPS.length);
+      setIdx((i) => (i + 1) % steps.length);
     }, 2200);
     return () => clearInterval(id);
-  }, [mode]);
+  }, [mode, agentType]);
 
   if (mode === "simple") {
     return (
