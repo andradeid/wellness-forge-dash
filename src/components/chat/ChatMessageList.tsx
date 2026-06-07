@@ -87,31 +87,65 @@ function cleanProse(text: string): string {
 /** Filters internal ReAct process (Thought/Action/Observation) for research agent. */
 function cleanResearchOutput(text: string): string {
   if (!text) return "";
+  
+  // Regex to detect "Thought:", "Action:", "Action Input:", "Observation:"
+  // and remove them along with their content.
+  // We want to keep everything that follows the last ReAct block or just show nothing if we are in the middle of it.
+  
   const lines = text.split("\n");
   
-  // Find the last index of a line starting with ReAct keywords or backticks (JSON blocks)
-  let lastThoughtIndex = -1;
+  // Search for common ReAct markers
+  const reactMarkers = [
+    "Thought:", 
+    "Action:", 
+    "Action Input:", 
+    "Observation:", 
+    "Final Answer:",
+    "Análise Final:",
+    "Resumo da Pesquisa:"
+  ];
+
+  let lastMarkerIndex = -1;
+  let isFinalAnswer = false;
+
   lines.forEach((line, i) => {
     const trimmed = line.trim();
-    if (
-      trimmed.startsWith("Thought:") ||
-      trimmed.startsWith("Action:") ||
-      trimmed.startsWith("Action Input:") ||
-      trimmed.startsWith("Observation:") ||
-      trimmed.startsWith("`")
-    ) {
-      lastThoughtIndex = i;
+    // Check for explicit markers
+    for (const marker of reactMarkers) {
+      if (trimmed.startsWith(marker)) {
+        lastMarkerIndex = i;
+        if (marker === "Final Answer:" || marker === "Análise Final:" || marker === "Resumo da Pesquisa:") {
+          isFinalAnswer = true;
+        }
+        break;
+      }
     }
   });
 
-  if (lastThoughtIndex >= 0) {
-    const afterThought = lines
-      .slice(lastThoughtIndex + 1)
-      .join("\n")
-      .trim();
-    return afterThought || text;
+  // If we found a final answer marker, we return only what follows it
+  if (isFinalAnswer && lastMarkerIndex !== -1) {
+    return lines.slice(lastMarkerIndex + 1).join("\n").trim();
   }
-  return text;
+
+  // If we are still in the ReAct process (found a marker but not a final one)
+  // we return empty to avoid showing the "Thought/Action" noise, 
+  // UNLESS there is content at the very beginning before any Thought (rare)
+  // or if there are no markers at all (normal markdown response)
+  if (lastMarkerIndex !== -1) {
+    // If we have content after the last marker, and it's not a ReAct marker itself,
+    // it might be the start of the final answer if the model didn't explicitly use a "Final Answer" label
+    const potentialContent = lines.slice(lastMarkerIndex + 1).join("\n").trim();
+    
+    // Heuristic: if the content is long enough and doesn't look like a tool result, it might be the answer
+    if (potentialContent.length > 100 && !potentialContent.startsWith("{") && !potentialContent.startsWith("[")) {
+      return potentialContent;
+    }
+    
+    return "";
+  }
+
+  // No markers found, return as is (could be a follow-up or a simple message)
+  return text.trim();
 }
 
 /** Determines research status label based on internal ReAct blocks during streaming. */
