@@ -477,20 +477,23 @@ export function useDifyChat(
     // 4) Stream from Dify proxy
     let assistantText = "";
     const buildContextPrefix = (ctx: ExamContext): string => {
+      const alteracoes = ctx?.alteracoes ?? [];
+      const otimos = ctx?.otimos ?? [];
+
       const lines = [
         `[CONTEXTO DO PACIENTE]`,
         `Paciente: ${ctx.patient_name}`,
         `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}`,
       ];
-      if (ctx.alteracoes.length > 0) {
-        lines.push(`Marcadores alterados: ${ctx.alteracoes.join(", ")}`);
+      if (alteracoes.length > 0) {
+        lines.push(`Marcadores alterados: ${alteracoes.join(", ")}`);
       }
-      if (ctx.otimos.length > 0) {
-        lines.push(`Marcadores ótimos: ${ctx.otimos.join(", ")}`);
+      if (otimos.length > 0) {
+        lines.push(`Marcadores ótimos: ${otimos.join(", ")}`);
       }
       // Fallback: se não temos marcadores estruturados, injeta a análise textual completa
       // do exame para que o agente tenha contexto clínico real para trabalhar.
-      if (ctx.alteracoes.length === 0 && ctx.otimos.length === 0 && ctx.resumo_texto) {
+      if (alteracoes.length === 0 && otimos.length === 0 && ctx.resumo_texto) {
         lines.push(`Análise do exame anterior:`);
         lines.push(ctx.resumo_texto);
       }
@@ -516,33 +519,38 @@ export function useDifyChat(
       ].filter(Boolean).join("\n");
     };
 
-    const finalQuery = agentType.startsWith("exam")
-      ? text
-      : agentType === "research"
-        ? text
-        : (examContext 
-            ? buildContextPrefix(examContext) 
-            : buildMinimalPrefix()) + text;
-    
-    const difyQuery = finalQuery || text;
-
-    const callDify = async (convId: string | undefined) =>
-      fetch("/api/dify/chat", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: difyQuery,
-          conversation_id: convId,
-          files: difyFiles,
-          meta: metaRef.current,
-          agent_type: agentType,
-        }),
-      });
-
     try {
+      const finalQuery = (() => {
+        if (agentType.startsWith("exam")) return text;
+        if (agentType === "research") return text;
+        try {
+          return (examContext 
+              ? buildContextPrefix(examContext) 
+              : buildMinimalPrefix()) + text;
+        } catch (e) {
+          console.error('[finalQuery error]', e);
+          return buildMinimalPrefix() + text;
+        }
+      })();
+      
+      const difyQuery = finalQuery || text;
+
+      const callDify = async (convId: string | undefined) =>
+        fetch("/api/dify/chat", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: difyQuery,
+            conversation_id: convId,
+            files: difyFiles,
+            meta: metaRef.current,
+            agent_type: agentType,
+          }),
+        });
+
       // Em conversas antigas, o Dify pode ter salvo o conversation_id com outro `user`.
       // Ao anexar exame, abrimos uma nova conversa Dify com o UUID correto e mantemos o contexto via meta.
       const initialConv = difyFiles.length ? undefined : conversationIdRef.current || undefined;
