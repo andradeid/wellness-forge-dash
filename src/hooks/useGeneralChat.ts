@@ -38,6 +38,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
       setMessages((msgData as ChatMessage[]) ?? []);
     };
     init();
+    return () => {
+      if (researchSaveTimeoutRef.current) {
+        clearTimeout(researchSaveTimeoutRef.current);
+      }
+    };
   }, [chatId]);
 
   const sendMessage = useCallback(async (text: string) => {
