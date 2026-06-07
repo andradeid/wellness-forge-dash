@@ -164,6 +164,10 @@ export function useDifyChat(
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
+  const assistantMsgIdRef = useRef<string | null>(null);
+  const progressiveUpdateRef = useRef<NodeJS.Timeout | null>(null);
+  const accumulatedContentRef = useRef<string>("");
+  const titleSavedRef = useRef<boolean>(false);
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -286,6 +290,10 @@ export function useDifyChat(
         } else {
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
+        // Se já existem mensagens na conversa, não precisamos salvar o título novamente
+        if ((msgs as any[])?.length > 0) {
+          titleSavedRef.current = true;
+        }
       }
     };
     init();
@@ -299,6 +307,8 @@ export function useDifyChat(
     setError(null);
     setThinking(true);
     setThinkingMode(files.length > 0 ? "analysis" : "simple");
+    accumulatedContentRef.current = "";
+    assistantMsgIdRef.current = null;
     if (files.length > 0) {
       setUploadProgress(files.map((file) => ({
         id: `${file.name}-${file.size}-${file.lastModified}`,
@@ -403,10 +413,9 @@ export function useDifyChat(
     const { data: userInserted } = await (supabase as any)
       .from("chat_messages").insert(userMsgPayload).select("id").single();
 
-    // Só define título na primeira mensagem do usuário se for agente research
-    const isFirstUserMessage = messages.length === 0;
-    
-    if (isFirstUserMessage && agentType === 'research') {
+    // Só define título se for agente research e ainda não foi salvo nesta conversa
+    if (!titleSavedRef.current && agentType === 'research') {
+      titleSavedRef.current = true;
       const title = text.trim().slice(0, 60);
       await (supabase as any)
         .from("patient_chats")
@@ -438,25 +447,43 @@ export function useDifyChat(
       const processingMs = Math.round(performance.now() - startedAt);
       const structured = { processing_ms: processingMs };
 
-      const { data: assistantInserted } = await (supabase as any)
-        .from("chat_messages")
-        .insert({
-          chat_id: chatId,
-          created_by: user.id,
-          role: "assistant",
-          content: content,
-          agent_type: agentType,
-          structured_data: structured,
-        })
-        .select("id")
-        .single();
-
-      if (assistantInserted?.id) {
+      if (agentType === 'research' && assistantMsgIdRef.current) {
+        // Update final para o research usando o ID já criado
+        await (supabase as any)
+          .from("chat_messages")
+          .update({
+            content: content,
+            structured_data: structured,
+          })
+          .eq("id", assistantMsgIdRef.current);
+          
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
+            m.id === assistantId ? { ...m, id: assistantMsgIdRef.current!, structured_data: structured } : m
           )
         );
+      } else {
+        // Comportamento padrão para outros agentes
+        const { data: assistantInserted } = await (supabase as any)
+          .from("chat_messages")
+          .insert({
+            chat_id: chatId,
+            created_by: user.id,
+            role: "assistant",
+            content: content,
+            agent_type: agentType,
+            structured_data: structured,
+          })
+          .select("id")
+          .single();
+
+        if (assistantInserted?.id) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
+            )
+          );
+        }
       }
     };
 
@@ -568,14 +595,47 @@ export function useDifyChat(
               const text = getDifyAnswer(data);
               if (text) {
                 fullText += text;
+                accumulatedContentRef.current = fullText;
+                
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId ? { ...m, content: fullText } : m
                   )
                 );
 
+                // MOMENTO 1 — primeiro chunk do research
+                if (agentType === 'research' && !assistantMsgIdRef.current && fullText.trim().length > 0) {
+                  const msgId = crypto.randomUUID();
+                  assistantMsgIdRef.current = msgId;
+                  
+                  // INSERT inicial
+                  (supabase as any).from('chat_messages').insert({
+                    id: msgId,
+                    chat_id: chatId,
+                    created_by: user.id,
+                    role: 'assistant',
+                    content: fullText,
+                    agent_type: 'research'
+                  }).then(() => {});
+
+                  // MOMENTO 2 — Inicia updates progressivos a cada 10s
+                  progressiveUpdateRef.current = setInterval(async () => {
+                    if (assistantMsgIdRef.current && accumulatedContentRef.current.length > 0) {
+                      await (supabase as any)
+                        .from('chat_messages')
+                        .update({ content: accumulatedContentRef.current })
+                        .eq('id', assistantMsgIdRef.current);
+                    }
+                  }, 10000);
+                }
               }
             } else if (data.event === "message_end") {
+              // MOMENTO 3 — Limpa o intervalo progressivo no fim
+              if (progressiveUpdateRef.current) {
+                clearInterval(progressiveUpdateRef.current);
+                progressiveUpdateRef.current = null;
+              }
+
               if (agentType === "research") {
                 await saveAssistantToSupabase(fullText, data.conversation_id);
               } else {
@@ -676,6 +736,10 @@ export function useDifyChat(
     } catch (e: any) {
       setError(e.message);
     } finally {
+      if (progressiveUpdateRef.current) {
+        clearInterval(progressiveUpdateRef.current);
+        progressiveUpdateRef.current = null;
+      }
       setThinking(false);
       setUploadProgress([]);
     }
@@ -693,6 +757,7 @@ export function useDifyChat(
     if (cErr) { setError(cErr.message); return; }
     conversationIdRef.current = "";
     setMessages([]);
+    titleSavedRef.current = false;
     setError(null);
     setAgentType("exam");
     setExamContext(null);
