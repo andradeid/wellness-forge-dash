@@ -164,6 +164,9 @@ export function useDifyChat(
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
+  const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const researchSavedRef = useRef<boolean>(false);
+  const currentFullTextRef = useRef<string>("");
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -291,6 +294,9 @@ export function useDifyChat(
     init();
     return () => { 
       cancelled = true; 
+      if (researchTimeoutRef.current) {
+        clearTimeout(researchTimeoutRef.current);
+      }
     };
   }, [patientId, readOnly, forceChatId]);
 
@@ -299,6 +305,12 @@ export function useDifyChat(
     setError(null);
     setThinking(true);
     setThinkingMode(files.length > 0 ? "analysis" : "simple");
+    researchSavedRef.current = false;
+    currentFullTextRef.current = "";
+    if (researchTimeoutRef.current) {
+      clearTimeout(researchTimeoutRef.current);
+      researchTimeoutRef.current = null;
+    }
     if (files.length > 0) {
       setUploadProgress(files.map((file) => ({
         id: `${file.name}-${file.size}-${file.lastModified}`,
@@ -573,15 +585,36 @@ export function useDifyChat(
               const text = getDifyAnswer(data);
               if (text) {
                 fullText += text;
+                currentFullTextRef.current = fullText;
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId ? { ...m, content: fullText } : m
                   )
                 );
+
+                // Lógica de salvamento por timeout para research
+                if (agentType === 'research') {
+                  if (researchTimeoutRef.current) {
+                    clearTimeout(researchTimeoutRef.current);
+                  }
+                  researchTimeoutRef.current = setTimeout(async () => {
+                    if (!researchSavedRef.current && currentFullTextRef.current.length > 200) {
+                      researchSavedRef.current = true;
+                      await saveAssistantToSupabase(currentFullTextRef.current, data.conversation_id);
+                    }
+                  }, 15000);
+                }
               }
             } else if (data.event === "message_end") {
+              if (researchTimeoutRef.current) {
+                clearTimeout(researchTimeoutRef.current);
+                researchTimeoutRef.current = null;
+              }
               if (agentType === "research") {
-                await saveAssistantToSupabase(fullText, data.conversation_id);
+                if (!researchSavedRef.current) {
+                  researchSavedRef.current = true;
+                  await saveAssistantToSupabase(fullText, data.conversation_id);
+                }
               } else {
                 if (data.conversation_id) {
                   conversationIdRef.current = data.conversation_id;
@@ -680,6 +713,12 @@ export function useDifyChat(
     } catch (e: any) {
       setError(e.message);
     } finally {
+      if (researchTimeoutRef.current && !researchSavedRef.current && agentType === 'research' && currentFullTextRef.current.length > 200) {
+        // Tenta um save final no erro se tiver conteúdo mínimo
+        const textToSave = currentFullTextRef.current;
+        researchSavedRef.current = true;
+        saveAssistantToSupabase(textToSave);
+      }
       setThinking(false);
       setUploadProgress([]);
     }
