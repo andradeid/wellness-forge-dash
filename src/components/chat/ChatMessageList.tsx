@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
