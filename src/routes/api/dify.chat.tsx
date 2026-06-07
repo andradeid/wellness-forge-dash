@@ -104,9 +104,9 @@ export const Route = createFileRoute("/api/dify/chat")({
               query: safeQuery,
               inputs: mergedInputs,
               response_mode: "streaming",
-              conversation_id: conversation_id ?? "",
               user: displayUser,
               files: files ?? [],
+              ...(conversation_id ? { conversation_id } : {}),
             }),
           });
 
@@ -160,9 +160,9 @@ export const Route = createFileRoute("/api/dify/chat")({
                   query: safeQuery,
                   inputs: mergedInputs,
                   response_mode: "streaming",
-                  conversation_id: conversation_id ?? "",
                   user: displayUser,
                   files: files ?? [],
+                  ...(conversation_id ? { conversation_id } : {}),
                 }),
               });
             } catch (retryErr: any) {

@@ -163,7 +163,7 @@ export function useDifyChat(
   const [agentType, setAgentType] = useState<string>("");
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
-  const conversationIdRef = useRef<string>("");
+  const conversationIdRef = useRef<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
@@ -779,7 +779,7 @@ export function useDifyChat(
       // possui sua própria chave, usar o ID de um agente anterior causará erro no Dify.
       
       console.log(`[SWITCH AGENT] Resetting conversationId from ${prev} to ${next}`);
-      conversationIdRef.current = "";
+      conversationIdRef.current = null;
       
       if (chatId) {
         (supabase as any)
