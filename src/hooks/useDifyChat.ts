@@ -779,7 +779,7 @@ export function useDifyChat(
       // possui sua própria chave, usar o ID de um agente anterior causará erro no Dify.
       
       console.log(`[SWITCH AGENT] Resetting conversationId from ${prev} to ${next}`);
-      conversationIdRef.current = "";
+      conversationIdRef.current = null;
       
       if (chatId) {
         (supabase as any)
