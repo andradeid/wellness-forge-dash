@@ -581,7 +581,7 @@ export function useDifyChat(
           if (!line.trim() || !line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought") {
+            if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
               const text = getDifyAnswer(data);
               if (text) {
                 fullText += text;
@@ -605,7 +605,7 @@ export function useDifyChat(
                   }, 15000);
                 }
               }
-            } else if (data.event === "message_end") {
+            } else if (data.event === "message_end" || data.event === "workflow_finished") {
               if (researchTimeoutRef.current) {
                 clearTimeout(researchTimeoutRef.current);
                 researchTimeoutRef.current = null;
