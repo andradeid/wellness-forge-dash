@@ -513,16 +513,9 @@ export function useDifyChat(
 
       const decoder = new TextDecoder();
       let fullText = "";
-      researchSavedRef.current = false;
-
       const saveMessageToSupabase = async (content: string, convId?: string) => {
         if (!content.trim()) return;
         
-        // Se já salvamos via timeout e estamos no message_end, precisamos ATUALIZAR
-        // a mensagem anterior em vez de inserir uma nova.
-        const existingAssistantMsg = messages.find(m => m.id === assistantId || (m.role === 'assistant' && !m.id.includes('-')));
-        const isUpdate = researchSavedRef.current;
-
         if (convId) {
           conversationIdRef.current = convId;
           await (supabase as any)
@@ -534,61 +527,23 @@ export function useDifyChat(
         const processingMs = Math.round(performance.now() - startedAt);
         const structured = { processing_ms: processingMs };
 
-        let result;
-        if (isUpdate) {
-          // Busca o ID real da mensagem inserida anteriormente no timeout
-          const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant' && m.agent_type === 'research');
-          const updateId = lastAssistantMsg?.id;
-          
-          if (updateId && !updateId.includes('-')) { // UUIDs reais não contêm hífens temporários se gerados por crypto.randomUUID mas aqui checamos se é persistido
-            result = await (supabase as any)
-              .from("chat_messages")
-              .update({
-                content: content,
-                structured_data: structured,
-              })
-              .eq("id", updateId)
-              .select("id")
-              .single();
-          } else {
-            // Fallback para insert se não achou ID válido para update
-            result = await (supabase as any)
-              .from("chat_messages")
-              .insert({
-                chat_id: chatId,
-                created_by: user.id,
-                role: "assistant",
-                content: content,
-                agent_type: agentType,
-                structured_data: structured,
-              })
-              .select("id")
-              .single();
-          }
-        } else {
-          result = await (supabase as any)
-            .from("chat_messages")
-            .insert({
-              chat_id: chatId,
-              created_by: user.id,
-              role: "assistant",
-              content: content,
-              agent_type: agentType,
-              structured_data: structured,
-            })
-            .select("id")
-            .single();
-        }
-
-        const assistantInserted = result?.data;
+        const { data: assistantInserted } = await (supabase as any)
+          .from("chat_messages")
+          .insert({
+            chat_id: chatId,
+            created_by: user.id,
+            role: "assistant",
+            content: content,
+            agent_type: agentType,
+            structured_data: structured,
+          })
+          .select("id")
+          .single();
 
         if (assistantInserted?.id) {
-          researchSavedRef.current = true;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId || m.id === assistantInserted.id 
-                ? { ...m, id: assistantInserted.id, content: content, structured_data: structured } 
-                : m
+              m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
             )
           );
         }
