@@ -609,10 +609,9 @@ export function useDifyChat(
                 }
 
                 // Extract markers if in exam mode
-                let markers: Marker[] | null = null;
-                if (agentType?.startsWith("exam")) {
-                  markers = tryExtractMarkers(fullText);
-                }
+                const markers: Marker[] | null = agentType?.startsWith("exam") 
+                  ? tryExtractMarkers(fullText) 
+                  : null;
 
                 const processingMs = Math.round(performance.now() - startedAt);
                 const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
@@ -656,38 +655,38 @@ export function useDifyChat(
                     agentType,
                   });
                 }
-              }
 
-              // Salva contexto após resposta do agente de exame
-              if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
-                const safeMarkers = markers ?? [];
-                const newCtx: ExamContext = {
-                  patient_name: metaRef.current.patient_name,
-                  patient_profile: metaRef.current.patient_profile,
-                  patient_sex: metaRef.current.patient_sex,
-                  gestante_tipo: metaRef.current.gestante_tipo,
-                  gestante_periodo: metaRef.current.gestante_periodo,
-                  exam_date: new Date().toISOString(),
-                  alteracoes: safeMarkers
-                    .filter(m => {
-                      const visual = classificationVisualState(m.classification);
-                      return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
-                    })
-                    .map(m => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
-                  otimos: safeMarkers
-                    .filter(m => classificationVisualState(m.classification) === "otimo")
-                    .map(m => `${m.name}: ${m.value} ${m.unit || ""}`),
-                  resumo_clinico: safeMarkers
-                    .map(m => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
-                    .join(" | "),
-                  resumo_texto: fullText.slice(0, 4000),
-                  agent_type: agentType,
-                };
-                setExamContext(newCtx);
-                await (supabase as any)
-                  .from("patient_chats")
-                  .update({ exam_context: newCtx })
-                  .eq("id", chatId);
+                // Salva contexto após resposta do agente de exame
+                if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
+                  const safeMarkers = markers ?? [];
+                  const newCtx: ExamContext = {
+                    patient_name: metaRef.current.patient_name,
+                    patient_profile: metaRef.current.patient_profile,
+                    patient_sex: metaRef.current.patient_sex,
+                    gestante_tipo: metaRef.current.gestante_tipo,
+                    gestante_periodo: metaRef.current.gestante_periodo,
+                    exam_date: new Date().toISOString(),
+                    alteracoes: safeMarkers
+                      .filter((m: Marker) => {
+                        const visual = classificationVisualState(m.classification);
+                        return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
+                      })
+                      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
+                    otimos: safeMarkers
+                      .filter((m: Marker) => classificationVisualState(m.classification) === "otimo")
+                      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""}`),
+                    resumo_clinico: safeMarkers
+                      .map((m: Marker) => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
+                      .join(" | "),
+                    resumo_texto: fullText.slice(0, 4000),
+                    agent_type: agentType,
+                  };
+                  setExamContext(newCtx);
+                  await (supabase as any)
+                    .from("patient_chats")
+                    .update({ exam_context: newCtx })
+                    .eq("id", chatId);
+                }
               }
             }
           } catch (e) {
