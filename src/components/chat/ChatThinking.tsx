@@ -11,16 +11,25 @@ const STEPS = [
   { icon: Sparkles, text: "Organizando a interpretação para você…" },
 ];
 
-export function ChatThinking({ mode = "analysis" }: { mode?: "analysis" | "simple" }) {
+const RESEARCH_STEPS = [
+  { icon: FileSearch, text: "Consultando bases científicas…" },
+  { icon: Activity, text: "Buscando evidências no PubMed…" },
+  { icon: FlaskConical, text: "Analisando artigos encontrados…" },
+  { icon: Brain, text: "Sintetizando descobertas acadêmicas…" },
+  { icon: Sparkles, text: "Organizando a análise científica para você…" },
+];
+
+export function ChatThinking({ mode = "analysis", agentType }: { mode?: "analysis" | "simple", agentType?: string }) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
     if (mode !== "analysis") return;
+    const steps = agentType === 'research' ? RESEARCH_STEPS : STEPS;
     const id = setInterval(() => {
-      setIdx((i) => (i + 1) % STEPS.length);
+      setIdx((i) => (i + 1) % steps.length);
     }, 2200);
     return () => clearInterval(id);
-  }, [mode]);
+  }, [mode, agentType]);
 
   if (mode === "simple") {
     return (
@@ -33,7 +42,8 @@ export function ChatThinking({ mode = "analysis" }: { mode?: "analysis" | "simpl
     );
   }
 
-  const Step = STEPS[idx];
+  const steps = agentType === 'research' ? RESEARCH_STEPS : STEPS;
+  const Step = steps[idx % steps.length];
   const Icon = Step.icon;
 
   return (
