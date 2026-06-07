@@ -350,7 +350,12 @@ export function ChatMessageList({
                         ? p.value 
                         : (isResearch && !isStreaming ? p.value : (isResearch ? cleanResearchOutput(p.value) : cleanProse(p.value)));
 
-                      if (!cleaned && m.role === "assistant") return null;
+                      // If cleaned output is empty but we have content and it's research, use fallback
+                      const finalContent = (!cleaned && m.role === "assistant" && p.value && isResearch) 
+                        ? researchFallback(p.value) 
+                        : cleaned;
+
+                      if (!finalContent && m.role === "assistant") return null;
 
                       return (
                         <div
@@ -383,7 +388,7 @@ export function ChatMessageList({
                               )
                             } : undefined}
                           >
-                            {cleaned || ""}
+                            {finalContent || ""}
                           </ReactMarkdown>
                         </div>
                       );
