@@ -10,8 +10,6 @@ export function useGeneralChat(chatId: string, agentType: string) {
   const [thinking, setThinking] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const conversationIdRef = useRef<string>("");
-  const researchSavedRef = useRef<boolean>(false);
-  const researchSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages and conversation ID
   useEffect(() => {
@@ -38,11 +36,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
       setMessages((msgData as ChatMessage[]) ?? []);
     };
     init();
-    return () => {
-      if (researchSaveTimeoutRef.current) {
-        clearTimeout(researchSaveTimeoutRef.current);
-      }
-    };
+    return () => {};
   }, [chatId]);
 
   const sendMessage = useCallback(async (text: string) => {
@@ -50,7 +44,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
     
     setThinking(true);
     setStreamingContent("");
-    researchSavedRef.current = false;
+    
     
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -91,8 +85,6 @@ export function useGeneralChat(chatId: string, agentType: string) {
       const saveMessageToSupabase = async (content: string, convId?: string) => {
         if (!content.trim()) return;
         
-        const isUpdate = researchSavedRef.current;
-        
         if (convId) {
           conversationIdRef.current = convId;
           await supabase
@@ -101,33 +93,12 @@ export function useGeneralChat(chatId: string, agentType: string) {
             .eq("id", chatId);
         }
 
-        let result;
-        if (isUpdate) {
-          const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant' && m.agent_type === 'research');
-          const updateId = lastAssistantMsg?.id;
-          
-          if (updateId && !updateId.includes('-')) {
-            result = await supabase
-              .from("general_chat_messages")
-              .update({ content: content })
-              .eq("id", updateId)
-              .select("id")
-              .single();
-          } else {
-            result = await supabase.from("general_chat_messages").insert([
-              { chat_id: chatId, role: "user", content: text, agent_type: agentType },
-              { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
-            ]).select("id").single();
-          }
-        } else {
-          result = await supabase.from("general_chat_messages").insert([
-            { chat_id: chatId, role: "user", content: text, agent_type: agentType },
-            { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
-          ]).select("id").single();
-        }
+        // Save messages to DB
+        await supabase.from("general_chat_messages").insert([
+          { chat_id: chatId, role: "user", content: text, agent_type: agentType },
+          { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
+        ]);
 
-        researchSavedRef.current = true;
-        
         // AJUSTE: Se for research e for a primeira mensagem, define o título
         const { data: countData } = await supabase
           .from("general_chat_messages")
@@ -192,28 +163,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
                   return updated;
                 });
 
-                // MUDANÇA 1 e 3: Save por timeout como fallback de emergência
-                if (agentType === 'research') {
-                  if (researchSaveTimeoutRef.current) {
-                    clearTimeout(researchSaveTimeoutRef.current);
-                  }
-                  
-                  researchSaveTimeoutRef.current = setTimeout(async () => {
-                    // MUDANÇA 3: Timeout de 8s e mínimo de 500 chars
-                    if (fullAssistantText.length > 500 && !researchSavedRef.current) {
-                      await saveMessageToSupabase(fullAssistantText, conversationIdRef.current || undefined);
-                    }
-                  }, 8000);
-                }
               }
             }
 
             if (parsed.event === "message_end") {
-              // MUDANÇA 2: Sempre salva no message_end, cancelando o timeout
-              if (researchSaveTimeoutRef.current) {
-                clearTimeout(researchSaveTimeoutRef.current);
-                researchSaveTimeoutRef.current = null;
-              }
               await saveMessageToSupabase(fullAssistantText, parsed.conversation_id);
             }
 

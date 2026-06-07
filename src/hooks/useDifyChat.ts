@@ -164,8 +164,6 @@ export function useDifyChat(
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string>("");
-  const researchSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const researchSavedRef = useRef<boolean>(false);
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -293,9 +291,6 @@ export function useDifyChat(
     init();
     return () => { 
       cancelled = true; 
-      if (researchSaveTimeoutRef.current) {
-        clearTimeout(researchSaveTimeoutRef.current);
-      }
     };
   }, [patientId, readOnly, forceChatId]);
 
@@ -620,28 +615,8 @@ export function useDifyChat(
                   )
                 );
 
-                // MUDANÇA 1 e 3: Save por timeout como fallback de emergência
-                if (agentType === 'research') {
-                  if (researchSaveTimeoutRef.current) {
-                    clearTimeout(researchSaveTimeoutRef.current);
-                  }
-                  
-                  researchSaveTimeoutRef.current = setTimeout(async () => {
-                    // MUDANÇA 3: Timeout de 8s e mínimo de 500 chars
-                    if (fullText.length > 500 && !researchSavedRef.current) {
-                      console.log("[RESEARCH] Timeout save triggered (8s fallback)");
-                      await saveMessageToSupabase(fullText, conversationIdRef.current || undefined);
-                    }
-                  }, 8000);
-                }
               }
             } else if (data.event === "message_end") {
-              // MUDANÇA 2: Sempre salva no message_end, cancelando o timeout
-              if (researchSaveTimeoutRef.current) {
-                clearTimeout(researchSaveTimeoutRef.current);
-                researchSaveTimeoutRef.current = null;
-              }
-
               if (agentType === "research") {
                 await saveMessageToSupabase(fullText, data.conversation_id);
               } else {
