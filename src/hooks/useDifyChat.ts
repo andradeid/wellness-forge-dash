@@ -508,6 +508,9 @@ export function useDifyChat(
     const finalQuery = !agentType.startsWith("exam")
       ? (isResearch ? "" : (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix())) + text
       : text;
+    
+    // Se for research e a query final estiver vazia (devido ao prefixo vazio), usa o texto original
+    const difyQuery = (isResearch && !finalQuery) ? text : (finalQuery || "Analise o exame anexado.");
 
     const callDify = async (convId: string | undefined) =>
       fetch("/api/dify/chat", {
@@ -517,7 +520,7 @@ export function useDifyChat(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: finalQuery || "Analise o exame anexado.",
+          query: difyQuery,
           conversation_id: convId,
           files: difyFiles,
           meta: metaRef.current,
@@ -564,7 +567,7 @@ export function useDifyChat(
           if (!line.trim() || !line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.event === "message" || data.event === "agent_message" || (agentType === "research" && data.event === "agent_thought")) {
+            if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought") {
               const text = getDifyAnswer(data);
               if (text) {
                 fullText += text;
