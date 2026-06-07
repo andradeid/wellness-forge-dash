@@ -454,8 +454,9 @@ export function useDifyChat(
       ].filter(Boolean).join("\n");
     };
 
+    const isResearch = agentType === "research";
     const finalQuery = !agentType.startsWith("exam")
-      ? (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix()) + text
+      ? (isResearch ? "" : (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix())) + text
       : text;
 
     const callDify = async (convId: string | undefined) =>
