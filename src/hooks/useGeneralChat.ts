@@ -139,7 +139,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
               await supabase
                 .from("general_chats")
-                .update({ updated_at: new Date().toISOString() })
+                .update({ 
+                  updated_at: new Date().toISOString(),
+                  agent_type: agentType // Ensure agent_type is persisted
+                })
                 .eq("id", chatId);
             }
 
