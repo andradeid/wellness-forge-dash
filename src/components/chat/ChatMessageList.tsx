@@ -311,23 +311,28 @@ export function ChatMessageList({
                       const isResearch = m.agent_type === "research" || agentType === "research";
                       
                       // Handling streaming status for research agent
-                      if (isStreaming && isResearch && m.role === "assistant" && i === parts.length - 1) {
-                        const status = getResearchStatus(p.value);
-                        const cleaned = cleanResearchOutput(p.value);
-                        
-                        // If we have a status (still in ReAct loops) and NO final content yet
-                        if (status && !cleaned) {
-                          return (
-                            <div key={i} className="text-muted-foreground italic text-xs py-1 animate-pulse">
-                              {status}
-                            </div>
-                          );
+                      if (isResearch && m.role === "assistant" && i === parts.length - 1) {
+                        // DURANTE o streaming, aplicamos os filtros e mostramos o status
+                        if (isStreaming) {
+                          const status = getResearchStatus(p.value);
+                          const cleaned = cleanResearchOutput(p.value);
+                          
+                          // Se temos um status (ainda nos loops ReAct) e NENHUM conteúdo final ainda
+                          if (status && !cleaned) {
+                            return (
+                              <div key={i} className="text-muted-foreground italic text-xs py-1 animate-pulse">
+                                {status}
+                              </div>
+                            );
+                          }
                         }
                       }
 
+                      // AJUSTE 2: Se NÃO está em streaming e é agente research, renderiza o conteúdo original
+                      // (evitando que o filtro oculte o final da mensagem se ela for cortada pelo Dify)
                       const cleaned = isUser 
                         ? p.value 
-                        : (isResearch ? cleanResearchOutput(p.value) : cleanProse(p.value));
+                        : (isResearch && !isStreaming ? p.value : (isResearch ? cleanResearchOutput(p.value) : cleanProse(p.value)));
 
                       if (!cleaned && m.role === "assistant") return null;
 
