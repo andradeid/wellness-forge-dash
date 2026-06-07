@@ -106,19 +106,21 @@ export function useGeneralChat(chatId: string, agentType: string) {
           try {
             const parsed = JSON.parse(jsonStr);
             
-            if (parsed.event === "agent_message" || parsed.event === "message") {
-              const chunk = parsed.answer ?? "";
-              fullAssistantText += chunk;
-              
-              // Update the last message (the assistant one) in the state
-              setMessages((prev) => {
-                const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                if (updated[lastIdx].role === "assistant") {
-                  updated[lastIdx] = { ...updated[lastIdx], content: fullAssistantText };
-                }
-                return updated;
-              });
+            if (parsed.event === "agent_message" || parsed.event === "message" || (agentType === "research" && parsed.event === "agent_thought")) {
+              const chunk = parsed.answer ?? parsed.text ?? parsed.content ?? "";
+              if (chunk) {
+                fullAssistantText += chunk;
+                
+                // Update the last message (the assistant one) in the state
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIdx = updated.length - 1;
+                  if (updated[lastIdx]?.role === "assistant") {
+                    updated[lastIdx] = { ...updated[lastIdx], content: fullAssistantText };
+                  }
+                  return updated;
+                });
+              }
             }
 
             if (parsed.event === "message_end") {
@@ -131,26 +133,36 @@ export function useGeneralChat(chatId: string, agentType: string) {
                   .eq("id", chatId);
               }
 
-              // AJUSTE 3: Se for research e for a primeira mensagem (não havia mensagens antes da atual), define o título
-              if (messages.length === 0 && agentType === 'research') {
-                const title = text.slice(0, 60);
-                await (supabase as any)
-                  .from("general_chats")
-                  .update({ title })
-                  .eq("id", chatId);
-              }
-
               // Save messages to DB
+              // We only save here if it wasn't already saved by a timeout or similar
+              // In general chat, we don't have the same complex persistence yet, so let's keep it simple but complete
               await supabase.from("general_chat_messages").insert([
                 { chat_id: chatId, role: "user", content: text, agent_type: agentType },
                 { chat_id: chatId, role: "assistant", content: fullAssistantText, agent_type: agentType }
               ]);
 
+              // AJUSTE: Se for research e for a primeira mensagem, define o título
+              // (verificando o histórico carregado)
+              const { data: countData } = await supabase
+                .from("general_chat_messages")
+                .select("id", { count: 'exact', head: true })
+                .eq("chat_id", chatId);
+              
+              const isFirstMessage = (countData?.length ?? 0) <= 2; // user + assistant we just inserted
+
+              if (isFirstMessage && agentType === 'research') {
+                const title = text.slice(0, 60);
+                await supabase
+                  .from("general_chats")
+                  .update({ title })
+                  .eq("id", chatId);
+              }
+
               await supabase
                 .from("general_chats")
                 .update({ 
                   updated_at: new Date().toISOString(),
-                  agent_type: agentType // Ensure agent_type is persisted
+                  agent_type: agentType 
                 })
                 .eq("id", chatId);
             }
