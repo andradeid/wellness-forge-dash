@@ -347,7 +347,21 @@ export function ChatMessageList({
                             ]
                           )}
                         >
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={isResearch ? {
+                              a: ({ href, children }) => (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary underline hover:opacity-80"
+                                >
+                                  {children}
+                                </a>
+                              )
+                            } : undefined}
+                          >
                             {cleaned || ""}
                           </ReactMarkdown>
                         </div>
