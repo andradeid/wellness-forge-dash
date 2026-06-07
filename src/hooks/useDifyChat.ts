@@ -301,7 +301,6 @@ export function useDifyChat(
   }, [patientId, readOnly, forceChatId]);
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
-    console.log('[SEND 1] iniciando sendMessage', agentType);
     if (!chatId || readOnly) return;
     setError(null);
     setThinking(true);
@@ -335,7 +334,6 @@ export function useDifyChat(
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('[SEND 2] usuário validado', user?.id);
     if (!token || !user) { setThinking(false); setUploadProgress([]); return; }
 
 
@@ -417,7 +415,6 @@ export function useDifyChat(
     };
     const { data: userInserted } = await (supabase as any)
       .from("chat_messages").insert(userMsgPayload).select("id").single();
-    console.log('[SEND 4] mensagem do usuário salva', chatId);
 
 
     // Só define título na primeira mensagem do usuário se for agente research
