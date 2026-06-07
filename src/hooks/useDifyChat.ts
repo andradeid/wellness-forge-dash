@@ -581,8 +581,19 @@ export function useDifyChat(
           if (!line.trim() || !line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6));
+            
+            if (agentType === 'production' || agentType === 'reasoning') {
+              console.log('[DIFY EVENT]', data.event, JSON.stringify(data).slice(0, 200));
+            }
+
             if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
-              const text = getDifyAnswer(data);
+              let text = "";
+              if (data.event === "text_chunk") {
+                text = data.text || data.data?.text || data.delta?.text || "";
+              } else {
+                text = getDifyAnswer(data);
+              }
+
               if (text) {
                 fullText += text;
                 currentFullTextRef.current = fullText;
