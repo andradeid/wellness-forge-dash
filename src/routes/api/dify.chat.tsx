@@ -53,11 +53,18 @@ export const Route = createFileRoute("/api/dify/chat")({
         }
 
         const { query, conversation_id, inputs, files, meta } = body ?? {};
-
+        
         const sanitize = (s: unknown) =>
           String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
+
+        const sanitizeQuery = (text: string) =>
+          text
+            .replace(/[\u0000-\u001F\u007F]/g, ' ')
+            .trim();
+
         const nutriName = sanitize(meta?.nutritionist_name);
         const patientName = sanitize(meta?.patient_name);
+        const safeQuery = sanitizeQuery(query || "");
 
         // Compõe o identificador exibido em "Usuário Final ou Conta" no Dify.
         const buildDisplayUser = () => {
@@ -82,6 +89,9 @@ export const Route = createFileRoute("/api/dify/chat")({
           ...(inputs ?? {}),
         };
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000);
+
         const sendToDify = () =>
           fetch(`${baseUrl}/chat-messages`, {
             method: "POST",
@@ -89,8 +99,9 @@ export const Route = createFileRoute("/api/dify/chat")({
               Authorization: `Bearer ${apiKey}`,
               "Content-Type": "application/json",
             },
+            signal: controller.signal,
             body: JSON.stringify({
-              query: query ?? "",
+              query: safeQuery,
               inputs: mergedInputs,
               response_mode: "streaming",
               conversation_id: conversation_id ?? "",
@@ -99,7 +110,19 @@ export const Route = createFileRoute("/api/dify/chat")({
             }),
           });
 
-        let upstream = await sendToDify();
+
+        let upstream;
+        try {
+          upstream = await sendToDify();
+        } catch (e: any) {
+          clearTimeout(timeout);
+          console.error('[PROXY FETCH ERROR]', e);
+          return new Response(JSON.stringify({ error: e.message || "Timeout or connection error" }), { 
+            status: 504,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        clearTimeout(timeout);
 
         if (!upstream.ok) {
           const text = await upstream.text().catch(() => "");
@@ -121,7 +144,33 @@ export const Route = createFileRoute("/api/dify/chat")({
               const message = e instanceof Error ? e.message : String(e);
               return new Response(message, { status: 500 });
             }
-            upstream = await sendToDify();
+            
+            const retryController = new AbortController();
+            const retryTimeout = setTimeout(() => retryController.abort(), 120000);
+            
+            try {
+              upstream = await fetch(`${baseUrl}/chat-messages`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${apiKey}`,
+                  "Content-Type": "application/json",
+                },
+                signal: retryController.signal,
+                body: JSON.stringify({
+                  query: safeQuery,
+                  inputs: mergedInputs,
+                  response_mode: "streaming",
+                  conversation_id: conversation_id ?? "",
+                  user: displayUser,
+                  files: files ?? [],
+                }),
+              });
+            } catch (retryErr: any) {
+              clearTimeout(retryTimeout);
+              return new Response(retryErr.message || "Retry timeout", { status: 504 });
+            }
+            clearTimeout(retryTimeout);
+
             if (upstream.ok && upstream.body) {
               return new Response(upstream.body, {
                 status: 200,
@@ -152,6 +201,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             }
           );
         }
+
 
         if (!upstream.ok || !upstream.body) {
           const text = await upstream.text().catch(() => "");
