@@ -556,6 +556,8 @@ export function useDifyChat(
           );
         }
       };
+      
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -575,6 +577,20 @@ export function useDifyChat(
                     m.id === assistantId ? { ...m, content: fullText } : m
                   )
                 );
+
+                // AJUSTE: Estratégia de save por timeout para o agente research
+                if (agentType === 'research') {
+                  if (researchSaveTimeoutRef.current) {
+                    clearTimeout(researchSaveTimeoutRef.current);
+                  }
+                  
+                  researchSaveTimeoutRef.current = setTimeout(async () => {
+                    if (fullText.length > 100 && !researchSavedRef.current) {
+                      console.log("[RESEARCH] Timeout save triggered");
+                      await saveMessageToSupabase(fullText, conversationIdRef.current || undefined);
+                    }
+                  }, 3000);
+                }
               }
             } else if (data.event === "message_end") {
               if (researchSaveTimeoutRef.current) {
