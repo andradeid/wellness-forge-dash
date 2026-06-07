@@ -89,20 +89,41 @@ export function useGeneralChat(chatId: string, agentType: string) {
       const assistantId = crypto.randomUUID();
 
       const saveMessageToSupabase = async (content: string, convId?: string) => {
-        if (researchSavedRef.current || !content.trim()) return;
+        if (!content.trim()) return;
         
-        // Save messages to DB
-        await supabase.from("general_chat_messages").insert([
-          { chat_id: chatId, role: "user", content: text, agent_type: agentType },
-          { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
-        ]);
-
+        const isUpdate = researchSavedRef.current;
+        
         if (convId) {
           conversationIdRef.current = convId;
           await supabase
             .from("general_chats")
             .update({ dify_conversation_id: convId })
             .eq("id", chatId);
+        }
+
+        let result;
+        if (isUpdate) {
+          const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant' && m.agent_type === 'research');
+          const updateId = lastAssistantMsg?.id;
+          
+          if (updateId && !updateId.includes('-')) {
+            result = await supabase
+              .from("general_chat_messages")
+              .update({ content: content })
+              .eq("id", updateId)
+              .select("id")
+              .single();
+          } else {
+            result = await supabase.from("general_chat_messages").insert([
+              { chat_id: chatId, role: "user", content: text, agent_type: agentType },
+              { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
+            ]).select("id").single();
+          }
+        } else {
+          result = await supabase.from("general_chat_messages").insert([
+            { chat_id: chatId, role: "user", content: text, agent_type: agentType },
+            { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
+          ]).select("id").single();
         }
 
         researchSavedRef.current = true;
@@ -171,24 +192,27 @@ export function useGeneralChat(chatId: string, agentType: string) {
                   return updated;
                 });
 
-                // AJUSTE: Estratégia de save por timeout para o agente research
+                // MUDANÇA 1 e 3: Save por timeout como fallback de emergência
                 if (agentType === 'research') {
                   if (researchSaveTimeoutRef.current) {
                     clearTimeout(researchSaveTimeoutRef.current);
                   }
                   
                   researchSaveTimeoutRef.current = setTimeout(async () => {
-                    if (fullAssistantText.length > 100 && !researchSavedRef.current) {
+                    // MUDANÇA 3: Timeout de 8s e mínimo de 500 chars
+                    if (fullAssistantText.length > 500 && !researchSavedRef.current) {
                       await saveMessageToSupabase(fullAssistantText, conversationIdRef.current || undefined);
                     }
-                  }, 3000);
+                  }, 8000);
                 }
               }
             }
 
             if (parsed.event === "message_end") {
+              // MUDANÇA 2: Sempre salva no message_end, cancelando o timeout
               if (researchSaveTimeoutRef.current) {
                 clearTimeout(researchSaveTimeoutRef.current);
+                researchSaveTimeoutRef.current = null;
               }
               await saveMessageToSupabase(fullAssistantText, parsed.conversation_id);
             }
