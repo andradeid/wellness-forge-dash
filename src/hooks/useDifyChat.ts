@@ -774,29 +774,25 @@ export function useDifyChat(
       if (prev === next) return prev;
       
       // Ao trocar de agente, queremos manter o contexto da conversa NO MESMO CHAT do Supabase,
-      // mas resetar o conversation_id do Dify para que o novo agente comece do zero
-      // ou (no futuro) use uma lógica de transferência. 
-      // IMPORTANTE: Não resetamos se for do mesmo "tipo" (ex: exam_gestante para exam_adulto),
-      // mas para o agente "research" (pesquisa científica), sempre resetamos para garantir 
-      // que ele use as ferramentas de busca corretamente sem poluição de contexto de exames.
+      // mas resetar o conversation_id do Dify para que o novo agente comece do zero.
+      // IMPORTANTE: IDs de conversa do Dify são vinculados à API Key (App). Como cada agente
+      // possui sua própria chave, usar o ID de um agente anterior causará erro no Dify.
       
-      const prevIsResearch = prev === 'research';
-      const nextIsResearch = next === 'research';
+      console.log(`[SWITCH AGENT] Resetting conversationId from ${prev} to ${next}`);
+      conversationIdRef.current = "";
       
-      if (prevIsResearch !== nextIsResearch) {
-        conversationIdRef.current = "";
-        if (chatId) {
-          (supabase as any)
-            .from("patient_chats")
-            .update({ dify_conversation_id: null })
-            .eq("id", chatId)
-            .then(() => {});
-        }
+      if (chatId) {
+        (supabase as any)
+          .from("patient_chats")
+          .update({ dify_conversation_id: null })
+          .eq("id", chatId)
+          .then(() => {});
       }
       
       return next;
     });
   }, [chatId]);
+
 
   const setContext = useCallback((ctx: {
     patient_sex?: string;
