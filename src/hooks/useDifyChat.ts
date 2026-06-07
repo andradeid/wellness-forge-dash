@@ -535,10 +535,8 @@ export function useDifyChat(
         }
       })();
       
-      console.log('[SEND 3] finalQuery montada', finalQuery?.slice(0, 50));
       const difyQuery = finalQuery || text;
 
-      console.log('[SEND 5] chamando Dify', agentType);
       const callDify = async (convId: string | undefined) =>
 
         fetch("/api/dify/chat", {
@@ -595,10 +593,6 @@ export function useDifyChat(
           try {
             const data = JSON.parse(line.slice(6));
             
-            if (agentType === 'production' || agentType === 'reasoning') {
-              console.log('[DIFY EVENT]', data.event, JSON.stringify(data).slice(0, 200));
-            }
-
             if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
               let text = "";
               if (data.event === "text_chunk") {
@@ -775,7 +769,6 @@ export function useDifyChat(
       // IMPORTANTE: IDs de conversa do Dify são vinculados à API Key (App). Como cada agente
       // possui sua própria chave, usar o ID de um agente anterior causará erro no Dify.
       
-      console.log(`[SWITCH AGENT] Resetting conversationId from ${prev} to ${next}`);
       conversationIdRef.current = null;
       
       if (chatId) {
