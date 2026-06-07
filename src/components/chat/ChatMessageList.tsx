@@ -137,10 +137,13 @@ function cleanResearchOutput(text: string): string {
     const potentialContent = lines.slice(lastMarkerIndex + 1).join("\n").trim();
     
     // Heuristic: if the content is long enough and doesn't look like a tool result, it might be the answer
-    if (potentialContent.length > 100 && !potentialContent.startsWith("{") && !potentialContent.startsWith("[")) {
+    // Lowered threshold to 50 chars to catch shorter summaries or tables starting.
+    if (potentialContent.length > 50 && !potentialContent.startsWith("{") && !potentialContent.startsWith("[")) {
       return potentialContent;
     }
     
+    // If the last marker was "Observation:", and there is a lot of text, it might be what we want to see
+    // (though usually we wait for Final Answer, sometimes models just stop or include the analysis in observations)
     return "";
   }
 
