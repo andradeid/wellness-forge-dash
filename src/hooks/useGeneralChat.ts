@@ -10,6 +10,9 @@ export function useGeneralChat(chatId: string, agentType: string) {
   const [thinking, setThinking] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const conversationIdRef = useRef<string>("");
+  const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const researchSavedRef = useRef<boolean>(false);
+  const currentFullTextRef = useRef<string>("");
 
   // Load messages and conversation ID
   useEffect(() => {
@@ -36,7 +39,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
       setMessages((msgData as ChatMessage[]) ?? []);
     };
     init();
-    return () => {};
+    return () => {
+      if (researchTimeoutRef.current) {
+        clearTimeout(researchTimeoutRef.current);
+      }
+    };
   }, [chatId]);
 
   const sendMessage = useCallback(async (text: string) => {
@@ -44,6 +51,12 @@ export function useGeneralChat(chatId: string, agentType: string) {
     
     setThinking(true);
     setStreamingContent("");
+    researchSavedRef.current = false;
+    currentFullTextRef.current = "";
+    if (researchTimeoutRef.current) {
+      clearTimeout(researchTimeoutRef.current);
+      researchTimeoutRef.current = null;
+    }
     
     
     const userMsgId = crypto.randomUUID();
@@ -162,10 +175,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
           try {
             const parsed = JSON.parse(jsonStr);
             
-            if (parsed.event === "agent_message" || parsed.event === "message" || (agentType === "research" && parsed.event === "agent_thought")) {
+            if (parsed.event === "agent_message" || parsed.event === "message" || parsed.event === "agent_thought") {
               const chunk = parsed.answer ?? parsed.text ?? parsed.content ?? "";
               if (chunk) {
                 fullAssistantText += chunk;
+                currentFullTextRef.current = fullAssistantText;
                 
                 // Update the last message (the assistant one) in the state
                 setMessages((prev) => {
@@ -177,14 +191,42 @@ export function useGeneralChat(chatId: string, agentType: string) {
                   return updated;
                 });
 
+                // Lógica de salvamento por timeout para research
+                if (agentType === 'research') {
+                  if (researchTimeoutRef.current) {
+                    clearTimeout(researchTimeoutRef.current);
+                  }
+                  researchTimeoutRef.current = setTimeout(async () => {
+                    if (!researchSavedRef.current && currentFullTextRef.current.length > 200) {
+                      researchSavedRef.current = true;
+                      await saveAssistantToSupabase(currentFullTextRef.current, parsed.conversation_id);
+                    }
+                  }, 15000);
+                }
               }
             }
 
             if (parsed.event === "message_end") {
-              await saveAssistantToSupabase(fullAssistantText, parsed.conversation_id);
+              if (researchTimeoutRef.current) {
+                clearTimeout(researchTimeoutRef.current);
+                researchTimeoutRef.current = null;
+              }
+              
+              if (agentType === "research") {
+                if (!researchSavedRef.current) {
+                  researchSavedRef.current = true;
+                  await saveAssistantToSupabase(fullAssistantText, parsed.conversation_id);
+                }
+              } else {
+                await saveAssistantToSupabase(fullAssistantText, parsed.conversation_id);
+              }
             }
 
             if (parsed.event === "error") {
+              if (researchTimeoutRef.current) {
+                clearTimeout(researchTimeoutRef.current);
+                researchTimeoutRef.current = null;
+              }
               throw new Error(parsed.message || "Erro no Dify");
             }
           } catch (e) {
@@ -205,6 +247,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
         return prev;
       });
     } finally {
+      if (researchTimeoutRef.current && !researchSavedRef.current && agentType === 'research' && currentFullTextRef.current.length > 200) {
+        researchSavedRef.current = true;
+        saveAssistantToSupabase(currentFullTextRef.current);
+      }
       setThinking(false);
     }
   }, [chatId, user, agentType]);
