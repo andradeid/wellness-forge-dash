@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
@@ -82,6 +83,45 @@ function cleanProse(text: string): string {
     .trim();
 }
 
+
+/** Filters internal ReAct process (Thought/Action/Observation) for research agent. */
+function cleanResearchOutput(text: string): string {
+  if (!text) return "";
+  const lines = text.split("\n");
+  
+  // Find the last index of a line starting with ReAct keywords or backticks (JSON blocks)
+  let lastThoughtIndex = -1;
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (
+      trimmed.startsWith("Thought:") ||
+      trimmed.startsWith("Action:") ||
+      trimmed.startsWith("Action Input:") ||
+      trimmed.startsWith("Observation:") ||
+      trimmed.startsWith("`")
+    ) {
+      lastThoughtIndex = i;
+    }
+  });
+
+  if (lastThoughtIndex >= 0) {
+    const afterThought = lines
+      .slice(lastThoughtIndex + 1)
+      .join("\n")
+      .trim();
+    return afterThought || text;
+  }
+  return text;
+}
+
+/** Determines research status label based on internal ReAct blocks during streaming. */
+function getResearchStatus(text: string): string | null {
+  if (!text) return null;
+  if (text.includes("fetch_pubmed_details")) return "📄 Analisando artigos encontrados...";
+  if (text.includes("tavily")) return "🌐 Consultando fontes adicionais...";
+  if (text.includes("Action:") || text.includes("Thought:")) return "🔍 Buscando artigos científicos...";
+  return null;
+}
 
 export function ChatMessageList({
   messages,
@@ -232,12 +272,44 @@ export function ChatMessageList({
                   {parts
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
-                      const cleaned = isUser ? p.value : (m.agent_type === 'research' || agentType === 'research' ? p.value : cleanProse(p.value));
+                      const isResearch = m.agent_type === "research" || agentType === "research";
+                      
+                      // Handling streaming status for research agent
+                      if (isStreaming && isResearch && m.role === "assistant" && i === parts.length - 1) {
+                        const status = getResearchStatus(p.value);
+                        const cleaned = cleanResearchOutput(p.value);
+                        
+                        // If we have a status (still in ReAct loops) and NO final content yet
+                        if (status && !cleaned) {
+                          return (
+                            <div key={i} className="text-muted-foreground italic text-xs py-1 animate-pulse">
+                              {status}
+                            </div>
+                          );
+                        }
+                      }
+
+                      const cleaned = isUser 
+                        ? p.value 
+                        : (isResearch ? cleanResearchOutput(p.value) : cleanProse(p.value));
+
                       if (!cleaned && m.role === "assistant") return null;
+
                       return (
                         <div
                           key={i}
-                          className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2"
+                          className={cn(
+                            "prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2",
+                            isResearch && [
+                              "[&_table]:overflow-x-auto",
+                              "[&_table]:block",
+                              "[&_h2]:mt-6 [&_h2]:mb-2",
+                              "[&_h3]:mt-4 [&_h3]:mb-1",
+                              "[&_pre]:bg-muted [&_pre]:p-2",
+                              "[&_pre]:rounded [&_pre]:text-xs",
+                              "[&_pre]:overflow-x-auto"
+                            ]
+                          )}
                         >
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {cleaned || ""}
