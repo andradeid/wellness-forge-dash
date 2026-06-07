@@ -504,13 +504,15 @@ export function useDifyChat(
       ].filter(Boolean).join("\n");
     };
 
-    const isResearch = agentType === "research";
-    const finalQuery = !agentType.startsWith("exam")
-      ? (isResearch ? "" : (examContext ? buildContextPrefix(examContext) : buildMinimalPrefix())) + text
-      : text;
+    const finalQuery = agentType.startsWith("exam")
+      ? text
+      : agentType === "research"
+        ? text
+        : (examContext 
+            ? buildContextPrefix(examContext) 
+            : buildMinimalPrefix()) + text;
     
-    // Se for research e a query final estiver vazia (devido ao prefixo vazio), usa o texto original
-    const difyQuery = (isResearch && !finalQuery) ? text : (finalQuery || "Analise o exame anexado.");
+    const difyQuery = finalQuery || text;
 
     const callDify = async (convId: string | undefined) =>
       fetch("/api/dify/chat", {
