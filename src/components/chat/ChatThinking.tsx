@@ -42,7 +42,8 @@ export function ChatThinking({ mode = "analysis", agentType }: { mode?: "analysi
     );
   }
 
-  const Step = STEPS[idx];
+  const steps = agentType === 'research' ? RESEARCH_STEPS : STEPS;
+  const Step = steps[idx % steps.length];
   const Icon = Step.icon;
 
   return (
