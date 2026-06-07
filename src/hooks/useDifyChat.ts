@@ -403,9 +403,11 @@ export function useDifyChat(
     const { data: userInserted } = await (supabase as any)
       .from("chat_messages").insert(userMsgPayload).select("id").single();
 
-    // AJUSTE 3: Se for agente research e for a primeira mensagem, define o título do chat
-    if (messages.length === 0 && agentType === 'research') {
-      const title = text.slice(0, 60);
+    // Só define título na primeira mensagem do usuário se for agente research
+    const isFirstUserMessage = messages.filter(m => m.role === 'user').length === 0;
+    
+    if (isFirstUserMessage && agentType === 'research') {
+      const title = text.trim().slice(0, 60);
       await (supabase as any)
         .from("patient_chats")
         .update({ title })
