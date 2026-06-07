@@ -580,18 +580,23 @@ export function useDifyChat(
 
       const decoder = new TextDecoder();
       let fullText = "";
+      let sseBuffer = "";
       
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split("\n");
+        sseBuffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith("data: ")) continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
+
           try {
-            const data = JSON.parse(line.slice(6));
+            const data = JSON.parse(jsonStr);
             
             if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
               let text = "";
