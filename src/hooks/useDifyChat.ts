@@ -513,7 +513,7 @@ export function useDifyChat(
           if (!line.trim() || !line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.event === "message" || data.event === "agent_message") {
+            if (data.event === "message" || data.event === "agent_message" || (agentType === "research" && data.event === "agent_thought")) {
               const text = getDifyAnswer(data);
               if (text) {
                 fullText += text;
