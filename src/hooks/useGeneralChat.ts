@@ -58,7 +58,6 @@ export function useGeneralChat(chatId: string, agentType: string) {
       researchTimeoutRef.current = null;
     }
     
-    
     const userMsgId = crypto.randomUUID();
     const userMsg: ChatMessage = {
       id: userMsgId,
@@ -126,6 +125,31 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/dify/chat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: text,
+          agent_type: agentType,
+          conversation_id: conversationIdRef.current || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Falha ao comunicar com agente");
+      }
+
+      if (!res.body) throw new Error("Resposta sem corpo");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullAssistantText = "";
+      
       setMessages((prev) => [...prev, {
         id: assistantId,
         role: "assistant",
