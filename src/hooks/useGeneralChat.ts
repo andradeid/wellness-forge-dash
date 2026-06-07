@@ -73,83 +73,59 @@ export function useGeneralChat(chatId: string, agentType: string) {
       { chat_id: chatId, role: "user", content: text, agent_type: agentType }
     ]).select("id").single();
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch("/api/dify/chat", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: text,
-          agent_type: agentType,
-          conversation_id: conversationIdRef.current || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Falha ao comunicar com agente");
-      }
-
-      if (!res.body) throw new Error("Resposta sem corpo");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let fullAssistantText = "";
-      const assistantId = crypto.randomUUID();
-
-      const saveAssistantToSupabase = async (content: string, convId?: string) => {
-        // Only save if we have some content OR if it's the final event
-        if (!content.trim() && !convId) return;
-        
-        if (convId) {
-          conversationIdRef.current = convId;
-          await supabase
-            .from("general_chats")
-            .update({ dify_conversation_id: convId })
-            .eq("id", chatId);
-        }
-
-        // Save assistant message to DB
-        const { data: assistantInserted } = await supabase.from("general_chat_messages").insert([
-          { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
-        ]).select("id").single();
-
-        // AJUSTE: Se for research e for a primeira mensagem, define o título
-        const { data: countData } = await supabase
-          .from("general_chat_messages")
-          .select("id", { count: 'exact', head: true })
-          .eq("chat_id", chatId);
-        
-        const isFirstMessage = (countData?.length ?? 0) <= 2; 
-
-        if (isFirstMessage && agentType === 'research') {
-          const title = text.slice(0, 60);
-          await supabase
-            .from("general_chats")
-            .update({ title })
-            .eq("id", chatId);
-        }
-
+    const assistantId = crypto.randomUUID();
+    const saveAssistantToSupabase = async (content: string, convId?: string) => {
+      // Only save if we have some content OR if it's the final event
+      if (!content.trim() && !convId) return;
+      
+      if (convId) {
+        conversationIdRef.current = convId;
         await supabase
           .from("general_chats")
-          .update({ 
-            updated_at: new Date().toISOString(),
-            agent_type: agentType 
-          })
+          .update({ dify_conversation_id: convId })
           .eq("id", chatId);
+      }
 
-        if (assistantInserted?.id) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, id: assistantInserted.id } : m
-            )
-          );
-        }
-      };
+      // Save assistant message to DB
+      const { data: assistantInserted } = await supabase.from("general_chat_messages").insert([
+        { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
+      ]).select("id").single();
+
+      // AJUSTE: Se for research e for a primeira mensagem, define o título
+      const { data: countData } = await supabase
+        .from("general_chat_messages")
+        .select("id", { count: 'exact', head: true })
+        .eq("chat_id", chatId);
+      
+      const isFirstMessage = (countData?.length ?? 0) <= 2; 
+
+      if (isFirstMessage && agentType === 'research') {
+        const title = text.slice(0, 60);
+        await supabase
+          .from("general_chats")
+          .update({ title })
+          .eq("id", chatId);
+      }
+
+      await supabase
+        .from("general_chats")
+        .update({ 
+          updated_at: new Date().toISOString(),
+          agent_type: agentType 
+        })
+        .eq("id", chatId);
+
+      if (assistantInserted?.id) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, id: assistantInserted.id } : m
+          )
+        );
+      }
+    };
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       setMessages((prev) => [...prev, {
         id: assistantId,
         role: "assistant",
