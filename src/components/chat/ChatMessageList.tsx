@@ -120,31 +120,34 @@ function cleanResearchOutput(text: string): string {
 
   // If we found a final answer marker, we return only what follows it
   if (isFinalAnswer && lastMarkerIndex !== -1) {
-    return lines.slice(lastMarkerIndex + 1).join("\n").trim();
+    const finalContent = lines.slice(lastMarkerIndex + 1).join("\n").trim();
+    
+    // Search for content BEFORE the final answer marker that might be important (like observations)
+    // but exclude technical Thoughts/Actions.
+    const preContent = lines.slice(0, lastMarkerIndex)
+      .filter(line => {
+        const t = line.trim();
+        return t && !t.startsWith("Thought:") && !t.startsWith("Action:") && !t.startsWith("Action Input:");
+      })
+      .join("\n")
+      .trim();
+
+    if (preContent) {
+      return preContent + "\n\n" + finalContent;
+    }
+    return finalContent;
   }
 
   // If we are still in the ReAct process (found a marker but not a final one)
   if (lastMarkerIndex !== -1) {
-    const potentialContent = lines.slice(lastMarkerIndex + 1).join("\n").trim();
-    
-    // Heuristic: if the content is long enough and doesn't look like a tool result, it might be the answer
-    // OR if it's the beginning of a table or markdown structure
-    if (
-      potentialContent.length > 30 || 
-      potentialContent.startsWith("|") || 
-      potentialContent.startsWith("#") ||
-      potentialContent.startsWith("*")
-    ) {
-      return potentialContent;
-    }
-    
-    return "";
-  }
-
-  // No markers found, but if the text starts with technical "Action:" etc, hide it
-  // otherwise it's just a normal message
-  if (text.includes("Thought:") || text.includes("Action:")) {
-    return "";
+    // Keep everything that isn't a technical marker line
+    return lines.filter(line => {
+      const t = line.trim();
+      for (const m of ["Thought:", "Action:", "Action Input:"]) {
+        if (t.startsWith(m)) return false;
+      }
+      return true;
+    }).join("\n").trim();
   }
 
   return text.trim();

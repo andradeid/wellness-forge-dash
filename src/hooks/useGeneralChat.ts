@@ -10,6 +10,8 @@ export function useGeneralChat(chatId: string, agentType: string) {
   const [thinking, setThinking] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const conversationIdRef = useRef<string>("");
+  const researchSavedRef = useRef<boolean>(false);
+  const researchSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages and conversation ID
   useEffect(() => {
@@ -36,6 +38,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
       setMessages((msgData as ChatMessage[]) ?? []);
     };
     init();
+    return () => {
+      if (researchSaveTimeoutRef.current) {
+        clearTimeout(researchSaveTimeoutRef.current);
+      }
+    };
   }, [chatId]);
 
   const sendMessage = useCallback(async (text: string) => {
@@ -43,6 +50,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
     
     setThinking(true);
     setStreamingContent("");
+    researchSavedRef.current = false;
     
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -78,9 +86,51 @@ export function useGeneralChat(chatId: string, agentType: string) {
       const decoder = new TextDecoder();
       let buffer = "";
       let fullAssistantText = "";
-
-      // Add a placeholder message for the assistant that we'll update with streaming content
       const assistantId = crypto.randomUUID();
+
+      const saveMessageToSupabase = async (content: string, convId?: string) => {
+        if (researchSavedRef.current || !content.trim()) return;
+        
+        // Save messages to DB
+        await supabase.from("general_chat_messages").insert([
+          { chat_id: chatId, role: "user", content: text, agent_type: agentType },
+          { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
+        ]);
+
+        if (convId) {
+          conversationIdRef.current = convId;
+          await supabase
+            .from("general_chats")
+            .update({ dify_conversation_id: convId })
+            .eq("id", chatId);
+        }
+
+        researchSavedRef.current = true;
+        
+        // AJUSTE: Se for research e for a primeira mensagem, define o título
+        const { data: countData } = await supabase
+          .from("general_chat_messages")
+          .select("id", { count: 'exact', head: true })
+          .eq("chat_id", chatId);
+        
+        const isFirstMessage = (countData?.length ?? 0) <= 2; 
+
+        if (isFirstMessage && agentType === 'research') {
+          const title = text.slice(0, 60);
+          await supabase
+            .from("general_chats")
+            .update({ title })
+            .eq("id", chatId);
+        }
+
+        await supabase
+          .from("general_chats")
+          .update({ 
+            updated_at: new Date().toISOString(),
+            agent_type: agentType 
+          })
+          .eq("id", chatId);
+      };
       setMessages((prev) => [...prev, {
         id: assistantId,
         role: "assistant",
@@ -106,53 +156,41 @@ export function useGeneralChat(chatId: string, agentType: string) {
           try {
             const parsed = JSON.parse(jsonStr);
             
-            if (parsed.event === "agent_message" || parsed.event === "message") {
-              const chunk = parsed.answer ?? "";
-              fullAssistantText += chunk;
-              
-              // Update the last message (the assistant one) in the state
-              setMessages((prev) => {
-                const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                if (updated[lastIdx].role === "assistant") {
-                  updated[lastIdx] = { ...updated[lastIdx], content: fullAssistantText };
+            if (parsed.event === "agent_message" || parsed.event === "message" || (agentType === "research" && parsed.event === "agent_thought")) {
+              const chunk = parsed.answer ?? parsed.text ?? parsed.content ?? "";
+              if (chunk) {
+                fullAssistantText += chunk;
+                
+                // Update the last message (the assistant one) in the state
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIdx = updated.length - 1;
+                  if (updated[lastIdx]?.role === "assistant") {
+                    updated[lastIdx] = { ...updated[lastIdx], content: fullAssistantText };
+                  }
+                  return updated;
+                });
+
+                // AJUSTE: Estratégia de save por timeout para o agente research
+                if (agentType === 'research') {
+                  if (researchSaveTimeoutRef.current) {
+                    clearTimeout(researchSaveTimeoutRef.current);
+                  }
+                  
+                  researchSaveTimeoutRef.current = setTimeout(async () => {
+                    if (fullAssistantText.length > 100 && !researchSavedRef.current) {
+                      await saveMessageToSupabase(fullAssistantText, conversationIdRef.current || undefined);
+                    }
+                  }, 3000);
                 }
-                return updated;
-              });
+              }
             }
 
             if (parsed.event === "message_end") {
-              if (parsed.conversation_id && parsed.conversation_id !== conversationIdRef.current) {
-                conversationIdRef.current = parsed.conversation_id;
-                // Sync to DB
-                await supabase
-                  .from("general_chats")
-                  .update({ dify_conversation_id: parsed.conversation_id })
-                  .eq("id", chatId);
+              if (researchSaveTimeoutRef.current) {
+                clearTimeout(researchSaveTimeoutRef.current);
               }
-
-              // AJUSTE 3: Se for research e for a primeira mensagem (não havia mensagens antes da atual), define o título
-              if (messages.length === 0 && agentType === 'research') {
-                const title = text.slice(0, 60);
-                await (supabase as any)
-                  .from("general_chats")
-                  .update({ title })
-                  .eq("id", chatId);
-              }
-
-              // Save messages to DB
-              await supabase.from("general_chat_messages").insert([
-                { chat_id: chatId, role: "user", content: text, agent_type: agentType },
-                { chat_id: chatId, role: "assistant", content: fullAssistantText, agent_type: agentType }
-              ]);
-
-              await supabase
-                .from("general_chats")
-                .update({ 
-                  updated_at: new Date().toISOString(),
-                  agent_type: agentType // Ensure agent_type is persisted
-                })
-                .eq("id", chatId);
+              await saveMessageToSupabase(fullAssistantText, parsed.conversation_id);
             }
 
             if (parsed.event === "error") {
