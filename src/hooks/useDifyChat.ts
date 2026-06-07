@@ -404,7 +404,7 @@ export function useDifyChat(
       .from("chat_messages").insert(userMsgPayload).select("id").single();
 
     // Só define título na primeira mensagem do usuário se for agente research
-    const isFirstUserMessage = messages.filter(m => m.role === 'user').length === 0;
+    const isFirstUserMessage = messages.length === 0;
     
     if (isFirstUserMessage && agentType === 'research') {
       const title = text.trim().slice(0, 60);
