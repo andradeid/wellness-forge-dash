@@ -232,7 +232,7 @@ export function ChatMessageList({
                   {parts
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
-                      const cleaned = isUser ? p.value : cleanProse(p.value);
+                      const cleaned = isUser ? p.value : (m.agent_type === 'research' || agentType === 'research' ? p.value : cleanProse(p.value));
                       if (!cleaned && m.role === "assistant") return null;
                       return (
                         <div
