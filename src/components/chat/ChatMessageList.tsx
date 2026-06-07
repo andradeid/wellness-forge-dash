@@ -153,6 +153,19 @@ function cleanResearchOutput(text: string): string {
   return text.trim();
 }
 
+/** Fallback for research output when only internal thoughts are present. */
+function researchFallback(text: string): string {
+  if (!text) return "";
+  const lines = text.split("\n");
+  // If we have "Thought:" but nothing else significant, show the thoughts but slightly styled
+  const thoughts = lines
+    .filter(l => l.trim().startsWith("Thought:"))
+    .map(l => l.replace("Thought:", "💭").trim())
+    .join("\n\n");
+  
+  return thoughts || "O agente concluiu o processamento.";
+}
+
 /** Determines research status label based on internal ReAct blocks during streaming. */
 function getResearchStatus(text: string): string | null {
   if (!text) return null;
@@ -337,7 +350,12 @@ export function ChatMessageList({
                         ? p.value 
                         : (isResearch && !isStreaming ? p.value : (isResearch ? cleanResearchOutput(p.value) : cleanProse(p.value)));
 
-                      if (!cleaned && m.role === "assistant") return null;
+                      // If cleaned output is empty but we have content and it's research, use fallback
+                      const finalContent = (!cleaned && m.role === "assistant" && p.value && isResearch) 
+                        ? researchFallback(p.value) 
+                        : cleaned;
+
+                      if (!finalContent && m.role === "assistant") return null;
 
                       return (
                         <div
@@ -370,7 +388,7 @@ export function ChatMessageList({
                               )
                             } : undefined}
                           >
-                            {cleaned || ""}
+                            {finalContent || ""}
                           </ReactMarkdown>
                         </div>
                       );

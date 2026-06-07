@@ -46,13 +46,19 @@ export function useGeneralChat(chatId: string, agentType: string) {
     setStreamingContent("");
     
     
+    const userMsgId = crypto.randomUUID();
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: userMsgId,
       role: "user",
       content: text,
       created_at: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
+
+    // Save user message immediately to ensure it's in history even if streaming fails
+    const { data: userInserted } = await supabase.from("general_chat_messages").insert([
+      { chat_id: chatId, role: "user", content: text, agent_type: agentType }
+    ]).select("id").single();
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -82,8 +88,9 @@ export function useGeneralChat(chatId: string, agentType: string) {
       let fullAssistantText = "";
       const assistantId = crypto.randomUUID();
 
-      const saveMessageToSupabase = async (content: string, convId?: string) => {
-        if (!content.trim()) return;
+      const saveAssistantToSupabase = async (content: string, convId?: string) => {
+        // Only save if we have some content OR if it's the final event
+        if (!content.trim() && !convId) return;
         
         if (convId) {
           conversationIdRef.current = convId;
@@ -93,11 +100,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
             .eq("id", chatId);
         }
 
-        // Save messages to DB
-        await supabase.from("general_chat_messages").insert([
-          { chat_id: chatId, role: "user", content: text, agent_type: agentType },
+        // Save assistant message to DB
+        const { data: assistantInserted } = await supabase.from("general_chat_messages").insert([
           { chat_id: chatId, role: "assistant", content: content, agent_type: agentType }
-        ]);
+        ]).select("id").single();
 
         // AJUSTE: Se for research e for a primeira mensagem, define o título
         const { data: countData } = await supabase
@@ -122,6 +128,14 @@ export function useGeneralChat(chatId: string, agentType: string) {
             agent_type: agentType 
           })
           .eq("id", chatId);
+
+        if (assistantInserted?.id) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, id: assistantInserted.id } : m
+            )
+          );
+        }
       };
       setMessages((prev) => [...prev, {
         id: assistantId,
@@ -167,7 +181,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
             }
 
             if (parsed.event === "message_end") {
-              await saveMessageToSupabase(fullAssistantText, parsed.conversation_id);
+              await saveAssistantToSupabase(fullAssistantText, parsed.conversation_id);
             }
 
             if (parsed.event === "error") {
