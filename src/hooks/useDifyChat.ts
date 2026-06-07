@@ -301,6 +301,7 @@ export function useDifyChat(
   }, [patientId, readOnly, forceChatId]);
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
+    console.log('[SEND 1] iniciando sendMessage', agentType);
     if (!chatId || readOnly) return;
     setError(null);
     setThinking(true);
@@ -334,7 +335,9 @@ export function useDifyChat(
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('[SEND 2] usuário validado', user?.id);
     if (!token || !user) { setThinking(false); setUploadProgress([]); return; }
+
 
     // 1) Upload files to Dify + storage
     const difyFiles: DifyFileRef[] = [];
@@ -414,6 +417,8 @@ export function useDifyChat(
     };
     const { data: userInserted } = await (supabase as any)
       .from("chat_messages").insert(userMsgPayload).select("id").single();
+    console.log('[SEND 4] mensagem do usuário salva', chatId);
+
 
     // Só define título na primeira mensagem do usuário se for agente research
     const isFirstUserMessage = messages.length === 0;
@@ -533,9 +538,12 @@ export function useDifyChat(
         }
       })();
       
+      console.log('[SEND 3] finalQuery montada', finalQuery?.slice(0, 50));
       const difyQuery = finalQuery || text;
 
+      console.log('[SEND 5] chamando Dify', agentType);
       const callDify = async (convId: string | undefined) =>
+
         fetch("/api/dify/chat", {
           method: "POST",
           headers: {
