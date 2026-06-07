@@ -111,7 +111,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
           .select("id", { count: 'exact', head: true })
           .eq("chat_id", chatId);
         
-        const isFirstMessage = (countData?.count ?? 0) <= 2; 
+        const isFirstMessage = (countData?.length ?? 0) <= 2; 
 
         if (isFirstMessage && agentType === 'research') {
           const title = text.slice(0, 60);
