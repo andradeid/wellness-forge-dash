@@ -513,41 +513,6 @@ export function useDifyChat(
 
       const decoder = new TextDecoder();
       let fullText = "";
-      const saveMessageToSupabase = async (content: string, convId?: string) => {
-        if (!content.trim()) return;
-        
-        if (convId) {
-          conversationIdRef.current = convId;
-          await (supabase as any)
-            .from("patient_chats")
-            .update({ dify_conversation_id: convId })
-            .eq("id", chatId);
-        }
-
-        const processingMs = Math.round(performance.now() - startedAt);
-        const structured = { processing_ms: processingMs };
-
-        const { data: assistantInserted } = await (supabase as any)
-          .from("chat_messages")
-          .insert({
-            chat_id: chatId,
-            created_by: user.id,
-            role: "assistant",
-            content: content,
-            agent_type: agentType,
-            structured_data: structured,
-          })
-          .select("id")
-          .single();
-
-        if (assistantInserted?.id) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, id: assistantInserted.id, structured_data: structured } : m
-            )
-          );
-        }
-      };
       
       while (true) {
         const { done, value } = await reader.read();
@@ -573,7 +538,7 @@ export function useDifyChat(
               }
             } else if (data.event === "message_end") {
               if (agentType === "research") {
-                await saveMessageToSupabase(fullText, data.conversation_id);
+                await saveAssistantToSupabase(fullText, data.conversation_id);
               } else {
                 if (data.conversation_id) {
                   conversationIdRef.current = data.conversation_id;
