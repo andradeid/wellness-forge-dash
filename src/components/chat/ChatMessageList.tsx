@@ -90,11 +90,8 @@ function cleanResearchOutput(text: string): string {
   
   // Regex to detect "Thought:", "Action:", "Action Input:", "Observation:"
   // and remove them along with their content.
-  // We want to keep everything that follows the last ReAct block or just show nothing if we are in the middle of it.
-  
   const lines = text.split("\n");
   
-  // Search for common ReAct markers
   const reactMarkers = [
     "Thought:", 
     "Action:", 
@@ -110,7 +107,6 @@ function cleanResearchOutput(text: string): string {
 
   lines.forEach((line, i) => {
     const trimmed = line.trim();
-    // Check for explicit markers
     for (const marker of reactMarkers) {
       if (trimmed.startsWith(marker)) {
         lastMarkerIndex = i;
@@ -128,26 +124,29 @@ function cleanResearchOutput(text: string): string {
   }
 
   // If we are still in the ReAct process (found a marker but not a final one)
-  // we return empty to avoid showing the "Thought/Action" noise, 
-  // UNLESS there is content at the very beginning before any Thought (rare)
-  // or if there are no markers at all (normal markdown response)
   if (lastMarkerIndex !== -1) {
-    // If we have content after the last marker, and it's not a ReAct marker itself,
-    // it might be the start of the final answer if the model didn't explicitly use a "Final Answer" label
     const potentialContent = lines.slice(lastMarkerIndex + 1).join("\n").trim();
     
     // Heuristic: if the content is long enough and doesn't look like a tool result, it might be the answer
-    // Lowered threshold to 50 chars to catch shorter summaries or tables starting.
-    if (potentialContent.length > 50 && !potentialContent.startsWith("{") && !potentialContent.startsWith("[")) {
+    // OR if it's the beginning of a table or markdown structure
+    if (
+      potentialContent.length > 30 || 
+      potentialContent.startsWith("|") || 
+      potentialContent.startsWith("#") ||
+      potentialContent.startsWith("*")
+    ) {
       return potentialContent;
     }
     
-    // If the last marker was "Observation:", and there is a lot of text, it might be what we want to see
-    // (though usually we wait for Final Answer, sometimes models just stop or include the analysis in observations)
     return "";
   }
 
-  // No markers found, return as is (could be a follow-up or a simple message)
+  // No markers found, but if the text starts with technical "Action:" etc, hide it
+  // otherwise it's just a normal message
+  if (text.includes("Thought:") || text.includes("Action:")) {
+    return "";
+  }
+
   return text.trim();
 }
 
