@@ -163,7 +163,7 @@ export function useDifyChat(
   const [agentType, setAgentType] = useState<string>("");
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
-  const conversationIdRef = useRef<string>("");
+  const conversationIdRef = useRef<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
