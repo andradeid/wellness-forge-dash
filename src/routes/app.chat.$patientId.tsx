@@ -28,6 +28,7 @@ export const Route = createFileRoute("/app/chat/$patientId")({
     chatId: typeof s.chatId === "string" ? s.chatId : undefined,
     messageId: typeof s.messageId === "string" ? s.messageId : undefined,
     module: typeof s.module === "string" ? s.module : undefined,
+    agent: typeof s.agent === "string" ? s.agent : undefined,
   }),
   component: ChatPage,
 });
@@ -72,7 +73,7 @@ interface PatientCtx {
 
 function ChatPage() {
   const { patientId } = Route.useParams();
-  const { chatId: forceChatId, messageId: highlightId, module: initialModule } = Route.useSearch();
+  const { chatId: forceChatId, messageId: highlightId, module: initialModule, agent: initialAgent } = Route.useSearch();
   const navigate = useNavigate();
   const { role, profile } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
@@ -89,7 +90,7 @@ function ChatPage() {
   const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
-    initialAgentType: initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined,
+    initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);

@@ -525,10 +525,18 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
       setConfirmOpen(false);
       reset();
       onCreated?.();
+      const agentId = moduleContext ? getAgentForCard(
+        moduleContext,
+        patient.is_pregnant 
+          ? 'gestante' 
+          : patient.gender === 'male' ? 'adulto_masculino' : patient.gender === 'female' ? 'adulto_feminino' : undefined,
+        patient.pregnancy_type ?? undefined
+      )?.agent_id : undefined;
+
       navigate({ 
         to: "/app/chat/$patientId", 
         params: { patientId: patient.id },
-        search: moduleContext ? { module: moduleContext } : undefined
+        search: moduleContext ? { module: moduleContext, agent: agentId } : undefined
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao cadastrar";
