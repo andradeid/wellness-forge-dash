@@ -549,7 +549,7 @@ function FaleComLummaPage() {
                     >
                       Análises e Uploads
                     </motion.h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                       {[
                         { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
                         { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
@@ -572,12 +572,12 @@ function FaleComLummaPage() {
                                 startGeneralChat(agent.agent_id);
                               }
                             }}
-                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                            className="flex flex-col items-center justify-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
                           >
-                            <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                              <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                            <div className="p-2 sm:p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                              <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
                             </div>
-                            <span className="text-sm font-medium text-foreground/80">{card.title}</span>
+                            <span className="text-xs sm:text-sm font-medium text-foreground/80 text-center">{card.title}</span>
                           </motion.button>
                         );
                       })}
@@ -598,7 +598,7 @@ function FaleComLummaPage() {
                     >
                       Condutas e Entregas
                     </motion.h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                       {[
                         { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
                         { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
@@ -621,12 +621,12 @@ function FaleComLummaPage() {
                                 startGeneralChat(agent.agent_id);
                               }
                             }}
-                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                            className="flex flex-col items-center justify-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
                           >
-                            <div className="p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
-                              <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                            <div className="p-2 sm:p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                              <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
                             </div>
-                            <span className="text-sm font-medium text-foreground/80">{card.title}</span>
+                            <span className="text-xs sm:text-sm font-medium text-foreground/80 text-center">{card.title}</span>
                           </motion.button>
                         );
                       })}
