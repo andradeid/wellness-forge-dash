@@ -92,6 +92,15 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
   });
+
+  console.log("DEBUG CHAT INITIALIZATION:", {
+    initialModule,
+    initialAgent,
+    agentTypeAtRender: agentType,
+    messagesLength: messages.length,
+    thinking,
+    pendingModuleFromUrl
+  });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
   const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
