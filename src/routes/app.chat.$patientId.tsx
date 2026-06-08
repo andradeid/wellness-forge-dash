@@ -458,7 +458,7 @@ function ChatPage() {
           >
             <ArrowLeft className="h-3 w-3" /> Pacientes
           </Link>
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Avatar className="h-9 w-9 shrink-0">
               {patient?.avatar_url && <AvatarImage src={patient.avatar_url} alt={patient.name} />}
               <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
@@ -494,10 +494,10 @@ function ChatPage() {
               <Button
                 onClick={handleNewChat}
                 disabled={thinking}
-                className="h-9 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 px-4 text-sm"
+                className="h-9 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 px-3 sm:px-4 text-sm"
               >
-                <Plus className="h-4 w-4 mr-1" />
-                Nova Conversa
+                <Plus className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Nova Conversa</span>
               </Button>
             )}
             <PatientChatHistory patientId={patientId} currentChatId={chatId} readOnly={readOnly} />
@@ -506,7 +506,7 @@ function ChatPage() {
               disabled={!branding || messages.length === 0}
               variant="ghost"
               size="sm"
-              className="h-9 rounded-lg gap-1.5"
+              className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
             >
               <Download className="h-4 w-4" />
               <span className="hidden lg:inline">Exportar</span>
@@ -516,7 +516,7 @@ function ChatPage() {
               disabled={!branding || reportMarkers.length === 0}
               variant="ghost"
               size="sm"
-              className="h-9 rounded-lg gap-1.5"
+              className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
             >
               <FileDown className="h-4 w-4" />
               <span className="hidden lg:inline">Laudo PDF</span>
@@ -524,7 +524,7 @@ function ChatPage() {
             <Link
               to="/app/evolution/$patientId"
               params={{ patientId }}
-              className="inline-flex items-center gap-1.5 h-9 rounded-lg px-3 text-sm hover:bg-muted/50 transition"
+              className="inline-flex items-center sm:gap-1.5 h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:px-3 text-sm hover:bg-muted/50 transition justify-center"
             >
               <TrendingUp className="h-4 w-4 text-[#e8a04c]" />
               <span className="hidden lg:inline">Evolução</span>
