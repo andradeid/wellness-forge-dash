@@ -699,10 +699,19 @@ function FaleComLummaPage() {
                             setSelectedPatient(p);
                             setIdentifyOpen(false);
                             toast.success(`Paciente ${p.name} selecionado`);
+                            
+                            const agentId = pendingTrigger ? getAgentForCard(
+                              pendingTrigger,
+                              p.is_pregnant 
+                                ? 'gestante' 
+                                : p.gender === 'male' ? 'adulto_masculino' : p.gender === 'female' ? 'adulto_feminino' : undefined,
+                              p.pregnancy_type ?? undefined
+                            )?.agent_id : undefined;
+
                             navigate({
                               to: "/app/chat/$patientId",
                               params: { patientId: p.id },
-                              search: pendingTrigger ? { module: pendingTrigger } : undefined,
+                              search: pendingTrigger ? { module: pendingTrigger, agent: agentId } : undefined,
                             });
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
