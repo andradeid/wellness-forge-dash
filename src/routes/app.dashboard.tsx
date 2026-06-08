@@ -682,6 +682,7 @@ function DashboardPage() {
                       <Link
                         to="/app/chat/$patientId"
                         params={{ patientId: p.patient_id }}
+                        search={{ module: "exames_de_sangue" }}
                       >
                         <Button size="sm" variant="ghost" className="rounded-full gap-1">
                           Abrir <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
@@ -883,7 +884,7 @@ function DashboardPage() {
                       <span className="font-medium text-[#b6743a]">{p.days} dias</span>
                     </div>
                   </div>
-                  <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                  <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
                     <Button size="sm" variant="ghost" className="rounded-full gap-1">
                       Conversar <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
                     </Button>
