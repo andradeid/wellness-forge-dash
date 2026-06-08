@@ -158,7 +158,7 @@ export function ChatInput({
       {allProgress.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
           {allProgress.map((item) => {
-            const isLoading = item.stage === "enviando" || item.stage === "processando" || item.stage === "pendente";
+            const isLoading = item.stage === "enviando" || item.stage === "processando";
             const sizeStr = formatFileSize(item.size);
             
             return (
