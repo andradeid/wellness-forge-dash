@@ -44,6 +44,7 @@ interface Patient {
   is_pregnant?: boolean;
   gestational_weeks?: number;
   pregnancy_type?: "single" | "multiple";
+  menstrual_cycle_phase?: string | null;
 }
 
 function PatientsPage() {
@@ -59,6 +60,7 @@ function PatientsPage() {
   const [isPregnant, setIsPregnant] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState("");
   const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
+  const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
@@ -116,7 +118,7 @@ function PatientsPage() {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("patients")
-      .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes, is_pregnant, gestational_weeks, pregnancy_type")
+      .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes, is_pregnant, gestational_weeks, pregnancy_type, menstrual_cycle_phase")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setPatients((data as Patient[]) ?? []);
@@ -143,6 +145,7 @@ function PatientsPage() {
       is_pregnant: gender === "female" ? isPregnant : false,
       gestational_weeks: gender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
       pregnancy_type: gender === "female" && isPregnant ? pregnancyType : null,
+      menstrual_cycle_phase: gender === "female" && !isPregnant ? menstrualCyclePhase : null,
     });
     setSubmitting(false);
     if (error) {
@@ -157,6 +160,7 @@ function PatientsPage() {
     setIsPregnant(false);
     setGestationalWeeks("");
     setPregnancyType("single");
+    setMenstrualCyclePhase("");
     load();
   };
 
@@ -290,6 +294,26 @@ function PatientsPage() {
                     )}
                   </div>
                 )}
+
+                {gender === "female" && !isPregnant && (
+                  <div className="space-y-1.5 animate-in fade-in duration-300">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fase do Ciclo Menstrual</Label>
+                    <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
+                      <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                        <SelectValue placeholder="Não informado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Não informado</SelectItem>
+                        <SelectItem value="folicular">Folicular</SelectItem>
+                        <SelectItem value="ovulatoria">Ovulatória</SelectItem>
+                        <SelectItem value="lutea">Lútea</SelectItem>
+                        <SelectItem value="menstrual">Menstrual</SelectItem>
+                        <SelectItem value="nao_se_aplica">Não se aplica (menopausa/anovulação)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</Label>
                     <Select value={gender ?? undefined} onValueChange={(v) => setGender(v as Patient["gender"])}>

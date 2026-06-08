@@ -436,6 +436,7 @@ export type Database = {
           gestational_weeks: number | null
           id: string
           is_pregnant: boolean | null
+          menstrual_cycle_phase: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -452,6 +453,7 @@ export type Database = {
           gestational_weeks?: number | null
           id?: string
           is_pregnant?: boolean | null
+          menstrual_cycle_phase?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -468,6 +470,7 @@ export type Database = {
           gestational_weeks?: number | null
           id?: string
           is_pregnant?: boolean | null
+          menstrual_cycle_phase?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
