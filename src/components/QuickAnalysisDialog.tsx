@@ -225,7 +225,7 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
   return "";
 }
 
-export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
+export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: () => void; moduleContext?: string }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -525,7 +525,11 @@ export function QuickAnalysisDialog({ onCreated }: { onCreated?: () => void }) {
       setConfirmOpen(false);
       reset();
       onCreated?.();
-      navigate({ to: "/app/chat/$patientId", params: { patientId: patient.id } });
+      navigate({ 
+        to: "/app/chat/$patientId", 
+        params: { patientId: patient.id },
+        search: moduleContext ? { module: moduleContext } : undefined
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao cadastrar";
       toast.error(msg);
