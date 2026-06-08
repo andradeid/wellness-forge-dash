@@ -198,7 +198,6 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      collapsible="none"
       className="border-r border-white/10 lumma-sidebar"
     >
       <SidebarHeader className="px-5 pt-6 pb-4">

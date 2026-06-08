@@ -169,10 +169,10 @@ function PatientsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 lg:px-0 overflow-x-hidden">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-row items-center justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight break-words">Pacientes</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-xl sm:text-3xl font-semibold tracking-tight truncate">Pacientes</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
             Bem-vinda ao Painel. Tudo em um só lugar — calmo, organizado, à mão.
           </p>
         </div>
@@ -184,10 +184,10 @@ function PatientsPage() {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
-                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md min-h-[44px] flex-1 md:flex-none"
+                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md h-10 sm:h-11 px-4 sm:px-6"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Paciente
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Novo Paciente</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
@@ -344,47 +344,52 @@ function PatientsPage() {
           ) : (
             <>
               {/* Mobile: card list */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-3 pt-2">
                 {filtered.map((p) => (
-                  <div key={p.id} className="rounded-xl border border-muted bg-white p-3 shadow-sm">
+                  <div key={p.id} className="rounded-2xl border border-muted bg-white p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 shrink-0">
+                      <Avatar className="h-12 w-12 shrink-0">
                         <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                        <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-sm font-semibold">
                           {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">{p.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {genderLabel(p.gender)} · {p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}
+                        <div className="font-semibold text-slate-800 truncate">{p.name}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+                          <span>{genderLabel(p.gender)}</span>
+                          {p.is_pregnant && (
+                            <span className="text-[#e8a04c] font-medium">
+                              · Gestante {p.gestational_weeks ? `(${p.gestational_weeks}s)` : ""}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-1 justify-end">
-                      <Button asChild size="sm" variant="ghost" className="rounded-full gap-1 min-h-[40px]">
+                    <div className="mt-4 flex items-center justify-between border-t pt-3">
+                      <Button asChild size="sm" className="rounded-full gap-2 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] hover:opacity-90 h-9 px-5">
                         <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
                           <MessageSquare className="h-4 w-4" /> Chat
                         </Link>
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => { setEditTarget(p); setEditOpen(true); }}
-                        className="rounded-full min-h-[40px] min-w-[40px]"
-                        aria-label="Editar paciente"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => askDelete(p)}
-                        className="rounded-full gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px] min-w-[40px]"
-                        aria-label="Excluir paciente"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => { setEditTarget(p); setEditOpen(true); }}
+                          className="h-9 w-9 rounded-full text-slate-500"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => askDelete(p)}
+                          className="h-9 w-9 rounded-full text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
