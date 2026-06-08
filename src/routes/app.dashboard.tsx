@@ -492,7 +492,10 @@ function DashboardPage() {
               </Link>
             </Button>
           )}
-          <QuickAnalysisDialog onCreated={() => window.location.reload()} />
+          <QuickAnalysisDialog 
+            onCreated={() => window.location.reload()} 
+            moduleContext="exames_de_sangue"
+          />
         </div>
       </div>
 

@@ -259,7 +259,10 @@ function EvolutionPage() {
               <FileDown className="h-3.5 w-3.5" />
               Gerar Laudo PDF
             </Button>
-            <QuickAnalysisDialog onCreated={() => reload()} />
+            <QuickAnalysisDialog 
+              onCreated={() => reload()} 
+              moduleContext="exames_de_sangue"
+            />
           </div>
         </div>
 
