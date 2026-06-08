@@ -363,7 +363,7 @@ function PatientsPage() {
                     </div>
                     <div className="mt-3 flex flex-wrap gap-1 justify-end">
                       <Button asChild size="sm" variant="ghost" className="rounded-full gap-1 min-h-[40px]">
-                        <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                        <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
                           <MessageSquare className="h-4 w-4" /> Chat
                         </Link>
                       </Button>
@@ -430,7 +430,7 @@ function PatientsPage() {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
-                              <Link to="/app/chat/$patientId" params={{ patientId: p.id }}>
+                              <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
                                 <MessageSquare className="h-4 w-4" /> Chat
                               </Link>
                             </Button>

@@ -218,6 +218,7 @@ function EvolutionPage() {
           <Link
             to="/app/chat/$patientId"
             params={{ patientId }}
+            search={{ module: "exames_de_sangue" }}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground rounded-full border px-3 py-1.5"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar
