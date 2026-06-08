@@ -116,11 +116,9 @@ function ChatPage() {
   useEffect(() => {
     // Só executa quando:
     // 1. Tem módulo pendente da URL
-    // 2. patientProfile já foi calculado (não está mais vazio)
     if (!pendingModuleFromUrl) return;
-    if (!patientProfile) return;
 
-    // Agora patientProfile está disponível
+    // Agora patientProfile está disponível ou usamos o fallback do hook
     // getAgentForCard pode decidir corretamente
     const agent = getAgentForCard(
       pendingModuleFromUrl, 
@@ -528,7 +526,7 @@ function ChatPage() {
 
         <main className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {(!thinking && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
+            {(!thinking && !agentType && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <ChatIntentPanel
                   filters={filters}
