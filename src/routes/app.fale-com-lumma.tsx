@@ -503,7 +503,7 @@ function FaleComLummaPage() {
           </AnimatePresence>
         </div>
 
-        <div className="flex h-full flex-col items-center justify-center px-6 py-12">
+        <div className="flex h-full flex-col items-center justify-center px-6 pt-4 sm:pt-12 pb-12">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
             <motion.img
               initial={{ opacity: 0, scale: 0.8 }}
@@ -549,7 +549,7 @@ function FaleComLummaPage() {
                     >
                       Análises e Uploads
                     </motion.h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                       {[
                         { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
                         { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
@@ -572,12 +572,13 @@ function FaleComLummaPage() {
                                 startGeneralChat(agent.agent_id);
                               }
                             }}
-                            className="flex flex-col items-center justify-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
                           >
-                            <div className="p-2 sm:p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
                               <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
                             </div>
-                            <span className="text-xs sm:text-sm font-medium text-foreground/80 text-center">{card.title}</span>
+                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">{card.title}</span>
+                            <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
                           </motion.button>
                         );
                       })}
@@ -598,7 +599,7 @@ function FaleComLummaPage() {
                     >
                       Condutas e Entregas
                     </motion.h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                       {[
                         { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
                         { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
@@ -621,12 +622,13 @@ function FaleComLummaPage() {
                                 startGeneralChat(agent.agent_id);
                               }
                             }}
-                            className="flex flex-col items-center justify-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
                           >
-                            <div className="p-2 sm:p-3 rounded-xl bg-white/50 group-hover:bg-white transition-colors">
+                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
                               <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
                             </div>
-                            <span className="text-xs sm:text-sm font-medium text-foreground/80 text-center">{card.title}</span>
+                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">{card.title}</span>
+                            <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
                           </motion.button>
                         );
                       })}
