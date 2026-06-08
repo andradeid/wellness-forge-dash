@@ -93,7 +93,8 @@ function AppLayout() {
             )}
             {!immersive && (
               <header className="h-14 flex items-center border-b bg-card px-4 gap-2">
-                <div className="text-sm font-medium text-muted-foreground">
+                <SidebarTrigger className="md:hidden" />
+                <div className="text-sm font-medium text-muted-foreground ml-2 md:ml-0">
                   LUMMA
                 </div>
                 <div className="ml-auto">
