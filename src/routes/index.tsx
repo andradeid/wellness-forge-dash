@@ -19,11 +19,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Teaser() {
-  const { session, loading } = useAuth();
+  const { session, loading, role } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/app" });
+    if (!loading && session) navigate({ to: role === "nutri" ? "/app/fale-com-lumma" : "/app" });
   }, [session, loading, navigate]);
 
   return (

@@ -22,7 +22,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { session, signIn, signUp, loading } = useAuth();
+  const { session, signIn, signUp, loading, role } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"signin" | "signup">("signin");
 
@@ -33,7 +33,10 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && session) {
-      navigate({ to: "/app", replace: true });
+      navigate({ 
+        to: role === "nutri" ? "/app/fale-com-lumma" : "/app", 
+        replace: true 
+      });
     }
   }, [session, loading, navigate]);
 
@@ -57,7 +60,7 @@ function LoginPage() {
     try {
       await signUp(email, password, fullName);
       toast.success("Conta criada! Verifique seu email se necessário.");
-      navigate({ to: "/app" });
+      navigate({ to: role === "nutri" ? "/app/fale-com-lumma" : "/app" });
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao cadastrar");
     } finally {
