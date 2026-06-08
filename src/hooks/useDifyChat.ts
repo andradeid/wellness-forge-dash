@@ -151,7 +151,7 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
 
 export function useDifyChat(
   patientId: string,
-  options?: { readOnly?: boolean; forceChatId?: string | null },
+  options?: { readOnly?: boolean; forceChatId?: string | null; initialAgentType?: string },
 ) {
   const readOnly = options?.readOnly ?? false;
   const forceChatId = options?.forceChatId ?? null;
@@ -160,7 +160,7 @@ export function useDifyChat(
   const [thinking, setThinking] = useState(false);
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
-  const [agentType, setAgentType] = useState<string>("");
+  const [agentType, setAgentType] = useState<string>(options?.initialAgentType ?? "");
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string | null>(null);

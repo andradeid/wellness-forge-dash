@@ -89,6 +89,7 @@ function ChatPage() {
   const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
+    initialAgentType: initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined,
   });
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
