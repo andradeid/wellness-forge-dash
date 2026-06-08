@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { processAndPersistMarkers, type RawMarker } from "@/lib/exam-markers";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
@@ -227,6 +228,7 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
 
 export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: () => void; moduleContext?: string }) {
   const { user } = useAuth();
+  const { getAgentForCard } = useAgentConfig();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
