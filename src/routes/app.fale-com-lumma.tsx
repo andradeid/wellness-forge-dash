@@ -409,7 +409,7 @@ function FaleComLummaPage() {
                         </div>
                       ) : (
                         <div className="flex items-start gap-1.5 min-w-0 flex-1">
-                          <span className="text-sm font-semibold text-white leading-tight break-words overflow-hidden">
+                          <span className="text-sm font-semibold text-white leading-tight truncate flex-1">
                             {c.title || c.patient_name}
                           </span>
                           {!c.patient_id && (
