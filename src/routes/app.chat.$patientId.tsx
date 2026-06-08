@@ -698,19 +698,17 @@ function ChatPage() {
                   Máximo de 10 arquivos de 20MB
                 </p>
                 {role === "nutri" && (
-                  <p className="mt-1 text-center text-[10px] italic text-amber-700/80 px-2">
+                  <p className="mt-1 text-center text-[10px] italic text-amber-700/80 px-2 hidden sm:block">
                     Nota: Processamento estrutural em modo de validação técnica.
                   </p>
                 )}
                 <TooltipProvider delayDuration={150}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <p className="mt-3 flex items-start sm:items-center justify-center gap-1.5 text-center text-[10px] text-muted-foreground/70 cursor-help select-none px-2">
+                      <p className="mt-2 sm:mt-3 flex items-start sm:items-center justify-center gap-1.5 text-center text-[10px] text-muted-foreground/70 cursor-help select-none px-2 line-clamp-1 sm:line-clamp-none">
                         <ShieldCheck className="h-3 w-3 text-[#7a8f6a] shrink-0 mt-0.5 sm:mt-0" />
-                        <span>
-                          Análises baseadas nos protocolos de inteligência integrativa da Dra. Ana
-                          Paula. Sempre confira os dados estruturados com o laudo original do
-                          laboratório.
+                        <span className="truncate sm:whitespace-normal">
+                          Análises baseadas nos protocolos de inteligência integrativa da Dra. Ana Paula.
                         </span>
                       </p>
                     </TooltipTrigger>

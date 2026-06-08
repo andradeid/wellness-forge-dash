@@ -102,7 +102,7 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
   }
 
   const baseBtn =
-    "inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors hover:bg-black/5 disabled:opacity-50";
+    "inline-flex items-center gap-1 sm:gap-1.5 text-xs px-1.5 sm:px-2 py-1 rounded-md transition-colors hover:bg-black/5 disabled:opacity-50";
   const iconCls = "h-3.5 w-3.5";
 
   return (
