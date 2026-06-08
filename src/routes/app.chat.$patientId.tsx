@@ -92,9 +92,19 @@ function ChatPage() {
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
   });
+
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
   const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
+
+  console.log("DEBUG CHAT INITIALIZATION:", {
+    initialModule,
+    initialAgent,
+    agentTypeAtRender: agentType,
+    messagesLength: messages.length,
+    thinking,
+    pendingModuleFromUrl
+  });
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
   useEffect(() => {
