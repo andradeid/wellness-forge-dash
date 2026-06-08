@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DebugRenderRouteImport } from './routes/debug-render'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -46,11 +45,6 @@ const UnauthorizedRoute = UnauthorizedRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DebugRenderRoute = DebugRenderRouteImport.update({
-  id: '/debug-render',
-  path: '/debug-render',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -183,7 +177,6 @@ const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/debug-render': typeof DebugRenderRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
@@ -212,7 +205,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/debug-render': typeof DebugRenderRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
@@ -243,7 +235,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/debug-render': typeof DebugRenderRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
@@ -275,7 +266,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/debug-render'
     | '/login'
     | '/unauthorized'
     | '/app/chats'
@@ -304,7 +294,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/debug-render'
     | '/login'
     | '/unauthorized'
     | '/app/chats'
@@ -334,7 +323,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/debug-render'
     | '/login'
     | '/unauthorized'
     | '/app/chats'
@@ -365,7 +353,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  DebugRenderRoute: typeof DebugRenderRoute
   LoginRoute: typeof LoginRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
@@ -390,13 +377,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/debug-render': {
-      id: '/debug-render'
-      path: '/debug-render'
-      fullPath: '/debug-render'
-      preLoaderRoute: typeof DebugRenderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -622,7 +602,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  DebugRenderRoute: DebugRenderRoute,
   LoginRoute: LoginRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
