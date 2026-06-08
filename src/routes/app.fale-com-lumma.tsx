@@ -471,7 +471,7 @@ function FaleComLummaPage() {
       </aside>
 
         {/* Área principal */}
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-y-auto overflow-x-hidden">
         {/* Controle de Áudio Flutuante */}
         <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-2">
           <Button
@@ -503,7 +503,7 @@ function FaleComLummaPage() {
           </AnimatePresence>
         </div>
 
-        <div className="flex h-full flex-col items-center justify-center px-6 pt-4 sm:pt-12 pb-12">
+        <div className="flex min-h-full flex-col items-center justify-center px-6 pt-6 sm:pt-12 pb-12">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
             <motion.img
               initial={{ opacity: 0, scale: 0.8 }}
@@ -514,7 +514,7 @@ function FaleComLummaPage() {
               className="h-20 w-20 mb-8 drop-shadow-sm"
             />
             <h1 
-              className="text-4xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-4 min-h-[1.2em]"
+              className="text-3xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-3 sm:mb-4 min-h-[1.2em]"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
               {displayText}
@@ -527,7 +527,7 @@ function FaleComLummaPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   onAnimationComplete={() => setShowCards(true)}
-                  className="text-lg text-foreground/70 leading-relaxed mb-12 max-w-xl"
+                  className="text-base sm:text-lg text-foreground/70 leading-relaxed mb-8 sm:mb-12 max-w-xl"
                 >
                   Sou sua mentora virtual, inspirada na metodologia da Ana Paula
                   Pujol. Estou aqui para apoiar seu raciocínio clínico em Nutrição
