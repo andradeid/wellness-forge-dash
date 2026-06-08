@@ -408,7 +408,7 @@ export function ChatMessageList({
                   )}
                   {m.role === "assistant" && <MessageFeedback messageId={m.id} />}
                   <div
-                    className={`mt-2 flex items-center gap-2 text-[10px] ${
+                    className={`mt-2 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] ${
                       isUser ? "text-white/70 justify-end" : "text-muted-foreground/70 justify-start"
                     }`}
                   >

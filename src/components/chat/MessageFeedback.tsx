@@ -102,7 +102,7 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
   }
 
   const baseBtn =
-    "inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors hover:bg-black/5 disabled:opacity-50";
+    "inline-flex items-center gap-1 sm:gap-1.5 text-xs px-1.5 sm:px-2 py-1 rounded-md transition-colors hover:bg-black/5 disabled:opacity-50";
   const iconCls = "h-3.5 w-3.5";
 
   return (
@@ -116,7 +116,7 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
           aria-label="Curti"
         >
           <ThumbsUp className={iconCls} />
-          <span>Curti</span>
+          <span className="hidden sm:inline">Curti</span>
         </button>
         <button
           type="button"
@@ -126,7 +126,7 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
           aria-label="Não curti"
         >
           <ThumbsDown className={iconCls} />
-          <span>Não curti</span>
+          <span className="hidden sm:inline">Não curti</span>
         </button>
         <button
           type="button"
@@ -136,7 +136,7 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
           aria-label={suggestionId ? "Editar sugestão" : "Sugestão"}
         >
           <MessageSquare className={iconCls} />
-          <span>{suggestionId ? "Editar sugestão" : "Sugestão"}</span>
+          <span className="hidden sm:inline">{suggestionId ? "Editar sugestão" : "Sugestão"}</span>
         </button>
         {saving && <Loader2 className="h-3 w-3 animate-spin opacity-60" />}
       </div>
