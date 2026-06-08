@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -472,6 +473,132 @@ function FaleComLummaPage() {
 
         {/* Área principal */}
       <div className="relative flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Menu Hamburguer Mobile */}
+        <div className="absolute top-6 left-6 z-20 md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40 transition-all shadow-sm"
+              >
+                <Menu className="h-4 w-4 text-foreground/70" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 border-r border-white/10 w-72 bg-gradient-to-br from-[#1a0b2e] to-[#0b0414] text-white">
+              <div className="flex h-full flex-col">
+                <div className="p-4 border-b border-white/10">
+                  <Link
+                    to="/app/dashboard"
+                    className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors mb-3"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Voltar ao Dashboard
+                  </Link>
+                  <Button
+                    onClick={() => {
+                      setPendingTrigger(undefined);
+                      setIdentifyOpen(true);
+                    }}
+                    className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
+                    style={{
+                      background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova conversa
+                  </Button>
+                  <div className="relative mt-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
+                    <Input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Buscar conversas..."
+                      className="pl-8 h-9 text-sm rounded-lg bg-white/10 border-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+                    />
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="px-2 py-3 space-y-1">
+                    <div className="px-2 pb-1 text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                      Recentes
+                    </div>
+                    {loadingChats ? (
+                      <div className="flex items-center justify-center py-8 text-white/60">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : filtered.length === 0 ? (
+                      <div className="px-3 py-6 text-xs text-white/60 text-center">
+                        Nenhuma conversa encontrada.
+                      </div>
+                    ) : (
+                      filtered.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            setActiveId(c.id);
+                            if (c.patient_id) {
+                              navigate({
+                                to: "/app/chat/$patientId",
+                                params: { patientId: c.patient_id },
+                                search: { chatId: c.id },
+                              });
+                            } else {
+                              navigate({
+                                to: `/app/general/${c.id}`,
+                                search: { module: c.agent_type || 'research' }
+                              });
+                            }
+                          }}
+                          className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 group ${
+                            activeId === c.id 
+                              ? "bg-white/20 shadow-sm" 
+                              : "hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="relative shrink-0">
+                            <Avatar className="h-9 w-9 border-2 border-white/20">
+                              <AvatarImage src={c.avatar_url || undefined} />
+                              <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
+                                {c.agent_type === 'research' ? '🔍' : c.agent_type === 'reasoning' ? '🤔' : (c.patient_name || "??").slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {c.pinned_at && (
+                              <Pin className="absolute -top-1 -right-1 h-3 w-3 text-white fill-white drop-shadow-sm" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-white leading-tight truncate flex-1">
+                                {c.title || c.patient_name}
+                              </span>
+                              {c.agent_type && (
+                                <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white/90 font-bold uppercase tracking-tighter">
+                                  {c.agent_type === "exam" && "Exame"}
+                                  {c.agent_type === "production" && "Produção"}
+                                  {c.agent_type === "reasoning" && "Clínico"}
+                                  {c.agent_type === "research" && "Pesquisa"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-white/60 mt-1 font-medium">
+                              {formatDistanceToNow(new Date(c.updated_at), {
+                                addSuffix: true,
+                                locale: ptBR,
+                              })}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
         {/* Controle de Áudio Flutuante */}
         <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-2">
           <Button
