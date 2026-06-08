@@ -243,7 +243,7 @@ export function useDifyChat(
           .maybeSingle(),
         (supabase as any)
           .from("patients")
-          .select("name")
+          .select("name, menstrual_cycle_phase")
           .eq("id", patientId)
           .maybeSingle(),
       ]);
@@ -254,6 +254,7 @@ export function useDifyChat(
         nutritionist_email: (profile?.email as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
         patient_id: patientId,
+        fase_ciclo: (patient?.menstrual_cycle_phase as string) || "",
       };
 
       let id = chosenChat?.id;

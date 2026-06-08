@@ -24,6 +24,8 @@ export interface EditablePatient {
   gender?: "male" | "female" | "other" | null;
   notes?: string | null;
   avatar_url?: string | null;
+  menstrual_cycle_phase?: string | null;
+  is_pregnant?: boolean;
 }
 
 interface Props {
@@ -44,6 +46,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
   const [gender, setGender] = useState<EditablePatient["gender"]>(null);
   const [notes, setNotes] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("");
+  const [isPregnant, setIsPregnant] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -56,6 +60,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
     setGender(patient.gender ?? null);
     setNotes(patient.notes ?? "");
     setAvatarUrl(patient.avatar_url ?? null);
+    setMenstrualCyclePhase(patient.menstrual_cycle_phase ?? "");
+    setIsPregnant(patient.is_pregnant ?? false);
   }, [patient]);
 
   const initials = name
@@ -103,6 +109,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
         gender,
         notes: notes.trim() || null,
         avatar_url: avatarUrl,
+        menstrual_cycle_phase: gender === "female" && !isPregnant ? menstrualCyclePhase : null,
       })
       .eq("id", patient.id)
       .eq("created_by", user.id);
@@ -188,6 +195,23 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
               </Select>
             </div>
           </div>
+
+          {gender === "female" && !isPregnant && (
+            <div className="space-y-2 animate-in fade-in duration-300">
+              <Label>Fase do Ciclo Menstrual</Label>
+              <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
+                <SelectTrigger><SelectValue placeholder="Não informado" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não informado</SelectItem>
+                  <SelectItem value="folicular">Folicular</SelectItem>
+                  <SelectItem value="ovulatoria">Ovulatória</SelectItem>
+                  <SelectItem value="lutea">Lútea</SelectItem>
+                  <SelectItem value="menstrual">Menstrual</SelectItem>
+                  <SelectItem value="nao_se_aplica">Não se aplica (menopausa/anovulação)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="ep-notes">Notas adicionais</Label>
