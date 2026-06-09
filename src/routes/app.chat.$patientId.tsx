@@ -97,6 +97,7 @@ function ChatPage() {
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
   const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
+  const [forceShowChat, setForceShowChat] = useState(false);
 
   console.log("DEBUG CHAT INITIALIZATION:", {
     initialModule,
