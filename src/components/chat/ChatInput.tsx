@@ -203,7 +203,7 @@ export function ChatInput({
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
-        placeholder={hasModule ? "Pergunte à Lumma sobre o paciente ou anexe um exame..." : "Selecione uma tarefa acima para iniciar a conversa"}
+        placeholder={hasModule ? "Pergunte à Lumma sobre o paciente ou anexe um exame..." : "⬆️ Selecione uma tarefa acima para começar"}
         className="min-h-[44px] sm:min-h-[36px] max-h-40 resize-none border-0 bg-transparent px-1 py-1.5 sm:py-1 shadow-none focus-visible:ring-0 text-[15px]"
         disabled={disabled || !hasModule}
       />
