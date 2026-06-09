@@ -183,10 +183,10 @@ function ChatPage() {
 
   const isExamAgent = agentType?.startsWith("exam_");
   const assistantMessages = messages.filter(m => m.role === "assistant");
-  const isFirstExamResponse = 
-    isExamAgent && 
-    !thinking && 
-    assistantMessages.length === 1 &&
+  const isFirstExamResponse =
+    isExamAgent &&
+    !thinking &&
+    messages.length > 0 &&
     messages[messages.length - 1]?.role === "assistant";
 
   // Reset forceShowChat when agent changes or when new messages arrive
