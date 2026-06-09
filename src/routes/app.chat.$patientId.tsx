@@ -634,10 +634,10 @@ function ChatPage() {
                               <button
                                 type="button"
                                 className={cn(
-                                  "inline-flex items-center gap-1.5 rounded-full backdrop-blur-sm border px-3 py-1 text-[11px] font-medium shadow-sm transition group",
+                                  "inline-flex items-center gap-1.5 rounded-full backdrop-blur-sm border shadow-sm transition group",
                                   !agentType 
-                                    ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 animate-pulse" 
-                                    : "bg-white/80 border-[#e8a04c]/30 text-foreground hover:bg-white"
+                                    ? "bg-yellow-400 border-yellow-500 text-black font-bold px-5 py-2 text-sm animate-pulse shadow-lg hover:bg-yellow-300" 
+                                    : "bg-white/80 border-[#e8a04c]/30 text-foreground hover:bg-white px-3 py-1 text-[11px] font-medium"
                                 )}
                                 title="Trocar de módulo"
                               >
@@ -652,8 +652,9 @@ function ChatPage() {
                                   return (
                                     <>
                                       {!agentType ? (
-                                        <span className="flex items-center gap-1.5">
-                                          <span>⚠️ {label}</span>
+                                        <span className="flex items-center gap-2">
+                                          <span className="text-lg">⚠️</span>
+                                          <span>{label}</span>
                                         </span>
                                       ) : (
                                         <>
@@ -664,9 +665,10 @@ function ChatPage() {
                                     </>
                                   );
                                 })()}
-                                <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
-                                <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                                {agentType && <span className="text-muted-foreground/70 text-[10px]">• trocar</span>}
+                                <ChevronDown className={cn("transition-colors", !agentType ? "h-4 w-4 text-black" : "h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground")} />
                               </button>
+
                             </PopoverTrigger>
                             <PopoverContent 
                               side="top" 
@@ -722,7 +724,13 @@ function ChatPage() {
                         </span>
                       </div>
                     )}
+                    {!agentType && (
+                      <p className="mb-1 text-center text-xs text-yellow-600 font-medium animate-pulse">
+                        👇 Comece aqui
+                      </p>
+                    )}
                     <ChatInput 
+
                       onSubmit={wrappedSend} 
                       disabled={thinking || !chatId || !agentType} 
                       hasModule={!!agentType}
