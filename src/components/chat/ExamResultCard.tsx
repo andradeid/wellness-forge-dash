@@ -28,18 +28,30 @@ export interface Marker {
   category?: string;
 }
 
-const stateStyles: Record<ClassificationVisualState, { badge: string; icon: ReactNode }> = {
+const stateStyles: Record<ClassificationVisualState, { badge: string; icon: ReactNode; label?: string }> = {
   otimo: {
     badge: "bg-green-100 text-green-700 border-green-200",
     icon: <CircleDot className="h-3 w-3" />,
+    label: "NORMAL",
   },
   normal: {
     badge: "bg-green-100 text-green-700 border-green-200",
     icon: <CircleDot className="h-3 w-3" />,
+    label: "NORMAL",
   },
   atencao: {
     badge: "bg-amber-100 text-amber-700 border-amber-200",
     icon: <AlertTriangle className="h-3 w-3" />,
+  },
+  levemente_baixo: {
+    badge: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    icon: <ArrowDown className="h-3 w-3" />,
+    label: "LEVEMENTE BAIXO",
+  },
+  levemente_alto: {
+    badge: "bg-orange-100 text-orange-700 border-orange-200",
+    icon: <ArrowUp className="h-3 w-3" />,
+    label: "LEVEMENTE ALTO",
   },
   baixo: {
     badge: "bg-orange-100 text-orange-800 border-orange-300",
