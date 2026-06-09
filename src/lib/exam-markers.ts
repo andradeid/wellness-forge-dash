@@ -65,7 +65,7 @@ function pickStr(obj: RawMarker, ...keys: string[]): string {
  * The original term is preserved in `classification` for the database;
  * this only drives card colors/badges in the UI.
  */
-export type ClassificationVisualState = "otimo" | "normal" | "atencao" | "baixo" | "alto" | "desconhecido";
+export type ClassificationVisualState = "otimo" | "normal" | "atencao" | "baixo" | "alto" | "levemente_alto" | "levemente_baixo" | "desconhecido";
 
 export function classificationVisualState(raw: string | null | undefined): ClassificationVisualState {
   if (!raw) return "desconhecido";
