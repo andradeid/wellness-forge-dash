@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronUp,
   CircleDot,
-  Sparkles,
   AlertTriangle,
   ArrowDown,
   ArrowUp,
