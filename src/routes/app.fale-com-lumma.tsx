@@ -250,6 +250,7 @@ function FaleComLummaPage() {
     const saved = localStorage.getItem("lumma_audio_enabled");
     return saved !== null ? saved === "true" : true;
   });
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
 
   useEffect(() => {
@@ -261,6 +262,7 @@ function FaleComLummaPage() {
 
       const audio = new Audio("/audio/saudacao-lumma.mp3");
       audio.volume = 0.5;
+      setCurrentAudio(audio);
       audio.play()
         .then(() => {
           // Marca como tocado apenas se a reprodução foi bem-sucedida
@@ -293,14 +295,22 @@ function FaleComLummaPage() {
   const toggleAudio = (enabled: boolean) => {
     setAudioEnabled(enabled);
     localStorage.setItem("lumma_audio_enabled", String(enabled));
-    if (!enabled) setAudioBlocked(false);
+    if (!enabled) {
+      setAudioBlocked(false);
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+    }
   };
 
   const handleManualPlay = () => {
     setAudioBlocked(false);
     const audio = new Audio("/audio/saudacao-lumma.mp3");
     audio.volume = 0.5;
+    setCurrentAudio(audio);
     audio.play().catch(console.error);
+    sessionStorage.setItem("lumma_greeting_played", "true");
   };
 
 
