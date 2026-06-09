@@ -138,7 +138,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                           <div className="text-sm font-medium truncate">{m.name}</div>
                           {showRef && (
                             <div className="text-xs text-muted-foreground truncate">
-                              Ref. BC: {refText}
+                              Ref.: {refText}
                             </div>
                           )}
                         </div>
