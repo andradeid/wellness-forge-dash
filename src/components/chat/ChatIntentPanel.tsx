@@ -126,7 +126,7 @@ export function ChatIntentPanel({
           Faça o upload de PDFs ou imagens de laudos laboratoriais para análise estruturada.
         </p>
 
-        <div className="flex items-center gap-3 flex-wrap justify-center max-w-4xl mb-8">
+        <div className="hidden flex items-center gap-3 flex-wrap justify-center max-w-4xl mb-8">
           <ModuleButton
             active={agentType === "exam"}
             onClick={() => selectAgent("exam")}
@@ -157,6 +157,7 @@ export function ChatIntentPanel({
             label="Cálculos e Prescrição (em breve)"
           />
         </div>
+
 
         {/* Painel de filtros (exclusivo para o módulo de exames) */}
         {agentType === "exam" && (
