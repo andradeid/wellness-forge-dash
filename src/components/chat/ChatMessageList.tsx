@@ -285,7 +285,7 @@ export function ChatMessageList({
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md transition-all ${
                     isUser
-                      ? "bg-gradient-to-br from-[#3d5a4a]/95 to-[#2f4a3c]/95 text-white border border-white/10"
+                      ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border border-white/10"
                       : "bg-white/70 border border-white/60 text-foreground"
                   } ${isHighlighted ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-transparent shadow-lg" : ""}`}
                 >
