@@ -430,14 +430,11 @@ export function ChatMessageList({
                                 </ReactMarkdown>
                               </div>
                             )}
-                            <div className="bg-white border border-border rounded-lg p-6 font-mono text-xs shadow-sm mt-4">
-                              <div className="font-bold border-b mb-3 pb-2 text-foreground">
-                                {prescriptionTrigger} DE MANIPULAÇÃO
-                              </div>
-                              <div className="whitespace-pre-wrap text-foreground">
-                                {prescriptionContent.replace(prescriptionTrigger + " DE MANIPULAÇÃO", "").trim()}
-                              </div>
-                            </div>
+                            <PrescriptionBlock
+                              title={`${prescriptionTrigger} DE MANIPULAÇÃO`}
+                              body={prescriptionContent.replace(prescriptionTrigger + " DE MANIPULAÇÃO", "").trim()}
+                            />
+
                           </div>
                         );
                       }
