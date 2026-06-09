@@ -181,6 +181,17 @@ function ChatPage() {
     });
   }, [filters, setContext]);
 
+  const isExamAgent = agentType?.startsWith("exam_");
+  const isFirstExamResponse = 
+    isExamAgent && 
+    !thinking && 
+    messages.filter(m => m.role === "assistant").length === 1;
+
+  // Reset forceShowChat when agent changes or when new messages arrive
+  useEffect(() => {
+    setForceShowChat(false);
+  }, [agentType, messages.length]);
+
   // patientProfile useMemo moved up to be available for the pendingModule logic
 
   const handleNewChat = useCallback(async () => {
