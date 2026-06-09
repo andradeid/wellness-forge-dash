@@ -1,54 +1,80 @@
-import { Apple, ClipboardList, Pill } from "lucide-react";
+import { Apple, ClipboardList, Pill, Droplet, Brain, Microscope, Search, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NextStepsSuggestionProps {
-  onSelectModule: (trigger: string) => void;
+  onSelectModule: (trigger: string | null) => void;
 }
 
 export function NextStepsSuggestion({ onSelectModule }: NextStepsSuggestionProps) {
   const steps = [
     {
-      label: "Plano Alimentar",
-      icon: <Apple className="h-3.5 w-3.5" />,
+      label: "Analisar outro exame",
+      icon: "🩸",
+      trigger: "exames_de_sangue",
+    },
+    {
+      label: "Criar plano alimentar para este paciente",
+      icon: "📋",
       trigger: "plano_alimentar",
     },
     {
-      label: "Formulações",
-      icon: <Pill className="h-3.5 w-3.5" />,
+      label: "Sugerir formulações para este paciente",
+      icon: "💊",
       trigger: "plano_alimentar",
     },
     {
-      label: "Caso Clínico",
-      icon: <ClipboardList className="h-3.5 w-3.5" />,
+      label: "Discutir o caso clínico deste paciente",
+      icon: "🧠",
       trigger: "casos_clinicos",
+    },
+    {
+      label: "Analisar genética e microbioma",
+      icon: "🔬",
+      trigger: "genetica_microbioma",
+    },
+    {
+      label: "Pesquisar evidências científicas",
+      icon: "🔍",
+      trigger: "pesquisa_cientifica",
     },
   ];
 
   return (
     <div className="mx-auto w-full max-w-2xl mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-white/40 backdrop-blur-sm border border-[#e8a04c]/20 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <p className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-          <span>✨</span> Análise concluída! Explore os próximos passos:
-        </p>
+      <div className="bg-white/60 backdrop-blur-md border border-[#e8a04c]/20 rounded-2xl p-5 sm:p-6 shadow-lg">
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-bold text-foreground mb-1">
+            ✨ Exame analisado! O que você quer fazer agora?
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Escolha o próximo passo para continuar o atendimento
+          </p>
+        </div>
         
-        <div className="flex flex-wrap gap-2 mb-3">
-          {steps.map((step) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          {steps.map((step, idx) => (
             <Button
-              key={step.label}
+              key={idx}
               variant="outline"
-              size="sm"
               onClick={() => onSelectModule(step.trigger)}
-              className="rounded-full bg-white/60 hover:bg-white border-[#e8a04c]/20 hover:border-[#e8a04c]/40 text-xs gap-1.5 h-8"
+              className="w-full h-auto py-3 px-4 justify-start text-left bg-white/50 hover:bg-white border-[#e8a04c]/10 hover:border-[#e8a04c]/30 text-sm font-medium gap-3 transition-all hover:shadow-sm"
             >
-              <span className="text-[#e8a04c]">{step.icon}</span>
-              {step.label}
+              <span className="text-lg shrink-0">{step.icon}</span>
+              <span className="leading-tight">{step.label}</span>
             </Button>
           ))}
         </div>
         
-        <p className="text-[10px] text-muted-foreground">
-          Clique em um módulo para continuar o atendimento com a Lumma
-        </p>
+        <div className="border-t border-[#e8a04c]/10 pt-4">
+          <Button
+            variant="ghost"
+            onClick={() => onSelectModule(null)}
+            className="w-full h-auto py-3 px-4 justify-center bg-[#e8a04c]/5 hover:bg-[#e8a04c]/10 text-sm font-medium gap-3 text-[#e8a04c] transition-all"
+          >
+            <span className="text-lg">💬</span>
+            Tenho uma dúvida sobre este exame
+          </Button>
+        </div>
       </div>
     </div>
   );
