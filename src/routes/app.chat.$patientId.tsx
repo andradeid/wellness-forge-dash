@@ -566,6 +566,14 @@ function ChatPage() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+                <ChatMessageList 
+                  messages={messages} 
+                  thinking={thinking} 
+                  thinkingMode={thinkingMode} 
+                  highlightId={highlightId} 
+                  isStreaming={thinking}
+                  agentType={agentType}
+                />
               </div>
             )}
           </div>
