@@ -724,7 +724,13 @@ function ChatPage() {
                         </span>
                       </div>
                     )}
+                    {!agentType && (
+                      <p className="mb-1 text-center text-xs text-yellow-600 font-medium animate-pulse">
+                        👇 Comece aqui
+                      </p>
+                    )}
                     <ChatInput 
+
                       onSubmit={wrappedSend} 
                       disabled={thinking || !chatId || !agentType} 
                       hasModule={!!agentType}
