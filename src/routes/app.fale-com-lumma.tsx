@@ -255,16 +255,23 @@ function FaleComLummaPage() {
   useEffect(() => {
     // Som de saudação enviado pelo usuário
     const playGreetingSound = () => {
-      if (!audioEnabled) return;
+      // Verifica se o som já foi tocado nesta sessão (carregamento da página)
+      const sessionPlayed = sessionStorage.getItem("lumma_greeting_played");
+      if (!audioEnabled || sessionPlayed === "true") return;
 
       const audio = new Audio("/audio/saudacao-lumma.mp3");
       audio.volume = 0.5;
-      audio.play().catch(err => {
-        console.log("Autoplay blocked or audio error:", err);
-        if (err.name === "NotAllowedError") {
-          setAudioBlocked(true);
-        }
-      });
+      audio.play()
+        .then(() => {
+          // Marca como tocado apenas se a reprodução foi bem-sucedida
+          sessionStorage.setItem("lumma_greeting_played", "true");
+        })
+        .catch(err => {
+          console.log("Autoplay blocked or audio error:", err);
+          if (err.name === "NotAllowedError") {
+            setAudioBlocked(true);
+          }
+        });
     };
 
     let i = 0;
