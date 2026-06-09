@@ -7,7 +7,7 @@ import {
   FlaskConical,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
+  CircleDot,
   Sparkles,
   AlertTriangle,
   ArrowDown,
