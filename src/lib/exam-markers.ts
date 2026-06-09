@@ -78,9 +78,9 @@ export function classificationVisualState(raw: string | null | undefined): Class
     .replace(/[\s-]+/g, "_");
   if (k === "otimo" || k === "ideal" || k === "funcional_otimo") return "otimo";
   if (k === "normal" || k === "dentro_da_referencia" || k === "adequado") return "normal";
+  if (k === "levemente_baixo") return "levemente_baixo";
+  if (k === "levemente_alto") return "levemente_alto";
   if (
-    k === "levemente_baixo" ||
-    k === "levemente_alto" ||
     k === "limitrofe" ||
     k === "atencao" ||
     k === "alerta"
