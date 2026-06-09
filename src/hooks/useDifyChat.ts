@@ -166,6 +166,7 @@ export function useDifyChat(
   const conversationIdRef = useRef<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
+  const assistantSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
   const metaRef = useRef<{
     nutritionist_name: string;
@@ -307,6 +308,7 @@ export function useDifyChat(
     setThinking(true);
     setThinkingMode(files.length > 0 ? "analysis" : "simple");
     researchSavedRef.current = false;
+    assistantSavedRef.current = false;
     currentFullTextRef.current = "";
     if (researchTimeoutRef.current) {
       clearTimeout(researchTimeoutRef.current);
