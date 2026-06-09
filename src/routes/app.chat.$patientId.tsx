@@ -566,36 +566,6 @@ function ChatPage() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-                <ChatMessageList 
-                  messages={messages} 
-                  thinking={thinking} 
-                  thinkingMode={thinkingMode} 
-                  highlightId={highlightId} 
-                  isStreaming={thinking}
-                  agentType={agentType}
-                />
-                {(() => {
-                  const isExamAgent = agentType?.startsWith("exam_");
-                  const isFirstExamResponse =
-                    isExamAgent &&
-                    !thinking &&
-                    messages.filter(m => m.role === "assistant").length === 1;
-
-                  if (!isFirstExamResponse) return null;
-
-                  return (
-                    <div className="px-4 pb-4">
-                      <NextStepsSuggestion
-                        onSelectModule={(trigger) => {
-                          const bestAgent = getAgentForCard(trigger, patientProfile, patient?.pregnancy_type);
-                          if (bestAgent) {
-                            setAgentType(bestAgent.agent_id);
-                          }
-                        }}
-                      />
-                    </div>
-                  );
-                })()}
               </div>
             )}
           </div>
