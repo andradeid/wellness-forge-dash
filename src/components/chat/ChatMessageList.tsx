@@ -211,12 +211,12 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
       <div className="whitespace-pre-wrap text-foreground">{body}</div>
       <div className="border-t mt-4 pt-3 flex flex-row gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={handleCopy}>
-          <Copy className="h-3.5 w-3.5 mr-1.5" />
-          {copied ? "✓ Copiado!" : "Copiar receita"}
+          <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
+          <span className="hidden sm:inline">{copied ? "✓ Copiado!" : "Copiar receita"}</span>
         </Button>
         <Button variant="outline" size="sm" onClick={handlePrint}>
-          <Printer className="h-3.5 w-3.5 mr-1.5" />
-          Imprimir
+          <Printer className="h-3.5 w-3.5 sm:mr-1.5" />
+          <span className="hidden sm:inline">Imprimir</span>
         </Button>
       </div>
     </div>
