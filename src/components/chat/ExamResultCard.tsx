@@ -68,11 +68,12 @@ const stateStyles: Record<ClassificationVisualState, { badge: string; icon: Reac
 };
 
 const CATEGORY_NAMES: Record<string, string> = {
+  hemograma_anemias: "Hemograma e Anemias",
+  hemograma: "Hemograma",
   perfil_lipidico: "Perfil Lipídico",
   perfil_glicidico: "Perfil Glicídico",
   perfil_tireoidiano: "Perfil Tireoidiano",
   perfil_hormonal: "Perfil Hormonal",
-  hemograma: "Hemograma",
   vitaminas_minerais: "Vitaminas e Minerais",
   funcao_hepatica: "Função Hepática",
   funcao_renal: "Função Renal e Eletrólitos",
