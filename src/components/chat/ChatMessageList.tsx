@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
@@ -173,6 +173,54 @@ function getResearchStatus(text: string): string | null {
   if (text.includes("tavily")) return "🌐 Consultando fontes adicionais...";
   if (text.includes("Action:") || text.includes("Thought:")) return "🔍 Buscando artigos científicos...";
   return null;
+}
+
+function PrescriptionBlock({ title, body }: { title: string; body: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const fullText = `${title}\n\n${body}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("Erro ao copiar receita:", e);
+    }
+  };
+
+  const handlePrint = () => {
+    const win = window.open("", "_blank", "width=800,height=900");
+    if (!win) return;
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+<style>
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #111; padding: 32px; }
+  h1 { font-size: 14px; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin: 0 0 16px; }
+  pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; margin: 0; }
+  @media print { body { padding: 16px; } }
+</style></head><body><h1>${title}</h1><pre>${body.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
+<script>window.onload = () => { window.focus(); window.print(); }<\/script>
+</body></html>`);
+    win.document.close();
+  };
+
+  return (
+    <div className="bg-white border border-border rounded-lg p-6 font-mono text-xs shadow-sm mt-4">
+      <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
+      <div className="whitespace-pre-wrap text-foreground">{body}</div>
+      <div className="border-t mt-4 pt-3 flex flex-row gap-2 justify-end">
+        <Button variant="outline" size="sm" onClick={handleCopy}>
+          <Copy className="h-3.5 w-3.5 mr-1.5" />
+          {copied ? "✓ Copiado!" : "Copiar receita"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={handlePrint}>
+          <Printer className="h-3.5 w-3.5 mr-1.5" />
+          Imprimir
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function ChatMessageList({
@@ -382,14 +430,11 @@ export function ChatMessageList({
                                 </ReactMarkdown>
                               </div>
                             )}
-                            <div className="bg-white border border-border rounded-lg p-6 font-mono text-xs shadow-sm mt-4">
-                              <div className="font-bold border-b mb-3 pb-2 text-foreground">
-                                {prescriptionTrigger} DE MANIPULAÇÃO
-                              </div>
-                              <div className="whitespace-pre-wrap text-foreground">
-                                {prescriptionContent.replace(prescriptionTrigger + " DE MANIPULAÇÃO", "").trim()}
-                              </div>
-                            </div>
+                            <PrescriptionBlock
+                              title={`${prescriptionTrigger} DE MANIPULAÇÃO`}
+                              body={prescriptionContent.replace(prescriptionTrigger + " DE MANIPULAÇÃO", "").trim()}
+                            />
+
                           </div>
                         );
                       }
