@@ -7,8 +7,7 @@ import {
   FlaskConical,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
-  Sparkles,
+  CircleDot,
   AlertTriangle,
   ArrowDown,
   ArrowUp,
@@ -31,12 +30,12 @@ export interface Marker {
 
 const stateStyles: Record<ClassificationVisualState, { badge: string; icon: ReactNode }> = {
   otimo: {
-    badge: "bg-emerald-600 text-white border-emerald-700",
-    icon: <Sparkles className="h-3 w-3" />,
+    badge: "bg-green-100 text-green-700 border-green-200",
+    icon: <CircleDot className="h-3 w-3" />,
   },
   normal: {
-    badge: "bg-sky-100 text-sky-700 border-sky-200", // Alterado para Azul (sky)
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    badge: "bg-green-100 text-green-700 border-green-200",
+    icon: <CircleDot className="h-3 w-3" />,
   },
   atencao: {
     badge: "bg-amber-100 text-amber-700 border-amber-200",
@@ -146,7 +145,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                               className={`mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide ${style.badge}`}
                             >
                               {style.icon}
-                              {m.classification}
+                              {state === "normal" || state === "otimo" ? "NORMAL" : m.classification}
                             </Badge>
                           )}
                         </div>
