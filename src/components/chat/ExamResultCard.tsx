@@ -146,7 +146,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                               className={`mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide ${style.badge}`}
                             >
                               {style.icon}
-                              {m.classification}
+                              {state === "normal" || state === "otimo" ? "NORMAL" : m.classification}
                             </Badge>
                           )}
                         </div>
