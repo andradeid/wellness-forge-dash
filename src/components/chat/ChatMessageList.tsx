@@ -178,8 +178,8 @@ function getResearchStatus(text: string): string | null {
 
 function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   const [copied, setCopied] = useState(false);
-  const { userId } = useAuth();
-  const { data: profile } = useBrandingProfile(userId);
+  const { user } = useAuth();
+  const { data: profile } = useBrandingProfile(user?.id);
 
   const getCleanedBody = () => {
     if (!profile) return body;
