@@ -178,6 +178,7 @@ function getResearchStatus(text: string): string | null {
 
 function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
   const { data: profile } = useBrandingProfile(user?.id);
 
@@ -292,16 +293,39 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
       <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
       <textarea
         value={editableBody}
+        readOnly={!isEditing}
         onChange={(e) => setEditableBody(e.target.value)}
-        className="w-full bg-transparent font-mono text-xs resize-none border border-transparent hover:border-amber-200 focus:border-amber-300 focus:ring-1 focus:ring-amber-200 rounded p-1 outline-none whitespace-pre-wrap text-foreground"
+        className={`w-full bg-transparent font-mono text-xs resize-none border rounded p-2 outline-none whitespace-pre-wrap text-foreground transition-all ${
+          isEditing 
+            ? "border-amber-300 ring-1 ring-amber-200 bg-amber-50/30" 
+            : "border-transparent hover:border-amber-100"
+        }`}
         rows={Math.max(3, editableBody.split('\n').length)}
       />
-      <div className="border-t mt-4 pt-3 flex flex-row gap-2 justify-end">
-        <Button variant="outline" size="sm" onClick={handleCopy}>
+      <div className="border-t mt-4 pt-3 flex flex-row flex-wrap gap-2 justify-end">
+        <Button 
+          variant={isEditing ? "default" : "outline"} 
+          size="sm" 
+          onClick={() => setIsEditing(!isEditing)}
+          className={isEditing ? "bg-amber-500 hover:bg-amber-600 border-none" : ""}
+        >
+          {isEditing ? (
+            <>
+              <Check className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Concluir</span>
+            </>
+          ) : (
+            <>
+              <Edit2 className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Editar</span>
+            </>
+          )}
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleCopy} disabled={isEditing}>
           <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
           <span className="hidden sm:inline">{copied ? "✓ Copiado!" : "Copiar receita"}</span>
         </Button>
-        <Button variant="outline" size="sm" onClick={handlePrint}>
+        <Button variant="outline" size="sm" onClick={handlePrint} disabled={isEditing}>
           <Printer className="h-3.5 w-3.5 sm:mr-1.5" />
           <span className="hidden sm:inline">Imprimir</span>
         </Button>
