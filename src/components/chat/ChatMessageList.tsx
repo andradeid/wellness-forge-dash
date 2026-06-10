@@ -194,7 +194,13 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   };
 
   const cleanedBody = getCleanedBody();
-  const fullText = `${title}\n\n${cleanedBody}`;
+  const [editableBody, setEditableBody] = useState(cleanedBody);
+
+  useEffect(() => {
+    setEditableBody(cleanedBody);
+  }, [cleanedBody]);
+
+  const fullText = `${title}\n\n${editableBody}`;
 
   const handleCopy = async () => {
     try {
@@ -256,7 +262,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   ${logoHtml}
   ${nutriInfoHtml}
   <h1>${title}</h1>
-  <pre>${cleanedBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
+  <pre>${editableBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
 <script>window.onload = () => { window.focus(); window.print(); }<\/script>
 </body></html>`);
     win.document.close();
@@ -284,7 +290,12 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
         </div>
       )}
       <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
-      <div className="whitespace-pre-wrap text-foreground">{cleanedBody}</div>
+      <textarea
+        value={editableBody}
+        onChange={(e) => setEditableBody(e.target.value)}
+        className="w-full bg-transparent font-mono text-xs resize-none border border-transparent hover:border-amber-200 focus:border-amber-300 focus:ring-1 focus:ring-amber-200 rounded p-1 outline-none whitespace-pre-wrap text-foreground"
+        rows={Math.max(3, editableBody.split('\n').length)}
+      />
       <div className="border-t mt-4 pt-3 flex flex-row gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={handleCopy}>
           <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
