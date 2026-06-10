@@ -369,6 +369,22 @@ export function ChatMessageList({
                       <ExamResultCard markers={m.structured_data.markers} />
                     </div>
                   )}
+
+                  {isStreaming && 
+                   (m.agent_type?.startsWith('exam') || (!m.agent_type && agentType?.startsWith('exam'))) && 
+                   (!m.structured_data?.markers || m.structured_data.markers.length === 0) && (
+                    <div className="mb-4 rounded-2xl border border-border bg-muted/30 p-4 animate-pulse">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-4 w-4 rounded bg-muted-foreground/20"/>
+                        <div className="h-4 w-32 rounded bg-muted-foreground/20"/>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="h-12 rounded-lg bg-muted-foreground/10"/>
+                        <div className="h-12 rounded-lg bg-muted-foreground/10"/>
+                        <div className="h-12 rounded-lg bg-muted-foreground/10"/>
+                      </div>
+                    </div>
+                  )}
                   {parts
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
