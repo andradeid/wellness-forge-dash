@@ -175,6 +175,7 @@ export function useDifyChat(
     nutritionist_pronoun: string;
     clinic_name: string;
     clinic_phone: string;
+    clinic_logo_url: string;
     patient_name: string;
     patient_id: string;
     patient_sex: string;
@@ -189,6 +190,7 @@ export function useDifyChat(
     nutritionist_pronoun: "",
     clinic_name: "",
     clinic_phone: "",
+    clinic_logo_url: "",
     patient_name: "",
     patient_id: patientId,
     patient_sex: "",
@@ -247,7 +249,7 @@ export function useDifyChat(
       const [{ data: profile }, { data: patient }] = await Promise.all([
         (supabase as any)
           .from("profiles")
-          .select("full_name, email, professional_id, pronoun, clinic_name, phone")
+          .select("full_name, email, professional_id, pronoun, clinic_name, phone, clinic_logo_url")
           .eq("id", user.id)
           .maybeSingle(),
         (supabase as any)
@@ -265,6 +267,7 @@ export function useDifyChat(
         nutritionist_pronoun: (profile?.pronoun as string) || "Nutri",
         clinic_name: (profile?.clinic_name as string) || "",
         clinic_phone: (profile?.phone as string) || "",
+        clinic_logo_url: (profile?.clinic_logo_url as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
         patient_id: patientId,
         fase_ciclo: (patient?.menstrual_cycle_phase as string) || "",
