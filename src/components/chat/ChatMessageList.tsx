@@ -7,6 +7,7 @@ import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
 import { useAuth } from "@/hooks/useAuth";
+import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
@@ -177,8 +178,23 @@ function getResearchStatus(text: string): string | null {
 
 function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   const [copied, setCopied] = useState(false);
+  const { userId } = useAuth();
+  const { data: profile } = useBrandingProfile(userId);
 
-  const fullText = `${title}\n\n${body}`;
+  const getCleanedBody = () => {
+    if (!profile) return body;
+    
+    let cleaned = body;
+    cleaned = cleaned.replace(/\[NOME COMPLETO DO NUTRICIONISTA\]/g, profile.full_name || "");
+    cleaned = cleaned.replace(/\[Nº CRN\]|\[Seu CRN\]/g, profile.professional_id || "");
+    cleaned = cleaned.replace(/\[Nome da Clínica\]|\[Endereço do Consultório\]/g, profile.clinic_name || "");
+    cleaned = cleaned.replace(/\[Telefone\/Email\]/g, profile.phone || profile.email || "");
+    cleaned = cleaned.replace(/\[Nome do Nutricionista\]/g, profile.full_name || "");
+    return cleaned;
+  };
+
+  const cleanedBody = getCleanedBody();
+  const fullText = `${title}\n\n${cleanedBody}`;
 
   const handleCopy = async () => {
     try {
@@ -193,13 +209,54 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   const handlePrint = () => {
     const win = window.open("", "_blank", "width=800,height=900");
     if (!win) return;
+    
+    const logoHtml = profile?.clinic_logo_url 
+      ? `<div style="text-align: center; margin-bottom: 20px;">
+           <img src="${profile.clinic_logo_url}" style="max-height: 80px; width: auto;" />
+         </div>`
+      : "";
+
+    const nutriInfoHtml = profile 
+      ? `<div style="text-align: center; margin-bottom: 30px; font-size: 14px; color: #444;">
+           <div style="font-weight: bold; font-size: 16px;">${profile.full_name}</div>
+           <div>${profile.pronoun || "Nutricionista"} - CRN ${profile.professional_id || ""}</div>
+           ${profile.clinic_name ? `<div>${profile.clinic_name}</div>` : ""}
+         </div>`
+      : "";
+
     win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
 <style>
-  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #111; padding: 32px; }
-  h1 { font-size: 14px; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin: 0 0 16px; }
-  pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; margin: 0; }
-  @media print { body { padding: 16px; } }
-</style></head><body><h1>${title}</h1><pre>${body.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
+  body { 
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size: 14px; 
+    color: #111; 
+    padding: 40px; 
+    line-height: 1.6;
+  }
+  h1 { 
+    font-size: 18px; 
+    border-bottom: 2px solid #e8a04c; 
+    padding-bottom: 10px; 
+    margin: 0 0 20px; 
+    text-align: center;
+    color: #333;
+  }
+  pre { 
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
+    font-family: inherit; 
+    margin: 0; 
+    text-align: justify;
+  }
+  @media print { 
+    body { padding: 20px; } 
+    button { display: none; }
+  }
+</style></head><body>
+  ${logoHtml}
+  ${nutriInfoHtml}
+  <h1>${title}</h1>
+  <pre>${cleanedBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
 <script>window.onload = () => { window.focus(); window.print(); }<\/script>
 </body></html>`);
     win.document.close();
@@ -208,7 +265,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   return (
     <div className="bg-white border border-border rounded-lg p-6 font-mono text-xs shadow-sm mt-4">
       <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
-      <div className="whitespace-pre-wrap text-foreground">{body}</div>
+      <div className="whitespace-pre-wrap text-foreground">{cleanedBody}</div>
       <div className="border-t mt-4 pt-3 flex flex-row gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={handleCopy}>
           <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
