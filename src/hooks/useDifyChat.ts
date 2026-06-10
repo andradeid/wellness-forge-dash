@@ -171,6 +171,10 @@ export function useDifyChat(
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
+    nutritionist_crn: string;
+    nutritionist_pronoun: string;
+    clinic_name: string;
+    clinic_phone: string;
     patient_name: string;
     patient_id: string;
     patient_sex: string;
@@ -181,6 +185,10 @@ export function useDifyChat(
   }>({
     nutritionist_name: "",
     nutritionist_email: "",
+    nutritionist_crn: "",
+    nutritionist_pronoun: "",
+    clinic_name: "",
+    clinic_phone: "",
     patient_name: "",
     patient_id: patientId,
     patient_sex: "",
@@ -239,7 +247,7 @@ export function useDifyChat(
       const [{ data: profile }, { data: patient }] = await Promise.all([
         (supabase as any)
           .from("profiles")
-          .select("full_name, email")
+          .select("full_name, email, professional_id, pronoun, clinic_name, phone")
           .eq("id", user.id)
           .maybeSingle(),
         (supabase as any)
@@ -253,6 +261,10 @@ export function useDifyChat(
         ...metaRef.current,
         nutritionist_name: (profile?.full_name as string) || (profile?.email as string) || "Nutricionista",
         nutritionist_email: (profile?.email as string) || "",
+        nutritionist_crn: (profile?.professional_id as string) || "",
+        nutritionist_pronoun: (profile?.pronoun as string) || "Nutri",
+        clinic_name: (profile?.clinic_name as string) || "",
+        clinic_phone: (profile?.phone as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
         patient_id: patientId,
         fase_ciclo: (patient?.menstrual_cycle_phase as string) || "",
