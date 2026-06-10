@@ -264,6 +264,25 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
 
   return (
     <div className="bg-white border border-border rounded-lg p-6 font-mono text-xs shadow-sm mt-4">
+      {profile && (
+        <div className="text-center mb-4 border-b pb-4">
+          {profile.clinic_logo_url && (
+            <img 
+              src={profile.clinic_logo_url} 
+              className="max-h-16 mx-auto mb-3 object-contain" 
+              alt={profile.clinic_name || "Logo"} 
+            />
+          )}
+          <div className="text-muted-foreground space-y-0.5">
+            <p className="font-semibold text-foreground text-sm">
+              {profile.pronoun} {profile.full_name}
+            </p>
+            {profile.professional_id && <p>CRN {profile.professional_id}</p>}
+            {profile.clinic_name && <p>{profile.clinic_name}</p>}
+            {profile.phone && <p>{profile.phone}</p>}
+          </div>
+        </div>
+      )}
       <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
       <div className="whitespace-pre-wrap text-foreground">{cleanedBody}</div>
       <div className="border-t mt-4 pt-3 flex flex-row gap-2 justify-end">
