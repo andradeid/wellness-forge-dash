@@ -798,7 +798,7 @@ export function useDifyChat(
       setThinking(false);
       setUploadProgress([]);
     }
-  }, [chatId, patientId, readOnly, agentType, examContext]);
+  }, [chatId, patientId, readOnly, agentType, examContext, getCost, consume, refetchCredits]);
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;
