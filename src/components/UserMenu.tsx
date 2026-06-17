@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyCredits } from "@/hooks/useCredits";
 import { ProfileDialog } from "@/components/ProfileDialog";
+import { topUpStore } from "@/lib/topup-store";
 
 const LOW_CREDIT_THRESHOLD = 20;
 
@@ -83,10 +84,14 @@ export function UserMenu() {
               </span>
             </div>
             {lowCredits && (
-              <div className="mt-2 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+              <button
+                type="button"
+                onClick={() => topUpStore.open()}
+                className="mt-2 w-full flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/15 transition px-2.5 py-2 text-[11px] text-destructive text-left"
+              >
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>Saldo baixo. Recarregue para continuar usando a Lumma.</span>
-              </div>
+                <span>Saldo baixo. Clique aqui para recarregar.</span>
+              </button>
             )}
           </div>
           <DropdownMenuSeparator />

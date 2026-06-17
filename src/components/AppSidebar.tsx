@@ -52,6 +52,7 @@ import { useMyCredits } from "@/hooks/useCredits";
 
 const LOW_CREDIT_THRESHOLD = 20;
 import { supabase } from "@/integrations/supabase/client";
+import { topUpStore } from "@/lib/topup-store";
 import { cn } from "@/lib/utils";
 import lummaLockup from "@/assets/lumma-lockup.svg";
 
@@ -128,7 +129,7 @@ const adminGroups: NavGroup[] = [
     subtitle: "Configurar o sistema",
     icon: Boxes,
     items: [
-      { title: "Planos", url: "#planos", icon: CreditCard },
+      { title: "Planos", url: "/app/admin/plans", icon: CreditCard, badge: "NOVO" },
       { title: "Valores dos Agentes", url: "/app/admin/agent-costs", icon: Sparkles, badge: "NOVO" },
       { title: "Auditoria de Créditos", url: "/app/admin/credits-audit", icon: CreditCard, badge: "NOVO" },
       { title: "Ofertas Hubla", url: "#hubla", icon: Package },
@@ -375,10 +376,14 @@ export function AppSidebar() {
                 </span>
               </div>
               {lowCredits && (
-                <div className="mt-2 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                <button
+                  type="button"
+                  onClick={() => topUpStore.open()}
+                  className="mt-2 w-full flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/15 transition px-2.5 py-2 text-[11px] text-destructive text-left"
+                >
                   <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <span>Saldo baixo. Recarregue para continuar usando a Lumma.</span>
-                </div>
+                  <span>Saldo baixo. Clique aqui para recarregar.</span>
+                </button>
               )}
             </div>
             <DropdownMenuSeparator />
