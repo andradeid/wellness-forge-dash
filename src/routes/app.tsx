@@ -45,6 +45,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const paywall = usePaywallState();
+  const topup = useTopUpState();
 
   useEffect(() => {
     if (!loading && !session) {
