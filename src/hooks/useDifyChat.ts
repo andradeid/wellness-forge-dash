@@ -729,9 +729,9 @@ export function useDifyChat(
                   }
 
                   // Débito de créditos APÓS resposta completa
-                  if (agentType && fullText.trim() && !labReportError) {
+                  if (billingKey && fullText.trim() && !labReportError) {
                     try {
-                      await consume(agentType, text.slice(0, 200));
+                      await consume(billingKey, text.slice(0, 200));
                     } catch (e) {
                       console.warn("[credits] débito falhou (sem cobrança):", e);
                     }
