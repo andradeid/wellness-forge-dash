@@ -62,16 +62,38 @@ export function UserMenu() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {roleLabel}
             </p>
+          <div className="px-3 pt-3 pb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              {roleLabel}
+            </p>
             <p className="text-sm font-medium text-foreground mt-1 break-all">
               {email}
             </p>
           </div>
+          <div className="px-3 pb-2">
+            <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
+              <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Coins className="h-3.5 w-3.5" />
+                Créditos
+              </span>
+              <span
+                className={
+                  lowCredits
+                    ? "text-sm font-semibold text-destructive"
+                    : "text-sm font-semibold text-foreground"
+                }
+              >
+                {balance.toLocaleString("pt-BR")}
+              </span>
+            </div>
+            {lowCredits && (
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>Saldo baixo. Recarregue para continuar usando a Lumma.</span>
+              </div>
+            )}
+          </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="rounded-lg gap-3 cursor-pointer py-2.5"
-            onClick={() => setEditing(true)}
-          >
-            <User className="h-4 w-4" />
             Meu perfil
           </DropdownMenuItem>
           <DropdownMenuItem
