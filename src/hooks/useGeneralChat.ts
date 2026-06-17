@@ -283,7 +283,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
       }
       setThinking(false);
     }
-  }, [chatId, user, agentType]);
+  }, [chatId, user, agentType, getCost, consume, refetchCredits]);
 
   return { messages, sendMessage, thinking };
 }
