@@ -12,6 +12,7 @@ import {
 } from "@/lib/exam-markers";
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
+import { resolveAgentKey } from "@/lib/agent-key-map";
 
 export interface ExamContext {
   patient_name: string;
