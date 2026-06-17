@@ -16,10 +16,9 @@ export const findUsers = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ q: z.string().trim().min(1).max(120) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const q = data.q;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
-    const query = supabaseAdmin
+    const query = context.supabase
       .from("profiles")
       .select("id, full_name, email")
       .limit(20);
@@ -35,8 +34,7 @@ export const getUserCredits = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin
+    const { data: row } = await context.supabase
       .from("user_credits")
       .select("balance, monthly_quota, quota_reset_at, updated_at")
       .eq("user_id", data.userId)
@@ -56,8 +54,7 @@ export const listTransactions = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let q = supabaseAdmin
+    let q = context.supabase
       .from("credit_transactions")
       .select("id, created_at, agent_key, agent_label, type, amount, balance_after, message_preview, metadata")
       .eq("user_id", data.userId)
@@ -83,10 +80,9 @@ export const adjustBalance = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // upsert user_credits row
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await context.supabase
       .from("user_credits")
       .select("balance")
       .eq("user_id", data.userId)
@@ -96,19 +92,19 @@ export const adjustBalance = createServerFn({ method: "POST" })
     if (next < 0) throw new Response("Saldo ficaria negativo", { status: 400 });
 
     if (existing) {
-      const { error } = await supabaseAdmin
+      const { error } = await context.supabase
         .from("user_credits")
         .update({ balance: next, updated_at: new Date().toISOString() })
         .eq("user_id", data.userId);
       if (error) throw new Response(error.message, { status: 500 });
     } else {
-      const { error } = await supabaseAdmin
+      const { error } = await context.supabase
         .from("user_credits")
         .insert({ user_id: data.userId, balance: next });
       if (error) throw new Response(error.message, { status: 500 });
     }
 
-    const { error: txErr } = await supabaseAdmin.from("credit_transactions").insert({
+    const { error: txErr } = await context.supabase.from("credit_transactions").insert({
       user_id: data.userId,
       type: data.delta > 0 ? "grant" : "debit",
       amount: Math.abs(data.delta),
