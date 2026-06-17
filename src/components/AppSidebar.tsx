@@ -48,6 +48,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreditsBadge } from "@/components/CreditsBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCredits } from "@/hooks/useCredits";
+
+const LOW_CREDIT_THRESHOLD = 20;
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import lummaLockup from "@/assets/lumma-lockup.svg";
