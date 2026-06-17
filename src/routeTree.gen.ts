@@ -26,6 +26,7 @@ import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patient
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
 import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
+import { Route as AppAdminPlansRouteImport } from './routes/app.admin.plans'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
@@ -124,6 +125,11 @@ const AppAdminPlaygroundRoute = AppAdminPlaygroundRouteImport.update({
   path: '/admin/playground',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminPlansRoute = AppAdminPlansRouteImport.update({
+  id: '/admin/plans',
+  path: '/admin/plans',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
   id: '/admin/nutritionists',
   path: '/admin/nutritionists',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/ranking': typeof AppAdminRankingRoute
   '/app/admin/users': typeof AppAdminUsersRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/ranking': typeof AppAdminRankingRoute
   '/app/admin/users': typeof AppAdminUsersRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
+  '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/ranking': typeof AppAdminRankingRoute
   '/app/admin/users': typeof AppAdminUsersRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/admin/plans'
     | '/app/admin/playground'
     | '/app/admin/ranking'
     | '/app/admin/users'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/admin/plans'
     | '/app/admin/playground'
     | '/app/admin/ranking'
     | '/app/admin/users'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
+    | '/app/admin/plans'
     | '/app/admin/playground'
     | '/app/admin/ranking'
     | '/app/admin/users'
@@ -508,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminPlaygroundRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/plans': {
+      id: '/app/admin/plans'
+      path: '/admin/plans'
+      fullPath: '/app/admin/plans'
+      preLoaderRoute: typeof AppAdminPlansRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/nutritionists': {
       id: '/app/admin/nutritionists'
       path: '/admin/nutritionists'
@@ -609,6 +628,7 @@ interface AppRouteChildren {
   AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
+  AppAdminPlansRoute: typeof AppAdminPlansRoute
   AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
   AppAdminRankingRoute: typeof AppAdminRankingRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
@@ -631,6 +651,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
+  AppAdminPlansRoute: AppAdminPlansRoute,
   AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,
   AppAdminRankingRoute: AppAdminRankingRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
