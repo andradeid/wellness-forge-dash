@@ -25,6 +25,7 @@ import {
   UserRound,
   LogOut,
   Plus,
+  Coins,
   Settings as SettingsIcon,
   User as UserIcon,
   Sparkles,
@@ -47,6 +48,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreditsBadge } from "@/components/CreditsBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCredits } from "@/hooks/useCredits";
+
+const LOW_CREDIT_THRESHOLD = 20;
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import lummaLockup from "@/assets/lumma-lockup.svg";
@@ -161,6 +165,9 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, profile, role, signOut } = useAuth();
+  const { data: credits } = useMyCredits();
+  const balance = credits?.balance ?? 0;
+  const lowCredits = balance < LOW_CREDIT_THRESHOLD;
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -350,6 +357,29 @@ export function AppSidebar() {
                 {role === "super_admin" ? "Super Admin" : role === "admin" ? "Administrador" : "Nutricionista"}
               </p>
               <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
+            </div>
+            <div className="px-3 pb-2">
+              <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Coins className="h-3.5 w-3.5" />
+                  Créditos
+                </span>
+                <span
+                  className={
+                    lowCredits
+                      ? "text-sm font-semibold text-destructive"
+                      : "text-sm font-semibold text-foreground"
+                  }
+                >
+                  {balance.toLocaleString("pt-BR")}
+                </span>
+              </div>
+              {lowCredits && (
+                <div className="mt-2 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>Saldo baixo. Recarregue para continuar usando a Lumma.</span>
+                </div>
+              )}
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
