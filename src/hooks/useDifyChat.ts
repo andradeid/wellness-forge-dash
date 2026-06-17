@@ -326,10 +326,10 @@ export function useDifyChat(
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId || readOnly) return;
 
-    // Gate de créditos (pré-envio)
-    if (agentType) {
+    const billingKey = resolveAgentKey(agentType);
+    if (billingKey) {
       try {
-        const { cost, label } = await getCost(agentType);
+        const { cost, label } = await getCost(billingKey);
         if (cost > 0) {
           const fresh = await refetchCredits();
           const balance = fresh.data?.balance ?? 0;
@@ -342,6 +342,7 @@ export function useDifyChat(
         console.warn("[credits] pré-check falhou, prosseguindo:", e);
       }
     }
+
 
     setError(null);
     setThinking(true);
