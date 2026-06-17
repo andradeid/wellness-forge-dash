@@ -25,6 +25,7 @@ import {
   UserRound,
   LogOut,
   Plus,
+  Coins,
   Settings as SettingsIcon,
   User as UserIcon,
   Sparkles,
