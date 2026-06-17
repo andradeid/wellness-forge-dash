@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { PaywallDialog } from "@/components/PaywallDialog";
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
+import { TopUpDialog } from "@/components/TopUpDialog";
+import { useTopUpState, topUpStore } from "@/lib/topup-store";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
