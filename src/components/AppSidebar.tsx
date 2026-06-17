@@ -165,6 +165,9 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, profile, role, signOut } = useAuth();
+  const { data: credits } = useMyCredits();
+  const balance = credits?.balance ?? 0;
+  const lowCredits = balance < LOW_CREDIT_THRESHOLD;
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
