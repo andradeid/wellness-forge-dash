@@ -726,6 +726,15 @@ export function useDifyChat(
                     );
                   }
 
+                  // Débito de créditos APÓS resposta completa
+                  if (agentType && fullText.trim() && !labReportError) {
+                    try {
+                      await consume(agentType, text.slice(0, 200));
+                    } catch (e) {
+                      console.warn("[credits] débito falhou (sem cobrança):", e);
+                    }
+                  }
+
                   if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
                     await processAndPersistMarkers({
                       userId: user.id,
