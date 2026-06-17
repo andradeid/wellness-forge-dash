@@ -44,8 +44,7 @@ export const consumeCredits = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: ok, error } = await supabaseAdmin.rpc("consume_credits" as any, {
+    const { data: ok, error } = await context.supabase.rpc("consume_credits" as any, {
       p_user_id: context.userId,
       p_agent_key: data.agentKey,
       p_message_preview: data.messagePreview ?? null,
