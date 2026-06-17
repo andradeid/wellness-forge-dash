@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_costs: {
+        Row: {
+          agent_key: string
+          cost_credits: number
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agent_key: string
+          cost_credits: number
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agent_key?: string
+          cost_credits?: number
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_feedback: {
         Row: {
           comment: string | null
@@ -87,6 +120,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      credit_transactions: {
+        Row: {
+          agent_key: string | null
+          agent_label: string | null
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          message_preview: string | null
+          metadata: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          agent_key?: string | null
+          agent_label?: string | null
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          message_preview?: string | null
+          metadata?: Json | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          agent_key?: string | null
+          agent_label?: string | null
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          message_preview?: string | null
+          metadata?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       dify_agents: {
         Row: {
@@ -563,6 +635,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          monthly_quota: number
+          quota_reset_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          monthly_quota?: number
+          quota_reset_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          monthly_quota?: number
+          quota_reset_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -589,6 +691,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_credits: {
+        Args: {
+          p_agent_key: string
+          p_message_preview: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
