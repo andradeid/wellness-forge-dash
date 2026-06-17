@@ -138,6 +138,10 @@ function AppLayout() {
           balance={paywall.balance}
           agentLabel={paywall.agentLabel}
         />
+        <TopUpDialog
+          open={topup.open}
+          onOpenChange={(v) => (v ? topUpStore.open() : topUpStore.close())}
+        />
       </div>
     </SidebarProvider>
   );
