@@ -245,9 +245,9 @@ export function useGeneralChat(chatId: string, agentType: string) {
               }
 
               // Débito após resposta completa
-              if (agentType && fullAssistantText.trim()) {
+              if (billingKey && fullAssistantText.trim()) {
                 try {
-                  await consume(agentType, text.slice(0, 200));
+                  await consume(billingKey, text.slice(0, 200));
                 } catch (e) {
                   console.warn("[credits] débito falhou:", e);
                 }
