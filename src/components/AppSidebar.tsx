@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreditsBadge } from "@/components/CreditsBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -204,13 +205,19 @@ export function AppSidebar() {
     >
       <SidebarHeader className="px-5 pt-6 pb-4">
         {collapsed ? (
-          <div className="h-8 w-8 mx-auto rounded-lg bg-gradient-brand" />
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
+            <CreditsBadge collapsed />
+          </div>
         ) : (
-          <div className="flex items-end gap-2">
-            <img src={lummaLockup} alt="Lumma" className="h-7" />
-            <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground pb-[3px]">
-              {role === "nutri" ? "Nutri" : "Admin"}
-            </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-end gap-2">
+              <img src={lummaLockup} alt="Lumma" className="h-7" />
+              <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground pb-[3px]">
+                {role === "nutri" ? "Nutri" : "Admin"}
+              </span>
+            </div>
+            <CreditsBadge />
           </div>
         )}
       </SidebarHeader>

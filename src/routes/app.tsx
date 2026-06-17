@@ -6,6 +6,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
+import { PaywallDialog } from "@/components/PaywallDialog";
+import { usePaywallState, paywallStore } from "@/lib/paywall-store";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -40,6 +42,7 @@ function AppLayout() {
   const { session, loading, role } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const paywall = usePaywallState();
 
   useEffect(() => {
     if (!loading && !session) {
@@ -125,6 +128,13 @@ function AppLayout() {
           </div>
         </div>
         <Toaster />
+        <PaywallDialog
+          open={paywall.open}
+          onOpenChange={(v) => (v ? null : paywallStore.close())}
+          needed={paywall.needed}
+          balance={paywall.balance}
+          agentLabel={paywall.agentLabel}
+        />
       </div>
     </SidebarProvider>
   );

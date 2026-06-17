@@ -10,6 +10,8 @@ import {
   classificationVisualState,
   type RawMarker,
 } from "@/lib/exam-markers";
+import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
+import { paywallStore } from "@/lib/paywall-store";
 
 export interface ExamContext {
   patient_name: string;
@@ -317,8 +319,29 @@ export function useDifyChat(
     };
   }, [patientId, readOnly, forceChatId]);
 
+  const { getCost, consume } = useCreditsActions();
+  const { refetch: refetchCredits } = useMyCredits();
+
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId || readOnly) return;
+
+    // Gate de créditos (pré-envio)
+    if (agentType) {
+      try {
+        const { cost, label } = await getCost(agentType);
+        if (cost > 0) {
+          const fresh = await refetchCredits();
+          const balance = fresh.data?.balance ?? 0;
+          if (balance < cost) {
+            paywallStore.open(cost, balance, label);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("[credits] pré-check falhou, prosseguindo:", e);
+      }
+    }
+
     setError(null);
     setThinking(true);
     setThinkingMode(files.length > 0 ? "analysis" : "simple");
@@ -703,6 +726,15 @@ export function useDifyChat(
                     );
                   }
 
+                  // Débito de créditos APÓS resposta completa
+                  if (agentType && fullText.trim() && !labReportError) {
+                    try {
+                      await consume(agentType, text.slice(0, 200));
+                    } catch (e) {
+                      console.warn("[credits] débito falhou (sem cobrança):", e);
+                    }
+                  }
+
                   if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
                     await processAndPersistMarkers({
                       userId: user.id,
@@ -766,7 +798,7 @@ export function useDifyChat(
       setThinking(false);
       setUploadProgress([]);
     }
-  }, [chatId, patientId, readOnly, agentType, examContext]);
+  }, [chatId, patientId, readOnly, agentType, examContext, getCost, consume, refetchCredits]);
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;

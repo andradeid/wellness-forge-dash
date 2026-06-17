@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
 import { toast } from "sonner";
+import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
+import { paywallStore } from "@/lib/paywall-store";
 
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
@@ -13,6 +15,8 @@ export function useGeneralChat(chatId: string, agentType: string) {
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
+  const { getCost, consume } = useCreditsActions();
+  const { refetch: refetchCredits } = useMyCredits();
 
   // Load messages and conversation ID
   useEffect(() => {
@@ -48,7 +52,24 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!chatId || !user) return;
-    
+
+    // Gate de créditos
+    if (agentType) {
+      try {
+        const { cost, label } = await getCost(agentType);
+        if (cost > 0) {
+          const fresh = await refetchCredits();
+          const balance = fresh.data?.balance ?? 0;
+          if (balance < cost) {
+            paywallStore.open(cost, balance, label);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("[credits] pré-check falhou:", e);
+      }
+    }
+
     setThinking(true);
     setStreamingContent("");
     researchSavedRef.current = false;
@@ -220,6 +241,15 @@ export function useGeneralChat(chatId: string, agentType: string) {
               } else {
                 await saveAssistantToSupabase(fullAssistantText, parsed.conversation_id);
               }
+
+              // Débito após resposta completa
+              if (agentType && fullAssistantText.trim()) {
+                try {
+                  await consume(agentType, text.slice(0, 200));
+                } catch (e) {
+                  console.warn("[credits] débito falhou:", e);
+                }
+              }
             }
 
             if (parsed.event === "error") {
@@ -253,7 +283,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
       }
       setThinking(false);
     }
-  }, [chatId, user, agentType]);
+  }, [chatId, user, agentType, getCost, consume, refetchCredits]);
 
   return { messages, sendMessage, thinking };
 }
