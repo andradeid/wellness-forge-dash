@@ -29,6 +29,8 @@ import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playg
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
+import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
+import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
@@ -137,6 +139,16 @@ const AppAdminFeedbacksRoute = AppAdminFeedbacksRouteImport.update({
   path: '/admin/feedbacks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminCreditsAuditRoute = AppAdminCreditsAuditRouteImport.update({
+  id: '/admin/credits-audit',
+  path: '/admin/credits-audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminAgentCostsRoute = AppAdminAgentCostsRouteImport.update({
+  id: '/admin/agent-costs',
+  path: '/admin/agent-costs',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
   id: '/admin/administrators',
   path: '/admin/administrators',
@@ -193,6 +205,8 @@ export interface FileRoutesByFullPath {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
+  '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
@@ -221,6 +235,8 @@ export interface FileRoutesByTo {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
+  '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
@@ -251,6 +267,8 @@ export interface FileRoutesById {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
+  '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
+  '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
@@ -282,6 +300,8 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
+    | '/app/admin/agent-costs'
+    | '/app/admin/credits-audit'
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
@@ -310,6 +330,8 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
+    | '/app/admin/agent-costs'
+    | '/app/admin/credits-audit'
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
@@ -339,6 +361,8 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/app/admin/administrators'
+    | '/app/admin/agent-costs'
+    | '/app/admin/credits-audit'
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
@@ -505,6 +529,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminFeedbacksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/credits-audit': {
+      id: '/app/admin/credits-audit'
+      path: '/admin/credits-audit'
+      fullPath: '/app/admin/credits-audit'
+      preLoaderRoute: typeof AppAdminCreditsAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/agent-costs': {
+      id: '/app/admin/agent-costs'
+      path: '/admin/agent-costs'
+      fullPath: '/app/admin/agent-costs'
+      preLoaderRoute: typeof AppAdminAgentCostsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/administrators': {
       id: '/app/admin/administrators'
       path: '/admin/administrators'
@@ -566,6 +604,8 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
+  AppAdminAgentCostsRoute: typeof AppAdminAgentCostsRoute
+  AppAdminCreditsAuditRoute: typeof AppAdminCreditsAuditRoute
   AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
@@ -586,6 +626,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
+  AppAdminAgentCostsRoute: AppAdminAgentCostsRoute,
+  AppAdminCreditsAuditRoute: AppAdminCreditsAuditRoute,
   AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,

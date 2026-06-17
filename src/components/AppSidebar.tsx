@@ -124,6 +124,8 @@ const adminGroups: NavGroup[] = [
     icon: Boxes,
     items: [
       { title: "Planos", url: "#planos", icon: CreditCard },
+      { title: "Valores dos Agentes", url: "/app/admin/agent-costs", icon: Sparkles, badge: "NOVO" },
+      { title: "Auditoria de Créditos", url: "/app/admin/credits-audit", icon: CreditCard, badge: "NOVO" },
       { title: "Ofertas Hubla", url: "#hubla", icon: Package },
       { title: "Vendas sem mapeamento", url: "#vendas", icon: AlertTriangle },
       { title: "Formulações", url: "#formulacoes", icon: FlaskConical },
