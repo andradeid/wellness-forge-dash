@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, ExternalLink, LogOut, User } from "lucide-react";
+import { AlertTriangle, ChevronDown, Coins, ExternalLink, LogOut, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCredits } from "@/hooks/useCredits";
 import { ProfileDialog } from "@/components/ProfileDialog";
+
+const LOW_CREDIT_THRESHOLD = 20;
 
 export function UserMenu() {
   const { user, profile, role, signOut, refresh } = useAuth();
