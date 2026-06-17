@@ -62,10 +62,6 @@ export function UserMenu() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {roleLabel}
             </p>
-          <div className="px-3 pt-3 pb-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              {roleLabel}
-            </p>
             <p className="text-sm font-medium text-foreground mt-1 break-all">
               {email}
             </p>
@@ -94,6 +90,11 @@ export function UserMenu() {
             )}
           </div>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="rounded-lg gap-3 cursor-pointer py-2.5"
+            onClick={() => setEditing(true)}
+          >
+            <User className="h-4 w-4" />
             Meu perfil
           </DropdownMenuItem>
           <DropdownMenuItem
