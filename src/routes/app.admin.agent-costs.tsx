@@ -41,7 +41,7 @@ function AgentCostsPage() {
       .select("id, agent_key, display_name, cost_credits, is_active")
       .order("display_name");
     if (error) toast.error(error.message);
-    setRows((data as Row[]) ?? []);
+    setRows(((data as unknown) as Row[]) ?? []);
     setLoading(false);
   }
 
