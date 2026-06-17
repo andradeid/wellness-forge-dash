@@ -5,6 +5,7 @@ import type { ChatMessage } from "@/components/chat/ChatMessageList";
 import { toast } from "sonner";
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
+import { resolveAgentKey } from "@/lib/agent-key-map";
 
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
