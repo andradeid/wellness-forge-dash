@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { PaywallDialog } from "@/components/PaywallDialog";
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
+import { TopUpDialog } from "@/components/TopUpDialog";
+import { useTopUpState, topUpStore } from "@/lib/topup-store";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -43,6 +45,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const paywall = usePaywallState();
+  const topup = useTopUpState();
 
   useEffect(() => {
     if (!loading && !session) {
@@ -134,6 +137,10 @@ function AppLayout() {
           needed={paywall.needed}
           balance={paywall.balance}
           agentLabel={paywall.agentLabel}
+        />
+        <TopUpDialog
+          open={topup.open}
+          onOpenChange={(v) => (v ? topUpStore.open() : topUpStore.close())}
         />
       </div>
     </SidebarProvider>

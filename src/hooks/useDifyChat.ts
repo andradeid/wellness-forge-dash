@@ -12,6 +12,7 @@ import {
 } from "@/lib/exam-markers";
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
+import { resolveAgentKey } from "@/lib/agent-key-map";
 
 export interface ExamContext {
   patient_name: string;
@@ -325,10 +326,10 @@ export function useDifyChat(
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId || readOnly) return;
 
-    // Gate de créditos (pré-envio)
-    if (agentType) {
+    const billingKey = resolveAgentKey(agentType);
+    if (billingKey) {
       try {
-        const { cost, label } = await getCost(agentType);
+        const { cost, label } = await getCost(billingKey);
         if (cost > 0) {
           const fresh = await refetchCredits();
           const balance = fresh.data?.balance ?? 0;
@@ -341,6 +342,7 @@ export function useDifyChat(
         console.warn("[credits] pré-check falhou, prosseguindo:", e);
       }
     }
+
 
     setError(null);
     setThinking(true);
@@ -727,9 +729,9 @@ export function useDifyChat(
                   }
 
                   // Débito de créditos APÓS resposta completa
-                  if (agentType && fullText.trim() && !labReportError) {
+                  if (billingKey && fullText.trim() && !labReportError) {
                     try {
-                      await consume(agentType, text.slice(0, 200));
+                      await consume(billingKey, text.slice(0, 200));
                     } catch (e) {
                       console.warn("[credits] débito falhou (sem cobrança):", e);
                     }

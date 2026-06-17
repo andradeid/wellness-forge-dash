@@ -3,6 +3,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { topUpStore } from "@/lib/topup-store";
 
 interface Props {
   open: boolean;
@@ -40,7 +41,7 @@ export function PaywallDialog({ open, onOpenChange, needed, balance, agentLabel 
             className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white"
             onClick={() => {
               onOpenChange(false);
-              // TODO: navegar para tela de recarga quando estiver pronta
+              topUpStore.open();
             }}
           >
             Comprar créditos

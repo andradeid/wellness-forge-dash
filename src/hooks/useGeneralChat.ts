@@ -5,6 +5,7 @@ import type { ChatMessage } from "@/components/chat/ChatMessageList";
 import { toast } from "sonner";
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
+import { resolveAgentKey } from "@/lib/agent-key-map";
 
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
@@ -54,9 +55,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
     if (!chatId || !user) return;
 
     // Gate de créditos
-    if (agentType) {
+    const billingKey = resolveAgentKey(agentType);
+    if (billingKey) {
       try {
-        const { cost, label } = await getCost(agentType);
+        const { cost, label } = await getCost(billingKey);
         if (cost > 0) {
           const fresh = await refetchCredits();
           const balance = fresh.data?.balance ?? 0;
@@ -243,9 +245,9 @@ export function useGeneralChat(chatId: string, agentType: string) {
               }
 
               // Débito após resposta completa
-              if (agentType && fullAssistantText.trim()) {
+              if (billingKey && fullAssistantText.trim()) {
                 try {
-                  await consume(agentType, text.slice(0, 200));
+                  await consume(billingKey, text.slice(0, 200));
                 } catch (e) {
                   console.warn("[credits] débito falhou:", e);
                 }
