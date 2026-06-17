@@ -55,9 +55,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
     if (!chatId || !user) return;
 
     // Gate de créditos
-    if (agentType) {
+    const billingKey = resolveAgentKey(agentType);
+    if (billingKey) {
       try {
-        const { cost, label } = await getCost(agentType);
+        const { cost, label } = await getCost(billingKey);
         if (cost > 0) {
           const fresh = await refetchCredits();
           const balance = fresh.data?.balance ?? 0;
