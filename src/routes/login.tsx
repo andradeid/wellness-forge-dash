@@ -117,6 +117,7 @@ function LoginPage() {
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    conflictConfirmedRef.current = false;
     try {
       await signIn(email, password);
       // Após login bem-sucedido, precisamos do user.id
@@ -126,16 +127,18 @@ function LoginPage() {
 
       const newToken = generateSessionToken();
       const existing = await fetchActiveSessionToken(uid);
+      const currentRole = await fetchRoleForNavigation(uid);
 
       if (!existing) {
         await claimSession(uid, newToken);
-        // O useEffect de redirect cuidará da navegação
+        finalizeEntry(currentRole);
         return;
       }
 
       // Conflito: já existe sessão ativa em outro dispositivo
       setPendingUserId(uid);
       setPendingToken(newToken);
+      setPendingRole(currentRole);
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
@@ -148,12 +151,15 @@ function LoginPage() {
     if (!pendingUserId || !pendingToken) return;
     setResolving(true);
     try {
+      conflictConfirmedRef.current = true;
       await claimSession(pendingUserId, pendingToken);
       setConflictOpen(false);
       setPendingUserId(null);
       setPendingToken(null);
-      finalizeEntry(role);
+      setPendingRole(null);
+      finalizeEntry(pendingRole);
     } catch (err: any) {
+      conflictConfirmedRef.current = false;
       toast.error(err.message ?? "Não foi possível encerrar a outra sessão.");
     } finally {
       setResolving(false);
@@ -161,12 +167,21 @@ function LoginPage() {
   };
 
   const handleConflictCancel = async () => {
+    if (cleanupInProgressRef.current) return;
+    cleanupInProgressRef.current = true;
+    conflictConfirmedRef.current = false;
     setConflictOpen(false);
     setPendingUserId(null);
     setPendingToken(null);
+    setPendingRole(null);
     setSubmitting(false);
-    await supabase.auth.signOut();
-    toast.info("Login cancelado. Você permanece desconectado.");
+    clearLocalSessionToken();
+    try {
+      await supabase.auth.signOut();
+      toast.info("Login cancelado. Você permanece desconectado.");
+    } finally {
+      cleanupInProgressRef.current = false;
+    }
   };
 
   const handleSignUp = async (e: FormEvent) => {
