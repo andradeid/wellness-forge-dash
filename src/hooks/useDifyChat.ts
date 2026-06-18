@@ -327,6 +327,13 @@ export function useDifyChat(
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId || readOnly) return;
 
+    // Gate de sessão única: aborta se outro dispositivo assumiu o login
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return;
+    const sessionOk = await enforceSessionGuard(currentUser.id);
+    if (!sessionOk) return;
+
+
     const billingKey = resolveAgentKey(agentType);
     if (billingKey) {
       try {
