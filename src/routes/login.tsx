@@ -5,7 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  claimSession,
+  fetchActiveSessionToken,
+  generateSessionToken,
+  SESSION_KICKED_KEY,
+} from "@/lib/session-guard";
 import { toast } from "sonner";
 import loginBg from "@/assets/login-bg.png";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
