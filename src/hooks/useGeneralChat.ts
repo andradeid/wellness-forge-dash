@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
+import { enforceSessionGuard } from "@/lib/session-guard";
 
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
