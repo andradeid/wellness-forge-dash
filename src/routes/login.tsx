@@ -128,8 +128,9 @@ function LoginPage() {
       const newToken = generateSessionToken();
       const existing = await fetchActiveSessionToken(uid);
       const currentRole = await fetchRoleForNavigation(uid);
+      const localToken = getLocalSessionToken();
 
-      if (!existing) {
+      if (!existing || existing === localToken) {
         await claimSession(uid, newToken);
         finalizeEntry(currentRole);
         return;
