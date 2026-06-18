@@ -55,6 +55,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
   const sendMessage = useCallback(async (text: string) => {
     if (!chatId || !user) return;
 
+    // Gate de sessão única: aborta se outro dispositivo assumiu o login
+    const sessionOk = await enforceSessionGuard(user.id);
+    if (!sessionOk) return;
+
+
     // Gate de créditos
     const billingKey = resolveAgentKey(agentType);
     if (billingKey) {
