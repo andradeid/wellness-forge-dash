@@ -8,11 +8,23 @@ export function useMyCredits() {
   const fn = useServerFn(getMyCredits);
   return useQuery({
     queryKey: ["credits", user?.id],
-    queryFn: () => fn(),
+    queryFn: async () => {
+      try {
+        return await fn();
+      } catch (err) {
+        // Server fn pode lançar Response (401) durante logout/troca de sessão.
+        // Não queremos derrubar a árvore — devolvemos null e a UI cai no fallback.
+        if (err instanceof Response) return null;
+        throw err;
+      }
+    },
     enabled: !!user?.id,
     staleTime: 30_000,
+    retry: false,
+    throwOnError: false,
   });
 }
+
 
 export function useCreditsActions() {
   const qc = useQueryClient();
