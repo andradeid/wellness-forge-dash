@@ -2,6 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  clearLocalSessionToken,
+  getLocalSessionToken,
+  isSessionStillValid,
+  SESSION_KICKED_KEY,
+} from "@/lib/session-guard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/")({
@@ -23,8 +30,25 @@ function Teaser() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: role === "nutri" ? "/app/fale-com-lumma" : "/app" });
-  }, [session, loading, navigate]);
+    if (loading || !session?.user) return;
+    let cancelled = false;
+    (async () => {
+      const localToken = getLocalSessionToken();
+      const valid = localToken ? await isSessionStillValid(session.user.id) : false;
+      if (cancelled) return;
+      if (!valid) {
+        window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+        clearLocalSessionToken();
+        await supabase.auth.signOut();
+        navigate({ to: "/login", replace: true });
+        return;
+      }
+      navigate({ to: role === "nutri" ? "/app/fale-com-lumma" : "/app", replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, loading, role, navigate]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0b0414] text-white font-sans antialiased">

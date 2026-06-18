@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,12 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   claimSession,
+  clearLocalSessionToken,
   fetchActiveSessionToken,
   generateSessionToken,
+  getLocalSessionToken,
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
 import { toast } from "sonner";
@@ -52,7 +54,10 @@ function LoginPage() {
   const [conflictOpen, setConflictOpen] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingRole, setPendingRole] = useState<AppRole | null>(null);
   const [resolving, setResolving] = useState(false);
+  const conflictConfirmedRef = useRef(false);
+  const cleanupInProgressRef = useRef(false);
 
   // Aviso quando o usuário foi derrubado por outro dispositivo
   useEffect(() => {
@@ -66,16 +71,30 @@ function LoginPage() {
   }, []);
 
   useEffect(() => {
-    // Só redireciona automaticamente quando não há conflito pendente
-    if (!loading && session && !conflictOpen && !pendingUserId) {
-      navigate({
-        to: role === "nutri" ? "/app/fale-com-lumma" : "/app",
-        replace: true,
-      });
-    }
-  }, [session, loading, navigate, role, conflictOpen, pendingUserId]);
+    if (loading || !session || submitting || pendingUserId) return;
+    if (getLocalSessionToken()) return;
+    clearLocalSessionToken();
+    void supabase.auth.signOut();
+  }, [loading, session, submitting, pendingUserId]);
 
-  const finalizeEntry = (currentRole: typeof role) => {
+  useEffect(() => {
+    if (!pendingUserId) return;
+    const cleanupPendingAuth = () => {
+      if (conflictConfirmedRef.current || cleanupInProgressRef.current) return;
+      cleanupInProgressRef.current = true;
+      clearLocalSessionToken();
+      void supabase.auth.signOut().finally(() => {
+        cleanupInProgressRef.current = false;
+      });
+    };
+    window.addEventListener("beforeunload", cleanupPendingAuth);
+    return () => {
+      window.removeEventListener("beforeunload", cleanupPendingAuth);
+      cleanupPendingAuth();
+    };
+  }, [pendingUserId]);
+
+  const finalizeEntry = (currentRole: AppRole | null) => {
     toast.success("Bem-vindo de volta!");
     navigate({
       to: currentRole === "nutri" ? "/app/fale-com-lumma" : "/app",
@@ -83,9 +102,22 @@ function LoginPage() {
     });
   };
 
+  const fetchRoleForNavigation = async (userId: string): Promise<AppRole | null> => {
+    const { data, error } = await (supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .order("role", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return (data?.role as AppRole | null) ?? null;
+  };
+
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    conflictConfirmedRef.current = false;
     try {
       await signIn(email, password);
       // Após login bem-sucedido, precisamos do user.id
@@ -95,16 +127,19 @@ function LoginPage() {
 
       const newToken = generateSessionToken();
       const existing = await fetchActiveSessionToken(uid);
+      const currentRole = await fetchRoleForNavigation(uid);
+      const localToken = getLocalSessionToken();
 
-      if (!existing) {
+      if (!existing || existing === localToken) {
         await claimSession(uid, newToken);
-        // O useEffect de redirect cuidará da navegação
+        finalizeEntry(currentRole);
         return;
       }
 
       // Conflito: já existe sessão ativa em outro dispositivo
       setPendingUserId(uid);
       setPendingToken(newToken);
+      setPendingRole(currentRole);
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
@@ -117,12 +152,15 @@ function LoginPage() {
     if (!pendingUserId || !pendingToken) return;
     setResolving(true);
     try {
+      conflictConfirmedRef.current = true;
       await claimSession(pendingUserId, pendingToken);
       setConflictOpen(false);
       setPendingUserId(null);
       setPendingToken(null);
-      finalizeEntry(role);
+      setPendingRole(null);
+      finalizeEntry(pendingRole);
     } catch (err: any) {
+      conflictConfirmedRef.current = false;
       toast.error(err.message ?? "Não foi possível encerrar a outra sessão.");
     } finally {
       setResolving(false);
@@ -130,12 +168,21 @@ function LoginPage() {
   };
 
   const handleConflictCancel = async () => {
+    if (cleanupInProgressRef.current) return;
+    cleanupInProgressRef.current = true;
+    conflictConfirmedRef.current = false;
     setConflictOpen(false);
     setPendingUserId(null);
     setPendingToken(null);
+    setPendingRole(null);
     setSubmitting(false);
-    await supabase.auth.signOut();
-    toast.info("Login cancelado. Você permanece desconectado.");
+    clearLocalSessionToken();
+    try {
+      await supabase.auth.signOut();
+      toast.info("Login cancelado. Você permanece desconectado.");
+    } finally {
+      cleanupInProgressRef.current = false;
+    }
   };
 
   const handleSignUp = async (e: FormEvent) => {
@@ -266,7 +313,10 @@ function LoginPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={resolving}
-              onClick={handleConflictConfirm}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleConflictConfirm();
+              }}
               className="text-white border-0"
               style={{ backgroundImage: "var(--gradient-brand)" }}
             >
