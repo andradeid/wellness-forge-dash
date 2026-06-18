@@ -13,6 +13,7 @@ import {
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
+import { enforceSessionGuard } from "@/lib/session-guard";
 
 export interface ExamContext {
   patient_name: string;
@@ -325,6 +326,13 @@ export function useDifyChat(
 
   const sendMessage = useCallback(async (text: string, files: File[]) => {
     if (!chatId || readOnly) return;
+
+    // Gate de sessão única: aborta se outro dispositivo assumiu o login
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return;
+    const sessionOk = await enforceSessionGuard(currentUser.id);
+    if (!sessionOk) return;
+
 
     const billingKey = resolveAgentKey(agentType);
     if (billingKey) {

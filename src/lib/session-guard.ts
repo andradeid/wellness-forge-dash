@@ -66,3 +66,30 @@ export async function isSessionStillValid(userId: string): Promise<boolean> {
   if (!remote) return true; // sem registro no banco — não derruba
   return remote === local;
 }
+
+/**
+ * Verifica a sessão antes de ações sensíveis (ex.: enviar mensagem ao chat).
+ * Se a sessão foi tomada por outro dispositivo, faz cleanup completo,
+ * mostra toast e redireciona para /login. Retorna `true` se pode prosseguir.
+ */
+export async function enforceSessionGuard(userId: string): Promise<boolean> {
+  const valid = await isSessionStillValid(userId);
+  if (valid) return true;
+
+  try {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+    }
+    clearLocalSessionToken();
+    const { toast } = await import("sonner");
+    toast.warning(
+      "Sua sessão foi encerrada porque esta conta foi conectada em outro dispositivo.",
+    );
+    await supabase.auth.signOut();
+  } finally {
+    if (typeof window !== "undefined") {
+      window.location.assign("/login");
+    }
+  }
+  return false;
+}

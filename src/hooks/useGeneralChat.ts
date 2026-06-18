@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
+import { enforceSessionGuard } from "@/lib/session-guard";
 
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
@@ -53,6 +54,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!chatId || !user) return;
+
+    // Gate de sessão única: aborta se outro dispositivo assumiu o login
+    const sessionOk = await enforceSessionGuard(user.id);
+    if (!sessionOk) return;
+
 
     // Gate de créditos
     const billingKey = resolveAgentKey(agentType);
