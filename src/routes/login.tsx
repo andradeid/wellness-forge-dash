@@ -250,6 +250,31 @@ function LoginPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={conflictOpen} onOpenChange={(v) => !v && !resolving && handleConflictCancel()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conexão Ativa Detectada</AlertDialogTitle>
+            <AlertDialogDescription>
+              Identificamos que este perfil já possui um acesso ativo em outro dispositivo.
+              Deseja encerrar a outra conexão e continuar neste aparelho?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resolving} onClick={handleConflictCancel}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resolving}
+              onClick={handleConflictConfirm}
+              className="text-white border-0"
+              style={{ backgroundImage: "var(--gradient-brand)" }}
+            >
+              {resolving ? "Encerrando..." : "Sim, encerrar outra conexão e continuar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
