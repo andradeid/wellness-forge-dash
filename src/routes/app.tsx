@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -51,11 +51,13 @@ function AppLayout() {
   const { session, loading, role } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const [sessionAllowed, setSessionAllowed] = useState(false);
   const paywall = usePaywallState();
   const topup = useTopUpState();
 
   useEffect(() => {
     if (!loading && !session) {
+      setSessionAllowed(false);
       navigate({ to: "/login", replace: true });
     }
   }, [session, loading, navigate]);
@@ -73,6 +75,7 @@ function AppLayout() {
   // tomado por outro dispositivo, desloga e redireciona para /login.
   useEffect(() => {
     if (loading || !session?.user) return;
+    setSessionAllowed(false);
     let cancelled = false;
     (async () => {
       const localToken = getLocalSessionToken();
@@ -83,7 +86,11 @@ function AppLayout() {
         return;
       }
       const valid = await isSessionStillValid(session.user.id);
-      if (cancelled || valid) return;
+      if (cancelled) return;
+      if (valid) {
+        setSessionAllowed(true);
+        return;
+      }
       try {
         if (typeof window !== "undefined") {
           window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
@@ -99,10 +106,10 @@ function AppLayout() {
     };
   }, [loading, session, pathname, navigate]);
 
-  if (loading) {
+  if (loading || (session && !sessionAllowed)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-sm text-muted-foreground">Carregando...</div>
+        <div className="text-sm text-muted-foreground">Validando sessão...</div>
       </div>
     );
   }
