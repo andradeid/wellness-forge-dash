@@ -10,6 +10,12 @@ import { PaywallDialog } from "@/components/PaywallDialog";
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
 import { TopUpDialog } from "@/components/TopUpDialog";
 import { useTopUpState, topUpStore } from "@/lib/topup-store";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  clearLocalSessionToken,
+  isSessionStillValid,
+  SESSION_KICKED_KEY,
+} from "@/lib/session-guard";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -60,6 +66,30 @@ function AppLayout() {
       navigate({ to: "/unauthorized", replace: true });
     }
   }, [loading, session, role, pathname, navigate]);
+
+  // Gatekeeper de sessão única: ao trocar de rota dentro do app, valida
+  // se o token local ainda confere com o registrado no banco. Se foi
+  // tomado por outro dispositivo, desloga e redireciona para /login.
+  useEffect(() => {
+    if (loading || !session?.user) return;
+    let cancelled = false;
+    (async () => {
+      const valid = await isSessionStillValid(session.user.id);
+      if (cancelled || valid) return;
+      try {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+        }
+        clearLocalSessionToken();
+        await supabase.auth.signOut();
+      } finally {
+        navigate({ to: "/login", replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, session, pathname, navigate]);
 
   if (loading) {
     return (
