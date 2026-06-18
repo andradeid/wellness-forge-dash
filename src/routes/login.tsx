@@ -313,7 +313,10 @@ function LoginPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={resolving}
-              onClick={handleConflictConfirm}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleConflictConfirm();
+              }}
               className="text-white border-0"
               style={{ backgroundImage: "var(--gradient-brand)" }}
             >
