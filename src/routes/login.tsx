@@ -48,27 +48,94 @@ function LoginPage() {
   const [fullName, setFullName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Estado da interceptação de sessão concorrente
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
+
+  // Aviso quando o usuário foi derrubado por outro dispositivo
   useEffect(() => {
-    if (!loading && session) {
-      navigate({ 
-        to: role === "nutri" ? "/app/fale-com-lumma" : "/app", 
-        replace: true 
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem(SESSION_KICKED_KEY)) {
+      window.sessionStorage.removeItem(SESSION_KICKED_KEY);
+      toast.warning(
+        "Sua sessão foi encerrada porque esta conta foi conectada em outro dispositivo.",
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    // Só redireciona automaticamente quando não há conflito pendente
+    if (!loading && session && !conflictOpen && !pendingUserId) {
+      navigate({
+        to: role === "nutri" ? "/app/fale-com-lumma" : "/app",
+        replace: true,
       });
     }
-  }, [session, loading, navigate]);
+  }, [session, loading, navigate, role, conflictOpen, pendingUserId]);
+
+  const finalizeEntry = (currentRole: typeof role) => {
+    toast.success("Bem-vindo de volta!");
+    navigate({
+      to: currentRole === "nutri" ? "/app/fale-com-lumma" : "/app",
+      replace: true,
+    });
+  };
 
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       await signIn(email, password);
-      toast.success("Bem-vindo de volta!");
-      // Não navega aqui — o useEffect acima detecta `session` e redireciona,
-      // evitando race com o AuthProvider (que ainda não propagou o contexto).
+      // Após login bem-sucedido, precisamos do user.id
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Não foi possível identificar o usuário.");
+
+      const newToken = generateSessionToken();
+      const existing = await fetchActiveSessionToken(uid);
+
+      if (!existing) {
+        await claimSession(uid, newToken);
+        // O useEffect de redirect cuidará da navegação
+        return;
+      }
+
+      // Conflito: já existe sessão ativa em outro dispositivo
+      setPendingUserId(uid);
+      setPendingToken(newToken);
+      setConflictOpen(true);
+      setSubmitting(false);
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao entrar");
       setSubmitting(false);
     }
+  };
+
+  const handleConflictConfirm = async () => {
+    if (!pendingUserId || !pendingToken) return;
+    setResolving(true);
+    try {
+      await claimSession(pendingUserId, pendingToken);
+      setConflictOpen(false);
+      setPendingUserId(null);
+      setPendingToken(null);
+      finalizeEntry(role);
+    } catch (err: any) {
+      toast.error(err.message ?? "Não foi possível encerrar a outra sessão.");
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const handleConflictCancel = async () => {
+    setConflictOpen(false);
+    setPendingUserId(null);
+    setPendingToken(null);
+    setSubmitting(false);
+    await supabase.auth.signOut();
+    toast.info("Login cancelado. Você permanece desconectado.");
   };
 
   const handleSignUp = async (e: FormEvent) => {
