@@ -67,6 +67,30 @@ function AppLayout() {
     }
   }, [loading, session, role, pathname, navigate]);
 
+  // Gatekeeper de sessão única: ao trocar de rota dentro do app, valida
+  // se o token local ainda confere com o registrado no banco. Se foi
+  // tomado por outro dispositivo, desloga e redireciona para /login.
+  useEffect(() => {
+    if (loading || !session?.user) return;
+    let cancelled = false;
+    (async () => {
+      const valid = await isSessionStillValid(session.user.id);
+      if (cancelled || valid) return;
+      try {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+        }
+        clearLocalSessionToken();
+        await supabase.auth.signOut();
+      } finally {
+        navigate({ to: "/login", replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, session, pathname, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
