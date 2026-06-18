@@ -10,6 +10,12 @@ import { PaywallDialog } from "@/components/PaywallDialog";
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
 import { TopUpDialog } from "@/components/TopUpDialog";
 import { useTopUpState, topUpStore } from "@/lib/topup-store";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  clearLocalSessionToken,
+  isSessionStillValid,
+  SESSION_KICKED_KEY,
+} from "@/lib/session-guard";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
