@@ -64,11 +64,11 @@ function AppLayout() {
 
   // RBAC: redireciona para /unauthorized se a role atual não tiver permissão.
   useEffect(() => {
-    if (loading || !session || !role) return;
+    if (loading || !session || !sessionAllowed || !role) return;
     if (!isAllowed(pathname, role)) {
       navigate({ to: "/unauthorized", replace: true });
     }
-  }, [loading, session, role, pathname, navigate]);
+  }, [loading, session, sessionAllowed, role, pathname, navigate]);
 
   // Gatekeeper de sessão única: ao trocar de rota dentro do app, valida
   // se o token local ainda confere com o registrado no banco. Se foi
