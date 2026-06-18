@@ -13,6 +13,7 @@ import { useTopUpState, topUpStore } from "@/lib/topup-store";
 import { supabase } from "@/integrations/supabase/client";
 import {
   clearLocalSessionToken,
+  getLocalSessionToken,
   isSessionStillValid,
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
@@ -74,6 +75,13 @@ function AppLayout() {
     if (loading || !session?.user) return;
     let cancelled = false;
     (async () => {
+      const localToken = getLocalSessionToken();
+      if (!localToken) {
+        if (cancelled) return;
+        await supabase.auth.signOut();
+        navigate({ to: "/login", replace: true });
+        return;
+      }
       const valid = await isSessionStillValid(session.user.id);
       if (cancelled || valid) return;
       try {
