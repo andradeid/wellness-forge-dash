@@ -611,6 +611,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          max_seats: number
           monthly_credits: number
           name: string
           price_monthly_cents: number
@@ -624,6 +625,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          max_seats?: number
           monthly_credits?: number
           name: string
           price_monthly_cents?: number
@@ -637,6 +639,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          max_seats?: number
           monthly_credits?: number
           name?: string
           price_monthly_cents?: number
@@ -731,16 +734,22 @@ export type Database = {
       user_sessions: {
         Row: {
           active_session_token: string
+          created_at: string
+          id: string
           updated_at: string
           user_id: string
         }
         Insert: {
           active_session_token: string
+          created_at?: string
+          id?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           active_session_token?: string
+          created_at?: string
+          id?: string
           updated_at?: string
           user_id?: string
         }
