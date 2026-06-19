@@ -22,6 +22,7 @@ type Plan = {
   price_monthly_cents: number;
   price_yearly_cents: number | null;
   monthly_credits: number;
+  max_seats: number;
   is_active: boolean;
   sort_order: number;
 };
