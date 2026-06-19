@@ -110,6 +110,7 @@ function PlansAdminPage() {
                     <TableHead className="w-[160px]">Preço Mensal (R$)</TableHead>
                     <TableHead className="w-[160px]">Preço Anual (R$)</TableHead>
                     <TableHead className="w-[140px]">Créditos / mês</TableHead>
+                    <TableHead className="w-[120px]">Assentos</TableHead>
                     <TableHead className="w-[90px]">Ativo</TableHead>
                     <TableHead className="w-[110px]" />
                   </TableRow>
