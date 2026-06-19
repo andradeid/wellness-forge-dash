@@ -18,12 +18,14 @@ import {
 import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  claimSession,
+  addSessionSeat,
   clearLocalSessionToken,
-  fetchActiveSessionToken,
   generateSessionToken,
   getLocalSessionToken,
+  getSeatInfo,
+  replaceOldestSeat,
   SESSION_KICKED_KEY,
+  type SeatInfo,
 } from "@/lib/session-guard";
 import { toast } from "sonner";
 import loginBg from "@/assets/login-bg.png";
