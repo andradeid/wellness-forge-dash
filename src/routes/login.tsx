@@ -313,10 +313,13 @@ function LoginPage() {
       <AlertDialog open={conflictOpen} onOpenChange={(v) => !v && !resolving && handleConflictCancel()}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Conexão Ativa Detectada</AlertDialogTitle>
+            <AlertDialogTitle>Limite de Acessos Atingido</AlertDialogTitle>
             <AlertDialogDescription>
-              Identificamos que este perfil já possui um acesso ativo em outro dispositivo.
-              Deseja encerrar a outra conexão e continuar neste aparelho?
+              {pendingSeatInfo
+                ? `Seu plano ${pendingSeatInfo.planLabel} permite até ${pendingSeatInfo.limit} ${pendingSeatInfo.limit === 1 ? "acesso simultâneo" : "acessos simultâneos"} e todos estão em uso neste momento. Para continuar e entrar neste dispositivo, a conexão ativa mais antiga da sua equipe será encerrada.`
+                : "Seu plano atingiu o limite de acessos simultâneos. Para continuar neste dispositivo, a conexão ativa mais antiga será encerrada."}
+              {" "}
+              <span className="block mt-2 text-xs opacity-80">Dica: faça o upgrade do seu plano para liberar mais acessos.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -332,7 +335,7 @@ function LoginPage() {
               className="text-white border-0"
               style={{ backgroundImage: "var(--gradient-brand)" }}
             >
-              {resolving ? "Encerrando..." : "Sim, encerrar outra conexão e continuar"}
+              {resolving ? "Encerrando..." : "Sim, encerrar acesso antigo e entrar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
