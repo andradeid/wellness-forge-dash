@@ -18,12 +18,14 @@ import {
 import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  claimSession,
+  addSessionSeat,
   clearLocalSessionToken,
-  fetchActiveSessionToken,
   generateSessionToken,
   getLocalSessionToken,
+  getSeatInfo,
+  replaceOldestSeat,
   SESSION_KICKED_KEY,
+  type SeatInfo,
 } from "@/lib/session-guard";
 import { toast } from "sonner";
 import loginBg from "@/assets/login-bg.png";
@@ -114,32 +116,39 @@ function LoginPage() {
     return (data?.role as AppRole | null) ?? null;
   };
 
+  const [pendingSeatInfo, setPendingSeatInfo] = useState<SeatInfo | null>(null);
+
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     conflictConfirmedRef.current = false;
     try {
       await signIn(email, password);
-      // Após login bem-sucedido, precisamos do user.id
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("Não foi possível identificar o usuário.");
 
       const newToken = generateSessionToken();
-      const existing = await fetchActiveSessionToken(uid);
+      const seatInfo = await getSeatInfo(uid);
       const currentRole = await fetchRoleForNavigation(uid);
       const localToken = getLocalSessionToken();
 
-      if (!existing || existing === localToken) {
-        await claimSession(uid, newToken);
+      // Se o token local já está entre os assentos, é o mesmo dispositivo — só renova.
+      const sameDevice =
+        !!localToken && seatInfo.active.some((s) => s.active_session_token === localToken);
+
+      // Há vaga disponível (ou é admin/super_admin) — entra direto.
+      if (sameDevice || seatInfo.unlimited || seatInfo.active.length < seatInfo.limit) {
+        await addSessionSeat(uid, newToken);
         finalizeEntry(currentRole);
         return;
       }
 
-      // Conflito: já existe sessão ativa em outro dispositivo
+      // Limite atingido — pedir confirmação para derrubar o assento mais antigo.
       setPendingUserId(uid);
       setPendingToken(newToken);
       setPendingRole(currentRole);
+      setPendingSeatInfo(seatInfo);
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
@@ -153,15 +162,17 @@ function LoginPage() {
     setResolving(true);
     try {
       conflictConfirmedRef.current = true;
-      await claimSession(pendingUserId, pendingToken);
+      await replaceOldestSeat(pendingUserId, pendingToken);
       setConflictOpen(false);
       setPendingUserId(null);
       setPendingToken(null);
+      const role = pendingRole;
       setPendingRole(null);
-      finalizeEntry(pendingRole);
+      setPendingSeatInfo(null);
+      finalizeEntry(role);
     } catch (err: any) {
       conflictConfirmedRef.current = false;
-      toast.error(err.message ?? "Não foi possível encerrar a outra sessão.");
+      toast.error(err.message ?? "Não foi possível encerrar a conexão mais antiga.");
     } finally {
       setResolving(false);
     }
@@ -175,6 +186,7 @@ function LoginPage() {
     setPendingUserId(null);
     setPendingToken(null);
     setPendingRole(null);
+    setPendingSeatInfo(null);
     setSubmitting(false);
     clearLocalSessionToken();
     try {
@@ -301,10 +313,13 @@ function LoginPage() {
       <AlertDialog open={conflictOpen} onOpenChange={(v) => !v && !resolving && handleConflictCancel()}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Conexão Ativa Detectada</AlertDialogTitle>
+            <AlertDialogTitle>Limite de Acessos Atingido</AlertDialogTitle>
             <AlertDialogDescription>
-              Identificamos que este perfil já possui um acesso ativo em outro dispositivo.
-              Deseja encerrar a outra conexão e continuar neste aparelho?
+              {pendingSeatInfo
+                ? `Seu plano ${pendingSeatInfo.planLabel} permite até ${pendingSeatInfo.limit} ${pendingSeatInfo.limit === 1 ? "acesso simultâneo" : "acessos simultâneos"} e todos estão em uso neste momento. Para continuar e entrar neste dispositivo, a conexão ativa mais antiga da sua equipe será encerrada.`
+                : "Seu plano atingiu o limite de acessos simultâneos. Para continuar neste dispositivo, a conexão ativa mais antiga será encerrada."}
+              {" "}
+              <span className="block mt-2 text-xs opacity-80">Dica: faça o upgrade do seu plano para liberar mais acessos.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -320,7 +335,7 @@ function LoginPage() {
               className="text-white border-0"
               style={{ backgroundImage: "var(--gradient-brand)" }}
             >
-              {resolving ? "Encerrando..." : "Sim, encerrar outra conexão e continuar"}
+              {resolving ? "Encerrando..." : "Sim, encerrar acesso antigo e entrar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
