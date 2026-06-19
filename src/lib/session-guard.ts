@@ -91,9 +91,9 @@ export async function resolveSeatLimit(
   }
 
   // Fallbacks
-  const fallback =
-    (planType && DEFAULT_SEATS_BY_PLAN_TYPE[planType]) ??
-    (planType && DEFAULT_SEATS_BY_SLUG[planType]) ??
+  const fallback: number =
+    (planType ? DEFAULT_SEATS_BY_PLAN_TYPE[planType] : undefined) ??
+    (planType ? DEFAULT_SEATS_BY_SLUG[planType] : undefined) ??
     FALLBACK_SEAT_LIMIT;
   return {
     limit: fallback,
