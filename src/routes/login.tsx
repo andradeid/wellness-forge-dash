@@ -116,32 +116,39 @@ function LoginPage() {
     return (data?.role as AppRole | null) ?? null;
   };
 
+  const [pendingSeatInfo, setPendingSeatInfo] = useState<SeatInfo | null>(null);
+
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     conflictConfirmedRef.current = false;
     try {
       await signIn(email, password);
-      // Após login bem-sucedido, precisamos do user.id
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("Não foi possível identificar o usuário.");
 
       const newToken = generateSessionToken();
-      const existing = await fetchActiveSessionToken(uid);
+      const seatInfo = await getSeatInfo(uid);
       const currentRole = await fetchRoleForNavigation(uid);
       const localToken = getLocalSessionToken();
 
-      if (!existing || existing === localToken) {
-        await claimSession(uid, newToken);
+      // Se o token local já está entre os assentos, é o mesmo dispositivo — só renova.
+      const sameDevice =
+        !!localToken && seatInfo.active.some((s) => s.active_session_token === localToken);
+
+      // Há vaga disponível (ou é admin/super_admin) — entra direto.
+      if (sameDevice || seatInfo.unlimited || seatInfo.active.length < seatInfo.limit) {
+        await addSessionSeat(uid, newToken);
         finalizeEntry(currentRole);
         return;
       }
 
-      // Conflito: já existe sessão ativa em outro dispositivo
+      // Limite atingido — pedir confirmação para derrubar o assento mais antigo.
       setPendingUserId(uid);
       setPendingToken(newToken);
       setPendingRole(currentRole);
+      setPendingSeatInfo(seatInfo);
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
@@ -155,15 +162,17 @@ function LoginPage() {
     setResolving(true);
     try {
       conflictConfirmedRef.current = true;
-      await claimSession(pendingUserId, pendingToken);
+      await replaceOldestSeat(pendingUserId, pendingToken);
       setConflictOpen(false);
       setPendingUserId(null);
       setPendingToken(null);
+      const role = pendingRole;
       setPendingRole(null);
-      finalizeEntry(pendingRole);
+      setPendingSeatInfo(null);
+      finalizeEntry(role);
     } catch (err: any) {
       conflictConfirmedRef.current = false;
-      toast.error(err.message ?? "Não foi possível encerrar a outra sessão.");
+      toast.error(err.message ?? "Não foi possível encerrar a conexão mais antiga.");
     } finally {
       setResolving(false);
     }
