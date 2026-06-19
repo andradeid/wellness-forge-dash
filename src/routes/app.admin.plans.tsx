@@ -168,6 +168,19 @@ function PlansAdminPage() {
                           />
                         </TableCell>
                         <TableCell>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={p.max_seats ?? 1}
+                            onChange={(e) =>
+                              patch(p.id, { max_seats: Math.max(1, Number(e.target.value) || 1) })
+                            }
+                          />
+                          <div className="text-[10px] text-muted-foreground mt-1">
+                            Acessos simultâneos
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <Switch
                             checked={p.is_active}
                             onCheckedChange={(v) => patch(p.id, { is_active: v })}
