@@ -22,6 +22,7 @@ type Plan = {
   price_monthly_cents: number;
   price_yearly_cents: number | null;
   monthly_credits: number;
+  max_seats: number;
   is_active: boolean;
   sort_order: number;
 };
@@ -109,6 +110,7 @@ function PlansAdminPage() {
                     <TableHead className="w-[160px]">Preço Mensal (R$)</TableHead>
                     <TableHead className="w-[160px]">Preço Anual (R$)</TableHead>
                     <TableHead className="w-[140px]">Créditos / mês</TableHead>
+                    <TableHead className="w-[120px]">Assentos</TableHead>
                     <TableHead className="w-[90px]">Ativo</TableHead>
                     <TableHead className="w-[110px]" />
                   </TableRow>
@@ -164,6 +166,19 @@ function PlansAdminPage() {
                               patch(p.id, { monthly_credits: Math.max(0, Number(e.target.value) || 0) })
                             }
                           />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={p.max_seats ?? 1}
+                            onChange={(e) =>
+                              patch(p.id, { max_seats: Math.max(1, Number(e.target.value) || 1) })
+                            }
+                          />
+                          <div className="text-[10px] text-muted-foreground mt-1">
+                            Acessos simultâneos
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Switch
