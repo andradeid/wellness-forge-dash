@@ -186,6 +186,7 @@ function LoginPage() {
     setPendingUserId(null);
     setPendingToken(null);
     setPendingRole(null);
+    setPendingSeatInfo(null);
     setSubmitting(false);
     clearLocalSessionToken();
     try {
