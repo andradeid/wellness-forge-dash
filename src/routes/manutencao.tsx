@@ -39,10 +39,15 @@ function MaintenancePage() {
     let height = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const fontSize = 16;
+    const HEAD_LENGTH = 30; // tamanho da cabeça (rastro controlado)
+    const MUTATION_RATE = 0.08; // ~8% dos caracteres da cabeça mudam por frame
     let columns = 0;
     let drops: number[] = [];
     let speeds: number[] = [];
+    let heads: string[][] = []; // por coluna: array de 30 chars (índice 0 = ponta)
     let last = 0;
+
+    const randomBit = () => (Math.random() < 0.5 ? "0" : "1");
 
     const resize = () => {
       width = canvas.clientWidth;
@@ -55,14 +60,17 @@ function MaintenancePage() {
         Math.floor((Math.random() * -height) / fontSize),
       );
       speeds = Array.from({ length: columns }, () => 0.12 + Math.random() * 0.35);
+      heads = Array.from({ length: columns }, () =>
+        Array.from({ length: HEAD_LENGTH }, randomBit),
+      );
     };
 
     const draw = (t: number) => {
       const dt = Math.min(50, t - last);
       last = t;
 
-      // Trilha (fade)
-      ctx.fillStyle = "rgba(10, 10, 20, 0.08)";
+      // Limpa o frame inteiro (sem rastro do canvas — controlamos o rastro nós mesmos)
+      ctx.fillStyle = "rgba(10, 10, 20, 1)";
       ctx.fillRect(0, 0, width, height);
 
       ctx.font = `${fontSize}px ui-monospace, "SFMono-Regular", Menlo, monospace`;
@@ -70,21 +78,37 @@ function MaintenancePage() {
 
       for (let i = 0; i < columns; i++) {
         const x = i * fontSize;
-        const y = drops[i] * fontSize;
-        const ch = Math.random() < 0.5 ? "0" : "1";
+        const headY = drops[i] * fontSize;
+        const baseColor = i % 2 === 0 ? "232, 160, 76" : "232, 155, 207";
 
-        // Caractere único com cores da marca
-        ctx.fillStyle = i % 2 === 0 ? "rgba(232, 160, 76, 0.05)" : "rgba(232, 155, 207, 0.05)";
-        ctx.fillText(ch, x, y);
+        // Muta apenas alguns caracteres da cabeça (não todos)
+        for (let k = 0; k < HEAD_LENGTH; k++) {
+          if (Math.random() < MUTATION_RATE) heads[i][k] = randomBit();
+        }
+
+        // Desenha os 30 caracteres da cabeça, com opacidade decrescente
+        for (let k = 0; k < HEAD_LENGTH; k++) {
+          const y = headY - k * fontSize;
+          if (y < -fontSize || y > height) continue;
+          // ponta (k=0) mais brilhante e quase branca; resto vai esmaecendo
+          const alpha = (1 - k / HEAD_LENGTH) * 0.35;
+          if (k === 0) {
+            ctx.fillStyle = `rgba(255, 230, 200, ${0.9})`;
+          } else {
+            ctx.fillStyle = `rgba(${baseColor}, ${alpha})`;
+          }
+          ctx.fillText(heads[i][k], x, y);
+        }
 
         drops[i] += speeds[i] * (dt / 24);
-        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+        if (headY - HEAD_LENGTH * fontSize > height && Math.random() > 0.975) {
           drops[i] = Math.floor(Math.random() * -20);
         }
       }
 
       raf = requestAnimationFrame(draw);
     };
+
 
     resize();
     raf = requestAnimationFrame(draw);
