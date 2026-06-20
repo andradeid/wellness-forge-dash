@@ -74,11 +74,11 @@ function MaintenancePage() {
         const ch = Math.random() < 0.5 ? "0" : "1";
 
         // Cabeça brilhante
-        ctx.fillStyle = "rgba(255, 230, 200, 0.9)";
+        ctx.fillStyle = "rgba(255, 230, 200, 0.05)";
         ctx.fillText(ch, x, y);
 
         // Rastro com cores da marca
-        ctx.fillStyle = i % 2 === 0 ? "rgba(232, 160, 76, 0.9)" : "rgba(232, 155, 207, 0.9)";
+        ctx.fillStyle = i % 2 === 0 ? "rgba(232, 160, 76, 0.05)" : "rgba(232, 155, 207, 0.05)";
         ctx.fillText(ch, x, y - fontSize);
 
         drops[i] += speeds[i] * (dt / 24);
