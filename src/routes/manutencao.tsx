@@ -92,9 +92,10 @@ function MaintenancePage() {
           const y = headY - k * fontSize;
           if (y < -fontSize || y > height) continue;
           // ponta (k=0) mais brilhante e quase branca; resto vai esmaecendo
-          const alpha = (1 - k / HEAD_LENGTH) * 0.05;
+          const alpha = (1 - k / HEAD_LENGTH) * 0.07;
           if (k === 0) {
-            ctx.fillStyle = `rgba(255, 230, 200, 0.05)`;
+            ctx.fillStyle = `rgba(255, 230, 200, 0.07)`;
+
           } else {
             ctx.fillStyle = `rgba(${baseColor}, ${alpha})`;
           }
