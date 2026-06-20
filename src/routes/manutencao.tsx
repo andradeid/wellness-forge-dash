@@ -54,7 +54,7 @@ function MaintenancePage() {
       drops = Array.from({ length: columns }, () =>
         Math.floor((Math.random() * -height) / fontSize),
       );
-      speeds = Array.from({ length: columns }, () => 0.12 + Math.random() * 0.35);
+      speeds = Array.from({ length: columns }, () => 0.04 + Math.random() * 0.12);
     };
 
     const draw = (t: number) => {
