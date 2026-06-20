@@ -57,8 +57,9 @@ function MaintenancePage() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       columns = Math.ceil(width / fontSize);
       drops = Array.from({ length: columns }, () =>
-        Math.floor((Math.random() * -height) / fontSize),
+        Math.floor(Math.random() * (height / fontSize)),
       );
+
       speeds = Array.from({ length: columns }, () => 0.12 + Math.random() * 0.35);
       heads = Array.from({ length: columns }, () =>
         Array.from({ length: HEAD_LENGTH }, randomBit),
