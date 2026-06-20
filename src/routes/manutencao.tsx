@@ -27,7 +27,7 @@ function MaintenancePage() {
     void supabase.auth.signOut();
   }, []);
 
-  // Animação de rede neural no fundo.
+  // Animação Matrix (chuva de 0s e 1s) no fundo.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -38,9 +38,11 @@ function MaintenancePage() {
     let width = 0;
     let height = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    type Node = { x: number; y: number; vx: number; vy: number; r: number };
-    let nodes: Node[] = [];
+    const fontSize = 16;
+    let columns = 0;
+    let drops: number[] = [];
+    let speeds: number[] = [];
+    let last = 0;
 
     const resize = () => {
       width = canvas.clientWidth;
@@ -48,75 +50,48 @@ function MaintenancePage() {
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      const density = Math.min(110, Math.floor((width * height) / 14000));
-      nodes = Array.from({ length: density }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: (Math.random() - 0.5) * 0.35,
-        r: Math.random() * 1.6 + 0.6,
-      }));
+      columns = Math.ceil(width / fontSize);
+      drops = Array.from({ length: columns }, () =>
+        Math.floor((Math.random() * -height) / fontSize),
+      );
+      speeds = Array.from({ length: columns }, () => 0.4 + Math.random() * 1.1);
     };
 
-    const draw = () => {
-      ctx.clearRect(0, 0, width, height);
+    const draw = (t: number) => {
+      const dt = Math.min(50, t - last);
+      last = t;
 
-      // Background gradient glow
-      const grad = ctx.createRadialGradient(
-        width / 2,
-        height / 2,
-        0,
-        width / 2,
-        height / 2,
-        Math.max(width, height) / 1.2,
-      );
-      grad.addColorStop(0, "rgba(232, 160, 76, 0.08)");
-      grad.addColorStop(0.6, "rgba(232, 155, 207, 0.05)");
-      grad.addColorStop(1, "rgba(10, 10, 20, 0)");
-      ctx.fillStyle = grad;
+      // Trilha (fade)
+      ctx.fillStyle = "rgba(10, 10, 20, 0.08)";
       ctx.fillRect(0, 0, width, height);
 
-      // Update + draw connections
-      const maxDist = 140;
-      for (let i = 0; i < nodes.length; i++) {
-        const n = nodes[i];
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > width) n.vx *= -1;
-        if (n.y < 0 || n.y > height) n.vy *= -1;
+      ctx.font = `${fontSize}px ui-monospace, "SFMono-Regular", Menlo, monospace`;
+      ctx.textBaseline = "top";
 
-        for (let j = i + 1; j < nodes.length; j++) {
-          const m = nodes[j];
-          const dx = n.x - m.x;
-          const dy = n.y - m.y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < maxDist) {
-            const alpha = 1 - d / maxDist;
-            const t = (i + j) % 2 === 0 ? "232, 160, 76" : "232, 155, 207";
-            ctx.strokeStyle = `rgba(${t}, ${alpha * 0.35})`;
-            ctx.lineWidth = 0.6;
-            ctx.beginPath();
-            ctx.moveTo(n.x, n.y);
-            ctx.lineTo(m.x, m.y);
-            ctx.stroke();
-          }
+      for (let i = 0; i < columns; i++) {
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        const ch = Math.random() < 0.5 ? "0" : "1";
+
+        // Cabeça brilhante
+        ctx.fillStyle = "rgba(255, 230, 200, 0.95)";
+        ctx.fillText(ch, x, y);
+
+        // Rastro com cores da marca
+        ctx.fillStyle = i % 2 === 0 ? "rgba(232, 160, 76, 0.55)" : "rgba(232, 155, 207, 0.5)";
+        ctx.fillText(ch, x, y - fontSize);
+
+        drops[i] += speeds[i] * (dt / 24);
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+          drops[i] = Math.floor(Math.random() * -20);
         }
-      }
-
-      // Nodes
-      for (const n of nodes) {
-        ctx.fillStyle = "rgba(255, 220, 200, 0.9)";
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fill();
       }
 
       raf = requestAnimationFrame(draw);
     };
 
     resize();
-    draw();
+    raf = requestAnimationFrame(draw);
     window.addEventListener("resize", resize);
     return () => {
       cancelAnimationFrame(raf);
