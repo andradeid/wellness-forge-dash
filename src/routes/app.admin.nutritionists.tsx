@@ -24,7 +24,9 @@ interface Row {
   status: string | null;
   plan_type: string | null;
   current_period_end: string | null;
+  seats_override: number | null;
 }
+
 
 function statusVariant(status: string | null): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
