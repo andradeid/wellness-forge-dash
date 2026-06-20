@@ -118,7 +118,7 @@ function AppLayout() {
     return () => {
       cancelled = true;
     };
-  }, [loading, session, pathname, navigate]);
+  }, [loading, session, pathname, navigate, role]);
 
   if (loading || (session && !sessionAllowed)) {
     return (
