@@ -84,6 +84,11 @@ function AppLayout() {
   // tomado por outro dispositivo, desloga e redireciona para /login.
   useEffect(() => {
     if (loading || !session?.user) return;
+    // Super admin não tem assento — pula validação de sessão única.
+    if (role === "super_admin") {
+      setSessionAllowed(true);
+      return;
+    }
     setSessionAllowed(false);
     let cancelled = false;
     (async () => {
