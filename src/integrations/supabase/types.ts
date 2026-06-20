@@ -683,6 +683,48 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          id: string
+          maintenance_enabled: boolean
+          maintenance_html: string
+          seo_canonical: string | null
+          seo_description: string | null
+          seo_title: string | null
+          site_description: string | null
+          sitemap_extra: string | null
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          maintenance_enabled?: boolean
+          maintenance_html?: string
+          seo_canonical?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          site_description?: string | null
+          sitemap_extra?: string | null
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          maintenance_enabled?: boolean
+          maintenance_html?: string
+          seo_canonical?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          site_description?: string | null
+          sitemap_extra?: string | null
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           balance: number
