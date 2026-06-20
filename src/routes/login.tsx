@@ -137,8 +137,15 @@ function LoginPage() {
       if (!uid) throw new Error("Não foi possível identificar o usuário.");
 
       const newToken = generateSessionToken();
-      const seatInfo = await getSeatInfo(uid);
       const currentRole = await fetchRoleForNavigation(uid);
+
+      // Super admin não tem assento — entra direto sem gravar sessão única.
+      if (currentRole === "super_admin") {
+        finalizeEntry(currentRole);
+        return;
+      }
+
+      const seatInfo = await getSeatInfo(uid);
       const localToken = getLocalSessionToken();
 
       // Se o token local já está entre os assentos, é o mesmo dispositivo — só renova.
