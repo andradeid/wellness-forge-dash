@@ -35,8 +35,10 @@ export function useSystemSettings() {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: fetchSettings,
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
   });
 }
 
