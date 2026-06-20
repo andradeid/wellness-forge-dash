@@ -27,7 +27,7 @@ function MaintenancePage() {
     void supabase.auth.signOut();
   }, []);
 
-  // Colunas verticais de 0s e 1s, em que apenas alguns dígitos piscam de tempos em tempos.
+  // Animação Matrix (chuva de 0s e 1s) no fundo.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -39,12 +39,10 @@ function MaintenancePage() {
     let height = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const fontSize = 16;
-    const rowsPerColumn = 30;
     let columns = 0;
-    let grid: string[][] = [];
-    let nextFlip = 0;
-
-    const randBit = () => (Math.random() < 0.5 ? "0" : "1");
+    let drops: number[] = [];
+    let speeds: number[] = [];
+    let last = 0;
 
     const resize = () => {
       width = canvas.clientWidth;
@@ -53,34 +51,39 @@ function MaintenancePage() {
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       columns = Math.ceil(width / fontSize);
-      grid = Array.from({ length: columns }, () =>
-        Array.from({ length: rowsPerColumn }, randBit),
+      drops = Array.from({ length: columns }, () =>
+        Math.floor((Math.random() * -height) / fontSize),
       );
+      speeds = Array.from({ length: columns }, () => 0.12 + Math.random() * 0.35);
     };
 
     const draw = (t: number) => {
-      // Pisca poucos dígitos a cada ~250ms (muito lento).
-      if (t - nextFlip > 250) {
-        nextFlip = t;
-        const flips = Math.max(1, Math.floor(columns * 0.08));
-        for (let k = 0; k < flips; k++) {
-          const c = Math.floor(Math.random() * columns);
-          const r = Math.floor(Math.random() * rowsPerColumn);
-          grid[c][r] = randBit();
-        }
-      }
+      const dt = Math.min(50, t - last);
+      last = t;
 
-      ctx.clearRect(0, 0, width, height);
+      // Trilha (fade)
+      ctx.fillStyle = "rgba(10, 10, 20, 0.08)";
+      ctx.fillRect(0, 0, width, height);
+
       ctx.font = `${fontSize}px ui-monospace, "SFMono-Regular", Menlo, monospace`;
       ctx.textBaseline = "top";
 
-      const rowHeight = height / rowsPerColumn;
       for (let i = 0; i < columns; i++) {
         const x = i * fontSize;
-        for (let r = 0; r < rowsPerColumn; r++) {
-          ctx.fillStyle =
-            i % 2 === 0 ? "rgba(232, 160, 76, 0.05)" : "rgba(232, 155, 207, 0.05)";
-          ctx.fillText(grid[i][r], x, r * rowHeight);
+        const y = drops[i] * fontSize;
+        const ch = Math.random() < 0.5 ? "0" : "1";
+
+        // Cabeça brilhante
+        ctx.fillStyle = "rgba(255, 230, 200, 0.05)";
+        ctx.fillText(ch, x, y);
+
+        // Rastro com cores da marca
+        ctx.fillStyle = i % 2 === 0 ? "rgba(232, 160, 76, 0.05)" : "rgba(232, 155, 207, 0.05)";
+        ctx.fillText(ch, x, y - fontSize);
+
+        drops[i] += speeds[i] * (dt / 24);
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+          drops[i] = Math.floor(Math.random() * -20);
         }
       }
 
