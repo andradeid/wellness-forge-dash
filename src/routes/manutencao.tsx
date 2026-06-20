@@ -56,11 +56,13 @@ function MaintenancePage() {
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       columns = Math.ceil(width / fontSize);
+      const rows = Math.ceil(height / fontSize);
+      // Distribui as gotas por toda a altura para já iniciar com chuva completa
       drops = Array.from({ length: columns }, () =>
-        Math.floor(Math.random() * (height / fontSize)),
+        Math.floor(Math.random() * (rows + HEAD_LENGTH)),
       );
 
-      speeds = Array.from({ length: columns }, () => 0.12 + Math.random() * 0.35);
+      speeds = Array.from({ length: columns }, () => 0.25 + Math.random() * 0.5);
       heads = Array.from({ length: columns }, () =>
         Array.from({ length: HEAD_LENGTH }, randomBit),
       );
@@ -104,8 +106,9 @@ function MaintenancePage() {
         }
 
         drops[i] += speeds[i] * (dt / 24);
-        if (headY - HEAD_LENGTH * fontSize > height && Math.random() > 0.975) {
-          drops[i] = Math.floor(Math.random() * -20);
+        // Reinicia imediatamente acima do topo para manter o fluxo contínuo
+        if (headY - HEAD_LENGTH * fontSize > height) {
+          drops[i] = -Math.floor(Math.random() * HEAD_LENGTH);
         }
       }
 
