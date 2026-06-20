@@ -73,13 +73,9 @@ function MaintenancePage() {
         const y = drops[i] * fontSize;
         const ch = Math.random() < 0.5 ? "0" : "1";
 
-        // Cabeça brilhante
-        ctx.fillStyle = "rgba(255, 230, 200, 0.05)";
-        ctx.fillText(ch, x, y);
-
-        // Rastro com cores da marca
+        // Caractere único com cores da marca
         ctx.fillStyle = i % 2 === 0 ? "rgba(232, 160, 76, 0.05)" : "rgba(232, 155, 207, 0.05)";
-        ctx.fillText(ch, x, y - fontSize);
+        ctx.fillText(ch, x, y);
 
         drops[i] += speeds[i] * (dt / 24);
         if (drops[i] * fontSize > height && Math.random() > 0.975) {
