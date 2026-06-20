@@ -200,6 +200,7 @@ function NutritionistsPage() {
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Validade</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground w-[160px]">Assentos</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
                 </TableRow>
               </TableHeader>
@@ -218,9 +219,16 @@ function NutritionistsPage() {
                     <TableCell className="capitalize">{r.plan_type ?? "—"}</TableCell>
                     <TableCell><Badge variant={statusVariant(r.status)} className="rounded-full">{statusLabel(r.status)}</Badge></TableCell>
                     <TableCell>{r.current_period_end ? new Date(r.current_period_end).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell>
+                      <SeatsEditor
+                        value={r.seats_override}
+                        onSave={(v) => saveSeats(r.id, v)}
+                      />
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-BR")}</TableCell>
                   </TableRow>
                 ))}
+
               </TableBody>
             </Table>
           )}
