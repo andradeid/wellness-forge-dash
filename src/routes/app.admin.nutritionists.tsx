@@ -237,3 +237,64 @@ function NutritionistsPage() {
     </div>
   );
 }
+
+function SeatsEditor({
+  value,
+  onSave,
+}: {
+  value: number | null;
+  onSave: (v: number | null) => void | Promise<void>;
+}) {
+  const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(value != null ? String(value) : "");
+  }, [value]);
+
+  const dirty = draft !== (value != null ? String(value) : "");
+
+  async function commit() {
+    const trimmed = draft.trim();
+    let next: number | null = null;
+    if (trimmed !== "") {
+      const n = Number(trimmed);
+      if (!Number.isInteger(n) || n <= 0) {
+        toast.error("Informe um número inteiro positivo (ou vazio para usar o plano).");
+        return;
+      }
+      next = n;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="number"
+        min={1}
+        step={1}
+        value={draft}
+        placeholder="Plano"
+        onChange={(e) => setDraft(e.target.value)}
+        className="h-9 w-20 rounded-lg"
+      />
+      <Button
+        size="sm"
+        variant={dirty ? "default" : "ghost"}
+        disabled={!dirty || saving}
+        onClick={commit}
+        className="h-9 px-2"
+        aria-label="Salvar assentos"
+      >
+        <Check className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
