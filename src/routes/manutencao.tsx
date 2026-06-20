@@ -148,8 +148,8 @@ function MaintenancePage() {
 
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
           No momento, estamos aprimorando nossa inteligência artificial para
-          entregar o que há de melhor em{" "}
-          <span className="text-white">inteligência funcional integrativa</span>.
+          entregar o que há de melhor raciocínio clínico em{" "}
+          <span className="text-white">Nutrição Funcional e Integrativa</span>.
         </p>
 
         <div className="mt-10 flex items-center gap-3 text-xs text-white/50">
