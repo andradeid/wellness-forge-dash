@@ -35,10 +35,13 @@ export function useSystemSettings() {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: fetchSettings,
-    staleTime: 15_000,
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: "always",
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    structuralSharing: true,
   });
 }
 
