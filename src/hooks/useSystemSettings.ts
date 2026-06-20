@@ -11,6 +11,10 @@ export interface SystemSettings {
   timezone: string;
   maintenance_enabled: boolean;
   maintenance_html: string;
+  maintenance_badge: string;
+  maintenance_title: string;
+  maintenance_subtitle: string;
+  maintenance_footer: string;
   updated_at: string;
   updated_by: string | null;
 }

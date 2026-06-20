@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { LogIn, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 export const Route = createFileRoute("/manutencao")({
   head: () => ({
@@ -21,6 +22,15 @@ export const Route = createFileRoute("/manutencao")({
 
 function MaintenancePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { data: settings } = useSystemSettings();
+  const badge = settings?.maintenance_badge ?? "LUMMA · Em evolução";
+  const title = settings?.maintenance_title ?? "Estamos em evolução.";
+  const subtitle =
+    settings?.maintenance_subtitle ??
+    "No momento, estamos aprimorando nossa inteligência artificial para entregar o que há de melhor raciocínio clínico em Nutrição Funcional e Integrativa.";
+  const footer =
+    settings?.maintenance_footer ??
+    "Treinando modelos · sincronizando agentes · ajustando protocolos";
 
   // Encerra qualquer sessão ativa durante a manutenção.
   useEffect(() => {
@@ -140,17 +150,15 @@ function MaintenancePage() {
       <main className="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 text-center">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs uppercase tracking-widest text-white/70 backdrop-blur">
           <Sparkles className="h-3.5 w-3.5 text-[#e8a04c]" />
-          LUMMA · Em evolução
+          {badge}
         </div>
 
         <h1 className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-4xl font-semibold leading-tight text-transparent sm:text-5xl md:text-6xl">
-          Estamos em evolução.
+          {title}
         </h1>
 
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
-          No momento, estamos aprimorando nossa inteligência artificial para
-          entregar o que há de melhor raciocínio clínico em{" "}
-          <span className="text-white">Nutrição Funcional e Integrativa</span>.
+        <p className="mt-6 max-w-2xl whitespace-pre-line text-base leading-relaxed text-white/75 sm:text-lg">
+          {subtitle}
         </p>
 
         <div className="mt-10 flex items-center gap-3 text-xs text-white/50">
@@ -158,7 +166,7 @@ function MaintenancePage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e8a04c] opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#e89bcf]" />
           </span>
-          Treinando modelos · sincronizando agentes · ajustando protocolos
+          {footer}
         </div>
       </main>
 
