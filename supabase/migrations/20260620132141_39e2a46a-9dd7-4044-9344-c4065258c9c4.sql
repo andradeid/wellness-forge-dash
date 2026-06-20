@@ -1,0 +1,2 @@
+ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS seats_override integer;
+COMMENT ON COLUMN public.subscriptions.seats_override IS 'Quando preenchido, sobrepõe o max_seats do plano para este usuário.';

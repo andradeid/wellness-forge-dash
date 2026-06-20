@@ -656,6 +656,7 @@ export type Database = {
           current_period_end: string
           id: string
           plan_type: Database["public"]["Enums"]["plan_type"]
+          seats_override: number | null
           status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
           user_id: string
@@ -665,6 +666,7 @@ export type Database = {
           current_period_end?: string
           id?: string
           plan_type?: Database["public"]["Enums"]["plan_type"]
+          seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id: string
@@ -674,6 +676,7 @@ export type Database = {
           current_period_end?: string
           id?: string
           plan_type?: Database["public"]["Enums"]["plan_type"]
+          seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id?: string

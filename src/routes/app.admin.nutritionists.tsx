@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ChevronRight, Search, Stethoscope, Users } from "lucide-react";
+import { ChevronRight, Search, Stethoscope, Users, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/app/admin/nutritionists")({
   component: NutritionistsPage,
@@ -22,7 +24,9 @@ interface Row {
   status: string | null;
   plan_type: string | null;
   current_period_end: string | null;
+  seats_override: number | null;
 }
+
 
 function statusVariant(status: string | null): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -57,7 +61,7 @@ function NutritionistsPage() {
 
       const [profilesRes, subsRes] = await Promise.all([
         (supabase as any).from("profiles").select("id, full_name, email, created_at").in("id", ids),
-        (supabase as any).from("subscriptions").select("user_id, status, plan_type, current_period_end").in("user_id", ids),
+        (supabase as any).from("subscriptions").select("user_id, status, plan_type, current_period_end, seats_override").in("user_id", ids),
       ]);
       if (profilesRes.error) toast.error(profilesRes.error.message);
       if (subsRes.error) toast.error(subsRes.error.message);
@@ -73,12 +77,31 @@ function NutritionistsPage() {
         status: subMap.get(p.id)?.status ?? null,
         plan_type: subMap.get(p.id)?.plan_type ?? null,
         current_period_end: subMap.get(p.id)?.current_period_end ?? null,
+        seats_override: subMap.get(p.id)?.seats_override ?? null,
       }));
 
       setRows(merged);
       setLoading(false);
     })();
   }, []);
+
+  async function saveSeats(userId: string, value: number | null) {
+    const payload: any = {
+      user_id: userId,
+      seats_override: value,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await (supabase as any)
+      .from("subscriptions")
+      .upsert(payload, { onConflict: "user_id" });
+    if (error) {
+      toast.error("Erro ao salvar assentos: " + error.message);
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === userId ? { ...r, seats_override: value } : r)));
+    toast.success("Assentos atualizados com sucesso.");
+  }
+
 
   const filtered = rows.filter((r) =>
     (r.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -177,6 +200,7 @@ function NutritionistsPage() {
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Validade</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground w-[160px]">Assentos</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
                 </TableRow>
               </TableHeader>
@@ -195,9 +219,16 @@ function NutritionistsPage() {
                     <TableCell className="capitalize">{r.plan_type ?? "—"}</TableCell>
                     <TableCell><Badge variant={statusVariant(r.status)} className="rounded-full">{statusLabel(r.status)}</Badge></TableCell>
                     <TableCell>{r.current_period_end ? new Date(r.current_period_end).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell>
+                      <SeatsEditor
+                        value={r.seats_override}
+                        onSave={(v) => saveSeats(r.id, v)}
+                      />
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-BR")}</TableCell>
                   </TableRow>
                 ))}
+
               </TableBody>
             </Table>
           )}
@@ -206,3 +237,64 @@ function NutritionistsPage() {
     </div>
   );
 }
+
+function SeatsEditor({
+  value,
+  onSave,
+}: {
+  value: number | null;
+  onSave: (v: number | null) => void | Promise<void>;
+}) {
+  const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(value != null ? String(value) : "");
+  }, [value]);
+
+  const dirty = draft !== (value != null ? String(value) : "");
+
+  async function commit() {
+    const trimmed = draft.trim();
+    let next: number | null = null;
+    if (trimmed !== "") {
+      const n = Number(trimmed);
+      if (!Number.isInteger(n) || n <= 0) {
+        toast.error("Informe um número inteiro positivo (ou vazio para usar o plano).");
+        return;
+      }
+      next = n;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="number"
+        min={1}
+        step={1}
+        value={draft}
+        placeholder="Plano"
+        onChange={(e) => setDraft(e.target.value)}
+        className="h-9 w-20 rounded-lg"
+      />
+      <Button
+        size="sm"
+        variant={dirty ? "default" : "ghost"}
+        disabled={!dirty || saving}
+        onClick={commit}
+        className="h-9 px-2"
+        aria-label="Salvar assentos"
+      >
+        <Check className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
