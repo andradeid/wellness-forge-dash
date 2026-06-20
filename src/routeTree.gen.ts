@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as ManutencaoRouteImport } from './routes/manutencao'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,7 @@ import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chat
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
+import { Route as AppAdminSystemRouteImport } from './routes/app.admin.system'
 import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
 import { Route as AppAdminPlansRouteImport } from './routes/app.admin.plans'
@@ -43,6 +45,11 @@ import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.struc
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManutencaoRoute = ManutencaoRouteImport.update({
+  id: '/manutencao',
+  path: '/manutencao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -113,6 +120,11 @@ const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminSystemRoute = AppAdminSystemRouteImport.update({
+  id: '/admin/system',
+  path: '/admin/system',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminRankingRoute = AppAdminRankingRouteImport.update({
@@ -196,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/manutencao': typeof ManutencaoRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -219,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/ranking': typeof AppAdminRankingRoute
+  '/app/admin/system': typeof AppAdminSystemRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
@@ -227,6 +241,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/manutencao': typeof ManutencaoRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -250,6 +265,7 @@ export interface FileRoutesByTo {
   '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/ranking': typeof AppAdminRankingRoute
+  '/app/admin/system': typeof AppAdminSystemRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
@@ -260,6 +276,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/manutencao': typeof ManutencaoRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -283,6 +300,7 @@ export interface FileRoutesById {
   '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
   '/app/admin/ranking': typeof AppAdminRankingRoute
+  '/app/admin/system': typeof AppAdminSystemRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
@@ -294,6 +312,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/login'
+    | '/manutencao'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -317,6 +336,7 @@ export interface FileRouteTypes {
     | '/app/admin/plans'
     | '/app/admin/playground'
     | '/app/admin/ranking'
+    | '/app/admin/system'
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
@@ -325,6 +345,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/manutencao'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -348,6 +369,7 @@ export interface FileRouteTypes {
     | '/app/admin/plans'
     | '/app/admin/playground'
     | '/app/admin/ranking'
+    | '/app/admin/system'
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
@@ -357,6 +379,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/login'
+    | '/manutencao'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -380,6 +403,7 @@ export interface FileRouteTypes {
     | '/app/admin/plans'
     | '/app/admin/playground'
     | '/app/admin/ranking'
+    | '/app/admin/system'
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
@@ -390,6 +414,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ManutencaoRoute: typeof ManutencaoRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
@@ -406,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manutencao': {
+      id: '/manutencao'
+      path: '/manutencao'
+      fullPath: '/manutencao'
+      preLoaderRoute: typeof ManutencaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -504,6 +536,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/users'
       fullPath: '/app/admin/users'
       preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/system': {
+      id: '/app/admin/system'
+      path: '/admin/system'
+      fullPath: '/app/admin/system'
+      preLoaderRoute: typeof AppAdminSystemRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/admin/ranking': {
@@ -631,6 +670,7 @@ interface AppRouteChildren {
   AppAdminPlansRoute: typeof AppAdminPlansRoute
   AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
   AppAdminRankingRoute: typeof AppAdminRankingRoute
+  AppAdminSystemRoute: typeof AppAdminSystemRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
@@ -654,6 +694,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminPlansRoute: AppAdminPlansRoute,
   AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,
   AppAdminRankingRoute: AppAdminRankingRoute,
+  AppAdminSystemRoute: AppAdminSystemRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
@@ -666,6 +707,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  ManutencaoRoute: ManutencaoRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,

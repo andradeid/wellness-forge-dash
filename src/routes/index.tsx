@@ -9,6 +9,7 @@ import {
   isSessionStillValid,
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/")({
@@ -28,6 +29,13 @@ export const Route = createFileRoute("/")({
 function Teaser() {
   const { session, loading, role } = useAuth();
   const navigate = useNavigate();
+  const { data: systemSettings } = useSystemSettings();
+
+  useEffect(() => {
+    if (systemSettings?.maintenance_enabled && role !== "super_admin") {
+      navigate({ to: "/manutencao", replace: true });
+    }
+  }, [systemSettings?.maintenance_enabled, role, navigate]);
 
   useEffect(() => {
     if (loading || !session?.user) return;
