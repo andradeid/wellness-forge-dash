@@ -39,7 +39,7 @@ function MaintenancePage() {
     let height = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const fontSize = 16;
-    const HEAD_LENGTH = 30; // tamanho da cabeça (rastro controlado)
+    const HEAD_LENGTH = 90; // tamanho da cabeça (rastro controlado)
     const MUTATION_RATE = 0.08; // ~8% dos caracteres da cabeça mudam por frame
     let columns = 0;
     let drops: number[] = [];
