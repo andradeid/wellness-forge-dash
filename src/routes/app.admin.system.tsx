@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import DOMPurify from "dompurify";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -222,32 +221,57 @@ function AdminSystemPage() {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Código HTML/CSS</Label>
-                  <Textarea
-                    rows={16}
-                    className="font-mono text-xs"
-                    value={form.maintenance_html}
-                    onChange={(e) => patch({ maintenance_html: e.target.value })}
+                  <Label>Badge (topo)</Label>
+                  <Input
+                    maxLength={80}
+                    value={form.maintenance_badge ?? ""}
+                    onChange={(e) => patch({ maintenance_badge: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Pré-visualização</Label>
-                  <iframe
-                    title="Preview manutenção"
-                    sandbox=""
-                    srcDoc={DOMPurify.sanitize(form.maintenance_html)}
-                    className="w-full h-[360px] border rounded-md bg-white"
+                  <Label>Título principal</Label>
+                  <Input
+                    maxLength={120}
+                    value={form.maintenance_title ?? ""}
+                    onChange={(e) => patch({ maintenance_title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subtítulo</Label>
+                  <Textarea
+                    rows={4}
+                    maxLength={500}
+                    value={form.maintenance_subtitle ?? ""}
+                    onChange={(e) => patch({ maintenance_subtitle: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Rodapé (status)</Label>
+                  <Input
+                    maxLength={160}
+                    value={form.maintenance_footer ?? ""}
+                    onChange={(e) => patch({ maintenance_footer: e.target.value })}
                   />
                 </div>
               </div>
 
               <Button
-                onClick={() => save({ maintenance_html: form.maintenance_html }, "HTML salvo")}
+                onClick={() =>
+                  save(
+                    {
+                      maintenance_badge: form.maintenance_badge,
+                      maintenance_title: form.maintenance_title,
+                      maintenance_subtitle: form.maintenance_subtitle,
+                      maintenance_footer: form.maintenance_footer,
+                    },
+                    "Textos salvos",
+                  )
+                }
                 disabled={update.isPending}
               >
-                {update.isPending ? "Salvando..." : "Salvar HTML"}
+                {update.isPending ? "Salvando..." : "Salvar textos"}
               </Button>
             </CardContent>
           </Card>

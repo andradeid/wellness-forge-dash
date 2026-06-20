@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { LogIn, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 export const Route = createFileRoute("/manutencao")({
   head: () => ({
