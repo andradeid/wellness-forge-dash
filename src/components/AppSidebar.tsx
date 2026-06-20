@@ -149,6 +149,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { title: "Usuários", url: "/app/admin/users", icon: Users },
       { title: "Administradores", url: "/app/admin/administrators", icon: Shield, badge: "NOVO" },
+      { title: "Sistema", url: "/app/admin/system", icon: SettingsIcon, superAdminOnly: true, badge: "NOVO" },
     ],
   },
   {

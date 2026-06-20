@@ -17,6 +17,7 @@ import {
   isSessionStillValid,
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -32,6 +33,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
   { prefix: "/app/admin/ranking", roles: ["super_admin"] },
   { prefix: "/app/admin/playground", roles: ["super_admin"] },
   { prefix: "/app/admin/feedbacks", roles: ["super_admin"] },
+  { prefix: "/app/admin/system", roles: ["super_admin"] },
   // Admin + super_admin
   { prefix: "/app/admin/administrators", roles: ["admin", "super_admin"] },
   { prefix: "/app/admin/integrations", roles: ["admin", "super_admin"] },
@@ -54,6 +56,13 @@ function AppLayout() {
   const [sessionAllowed, setSessionAllowed] = useState(false);
   const paywall = usePaywallState();
   const topup = useTopUpState();
+  const { data: systemSettings } = useSystemSettings();
+
+  useEffect(() => {
+    if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
+      navigate({ to: "/manutencao", replace: true });
+    }
+  }, [systemSettings?.maintenance_enabled, role, navigate]);
 
   useEffect(() => {
     if (!loading && !session) {

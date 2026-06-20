@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 import {
   addSessionSeat,
   clearLocalSessionToken,
@@ -45,6 +46,13 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { session, signIn, signUp, loading, role } = useAuth();
   const navigate = useNavigate();
+  const { data: systemSettings } = useSystemSettings();
+
+  useEffect(() => {
+    if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
+      navigate({ to: "/manutencao", replace: true });
+    }
+  }, [systemSettings?.maintenance_enabled, role, navigate]);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
 
   const [email, setEmail] = useState("");
