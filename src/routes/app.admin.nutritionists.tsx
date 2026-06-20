@@ -61,7 +61,7 @@ function NutritionistsPage() {
 
       const [profilesRes, subsRes] = await Promise.all([
         (supabase as any).from("profiles").select("id, full_name, email, created_at").in("id", ids),
-        (supabase as any).from("subscriptions").select("user_id, status, plan_type, current_period_end").in("user_id", ids),
+        (supabase as any).from("subscriptions").select("user_id, status, plan_type, current_period_end, seats_override").in("user_id", ids),
       ]);
       if (profilesRes.error) toast.error(profilesRes.error.message);
       if (subsRes.error) toast.error(subsRes.error.message);
@@ -77,12 +77,31 @@ function NutritionistsPage() {
         status: subMap.get(p.id)?.status ?? null,
         plan_type: subMap.get(p.id)?.plan_type ?? null,
         current_period_end: subMap.get(p.id)?.current_period_end ?? null,
+        seats_override: subMap.get(p.id)?.seats_override ?? null,
       }));
 
       setRows(merged);
       setLoading(false);
     })();
   }, []);
+
+  async function saveSeats(userId: string, value: number | null) {
+    const payload: any = {
+      user_id: userId,
+      seats_override: value,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await (supabase as any)
+      .from("subscriptions")
+      .upsert(payload, { onConflict: "user_id" });
+    if (error) {
+      toast.error("Erro ao salvar assentos: " + error.message);
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === userId ? { ...r, seats_override: value } : r)));
+    toast.success("Assentos atualizados com sucesso.");
+  }
+
 
   const filtered = rows.filter((r) =>
     (r.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
