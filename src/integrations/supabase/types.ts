@@ -686,8 +686,12 @@ export type Database = {
       system_settings: {
         Row: {
           id: string
+          maintenance_badge: string
           maintenance_enabled: boolean
+          maintenance_footer: string
           maintenance_html: string
+          maintenance_subtitle: string
+          maintenance_title: string
           seo_canonical: string | null
           seo_description: string | null
           seo_title: string | null
@@ -699,8 +703,12 @@ export type Database = {
         }
         Insert: {
           id?: string
+          maintenance_badge?: string
           maintenance_enabled?: boolean
+          maintenance_footer?: string
           maintenance_html?: string
+          maintenance_subtitle?: string
+          maintenance_title?: string
           seo_canonical?: string | null
           seo_description?: string | null
           seo_title?: string | null
@@ -712,8 +720,12 @@ export type Database = {
         }
         Update: {
           id?: string
+          maintenance_badge?: string
           maintenance_enabled?: boolean
+          maintenance_footer?: string
           maintenance_html?: string
+          maintenance_subtitle?: string
+          maintenance_title?: string
           seo_canonical?: string | null
           seo_description?: string | null
           seo_title?: string | null
