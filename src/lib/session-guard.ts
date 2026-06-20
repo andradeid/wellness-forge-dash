@@ -73,10 +73,16 @@ export async function resolveSeatLimit(
 
   const { data: sub } = await (supabase as any)
     .from("subscriptions")
-    .select("plan_type")
+    .select("plan_type, seats_override")
     .eq("user_id", userId)
     .maybeSingle();
   const planType = (sub?.plan_type as string | undefined) ?? null;
+  const override = sub?.seats_override as number | null | undefined;
+
+  // Override individual tem prioridade máxima
+  if (override && override > 0) {
+    return { limit: override, unlimited: false, planLabel: `Personalizado (${override})` };
+  }
 
   // Tenta casar o plano com subscription_plans pela slug
   if (planType) {
@@ -89,6 +95,7 @@ export async function resolveSeatLimit(
       return { limit: plan.max_seats, unlimited: false, planLabel: plan.name ?? planType };
     }
   }
+
 
   // Fallbacks
   const fallback: number =
