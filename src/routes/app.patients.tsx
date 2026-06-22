@@ -60,7 +60,7 @@ function PatientsPage() {
   const [isPregnant, setIsPregnant] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState("");
   const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
-  const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("");
+  const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("nao_sei");
   const [submitting, setSubmitting] = useState(false);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
