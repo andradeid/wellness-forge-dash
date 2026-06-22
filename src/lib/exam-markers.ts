@@ -220,18 +220,39 @@ export async function processAndPersistMarkers(args: {
   if (invalid.length) console.warn("Inválidos:", invalid);
   console.groupEnd();
 
+  // Audit enxuto (LGPD): metadados agregados, sem array completo de marcadores.
+  const categoryCounts = valid.reduce<Record<string, number>>((acc, m) => {
+    const c = m.category || "outros";
+    acc[c] = (acc[c] ?? 0) + 1;
+    return acc;
+  }, {});
+  const classificationCounts = valid.reduce<Record<string, number>>((acc, m) => {
+    const k = (m.classification || "desconhecido").toString();
+    acc[k] = (acc[k] ?? 0) + 1;
+    return acc;
+  }, {});
+  const invalidSummary = invalid.slice(0, 20).map((i) => ({
+    name: (i.raw as Record<string, unknown>)?.name ?? null,
+    missing: i.missing,
+  }));
+
   await logStructuredAudit({
     source: args.source ?? "dify-chat",
     event: "structured_data.received",
     status: invalid.length ? "warn" : "ok",
     message: `${valid.length} marcadores válidos, ${invalid.length} inválidos`,
     data: {
+      user_id: args.userId,
       patient_id: args.patientId,
       chat_id: args.chatId ?? null,
       exam_id: args.examId ?? null,
-      raw: args.rawMarkers,
-      valid,
-      invalid,
+      agent_type: args.agentType ?? null,
+      received_count: args.rawMarkers.length,
+      valid_count: valid.length,
+      invalid_count: invalid.length,
+      categories: categoryCounts,
+      classifications: classificationCounts,
+      invalid_sample: invalidSummary,
     },
   });
 
