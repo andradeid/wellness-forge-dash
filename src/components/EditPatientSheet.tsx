@@ -199,15 +199,15 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
           {gender === "female" && !isPregnant && (
             <div className="space-y-2 animate-in fade-in duration-300">
               <Label>Fase do Ciclo Menstrual</Label>
-              <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
-                <SelectTrigger><SelectValue placeholder="Não informado" /></SelectTrigger>
+              <Select value={menstrualCyclePhase || "nao_sei"} onValueChange={setMenstrualCyclePhase}>
+                <SelectTrigger><SelectValue placeholder="Não sei" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Não informado</SelectItem>
                   <SelectItem value="folicular">Folicular</SelectItem>
                   <SelectItem value="ovulatoria">Ovulatória</SelectItem>
                   <SelectItem value="lutea">Lútea</SelectItem>
-                  <SelectItem value="menstrual">Menstrual</SelectItem>
-                  <SelectItem value="nao_se_aplica">Não se aplica (menopausa/anovulação)</SelectItem>
+                  <SelectItem value="nao_menstrua">Paciente não menstrua</SelectItem>
+                  <SelectItem value="menopausa">Paciente na menopausa</SelectItem>
+                  <SelectItem value="nao_sei">Não sei</SelectItem>
                 </SelectContent>
               </Select>
             </div>

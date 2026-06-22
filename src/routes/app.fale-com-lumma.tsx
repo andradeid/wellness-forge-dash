@@ -99,6 +99,7 @@ function FaleComLummaPage() {
   const [isPregnant, setIsPregnant] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState("");
   const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
+  const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("nao_sei");
   const [creating, setCreating] = useState(false);
 
   const loadPatients = async () => {
@@ -141,6 +142,7 @@ function FaleComLummaPage() {
         is_pregnant: newGender === "female" ? isPregnant : false,
         gestational_weeks: newGender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
         pregnancy_type: newGender === "female" && isPregnant ? pregnancyType : null,
+        menstrual_cycle_phase: newGender === "female" && !isPregnant ? menstrualCyclePhase : null,
       })
       .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .single();
@@ -157,6 +159,7 @@ function FaleComLummaPage() {
     setIsPregnant(false);
     setGestationalWeeks("");
     setPregnancyType("single");
+    setMenstrualCyclePhase("nao_sei");
     if (data) {
       const patientWithProfile = {
         ...data,
@@ -1016,6 +1019,27 @@ function FaleComLummaPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                )}
+
+                {!isPregnant && (
+                  <div className="space-y-1.5 pt-2 animate-in fade-in duration-300">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Fase do ciclo menstrual
+                    </Label>
+                    <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
+                      <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="folicular">Folicular</SelectItem>
+                        <SelectItem value="ovulatoria">Ovulatória</SelectItem>
+                        <SelectItem value="lutea">Lútea</SelectItem>
+                        <SelectItem value="nao_menstrua">Paciente não menstrua</SelectItem>
+                        <SelectItem value="menopausa">Paciente na menopausa</SelectItem>
+                        <SelectItem value="nao_sei">Não sei</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </div>
