@@ -796,7 +796,24 @@ export function useDifyChat(
           }
         }
       }
+
+      // Stream encerrou sem 'message_end' (timeout do proxy, conexão cortada, etc.).
+      // Salva o conteúdo parcial recebido em vez de descartar tudo.
+      if (!assistantSavedRef.current && fullText.trim() && agentType !== 'research') {
+        assistantSavedRef.current = true;
+        console.warn('[dify] stream encerrado sem message_end — salvando conteúdo parcial');
+        const partialNote = "\n\n⚠️ *Análise interrompida antes do encerramento. O conteúdo acima é parcial — reenvie o exame para gerar a análise completa.*";
+        await saveAssistantToSupabase(fullText + partialNote, conversationIdRef.current || undefined);
+      }
     } catch (e: any) {
+      // Se o stream caiu com erro mas chegou conteúdo, preserva o parcial.
+      if (!assistantSavedRef.current && currentFullTextRef.current.trim() && agentType !== 'research') {
+        assistantSavedRef.current = true;
+        const partialNote = "\n\n⚠️ *Análise interrompida (" + (e?.message || 'erro de conexão') + "). Conteúdo parcial — reenvie o exame para análise completa.*";
+        try {
+          await saveAssistantToSupabase(currentFullTextRef.current + partialNote, conversationIdRef.current || undefined);
+        } catch {}
+      }
       setError(e.message);
     } finally {
       if (researchTimeoutRef.current && !researchSavedRef.current && agentType === 'research' && currentFullTextRef.current.length > 200) {

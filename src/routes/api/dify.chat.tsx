@@ -90,7 +90,9 @@ export const Route = createFileRoute("/api/dify/chat")({
         };
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000);
+        // Teto alto (6min) para suportar workflows longos de análise de exame no Dify.
+        // Não removemos o timeout para não deixar conexões penduradas em caso de hang real.
+        const timeout = setTimeout(() => controller.abort(), 360000);
 
         const sendToDify = () =>
           fetch(`${baseUrl}/chat-messages`, {
@@ -146,7 +148,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             }
             
             const retryController = new AbortController();
-            const retryTimeout = setTimeout(() => retryController.abort(), 120000);
+            const retryTimeout = setTimeout(() => retryController.abort(), 360000);
             
             try {
               upstream = await fetch(`${baseUrl}/chat-messages`, {
