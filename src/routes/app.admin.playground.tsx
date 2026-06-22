@@ -311,7 +311,7 @@ function PlaygroundPage() {
 
       <div className="flex items-center gap-3 flex-wrap">
         <label className="text-sm font-medium">Agente:</label>
-        <Select value={agentType} onValueChange={handleAgentChange}>
+        <Select value={agentType ?? ""} onValueChange={handleAgentChange}>
           <SelectTrigger className="w-[320px] rounded-lg">
             <SelectValue placeholder="Selecione um agente…" />
           </SelectTrigger>

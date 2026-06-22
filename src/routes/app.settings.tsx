@@ -451,7 +451,7 @@ function SettingsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="pronoun">Pronome de tratamento</Label>
-                    <Select value={pronoun} onValueChange={setPronoun}>
+                    <Select value={pronoun ?? ""} onValueChange={setPronoun}>
                       <SelectTrigger id="pronoun" className="rounded-lg">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>

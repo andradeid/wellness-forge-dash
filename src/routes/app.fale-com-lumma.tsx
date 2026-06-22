@@ -1021,7 +1021,7 @@ function FaleComLummaPage() {
 
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
-                      <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                      <Select value={pregnancyType ?? ""} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
                         <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
                           <SelectValue />
                         </SelectTrigger>
@@ -1039,7 +1039,7 @@ function FaleComLummaPage() {
                     <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Fase do ciclo menstrual
                     </Label>
-                    <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
+                    <Select value={menstrualCyclePhase ?? ""} onValueChange={setMenstrualCyclePhase}>
                       <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
                         <SelectValue />
                       </SelectTrigger>
