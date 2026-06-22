@@ -1021,6 +1021,27 @@ function FaleComLummaPage() {
                     </div>
                   </div>
                 )}
+
+                {!isPregnant && (
+                  <div className="space-y-1.5 pt-2 animate-in fade-in duration-300">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Fase do ciclo menstrual
+                    </Label>
+                    <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
+                      <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="folicular">Folicular</SelectItem>
+                        <SelectItem value="ovulatoria">Ovulatória</SelectItem>
+                        <SelectItem value="lutea">Lútea</SelectItem>
+                        <SelectItem value="nao_menstrua">Paciente não menstrua</SelectItem>
+                        <SelectItem value="menopausa">Paciente na menopausa</SelectItem>
+                        <SelectItem value="nao_sei">Não sei</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             )}
             <DialogFooter className="pt-2">
