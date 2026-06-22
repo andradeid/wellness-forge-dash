@@ -132,11 +132,14 @@ function ChatPage() {
     // Só executa quando:
     // 1. Tem módulo pendente da URL
     if (!pendingModuleFromUrl) return;
+    // 2. Os agentes já carregaram (evita resolver com lista vazia)
+    if (loadingAgents) return;
+    // 3. O paciente já foi carregado (evita resolver com profile vazio
+    //    e cair no fallback errado, ex: exam_masculino para uma gestante)
+    if (!patient) return;
 
-    // Agora patientProfile está disponível ou usamos o fallback do hook
-    // getAgentForCard pode decidir corretamente
     const agent = getAgentForCard(
-      pendingModuleFromUrl, 
+      pendingModuleFromUrl,
       patientProfile,
       patient?.pregnancy_type
     );
@@ -157,7 +160,7 @@ function ChatPage() {
         module: undefined
       } as any
     });
-  }, [pendingModuleFromUrl, patientProfile, patient, getAgentForCard, setAgentType, navigate]);
+  }, [pendingModuleFromUrl, patientProfile, patient, loadingAgents, getAgentForCard, setAgentType, navigate]);
 
   useEffect(() => {
     const patientProfile =
