@@ -106,19 +106,13 @@ function cleanProse(text: string): string {
   //    Procura o '{' que precede a primeira ocorrência de "markers".
   const markersIdx = out.search(/"markers"\s*:/);
   if (markersIdx !== -1) {
-    // Acha o '{' inicial — pode haver objetos aninhados antes, pegamos o mais externo
-    // varrendo para trás até o último '{' que esteja em coluna inicial ou após espaços/quebras.
-    let objStart = out.lastIndexOf("{", markersIdx);
-    while (objStart > 0) {
-      const prev = out.slice(0, objStart).search(/\{[^{}]*$/);
-      if (prev === -1 || prev === objStart) break;
-      objStart = prev;
-    }
+    // O '{' que abre o objeto markers é o '{' imediatamente antes de "markers":.
+    const objStart = out.lastIndexOf("{", markersIdx);
     if (objStart !== -1) {
       const end = findBalancedJsonEnd(out, objStart);
       if (end !== -1) {
-        // JSON completo: remove o trecho inteiro.
-        out = out.slice(0, objStart) + "\n\n" + out.slice(end + 1);
+        // JSON completo: remove o trecho inteiro e garante quebra dupla.
+        out = out.slice(0, objStart).replace(/\s+$/, "") + "\n\n" + out.slice(end + 1).replace(/^\s+/, "");
       } else {
         // JSON ainda em streaming (não fechou): esconde o restante.
         out = out.slice(0, objStart);
