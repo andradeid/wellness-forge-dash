@@ -159,6 +159,7 @@ function FaleComLummaPage() {
     setIsPregnant(false);
     setGestationalWeeks("");
     setPregnancyType("single");
+    setMenstrualCyclePhase("nao_sei");
     if (data) {
       const patientWithProfile = {
         ...data,
