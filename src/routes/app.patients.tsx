@@ -298,17 +298,17 @@ function PatientsPage() {
                 {gender === "female" && !isPregnant && (
                   <div className="space-y-1.5 animate-in fade-in duration-300">
                     <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fase do Ciclo Menstrual</Label>
-                    <Select value={menstrualCyclePhase} onValueChange={setMenstrualCyclePhase}>
+                    <Select value={menstrualCyclePhase || "nao_sei"} onValueChange={setMenstrualCyclePhase}>
                       <SelectTrigger className="rounded-xl h-11 bg-white border-muted focus:ring-[#e8a04c]/30">
-                        <SelectValue placeholder="Não informado" />
+                        <SelectValue placeholder="Não sei" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Não informado</SelectItem>
                         <SelectItem value="folicular">Folicular</SelectItem>
                         <SelectItem value="ovulatoria">Ovulatória</SelectItem>
                         <SelectItem value="lutea">Lútea</SelectItem>
-                        <SelectItem value="menstrual">Menstrual</SelectItem>
-                        <SelectItem value="nao_se_aplica">Não se aplica (menopausa/anovulação)</SelectItem>
+                        <SelectItem value="nao_menstrua">Paciente não menstrua</SelectItem>
+                        <SelectItem value="menopausa">Paciente na menopausa</SelectItem>
+                        <SelectItem value="nao_sei">Não sei</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
