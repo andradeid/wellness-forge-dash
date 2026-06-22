@@ -261,6 +261,16 @@ function ChatPage() {
       weeks <= 12 ? "1t" : 
       weeks <= 27 ? "2t" : "3t";
 
+    // Fase do ciclo (a partir do cadastro do paciente)
+    const FASE_VALIDAS = ["folicular", "ovulatoria", "lutea", "nao_menstrua", "menopausa", "nao_sei"] as const;
+    const stored = patient.menstrual_cycle_phase ?? null;
+    const faseCiclo: ExamFilters["faseCiclo"] =
+      stored && (FASE_VALIDAS as readonly string[]).includes(stored)
+        ? (stored as ExamFilters["faseCiclo"])
+        : sexo === "feminino" && !isPregnant
+        ? "nao_sei"
+        : null;
+
     // Seta os filtros que alimentam o metaRef
     setFilters(prev => ({
       ...prev,
@@ -268,6 +278,7 @@ function ChatPage() {
       publico: prev.publico ?? publico,
       gestanteTipo: isPregnant ? (prev.gestanteTipo ?? gestanteTipo) : prev.gestanteTipo,
       gestantePeriodo: isPregnant ? (prev.gestantePeriodo ?? gestantePeriodo) : prev.gestantePeriodo,
+      faseCiclo: prev.faseCiclo ?? faseCiclo,
     }));
   }, [patient]);
 
