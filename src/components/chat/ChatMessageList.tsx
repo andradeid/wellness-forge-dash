@@ -55,28 +55,71 @@ function splitJsonBlocks(text: string): Array<{ type: "text" | "json"; value: st
   return parts.length > 0 ? parts : [{ type: "text", value: text }];
 }
 
-/** Removes JSON preamble headings and any unterminated streaming JSON tail. */
+/**
+ * Find the end index (inclusive) of a balanced JSON object/array starting at `start`.
+ * String-aware: ignora chaves dentro de strings JSON e respeita escapes.
+ * Retorna -1 se incompleto (stream em andamento ou malformado).
+ */
+function findBalancedJsonEnd(text: string, start: number): number {
+  const opener = text[start];
+  if (opener !== "{" && opener !== "[") return -1;
+  let brace = 0;
+  let bracket = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escape) { escape = false; continue; }
+      if (ch === "\\") { escape = true; continue; }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === "{") brace++;
+    else if (ch === "}") brace--;
+    else if (ch === "[") bracket++;
+    else if (ch === "]") bracket--;
+    if (brace === 0 && bracket === 0 && (ch === "}" || ch === "]") && i >= start) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/** Removes the markers JSON block (fenced or bare, complete or streaming) from displayed prose. */
 function cleanProse(text: string): string {
   let out = text;
-  // Strip unterminated ```json ... (still streaming, no closing fence yet)
-  const fenceOpen = out.search(/```json\b/i);
-  if (fenceOpen !== -1 && !/```json[\s\S]*?```/i.test(out)) {
-    out = out.slice(0, fenceOpen);
+
+  // 1) Bloco com cerca ```json ... ``` contendo "markers": remove cerca + conteúdo.
+  out = out.replace(/```json\s*([\s\S]*?)```/gi, (full, body: string) => {
+    return /"markers"\s*:/.test(body) ? "" : full;
+  });
+
+  // 2) Cerca ```json aberta sem fechamento (streaming): corta dali em diante.
+  const openFence = out.search(/```json\b/i);
+  if (openFence !== -1 && !/```json[\s\S]*?```/i.test(out)) {
+    out = out.slice(0, openFence);
   }
-  // Strip unterminated loose "json { ..." block while streaming
-  const looseOpen = out.search(/(?:^|\n)\s*json\s*\{/i);
-  if (looseOpen !== -1 && !/(?:^|\n)\s*json\s*\{[\s\S]*?\}(?=\n|$)/i.test(out)) {
-    out = out.slice(0, looseOpen);
+
+  // 3) Bloco JSON cru contendo "markers" (com ou sem fence parcial).
+  //    Procura o '{' que precede a primeira ocorrência de "markers".
+  const markersIdx = out.search(/"markers"\s*:/);
+  if (markersIdx !== -1) {
+    // O '{' que abre o objeto markers é o '{' imediatamente antes de "markers":.
+    const objStart = out.lastIndexOf("{", markersIdx);
+    if (objStart !== -1) {
+      const end = findBalancedJsonEnd(out, objStart);
+      if (end !== -1) {
+        // JSON completo: remove o trecho inteiro e garante quebra dupla.
+        out = out.slice(0, objStart).replace(/\s+$/, "") + "\n\n" + out.slice(end + 1).replace(/^\s+/, "");
+      } else {
+        // JSON ainda em streaming (não fechou): esconde o restante.
+        out = out.slice(0, objStart);
+      }
+    }
   }
-  // Also hide bare streaming JSON object that starts the tail (no "json" keyword)
-  const braceOpen = out.search(/(?:^|\n)\s*\{\s*"\w/);
-  if (braceOpen !== -1) {
-    const tail = out.slice(braceOpen);
-    // unbalanced braces => still streaming => hide it
-    const opens = (tail.match(/\{/g) || []).length;
-    const closes = (tail.match(/\}/g) || []).length;
-    if (opens !== closes) out = out.slice(0, braceOpen);
-  }
+
   return out
     .replace(/^\s*Parte\s*2\s*[—\-:].*$/gim, "")
     .replace(/^\s*JSON\s*(obrigat[óo]rio|marcadores)?\s*:?\s*$/gim, "")
@@ -532,7 +575,7 @@ export function ChatMessageList({
                                 "prose-ul:my-2 prose-ul:space-y-1",
                                 "prose-ol:my-2 prose-ol:space-y-1",
                                 "prose-li:my-0",
-                                "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
+                                "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
                                 "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
                                 "[&_hr]:my-4 [&_hr]:border-border"
                               )}>
@@ -560,7 +603,7 @@ export function ChatMessageList({
                             "prose-ul:my-2 prose-ul:space-y-1",
                             "prose-ol:my-2 prose-ol:space-y-1",
                             "prose-li:my-0",
-                            "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
+                            "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
                             "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
                             "[&_hr]:my-4 [&_hr]:border-border",
                             isResearch && [
