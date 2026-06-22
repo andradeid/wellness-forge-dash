@@ -148,7 +148,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             }
             
             const retryController = new AbortController();
-            const retryTimeout = setTimeout(() => retryController.abort(), 120000);
+            const retryTimeout = setTimeout(() => retryController.abort(), 360000);
             
             try {
               upstream = await fetch(`${baseUrl}/chat-messages`, {
