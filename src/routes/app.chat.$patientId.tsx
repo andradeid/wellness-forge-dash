@@ -222,7 +222,7 @@ function ChatPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("patients")
-        .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
+        .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type, menstrual_cycle_phase")
         .eq("id", patientId)
         .maybeSingle();
       setPatient(data as PatientCtx | null);
