@@ -170,10 +170,22 @@ function FaleComLummaPage() {
       
       // Navega automaticamente para o chat com o novo paciente
       if (pendingTrigger) {
+        const resolvedProfile = data.is_pregnant
+          ? 'gestante'
+          : data.gender === 'male'
+          ? 'adulto_masculino'
+          : data.gender === 'female'
+          ? 'adulto_feminino'
+          : undefined;
+        const agentId = getAgentForCard(
+          pendingTrigger,
+          resolvedProfile,
+          data.pregnancy_type ?? undefined
+        )?.agent_id;
         navigate({
           to: "/app/chat/$patientId",
           params: { patientId: data.id },
-          search: { module: pendingTrigger },
+          search: { module: pendingTrigger, agent: agentId },
         });
       } else {
         navigate({
