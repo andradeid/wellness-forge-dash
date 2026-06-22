@@ -70,6 +70,7 @@ interface PatientCtx {
   is_pregnant?: boolean;
   gestational_weeks?: number;
   pregnancy_type?: "single" | "multiple";
+  menstrual_cycle_phase?: string | null;
 }
 
 function ChatPage() {
