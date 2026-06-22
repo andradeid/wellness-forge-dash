@@ -172,6 +172,12 @@ export function useDifyChat(
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
+  // Espelha o estado de `thinking` em ref para uso síncrono dentro do init().
+  // Usado para impedir que uma re-execução do init (ex.: troca de role/readOnly
+  // durante TOKEN_REFRESHED) sobrescreva o stream em andamento com um snapshot
+  // vazio do banco antes do message_end propagar no PostgREST.
+  const thinkingRef = useRef<boolean>(false);
+  useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -208,6 +214,11 @@ export function useDifyChat(
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
+      // Defesa em profundidade: se há stream ativo, NÃO rebusca histórico do
+      // banco — o snapshot do PostgREST pode estar atrasado em relação ao
+      // estado local e sobrescreveria a mensagem em construção.
+      if (thinkingRef.current) return;
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
