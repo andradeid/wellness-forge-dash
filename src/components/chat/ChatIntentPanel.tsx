@@ -2,7 +2,13 @@ import { FileText, Search, Utensils, Lock, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
-export type FaseCiclo = "folicular" | "ovulatoria" | "lutea" | "menopausa";
+export type FaseCiclo =
+  | "folicular"
+  | "ovulatoria"
+  | "lutea"
+  | "nao_menstrua"
+  | "menopausa"
+  | "nao_sei";
 
 export type AgentType = "exam" | "production" | "reasoning" | "research";
 
@@ -15,12 +21,23 @@ export type ExamFilters = {
   dataExame: string; // YYYY-MM-DD
 };
 
-const FASE_CICLO_LABEL: Record<FaseCiclo, string> = {
-  folicular: "Fase Folicular",
-  ovulatoria: "Fase Ovulatória",
-  lutea: "Fase Lútea",
-  menopausa: "Menopausa",
+export const FASE_CICLO_LABEL: Record<FaseCiclo, string> = {
+  folicular: "Folicular",
+  ovulatoria: "Ovulatória",
+  lutea: "Lútea",
+  nao_menstrua: "Paciente não menstrua",
+  menopausa: "Paciente na menopausa",
+  nao_sei: "Não sei",
 };
+
+export const FASE_CICLO_OPTIONS: { value: FaseCiclo; label: string }[] = [
+  { value: "folicular", label: "Folicular" },
+  { value: "ovulatoria", label: "Ovulatória" },
+  { value: "lutea", label: "Lútea" },
+  { value: "nao_menstrua", label: "Paciente não menstrua" },
+  { value: "menopausa", label: "Paciente na menopausa" },
+  { value: "nao_sei", label: "Não sei" },
+];
 
 function todayISO() {
   const d = new Date();
