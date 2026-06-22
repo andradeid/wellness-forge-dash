@@ -125,7 +125,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initialRequestId = authRequestRef.current;
     // Listener FIRST, then getSession
     const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      (event, newSession) => {
+        // INITIAL_SESSION é tratado pelo getSession() abaixo — ignora aqui
+        // para não disparar re-render duplicado que reinicializa o chat.
+        if (event === "INITIAL_SESSION") return;
+
+        // TOKEN_REFRESHED mantém o JWT atualizado sem refazer fetch de
+        // profile/role. Isso evita que streams longos (ex.: exames de 3min+)
+        // sejam interrompidos por uma re-renderização da árvore.
+        if (event === "TOKEN_REFRESHED") {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          return;
+        }
+
+        // SIGNED_IN, SIGNED_OUT, USER_UPDATED, PASSWORD_RECOVERY → aplica sessão completa.
         setTimeout(() => {
           void applySession(newSession);
         }, 0);
