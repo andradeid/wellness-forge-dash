@@ -160,7 +160,7 @@ function PatientsPage() {
     setIsPregnant(false);
     setGestationalWeeks("");
     setPregnancyType("single");
-    setMenstrualCyclePhase("");
+    setMenstrualCyclePhase("nao_sei");
     load();
   };
 
