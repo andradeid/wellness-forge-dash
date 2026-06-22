@@ -142,6 +142,7 @@ function FaleComLummaPage() {
         is_pregnant: newGender === "female" ? isPregnant : false,
         gestational_weeks: newGender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
         pregnancy_type: newGender === "female" && isPregnant ? pregnancyType : null,
+        menstrual_cycle_phase: newGender === "female" && !isPregnant ? menstrualCyclePhase : null,
       })
       .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type")
       .single();
