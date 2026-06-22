@@ -145,7 +145,7 @@ function PatientsPage() {
       is_pregnant: gender === "female" ? isPregnant : false,
       gestational_weeks: gender === "female" && isPregnant ? parseInt(gestationalWeeks) || null : null,
       pregnancy_type: gender === "female" && isPregnant ? pregnancyType : null,
-      menstrual_cycle_phase: gender === "female" && !isPregnant ? menstrualCyclePhase : null,
+      menstrual_cycle_phase: gender === "female" && !isPregnant ? (menstrualCyclePhase || "nao_sei") : null,
     });
     setSubmitting(false);
     if (error) {
