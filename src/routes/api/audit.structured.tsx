@@ -9,7 +9,7 @@ interface AuditPayload {
   data?: unknown;
 }
 
-const MAX_BODY_BYTES = 10 * 1024; // 10 KB
+const MAX_BODY_BYTES = 64 * 1024; // 64 KB
 
 export const Route = createFileRoute("/api/audit/structured")({
   server: {
