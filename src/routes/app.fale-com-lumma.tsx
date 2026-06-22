@@ -99,6 +99,7 @@ function FaleComLummaPage() {
   const [isPregnant, setIsPregnant] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState("");
   const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
+  const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("nao_sei");
   const [creating, setCreating] = useState(false);
 
   const loadPatients = async () => {
