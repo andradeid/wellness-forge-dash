@@ -79,17 +79,17 @@ function AppLayout() {
     }
   }, [loading, session, sessionAllowed, role, pathname, navigate]);
 
-  // Gatekeeper de sessão única: ao trocar de rota dentro do app, valida
-  // se o token local ainda confere com o registrado no banco. Se foi
-  // tomado por outro dispositivo, desloga e redireciona para /login.
+  // Gatekeeper de sessão única: valida UMA VEZ por sessão (não a cada rota).
+  // Revalidar a cada mudança de pathname desmontava a árvore do chat no meio
+  // de um stream do Dify (ex.: durante upload/análise de exame), perdendo
+  // toda a resposta. Aqui mantemos a UI montada durante a revalidação e só
+  // deslogamos se a sessão for confirmadamente inválida.
   useEffect(() => {
     if (loading || !session?.user) return;
-    // Super admin não tem assento — pula validação de sessão única.
     if (role === "super_admin") {
       setSessionAllowed(true);
       return;
     }
-    setSessionAllowed(false);
     let cancelled = false;
     (async () => {
       const localToken = getLocalSessionToken();
@@ -118,7 +118,7 @@ function AppLayout() {
     return () => {
       cancelled = true;
     };
-  }, [loading, session, pathname, navigate, role]);
+  }, [loading, session?.user?.id, role, navigate]);
 
   if (loading || (session && !sessionAllowed)) {
     return (
