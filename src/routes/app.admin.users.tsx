@@ -401,7 +401,7 @@ function UsersPage() {
                 className="pl-9 rounded-xl"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter ?? ""} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-44 rounded-xl"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
@@ -412,7 +412,7 @@ function UsersPage() {
                 <SelectItem value="blocked">Bloqueada</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={planFilter} onValueChange={setPlanFilter}>
+            <Select value={planFilter ?? ""} onValueChange={setPlanFilter}>
               <SelectTrigger className="w-40 rounded-xl"><SelectValue placeholder="Plano" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os planos</SelectItem>
@@ -594,7 +594,7 @@ function UsersPage() {
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label>Tipo de plano</Label>
-              <Select value={planForm.plan_type} onValueChange={(v) => setPlanForm((f) => ({ ...f, plan_type: v as PlanType }))}>
+              <Select value={planForm.plan_type ?? ""} onValueChange={(v) => setPlanForm((f) => ({ ...f, plan_type: v as PlanType }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
@@ -606,7 +606,7 @@ function UsersPage() {
             </div>
             <div className="space-y-2">
               <Label>Status da assinatura</Label>
-              <Select value={planForm.status} onValueChange={(v) => setPlanForm((f) => ({ ...f, status: v as SubStatus }))}>
+              <Select value={planForm.status ?? ""} onValueChange={(v) => setPlanForm((f) => ({ ...f, status: v as SubStatus }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="trial">Trial</SelectItem>

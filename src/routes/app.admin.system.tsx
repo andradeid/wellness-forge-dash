@@ -173,7 +173,7 @@ function AdminSystemPage() {
               <CardDescription>Aplicado em datas e relatórios.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Select value={form.timezone} onValueChange={(v) => patch({ timezone: v })}>
+              <Select value={form.timezone ?? ""} onValueChange={(v) => patch({ timezone: v })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
