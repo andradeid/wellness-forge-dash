@@ -251,9 +251,11 @@ function AdminDashboardPage() {
       {/* Header + filtros */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Painel administrativo</p>
-          <h1 className="font-serif text-4xl font-normal tracking-tight mt-2">Visão geral do negócio</h1>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+            Visão geral do <span className="italic text-gradient-brand">negócio</span>
+          </h1>
         </div>
+
         <div className="flex gap-2">
           {(Object.keys(PERIOD_LABEL) as Period[]).map((p) => {
             const active = p === period;

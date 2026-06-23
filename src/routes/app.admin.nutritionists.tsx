@@ -121,20 +121,12 @@ function NutritionistsPage() {
       </div>
 
       {/* Hero */}
-      <div className="space-y-4">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-          Painel administrativo
-        </p>
-        <h1 className="font-serif text-5xl md:text-6xl font-normal leading-[1.05] tracking-tight text-foreground">
-          Gerencie os{" "}
-          <span className="italic text-gradient-brand">nutricionistas</span>
+      <div className="-mb-6" style={{ marginTop: 8 }}>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+          Gerencie os <span className="italic text-gradient-brand">nutricionistas</span>
         </h1>
-        <p className="max-w-2xl text-base text-muted-foreground leading-relaxed">
-          Acompanhe quem está utilizando a Lumma, o status de cada assinatura e
-          mantenha o controle dos acessos profissionais — tudo num só lugar,
-          calmo e organizado.
-        </p>
       </div>
+
 
       {/* Stat tiles */}
       <div className="grid gap-4 md:grid-cols-3">
