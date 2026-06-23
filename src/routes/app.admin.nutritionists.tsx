@@ -292,26 +292,63 @@ function SeatsEditor({
 
   return (
     <div className="flex items-center gap-2">
-      <Input
+      <input
         type="number"
         min={1}
         step={1}
         value={draft}
-        placeholder="Plano"
+        placeholder="—"
         onChange={(e) => setDraft(e.target.value)}
-        className="h-9 w-20 rounded-lg"
+        style={{
+          border: "1px solid var(--border)",
+          borderRadius: "6px",
+          padding: "4px 8px",
+          fontFamily: "var(--font-mono)",
+          width: "64px",
+          textAlign: "center",
+          background: "transparent",
+          outline: "none",
+        }}
       />
-      <Button
-        size="sm"
-        variant={dirty ? "default" : "ghost"}
+      <button
+        type="button"
         disabled={!dirty || saving}
         onClick={commit}
-        className="h-9 px-2"
         aria-label="Salvar assentos"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted disabled:opacity-30"
+        style={{ color: "oklch(0.54 0.13 160)" }}
       >
         <Check className="h-4 w-4" />
-      </Button>
+      </button>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string | null }) {
+  const tones: Record<string, { hue: number; label: string }> = {
+    active: { hue: 160, label: "Ativa" },
+    trial: { hue: 160, label: "Trial" },
+    past_due: { hue: 30, label: "Atrasada" },
+    canceled: { hue: 20, label: "Cancelada" },
+  };
+  const t = tones[status ?? ""] ?? { hue: 285, label: "—" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        backgroundColor: `oklch(0.96 0.04 ${t.hue})`,
+        border: `1px solid oklch(0.7 0.12 ${t.hue})`,
+        color: `oklch(0.4 0.12 ${t.hue})`,
+        fontSize: "11px",
+        fontWeight: 500,
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        borderRadius: "4px",
+        padding: "2px 8px",
+      }}
+    >
+      {t.label}
+    </span>
   );
 }
 
