@@ -398,22 +398,49 @@ function PatientsPage() {
       </div>
 
       <Card className="bg-white shadow-sm rounded-lg border-muted">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <CardHeader className="border-b">
           <CardTitle className="text-base font-medium">Lista de pacientes</CardTitle>
-          <div className="relative w-full sm:w-64 sm:max-w-full">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar paciente..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-11 sm:h-10"
-            />
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou data de nascimento…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-10"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { id: "all", label: "Todos" },
+                { id: "pregnant", label: "Gestantes" },
+                { id: "with_exams", label: "Com exames" },
+                { id: "no_analysis", label: "Sem análise" },
+              ] as const).map((chip) => {
+                const active = activeFilter === chip.id;
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => setActiveFilter(chip.id)}
+                    className={cn(
+                      "h-8 rounded-full border px-3 text-xs font-medium transition-colors",
+                      active
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-transparent text-muted-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
           {loading ? (
             <div className="py-12 text-center text-sm text-muted-foreground">Carregando...</div>
-          ) : filtered.length === 0 ? (
+          ) : total === 0 ? (
             <div className="py-16 text-center">
               <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-muted-foreground">
@@ -478,18 +505,33 @@ function PatientsPage() {
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Nascimento</TableHead>
+                    <TableRow className="hover:bg-transparent [&>th]:border-b-[1.5px] [&>th]:border-border [&>th]:h-11 [&>th]:text-[11px] [&>th]:font-medium [&>th]:uppercase [&>th]:tracking-[0.06em] [&>th]:text-muted-foreground">
+                      <TableHead>
+                        <button type="button" onClick={() => toggleSort("name")} className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors">
+                          Nome {sortIcon("name")}
+                        </button>
+                      </TableHead>
+                      <TableHead>
+                        <button type="button" onClick={() => toggleSort("birth_date")} className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors">
+                          Nascimento {sortIcon("birth_date")}
+                        </button>
+                      </TableHead>
                       <TableHead>Gênero</TableHead>
                       <TableHead>Gestação</TableHead>
-                      <TableHead>Cadastrado em</TableHead>
+                      <TableHead>
+                        <button type="button" onClick={() => toggleSort("created_at")} className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors">
+                          Cadastramento {sortIcon("created_at")}
+                        </button>
+                      </TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((p) => (
-                      <TableRow key={p.id}>
+                      <TableRow
+                        key={p.id}
+                        className="group cursor-pointer transition-colors duration-[120ms] hover:bg-[oklch(0.97_0.006_285)]"
+                      >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
@@ -512,7 +554,7 @@ function PatientsPage() {
                         </TableCell>
                         <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
+                          <div className="flex justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100">
                             <Button asChild size="sm" variant="ghost" className="rounded-full gap-1">
                               <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
                                 <MessageSquare className="h-4 w-4" /> Chat
@@ -543,9 +585,76 @@ function PatientsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Pagination bar */}
+              <div className="mt-2 flex flex-col gap-3 border-t py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Exibir:</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                    <SelectTrigger className="h-8 w-[72px] rounded-md text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[10, 25, 50, 100].map((n) => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-xs text-muted-foreground text-center">
+                  Exibindo {total === 0 ? 0 : startIdx + 1}–{Math.min(startIdx + pageSize, total)} de {total} pacientes
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }).slice(
+                    Math.max(0, currentPage - 3),
+                    Math.max(0, currentPage - 3) + Math.min(5, totalPages)
+                  ).map((_, i) => {
+                    const start = Math.max(0, currentPage - 3);
+                    const num = start + i + 1;
+                    if (num > totalPages) return null;
+                    const active = num === currentPage;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setPage(num)}
+                        className={cn(
+                          "h-8 min-w-8 rounded-md px-2 text-xs font-medium transition-colors",
+                          active
+                            ? "bg-primary/10 text-foreground border border-primary"
+                            : "text-muted-foreground hover:bg-muted/50"
+                        )}
+                      >
+                        {num}
+                      </button>
+                    );
+                  })}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    aria-label="Próxima página"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </CardContent>
+
       </Card>
 
       <AlertDialog open={deleteStep === 1} onOpenChange={(o) => !o && setDeleteStep(0)}>
