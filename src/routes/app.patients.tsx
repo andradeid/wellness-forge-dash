@@ -469,7 +469,7 @@ function PatientsPage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12 shrink-0">
                         <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-sm font-semibold">
+                        <AvatarFallback className={`bg-gradient-to-br ${avatarGradient(p.name)} text-white text-sm font-semibold`}>
                           {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
                         </AvatarFallback>
                       </Avatar>
