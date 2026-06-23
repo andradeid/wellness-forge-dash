@@ -102,13 +102,15 @@ function AuditPage() {
     setLoadingTx(true);
     try {
       const [c, t] = await Promise.all([
-        fnCredits({ data: { userId } }) as Promise<{ balance: number }>,
+        fnCredits({ data: { userId } }) as Promise<{ balance: number; unlimited_credits: boolean }>,
         fnList({ data: { userId, limit: PAGE } }) as Promise<Tx[]>,
       ]);
       setBalance(c.balance);
+      setUnlimitedState(!!c.unlimited_credits);
       setTxs(t);
       setHasMore(t.length === PAGE);
     } finally {
+
       setLoadingTx(false);
     }
   }
