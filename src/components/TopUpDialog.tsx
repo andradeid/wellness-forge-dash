@@ -232,21 +232,14 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                   </ul>
 
                   <Button
-                    asChild
-                    className="mt-5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90"
+                    disabled
+                    className="mt-5 rounded-full"
+                    variant="outline"
+                    title="Pagamento online em breve"
                   >
-                    <a
-                      href={buildWhatsAppLink("gostaria de fazer upgrade para o plano Pro Individual", [
-                        `*Plano desejado:* ${proPlan.name}`,
-                        `*Valor:* ${formatBRL(proPlan.price_monthly_cents)}/mês`,
-                        `*Créditos mensais:* ${proPlan.monthly_credits}`,
-                      ])}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Fazer upgrade para {proPlan.name}
-                    </a>
+                    Em breve
                   </Button>
+
                 </div>
               </div>
             ) : (
@@ -318,28 +311,14 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                     )}
 
                     <Button
-                      asChild
-                      disabled={pack.price_cents === 0}
-                      className={cn(
-                        "mt-4 rounded-full",
-                        pack.is_highlighted
-                          ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90"
-                          : "",
-                      )}
+                      disabled
+                      className="mt-4 rounded-full"
                       variant={pack.is_highlighted ? "default" : "outline"}
+                      title="Pagamento online em breve"
                     >
-                      <a
-                        href={buildWhatsAppLink("gostaria de recarregar meu saldo", [
-                          `*Pacote escolhido:* ${pack.name}`,
-                          `*Créditos:* ${pack.credits}`,
-                          `*Valor:* ${pack.price_cents > 0 ? formatBRL(pack.price_cents) : "a definir"}`,
-                        ])}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Comprar crédito
-                      </a>
+                      Em breve
                     </Button>
+
                   </div>
                 );
               })}
