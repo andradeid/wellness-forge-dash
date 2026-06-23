@@ -121,6 +121,45 @@ export type Database = {
           },
         ]
       }
+      credit_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          balance_after: number | null
+          balance_before: number | null
+          created_at: string
+          delta: number | null
+          id: string
+          metadata: Json
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string
+          delta?: number | null
+          id?: string
+          metadata?: Json
+          reason: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string
+          delta?: number | null
+          id?: string
+          metadata?: Json
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_packs: {
         Row: {
           created_at: string
@@ -865,6 +904,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_user_balance: {
+        Args: {
+          p_admin_id: string
+          p_delta: number
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       consume_credits: {
         Args: {
           p_agent_key: string
@@ -877,6 +925,15 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      toggle_unlimited_credits: {
+        Args: {
+          p_admin_id: string
+          p_reason: string
+          p_unlimited: boolean
+          p_user_id: string
         }
         Returns: boolean
       }
