@@ -161,6 +161,38 @@ function AuditPage() {
     }
   }
 
+  function openUnlimitedDialog(next: boolean) {
+    setUnlimitedTarget(next);
+    setUnlimitedReason("");
+    setUnlimitedOpen(true);
+  }
+
+  async function submitUnlimited() {
+    if (!selected) return;
+    if (unlimitedReason.trim().length < 3) {
+      toast.error("Justifique o motivo");
+      return;
+    }
+    setSavingUnlimited(true);
+    try {
+      await fnSetUnlimited({
+        data: {
+          userId: selected.id,
+          unlimited: unlimitedTarget,
+          reason: unlimitedReason.trim(),
+        },
+      });
+      toast.success(unlimitedTarget ? "Ilimitado ativado" : "Ilimitado desativado");
+      setUnlimitedOpen(false);
+      await refreshUser(selected.id);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao alterar ilimitado");
+    } finally {
+      setSavingUnlimited(false);
+    }
+  }
+
+
   return (
     <div className="p-6 space-y-4">
       <Card>
