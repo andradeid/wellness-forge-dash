@@ -139,23 +139,21 @@ function NutritionistsPage() {
       {/* Stat tiles */}
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: "Cadastrados", value: rows.length, icon: Users },
-          { label: "Assinaturas ativas", value: activeCount, icon: Stethoscope },
-          { label: "Em período trial", value: trialCount, icon: Stethoscope },
+          { label: "Cadastrados", value: rows.length },
+          { label: "Assinaturas Ativas", value: activeCount },
+          { label: "Em Período Trial", value: trialCount },
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl border bg-card p-5 shadow-sm flex items-center gap-4"
+            className="rounded-2xl border bg-card shadow-sm"
+            style={{ padding: "24px" }}
           >
-            <div className="h-10 w-10 rounded-xl bg-accent/60 flex items-center justify-center">
-              <s.icon className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                {s.label}
-              </p>
-              <p className="text-2xl font-semibold text-foreground">{s.value}</p>
-            </div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              {s.label}
+            </p>
+            <p className="font-mono font-bold text-4xl tracking-tight text-foreground mt-2">
+              {s.value}
+            </p>
           </div>
         ))}
       </div>
