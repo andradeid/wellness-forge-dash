@@ -288,7 +288,7 @@ function FeedbacksPage() {
         <span className="text-foreground/80">Auditoria de Feedbacks</span>
       </div>
 
-      <div className="-mb-6" style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 8, marginBottom: -24 }}>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           Auditoria de <span className="italic text-gradient-brand">feedbacks</span>
         </h1>
