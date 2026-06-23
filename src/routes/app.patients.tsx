@@ -184,12 +184,47 @@ function PatientsPage() {
     load();
   };
 
-  const filtered = patients.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const searchLower = search.toLowerCase().trim();
+  const matchesSearch = (p: Patient) => {
+    if (!searchLower) return true;
+    if (p.name.toLowerCase().includes(searchLower)) return true;
+    if (p.birth_date) {
+      const formatted = new Date(p.birth_date).toLocaleDateString("pt-BR");
+      if (formatted.includes(searchLower)) return true;
+    }
+    return false;
+  };
+  const matchesChip = (p: Patient) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "pregnant") return !!p.is_pregnant;
+    if (activeFilter === "with_exams") return examPatientIds.has(p.id);
+    if (activeFilter === "no_analysis") return !analyzedPatientIds.has(p.id);
+    return true;
+  };
+  const filteredAll = patients.filter((p) => matchesSearch(p) && matchesChip(p));
+  const sorted = [...filteredAll].sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    if (sortKey === "name") return a.name.localeCompare(b.name, "pt-BR") * dir;
+    const av = a[sortKey] ? new Date(a[sortKey] as string).getTime() : 0;
+    const bv = b[sortKey] ? new Date(b[sortKey] as string).getTime() : 0;
+    return (av - bv) * dir;
+  });
+  const total = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIdx = (currentPage - 1) * pageSize;
+  const filtered = sorted.slice(startIdx, startIdx + pageSize);
+
+  useEffect(() => { setPage(1); }, [search, activeFilter, pageSize, sortKey, sortDir]);
+
+  const sortIcon = (key: "name" | "birth_date" | "created_at") => {
+    if (sortKey !== key) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+  };
 
   const genderLabel = (g: Patient["gender"]) =>
     g === "male" ? "Masculino" : g === "female" ? "Feminino" : g === "other" ? "Outro" : "—";
+
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 lg:px-0 overflow-x-hidden">
