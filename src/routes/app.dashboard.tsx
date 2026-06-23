@@ -316,6 +316,16 @@ function DashboardPage() {
       .slice(0, 6);
   }, [filteredResults, patientMap]);
 
+  // Pacientes distintos em atenção/crítico (KPI)
+  const patientsInAttentionCount = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of filteredResults) {
+      const b = classify(r.classification);
+      if (b === "critico" || b === "atencao") set.add(r.patient_id);
+    }
+    return set.size;
+  }, [filteredResults]);
+
   // Pacientes sem exame há +60 dias (usa último measured_at; cai para created_at)
   const followUpList = useMemo(() => {
     const lastByPatient = new Map<string, string>();
