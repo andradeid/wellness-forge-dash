@@ -516,7 +516,7 @@ function PatientsPage() {
 
               {/* Desktop: table */}
               <div className="hidden md:block overflow-x-auto">
-                <Table>
+                <Table className="group/ptable">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent [&>th]:border-b-[1.5px] [&>th]:border-border [&>th]:h-11 [&>th]:text-[11px] [&>th]:font-medium [&>th]:uppercase [&>th]:tracking-[0.06em] [&>th]:text-muted-foreground">
                       <TableHead>
@@ -536,7 +536,9 @@ function PatientsPage() {
                           Cadastramento {sortIcon("created_at")}
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="text-right">
+                        <span className="opacity-0 transition-opacity duration-150 group-has-[tbody:hover]/ptable:opacity-100">Ações</span>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -549,7 +551,7 @@ function PatientsPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
                               <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
-                              <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                              <AvatarFallback className={`bg-gradient-to-br ${avatarGradient(p.name)} text-white text-xs`}>
                                 {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
                               </AvatarFallback>
                             </Avatar>
