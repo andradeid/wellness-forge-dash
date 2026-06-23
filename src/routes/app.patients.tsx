@@ -436,11 +436,18 @@ function PatientsPage() {
                     key={chip.id}
                     type="button"
                     onClick={() => setActiveFilter(chip.id)}
+                    style={
+                      active
+                        ? {
+                            backgroundColor: "oklch(0.94 0.04 285)",
+                            borderColor: "oklch(0.42 0.18 285)",
+                            color: "oklch(0.42 0.18 285)",
+                          }
+                        : undefined
+                    }
                     className={cn(
                       "h-8 rounded-full border px-3 text-xs font-medium transition-colors",
-                      active
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-border bg-transparent text-muted-foreground hover:bg-muted/50"
+                      !active && "border-border bg-transparent text-muted-foreground hover:bg-muted/50"
                     )}
                   >
                     {chip.label}
