@@ -243,16 +243,39 @@ function AuditPage() {
             <div>
               <CardTitle>{selected.full_name ?? selected.email}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">{selected.email}</p>
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <Wallet className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Saldo atual:</span>
                 <Badge className="text-base">{balance} créditos</Badge>
+                {unlimited && (
+                  <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0">
+                    <InfinityIcon className="h-3 w-3 mr-1" /> Ilimitado
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-3 rounded-md border bg-muted/30 px-3 py-2">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="unlimited-toggle" className="text-sm flex-1 cursor-pointer">
+                  Créditos ilimitados {isSuperAdmin ? "" : "(somente super_admin)"}
+                </Label>
+                <Switch
+                  id="unlimited-toggle"
+                  checked={unlimited}
+                  disabled={!isSuperAdmin || savingUnlimited}
+                  onCheckedChange={(v) => openUnlimitedDialog(v)}
+                />
               </div>
             </div>
-            <Button onClick={() => setAdjustOpen(true)} variant="outline">
+            <Button
+              onClick={() => setAdjustOpen(true)}
+              variant="outline"
+              disabled={!isSuperAdmin}
+              title={isSuperAdmin ? "" : "Somente super_admin pode ajustar saldo"}
+            >
               <Plus className="h-4 w-4 mr-1" /> Ajustar Saldo Manual
             </Button>
           </CardHeader>
+
           <CardContent>
             <Table>
               <TableHeader>
