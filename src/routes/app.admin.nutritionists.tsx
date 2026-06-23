@@ -139,23 +139,21 @@ function NutritionistsPage() {
       {/* Stat tiles */}
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: "Cadastrados", value: rows.length, icon: Users },
-          { label: "Assinaturas ativas", value: activeCount, icon: Stethoscope },
-          { label: "Em período trial", value: trialCount, icon: Stethoscope },
+          { label: "Cadastrados", value: rows.length },
+          { label: "Assinaturas Ativas", value: activeCount },
+          { label: "Em Período Trial", value: trialCount },
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl border bg-card p-5 shadow-sm flex items-center gap-4"
+            className="rounded-2xl border bg-card shadow-sm"
+            style={{ padding: "24px" }}
           >
-            <div className="h-10 w-10 rounded-xl bg-accent/60 flex items-center justify-center">
-              <s.icon className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                {s.label}
-              </p>
-              <p className="text-2xl font-semibold text-foreground">{s.value}</p>
-            </div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              {s.label}
+            </p>
+            <p className="font-mono font-bold text-4xl tracking-tight text-foreground mt-2">
+              {s.value}
+            </p>
           </div>
         ))}
       </div>
@@ -194,19 +192,36 @@ function NutritionistsPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Nome</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Email</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Validade</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground w-[160px]">Assentos</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
+                <TableRow
+                  className="hover:bg-transparent"
+                  style={{ borderBottom: "1.5px solid var(--border)" }}
+                >
+                  {["Nome", "Email", "Plano", "Status", "Validade", "Assentos", "Cadastro"].map((h, i) => (
+                    <TableHead
+                      key={h}
+                      className={i === 5 ? "w-[160px]" : undefined}
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: "var(--muted-foreground)",
+                      }}
+                    >
+                      {h}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((r) => (
-                  <TableRow key={r.id} className="border-b last:border-0">
+                  <TableRow
+                    key={r.id}
+                    className="border-b last:border-0 cursor-pointer transition-colors"
+                    style={{ transition: "background 120ms ease" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "oklch(0.97 0.006 285)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                  >
                     <TableCell className="font-medium py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-white text-xs font-semibold uppercase">
@@ -217,7 +232,9 @@ function NutritionistsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{r.email}</TableCell>
                     <TableCell className="capitalize">{r.plan_type ?? "—"}</TableCell>
-                    <TableCell><Badge variant={statusVariant(r.status)} className="rounded-full">{statusLabel(r.status)}</Badge></TableCell>
+                    <TableCell>
+                      <StatusBadge status={r.status} />
+                    </TableCell>
                     <TableCell>{r.current_period_end ? new Date(r.current_period_end).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell>
                       <SeatsEditor
@@ -275,26 +292,63 @@ function SeatsEditor({
 
   return (
     <div className="flex items-center gap-2">
-      <Input
+      <input
         type="number"
         min={1}
         step={1}
         value={draft}
-        placeholder="Plano"
+        placeholder="—"
         onChange={(e) => setDraft(e.target.value)}
-        className="h-9 w-20 rounded-lg"
+        style={{
+          border: "1px solid var(--border)",
+          borderRadius: "6px",
+          padding: "4px 8px",
+          fontFamily: "var(--font-mono)",
+          width: "64px",
+          textAlign: "center",
+          background: "transparent",
+          outline: "none",
+        }}
       />
-      <Button
-        size="sm"
-        variant={dirty ? "default" : "ghost"}
+      <button
+        type="button"
         disabled={!dirty || saving}
         onClick={commit}
-        className="h-9 px-2"
         aria-label="Salvar assentos"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted disabled:opacity-30"
+        style={{ color: "oklch(0.54 0.13 160)" }}
       >
         <Check className="h-4 w-4" />
-      </Button>
+      </button>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string | null }) {
+  const tones: Record<string, { hue: number; label: string }> = {
+    active: { hue: 160, label: "Ativa" },
+    trial: { hue: 160, label: "Trial" },
+    past_due: { hue: 30, label: "Atrasada" },
+    canceled: { hue: 20, label: "Cancelada" },
+  };
+  const t = tones[status ?? ""] ?? { hue: 285, label: "—" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        backgroundColor: `oklch(0.96 0.04 ${t.hue})`,
+        border: `1px solid oklch(0.7 0.12 ${t.hue})`,
+        color: `oklch(0.4 0.12 ${t.hue})`,
+        fontSize: "11px",
+        fontWeight: 500,
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        borderRadius: "4px",
+        padding: "2px 8px",
+      }}
+    >
+      {t.label}
+    </span>
   );
 }
 
