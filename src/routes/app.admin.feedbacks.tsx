@@ -403,7 +403,7 @@ function FeedbacksPage() {
                 </TableHeader>
                 <TableBody>
                   {groups.map((g) => (
-                    <>
+                    <Fragment key={g.key}>
                       <TableRow key={`h-${g.key}`} className="hover:bg-transparent border-0">
                         <TableCell colSpan={5} className="pt-6 pb-2">
                           <div className="flex items-center gap-3">
