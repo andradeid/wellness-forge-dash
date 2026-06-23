@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export interface EditablePatient {
   id: string;
@@ -26,6 +27,8 @@ export interface EditablePatient {
   avatar_url?: string | null;
   menstrual_cycle_phase?: string | null;
   is_pregnant?: boolean;
+  gestational_weeks?: number | null;
+  pregnancy_type?: "single" | "multiple" | null;
 }
 
 interface Props {
@@ -48,6 +51,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("");
   const [isPregnant, setIsPregnant] = useState(false);
+  const [gestationalWeeks, setGestationalWeeks] = useState<string>("");
+  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -62,6 +67,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
     setAvatarUrl(patient.avatar_url ?? null);
     setMenstrualCyclePhase(patient.menstrual_cycle_phase ?? "");
     setIsPregnant(patient.is_pregnant ?? false);
+    setGestationalWeeks(patient.gestational_weeks ? String(patient.gestational_weeks) : "");
+    setPregnancyType((patient.pregnancy_type as "single" | "multiple") ?? "single");
   }, [patient]);
 
   const initials = name
@@ -109,6 +116,9 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
         gender,
         notes: notes.trim() || null,
         avatar_url: avatarUrl,
+        is_pregnant: gender === "female" ? isPregnant : false,
+        gestational_weeks: gender === "female" && isPregnant ? (parseInt(gestationalWeeks) || null) : null,
+        pregnancy_type: gender === "female" && isPregnant ? pregnancyType : null,
         menstrual_cycle_phase: gender === "female" && !isPregnant ? menstrualCyclePhase : null,
       })
       .eq("id", patient.id)
@@ -195,6 +205,68 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
               </Select>
             </div>
           </div>
+
+          {gender === "female" && (
+            <div className="space-y-4 p-4 rounded-xl bg-[#f7f5f0]/50 border border-muted/50 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Paciente está gestante?</Label>
+                <div className="flex bg-white rounded-lg p-1 border border-muted shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setIsPregnant(false)}
+                    className={cn(
+                      "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                      !isPregnant
+                        ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    Não
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPregnant(true)}
+                    className={cn(
+                      "px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+                      isPregnant
+                        ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    Sim
+                  </button>
+                </div>
+              </div>
+
+              {isPregnant && (
+                <div className="grid grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ep-weeks" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Semanas</Label>
+                    <Input
+                      id="ep-weeks"
+                      type="number"
+                      min="1"
+                      max="42"
+                      value={gestationalWeeks}
+                      onChange={(e) => setGestationalWeeks(e.target.value)}
+                      placeholder="Ex: 24"
+                      className="rounded-xl h-11 bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
+                    <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                      <SelectTrigger className="rounded-xl h-11 bg-white"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">Única (monofetal)</SelectItem>
+                        <SelectItem value="multiple">Gemelar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {gender === "female" && !isPregnant && (
             <div className="space-y-2 animate-in fade-in duration-300">
