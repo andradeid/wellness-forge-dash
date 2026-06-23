@@ -32,6 +32,7 @@ import { Route as AppAdminPlansRouteImport } from './routes/app.admin.plans'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
+import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashboard'
 import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
@@ -157,6 +158,11 @@ const AppAdminFeedbacksRoute = AppAdminFeedbacksRouteImport.update({
   path: '/admin/feedbacks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminCreditsAuditRoute = AppAdminCreditsAuditRouteImport.update({
   id: '/admin/credits-audit',
   path: '/admin/credits-audit',
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
+  '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
+  '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
+  '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/credits-audit'
+    | '/app/admin/dashboard'
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/credits-audit'
+    | '/app/admin/dashboard'
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/credits-audit'
+    | '/app/admin/dashboard'
     | '/app/admin/feedbacks'
     | '/app/admin/integrations'
     | '/app/admin/nutritionists'
@@ -587,6 +599,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminFeedbacksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/dashboard': {
+      id: '/app/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/app/admin/dashboard'
+      preLoaderRoute: typeof AppAdminDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/credits-audit': {
       id: '/app/admin/credits-audit'
       path: '/admin/credits-audit'
@@ -664,6 +683,7 @@ interface AppRouteChildren {
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminAgentCostsRoute: typeof AppAdminAgentCostsRoute
   AppAdminCreditsAuditRoute: typeof AppAdminCreditsAuditRoute
+  AppAdminDashboardRoute: typeof AppAdminDashboardRoute
   AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
@@ -688,6 +708,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminAgentCostsRoute: AppAdminAgentCostsRoute,
   AppAdminCreditsAuditRoute: AppAdminCreditsAuditRoute,
+  AppAdminDashboardRoute: AppAdminDashboardRoute,
   AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
