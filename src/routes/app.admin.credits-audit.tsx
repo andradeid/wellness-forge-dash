@@ -400,6 +400,47 @@ function AuditPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={unlimitedOpen} onOpenChange={setUnlimitedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {unlimitedTarget ? "Ativar créditos ilimitados" : "Desativar créditos ilimitados"}
+            </DialogTitle>
+            <DialogDescription>
+              {unlimitedTarget
+                ? "Este usuário deixará de consumir créditos em todas as interações."
+                : "Este usuário voltará a consumir créditos normalmente."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Motivo (obrigatório)</Label>
+              <Textarea
+                placeholder="Ex.: cliente legado com compromisso contratual de ilimitado"
+                value={unlimitedReason}
+                onChange={(e) => setUnlimitedReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlimitedOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={submitUnlimited} disabled={savingUnlimited}>
+              {savingUnlimited ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : unlimitedTarget ? (
+                "Ativar ilimitado"
+              ) : (
+                "Desativar ilimitado"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
