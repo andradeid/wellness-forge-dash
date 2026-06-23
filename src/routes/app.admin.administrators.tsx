@@ -181,24 +181,18 @@ function AdministratorsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span>Acesso</span>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground/80">Administradores</span>
-      </div>
-
-      {/* Hero */}
-      <div className="flex items-start justify-between gap-6 flex-wrap">
+    <div className="max-w-6xl">
+      {/* Header */}
+      <div className="mb-4 flex items-end justify-between gap-6 flex-wrap">
         <div className="space-y-2">
-          <h1 className="font-serif text-4xl md:text-5xl font-normal leading-tight tracking-tight text-foreground flex items-center gap-3">
-            <Shield className="h-7 w-7 text-[oklch(0.55_0.18_25)]" />
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <span>Acesso</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground/80">Administradores</span>
+          </div>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
             Administradores
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie quem tem acesso ao painel administrativo.
-          </p>
         </div>
         {isSuperAdmin && (
           <Button
