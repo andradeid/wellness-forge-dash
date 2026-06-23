@@ -27,6 +27,19 @@ type Plan = {
   sort_order: number;
 };
 
+type Pack = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  credits: number;
+  price_cents: number;
+  is_highlighted: boolean;
+  is_active: boolean;
+  sort_order: number;
+};
+
+
 const centsToBRL = (c: number | null | undefined) =>
   ((c ?? 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
