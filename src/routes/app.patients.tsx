@@ -18,6 +18,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+
+const AVATAR_GRADIENTS = [
+  "from-[#7c3aed] to-[#a78bfa]", // roxo
+  "from-[#e8a04c] to-[#f4c280]", // âmbar
+  "from-[#e89bcf] to-[#f4c2dd]", // rosa
+  "from-[#6b8e6b] to-[#9bb89b]", // verde-sálvia
+  "from-[#4a6b8a] to-[#7a9bb8]", // azul-aço
+  "from-[#c97b5e] to-[#e09b80]", // terracota
+];
+function avatarGradient(name: string): string {
+  const ch = (name.trim()[0] ?? "?").toUpperCase().charCodeAt(0);
+  return AVATAR_GRADIENTS[ch % AVATAR_GRADIENTS.length];
+}
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -456,7 +469,7 @@ function PatientsPage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12 shrink-0">
                         <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-sm font-semibold">
+                        <AvatarFallback className={`bg-gradient-to-br ${avatarGradient(p.name)} text-white text-sm font-semibold`}>
                           {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
                         </AvatarFallback>
                       </Avatar>
@@ -503,7 +516,7 @@ function PatientsPage() {
 
               {/* Desktop: table */}
               <div className="hidden md:block overflow-x-auto">
-                <Table>
+                <Table className="group/ptable">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent [&>th]:border-b-[1.5px] [&>th]:border-border [&>th]:h-11 [&>th]:text-[11px] [&>th]:font-medium [&>th]:uppercase [&>th]:tracking-[0.06em] [&>th]:text-muted-foreground">
                       <TableHead>
@@ -523,7 +536,9 @@ function PatientsPage() {
                           Cadastramento {sortIcon("created_at")}
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="text-right">
+                        <span className="opacity-0 transition-opacity duration-150 group-has-[tbody:hover]/ptable:opacity-100">Ações</span>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -536,7 +551,7 @@ function PatientsPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
                               <AvatarImage src={p.avatar_url ?? undefined} alt={p.name} />
-                              <AvatarFallback className="bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white text-xs">
+                              <AvatarFallback className={`bg-gradient-to-br ${avatarGradient(p.name)} text-white text-xs`}>
                                 {p.name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")}
                               </AvatarFallback>
                             </Avatar>
