@@ -1,13 +1,13 @@
+import { Fragment } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronRight,
+  ChevronLeft,
   MessageSquare,
-  ThumbsDown,
-  ThumbsUp,
   Search,
   ExternalLink,
-  Lightbulb,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -45,6 +51,8 @@ interface FeedbackRow {
   nutri_email: string | null;
 }
 
+const HOVER_BG = "oklch(0.97 0.006 285)";
+
 function FeedbacksPage() {
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -52,6 +60,8 @@ function FeedbacksPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterMode>("all");
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (role && role !== "super_admin") {
@@ -169,6 +179,33 @@ function FeedbacksPage() {
     });
   }, [rows, search, filter]);
 
+  // Reset page on filter/search change
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter, pageSize]);
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIdx = (currentPage - 1) * pageSize;
+  const paged = filtered.slice(startIdx, startIdx + pageSize);
+
+  // Group paged rows by date
+  const groups = useMemo(() => {
+    const map = new Map<string, FeedbackRow[]>();
+    for (const r of paged) {
+      const d = new Date(r.created_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    return Array.from(map.entries()).map(([key, items]) => ({
+      key,
+      date: new Date(items[0].created_at),
+      items,
+    }));
+  }, [paged]);
+
   const stats = useMemo(() => {
     const total = rows.length;
     const positive = rows.filter((r) => r.rating === "positive").length;
@@ -176,8 +213,70 @@ function FeedbacksPage() {
     const suggestion = rows.filter((r) => r.rating === "suggestion").length;
     const ratable = positive + negative;
     const approval = ratable > 0 ? Math.round((positive / ratable) * 100) : 0;
-    return { total, positive, negative, suggestion, approval };
+
+    // MoM variations
+    const now = new Date();
+    const startThis = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const inRange = (d: Date, from: Date, to: Date) => d >= from && d < to;
+    const prev = {
+      total: 0,
+      positive: 0,
+      negative: 0,
+      suggestion: 0,
+    };
+    const curr = { total: 0, positive: 0, negative: 0, suggestion: 0 };
+    for (const r of rows) {
+      const d = new Date(r.created_at);
+      if (inRange(d, startThis, new Date(now.getFullYear(), now.getMonth() + 1, 1))) {
+        curr.total++;
+        (curr as any)[r.rating]++;
+      } else if (inRange(d, startPrev, startThis)) {
+        prev.total++;
+        (prev as any)[r.rating]++;
+      }
+    }
+    const prevRatable = prev.positive + prev.negative;
+    const prevApproval = prevRatable > 0 ? Math.round((prev.positive / prevRatable) * 100) : 0;
+
+    return {
+      total,
+      positive,
+      negative,
+      suggestion,
+      approval,
+      deltaTotal: curr.total - prev.total,
+      deltaApproval: approval - prevApproval,
+      deltaNegative: curr.negative - prev.negative,
+      deltaSuggestion: curr.suggestion - prev.suggestion,
+    };
   }, [rows]);
+
+  const exportCsv = () => {
+    const headers = ["Data", "Paciente", "Nutricionista", "Rating", "Comentário"];
+    const escape = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [headers.join(",")];
+    for (const r of filtered) {
+      lines.push(
+        [
+          new Date(r.created_at).toLocaleString("pt-BR"),
+          r.patient_name ?? "",
+          r.nutri_name ?? r.nutri_email ?? "",
+          r.rating,
+          (r.comment ?? "").replace(/\n/g, " "),
+        ]
+          .map(escape)
+          .join(","),
+      );
+    }
+    const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `feedbacks-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (role && role !== "super_admin") return null;
 
@@ -205,25 +304,15 @@ function FeedbacksPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatTile label="Total" value={stats.total} icon={MessageSquare} />
+        <StatTile label="Total" value={stats.total} delta={stats.deltaTotal} />
         <StatTile
           label="Taxa de aprovação"
           value={`${stats.approval}%`}
-          icon={ThumbsUp}
-          accent="emerald"
+          delta={stats.deltaApproval}
+          deltaSuffix="pp"
         />
-        <StatTile
-          label="Negativos"
-          value={stats.negative}
-          icon={ThumbsDown}
-          accent="rose"
-        />
-        <StatTile
-          label="Sugestões"
-          value={stats.suggestion}
-          icon={Lightbulb}
-          accent="sky"
-        />
+        <StatTile label="Negativos" value={stats.negative} delta={stats.deltaNegative} />
+        <StatTile label="Sugestões" value={stats.suggestion} delta={stats.deltaSuggestion} />
       </div>
 
       <Card className="rounded-2xl border bg-card shadow-sm">
@@ -270,6 +359,10 @@ function FeedbacksPage() {
                 className="pl-9 rounded-xl"
               />
             </div>
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Exportar CSV
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -287,91 +380,180 @@ function FeedbacksPage() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Data
-                  </TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Paciente / Nutri
-                  </TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Rating
-                  </TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Comentário
-                  </TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-right">
-                    Conversa
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((r) => (
-                  <TableRow
-                    key={r.id}
-                    className={cn(
-                      "border-b last:border-0 align-top",
-                      r.rating === "negative" && "bg-rose-50/60 hover:bg-rose-50",
-                    )}
-                  >
-                    <TableCell className="py-4 text-sm text-muted-foreground whitespace-nowrap">
-                      {new Date(r.created_at).toLocaleString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="font-medium text-foreground">
-                        {r.patient_name ?? "—"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {r.nutri_name ?? r.nutri_email ?? "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <RatingBadge rating={r.rating} />
-                    </TableCell>
-                    <TableCell className="py-4 text-sm text-foreground/80 max-w-md">
-                      {r.comment ? (
-                        <span className="line-clamp-3 whitespace-pre-wrap">
-                          {r.comment}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-4 text-right">
-                      {r.patient_id ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full"
-                        >
-                          <Link
-                            to="/app/chat/$patientId"
-                            params={{ patientId: r.patient_id }}
-                            search={{ chatId: r.chat_id ?? undefined, messageId: r.message_id }}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                            Ver conversa
-                          </Link>
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          indisponível
-                        </span>
-                      )}
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground w-[120px]">
+                      Hora
+                    </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                      Paciente / Nutri
+                    </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                      Rating
+                    </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                      Comentário
+                    </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-right">
+                      Conversa
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {groups.map((g) => (
+                    <Fragment key={g.key}>
+                      <TableRow key={`h-${g.key}`} className="hover:bg-transparent border-0">
+                        <TableCell colSpan={5} className="pt-6 pb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                              {g.date.toLocaleDateString("pt-BR", {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                              })}
+                            </span>
+                            <div className="flex-1 h-px bg-border" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {g.items.map((r) => (
+                        <TableRow
+                          key={r.id}
+                          className="border-b last:border-0 align-top transition-colors"
+                          style={{ transition: "background 120ms ease" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = HOVER_BG)}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                        >
+                          <TableCell className="py-4 font-mono text-sm text-muted-foreground whitespace-nowrap">
+                            {new Date(r.created_at).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </TableCell>
+                          <TableCell className="py-4">
+                            <div className="font-medium text-foreground">
+                              {r.patient_name ?? "—"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {r.nutri_name ?? r.nutri_email ?? "—"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-4">
+                            <RatingBadge rating={r.rating} />
+                          </TableCell>
+                          <TableCell className="py-4 text-sm text-foreground/80 max-w-md">
+                            {r.comment ? (
+                              <span className="line-clamp-3 whitespace-pre-wrap">
+                                {r.comment}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="py-4 text-right">
+                            {r.patient_id ? (
+                              <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                                className="rounded-full"
+                              >
+                                <Link
+                                  to="/app/chat/$patientId"
+                                  params={{ patientId: r.patient_id }}
+                                  search={{
+                                    chatId: r.chat_id ?? undefined,
+                                    messageId: r.message_id,
+                                  }}
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                                  Ver conversa
+                                </Link>
+                              </Button>
+                            ) : (
+                              <UnavailableBadge />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              <div className="mt-2 flex flex-col gap-3 border-t py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Exibir:</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                    <SelectTrigger className="h-8 w-[72px] rounded-md text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[10, 25, 50].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-xs text-muted-foreground text-center">
+                  Exibindo {total === 0 ? 0 : startIdx + 1}–
+                  {Math.min(startIdx + pageSize, total)} de {total} feedbacks
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: totalPages })
+                    .slice(
+                      Math.max(0, currentPage - 3),
+                      Math.max(0, currentPage - 3) + Math.min(5, totalPages),
+                    )
+                    .map((_, i) => {
+                      const start = Math.max(0, currentPage - 3);
+                      const num = start + i + 1;
+                      if (num > totalPages) return null;
+                      const active = num === currentPage;
+                      return (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setPage(num)}
+                          className={cn(
+                            "h-8 min-w-8 rounded-md px-2 text-xs font-medium transition-colors",
+                            active
+                              ? "bg-primary/10 text-foreground border border-primary"
+                              : "text-muted-foreground hover:bg-muted/50",
+                          )}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    aria-label="Próxima página"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -382,58 +564,91 @@ function FeedbacksPage() {
 function StatTile({
   label,
   value,
-  icon: Icon,
-  accent,
+  delta,
+  deltaSuffix,
 }: {
   label: string;
   value: number | string;
-  icon: React.ComponentType<{ className?: string }>;
-  accent?: "emerald" | "rose" | "sky";
+  delta?: number;
+  deltaSuffix?: string;
 }) {
-  const tone =
-    accent === "emerald"
-      ? "bg-emerald-100 text-emerald-700"
-      : accent === "rose"
-        ? "bg-rose-100 text-rose-700"
-        : accent === "sky"
-          ? "bg-sky-100 text-sky-700"
-          : "bg-accent/60 text-accent-foreground";
+  const hasDelta = typeof delta === "number";
+  const arrow = !hasDelta ? "" : delta! > 0 ? "↑" : delta! < 0 ? "↓" : "→";
+  const abs = hasDelta ? Math.abs(delta!) : 0;
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-sm flex items-center gap-4">
-      <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", tone)}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          {label}
+    <div className="rounded-2xl border bg-card shadow-sm" style={{ padding: 24 }}>
+      <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="font-mono font-bold text-4xl tracking-tight text-foreground mt-2">
+        {value}
+      </p>
+      {hasDelta && (
+        <p className="text-xs text-muted-foreground mt-2">
+          {arrow} {abs}
+          {deltaSuffix ? deltaSuffix : ""} vs mês anterior
         </p>
-        <p className="text-2xl font-semibold text-foreground">{value}</p>
-      </div>
+      )}
     </div>
   );
 }
 
+const BADGE_BASE: React.CSSProperties = {
+  display: "inline-block",
+  fontSize: 11,
+  fontWeight: 500,
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  borderRadius: 4,
+  padding: "2px 8px",
+  borderWidth: 1,
+  borderStyle: "solid",
+};
+
 function RatingBadge({ rating }: { rating: FeedbackRow["rating"] }) {
-  if (rating === "positive") {
-    return (
-      <Badge className="rounded-full gap-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">
-        <ThumbsUp className="h-3 w-3" />
-        Positivo
-      </Badge>
-    );
-  }
-  if (rating === "negative") {
-    return (
-      <Badge className="rounded-full gap-1.5 bg-rose-100 text-rose-700 hover:bg-rose-100 border-0">
-        <ThumbsDown className="h-3 w-3" />
-        Negativo
-      </Badge>
-    );
-  }
+  const map = {
+    positive: {
+      bg: "oklch(0.96 0.04 160)",
+      border: "oklch(0.7 0.12 160)",
+      text: "oklch(0.4 0.12 160)",
+      label: "Positivo",
+    },
+    negative: {
+      bg: "oklch(0.97 0.04 28)",
+      border: "oklch(0.7 0.15 28)",
+      text: "oklch(0.45 0.15 28)",
+      label: "Negativo",
+    },
+    suggestion: {
+      bg: "oklch(0.96 0.04 250)",
+      border: "oklch(0.7 0.10 250)",
+      text: "oklch(0.4 0.10 250)",
+      label: "Sugestão",
+    },
+  }[rating];
   return (
-    <Badge className="rounded-full gap-1.5 bg-sky-100 text-sky-700 hover:bg-sky-100 border-0">
-      <MessageSquare className="h-3 w-3" />
-      Sugestão
-    </Badge>
+    <span
+      style={{
+        ...BADGE_BASE,
+        background: map.bg,
+        borderColor: map.border,
+        color: map.text,
+      }}
+    >
+      {map.label}
+    </span>
+  );
+}
+
+function UnavailableBadge() {
+  return (
+    <span
+      style={{
+        ...BADGE_BASE,
+        background: "oklch(0.95 0.005 285)",
+        borderColor: "oklch(0.9 0.005 285)",
+        color: "oklch(0.6 0.01 285)",
+      }}
+    >
+      Indisponível
+    </span>
   );
 }
