@@ -134,6 +134,14 @@ function PatientsPage() {
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setPatients((data as Patient[]) ?? []);
+
+    const [examsRes, resultsRes] = await Promise.all([
+      (supabase as any).from("patient_exams").select("patient_id"),
+      (supabase as any).from("patient_exam_results").select("patient_id"),
+    ]);
+    setExamPatientIds(new Set(((examsRes.data ?? []) as { patient_id: string }[]).map((r) => r.patient_id)));
+    setAnalyzedPatientIds(new Set(((resultsRes.data ?? []) as { patient_id: string }[]).map((r) => r.patient_id)));
+
     setLoading(false);
   };
 
