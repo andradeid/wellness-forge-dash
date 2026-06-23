@@ -2,8 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  Users,
-  Activity,
   AlertTriangle,
   TrendingDown,
   ArrowRight,
@@ -14,7 +12,6 @@ import {
   MessageCircle,
   TrendingUp,
   PieChart as PieChartIcon,
-  Lightbulb,
   Pin,
 } from "lucide-react";
 
