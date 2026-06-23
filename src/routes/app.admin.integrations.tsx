@@ -13,7 +13,6 @@ import {
   Link as LinkIcon,
   Loader2,
   MessageCircle,
-  Plug,
   RotateCcw,
   Save,
   Wifi,
@@ -457,25 +456,18 @@ function IntegrationsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span>Sistema</span>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground/80">Integrações & APIs</span>
-      </div>
-
-      {/* Hero */}
-      <div className="flex items-start justify-between gap-6 flex-wrap">
+    <div className="max-w-6xl">
+      {/* Header */}
+      <div className="mb-4 flex items-end justify-between gap-6 flex-wrap">
         <div className="space-y-2">
-          <h1 className="font-serif text-4xl md:text-5xl font-normal leading-tight tracking-tight text-foreground flex items-center gap-3">
-            <Plug className="h-7 w-7 text-[oklch(0.55_0.18_25)]" />
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <span>Sistema</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground/80">Integrações & APIs</span>
+          </div>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
             Integrações & APIs
           </h1>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Painel de controle de conectividade — gerencie chaves, webhooks e
-            monitore a saúde do sistema em um só lugar.
-          </p>
         </div>
         <Button
           onClick={runHealthCheck}
@@ -528,11 +520,11 @@ function IntegrationsPage() {
 
       {/* Cards */}
       {loading ? (
-        <div className="py-16 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+        <div className="mt-8 py-16 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" /> Carregando integrações...
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-1">
+        <div className="mt-8 grid gap-6 lg:grid-cols-1">
           {CARDS.map((c) => {
             const fields = grouped[c.category] ?? [];
             return (

@@ -336,16 +336,14 @@ function UsersPage() {
   };
 
   return (
-    <div className="space-y-10 max-w-7xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span>Acesso</span>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground/80">Gestão de usuários</span>
-      </div>
-
-      {/* Hero */}
-      <div style={{ marginTop: 8, marginBottom: -24 }}>
+    <div className="max-w-7xl">
+      {/* Header */}
+      <div className="mb-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span>Acesso</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-foreground/80">Gestão de usuários</span>
+        </div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           Central de <span className="italic text-gradient-brand">nutricionistas</span>
         </h1>
@@ -368,7 +366,7 @@ function UsersPage() {
       </div>
 
       {/* Tabela */}
-      <Card className="rounded-2xl border bg-card shadow-sm">
+      <Card className="mt-10 rounded-2xl border bg-card shadow-sm">
         <CardHeader className="border-b space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>

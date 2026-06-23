@@ -141,25 +141,16 @@ function RankingPage() {
   if (role && role !== "super_admin") return null;
 
   return (
-    <div className="space-y-10 max-w-6xl">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span>Operação</span>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground/80">Ranking de uso</span>
-      </div>
-
-      <div className="space-y-4">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-          Engajamento da equipe
-        </p>
-        <h1 className="font-serif text-5xl md:text-6xl font-normal leading-[1.05] tracking-tight text-foreground">
+    <div className="max-w-6xl">
+      <div className="mb-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span>Operação</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-foreground/80">Ranking de uso</span>
+        </div>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           Ranking de <span className="italic text-gradient-brand">uso</span>
         </h1>
-        <p className="max-w-2xl text-base text-muted-foreground leading-relaxed">
-          Identifique os nutricionistas mais engajados com a Lumma e quem
-          pode precisar de apoio ou treinamento. O ranking considera análises
-          geradas e feedbacks registrados.
-        </p>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -189,11 +180,11 @@ function RankingPage() {
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-sm text-muted-foreground">
+        <div className="mt-10 py-16 text-center text-sm text-muted-foreground">
           Carregando ranking...
         </div>
       ) : rows.length === 0 ? (
-        <Card className="rounded-2xl border-dashed">
+        <Card className="mt-10 rounded-2xl border-dashed">
           <CardContent className="py-16 text-center">
             <div className="h-12 w-12 mx-auto rounded-2xl bg-accent/60 flex items-center justify-center mb-4">
               <Trophy className="h-6 w-6 text-accent-foreground" />
@@ -204,7 +195,7 @@ function RankingPage() {
           </CardContent>
         </Card>
       ) : (
-        <>
+        <div className="mt-10 space-y-10">
           {top3.length > 0 && (
             <div className="grid gap-5 md:grid-cols-3">
               {top3.map((r, i) => (
@@ -220,7 +211,7 @@ function RankingPage() {
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

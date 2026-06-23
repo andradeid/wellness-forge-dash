@@ -281,14 +281,13 @@ function FeedbacksPage() {
   if (role && role !== "super_admin") return null;
 
   return (
-    <div className="space-y-10 max-w-6xl">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span>Operação</span>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground/80">Auditoria de Feedbacks</span>
-      </div>
-
-      <div style={{ marginTop: 8, marginBottom: -24 }}>
+    <div className="max-w-6xl">
+      <div className="mb-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span>Operação</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-foreground/80">Auditoria de Feedbacks</span>
+        </div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           Auditoria de <span className="italic text-gradient-brand">feedbacks</span>
         </h1>
@@ -307,7 +306,7 @@ function FeedbacksPage() {
         <StatTile label="Sugestões" value={stats.suggestion} delta={stats.deltaSuggestion} />
       </div>
 
-      <Card className="rounded-2xl border bg-card shadow-sm">
+      <Card className="mt-10 rounded-2xl border bg-card shadow-sm">
         <CardHeader className="flex-row items-center justify-between gap-4 border-b flex-wrap">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
