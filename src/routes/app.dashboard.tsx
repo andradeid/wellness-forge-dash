@@ -521,111 +521,40 @@ function DashboardPage() {
         </div>
       </div>
 
-      {/* Lumma Insights — inteligência consolidada da base */}
-      <Card className="relative overflow-hidden border border-[#f1d9b8] bg-gradient-to-br from-[#fffaf2] via-white to-[#fdf3f8] p-4 sm:p-5 shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#e8a04c] to-[#e89bcf]" />
-        <div className="flex items-start gap-4 pl-2">
-          <div className="shrink-0 mt-0.5 h-9 w-9 rounded-full bg-white shadow-sm border border-[#f1d9b8] flex items-center justify-center">
-            <Lightbulb className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm font-semibold tracking-tight">
-                Insight Consolidado da Base
-              </h2>
-              <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 text-[10px] h-4 px-2 hover:opacity-90">
-                LUMMA Insights
-              </Badge>
-            </div>
-            <p className="text-[13px] text-foreground/80 mt-1.5 leading-relaxed max-w-3xl">
-              A análise automatizada desta semana identificou uma tendência de{" "}
-              <strong className="text-[#b6743a]">12% de aumento</strong> em marcadores de
-              estresse oxidativo na sua base de pacientes ativos. O perfil predominante
-              atual exige atenção preventiva para deficiência de{" "}
-              <strong className="text-foreground">Vitamina B12</strong> e{" "}
-              <strong className="text-foreground">Ferritina</strong>.
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-        <KpiCard
-          icon={<Users className="h-5 w-5" {...ICON_PROPS} />}
-          label="Vidas impactadas"
-          value={stats.totalPatients}
-          hint="Pacientes ativos na sua base"
-          tone="sage"
-          loading={loading}
-        />
-        <KpiCard
-          icon={<Activity className="h-5 w-5" {...ICON_PROPS} />}
-          label={`Exames avaliados · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`}
-          value={stats.examsThisMonth}
-          hint="Total de laudos, BIA, genético e outros"
-          tone="brand"
-          loading={loading}
-        />
-
+      {/* KPIs - 4 cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          { label: "Vidas Impactadas", value: stats.totalPatients },
+          { label: `Exames Avaliados · ${RANGE_OPTIONS.find((o) => o.key === range)?.label ?? ""}`, value: stats.examsThisMonth },
+          { label: "Pacientes em Atenção", value: patientsInAttentionCount },
+          { label: "Conversas Ativas", value: recentChats.length },
+        ].map((k) => (
+          <Card key={k.label} className="p-5">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
+            {loading ? (
+              <Skeleton className="h-9 w-20 mt-2" />
+            ) : (
+              <p className="font-mono font-semibold text-3xl mt-2 text-foreground">{k.value}</p>
+            )}
+          </Card>
+        ))}
       </div>
 
-      {/* Bento grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
-        {/* Distribution */}
-        <Card className="p-4 sm:p-6 lg:col-span-1">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold">Saúde da base</h2>
-            <span className="text-xs text-muted-foreground">{stats.totalAnalyzed} marcadores</span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Distribuição da última leitura por classificação.
-          </p>
-          {loading ? (
-            <Skeleton className="h-56 w-full" />
-          ) : stats.totalAnalyzed === 0 ? (
-            <EmptyState text="Sem marcadores ainda. Envie um exame para começar." />
-          ) : (
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.distribution.filter((d) => d.value > 0)}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={2}
-                  >
-                    {stats.distribution.map((d) => (
-                      <Cell key={d.bucket} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend
-                    wrapperStyle={{ fontSize: 11 }}
-                    iconType="circle"
-                    align="center"
-                    verticalAlign="bottom"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-
-        {/* Attention list */}
-        <Card className="p-4 sm:p-6 lg:col-span-2">
+      {/* L1: Atenção Prioritária (2) + Saúde da Base (1) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <Card className="p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-sm font-semibold">Atenção prioritária</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-base font-semibold flex items-center gap-2">
+                Atenção Prioritária
+                <span className="text-xs font-normal text-muted-foreground">
+                  ({attentionList.length} paciente{attentionList.length !== 1 ? "s" : ""})
+                </span>
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Pacientes com marcadores em alerta ou crítico.
               </p>
             </div>
-            <Badge variant="outline" className="text-[10px]">
-              {attentionList.length}
-            </Badge>
           </div>
           {loading ? (
             <div className="space-y-2">
@@ -636,7 +565,7 @@ function DashboardPage() {
           ) : attentionList.length === 0 ? (
             <EmptyState text="Nenhum alerta no momento. Tudo dentro do esperado." />
           ) : (
-            <ul className="divide-y">
+            <ul>
               {attentionList.map((p) => {
                 const b = p.top.bucket;
                 const totalAlerts = p.critical + p.attention;
@@ -645,7 +574,7 @@ function DashboardPage() {
                     ? "bg-rose-50 text-rose-700 border border-rose-200"
                     : "bg-amber-50 text-amber-700 border border-amber-200";
                 return (
-                  <li key={p.patient_id} className="py-3 flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+                  <li key={p.patient_id} className="py-3 border-b border-border/60 last:border-b-0 flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ background: BUCKET_META[b].color }}
@@ -672,7 +601,7 @@ function DashboardPage() {
                         </span>
                         <span
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                            "rounded-full px-2 py-0.5 font-mono text-sm font-medium",
                             severityBadge,
                           )}
                         >
@@ -718,17 +647,53 @@ function DashboardPage() {
           )}
         </Card>
 
-        {/* Top deficiencies */}
-        <Card className="p-4 sm:p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold">Top 5 deficiências da base</h2>
-              <p className="text-xs text-muted-foreground">
-                Marcadores classificados como baixos / deficientes na sua base.
-              </p>
+        <Card className="p-6 lg:col-span-1">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold">Saúde da Base</h2>
+            <span className="text-xs text-muted-foreground">{stats.totalAnalyzed} marcadores</span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Distribuição da última leitura por classificação.
+          </p>
+          {loading ? (
+            <Skeleton className="h-56 w-full" />
+          ) : stats.totalAnalyzed === 0 ? (
+            <EmptyState text="Sem marcadores ainda. Envie um exame para começar." />
+          ) : (
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.distribution.filter((d) => d.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={2}
+                  >
+                    {stats.distribution.map((d) => (
+                      <Cell key={d.bucket} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" align="center" verticalAlign="bottom" />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
+          )}
+        </Card>
+      </div>
+
+      {/* L2: Top 5 Deficiências (2) + Perfil de Exames (1) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <Card className="p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold">Top 5 Deficiências</h2>
             <Sparkles className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
           </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Marcadores classificados como baixos / deficientes na sua base.
+          </p>
           {loading ? (
             <Skeleton className="h-56 w-full" />
           ) : topDeficiencies.length === 0 ? (
@@ -745,13 +710,7 @@ function DashboardPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
                   <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={100}
-                    tick={{ fontSize: 11 }}
-                    stroke="#475569"
-                  />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
                   <Tooltip formatter={(v: number) => [`${v} ocorrências`, "Total"]} />
                   <Bar dataKey="count" fill="url(#defBar)" radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -760,15 +719,12 @@ function DashboardPage() {
           )}
         </Card>
 
-        {/* Perfil de Exames Avaliados */}
-        <Card className="p-4 sm:p-6 lg:col-span-1">
-          <div className="flex items-center justify-between mb-2">
+        <Card className="p-6 lg:col-span-1">
+          <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold">Perfil de Exames Avaliados</h2>
             <PieChartIcon className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
           </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Distribuição por tipo de análise.
-          </p>
+          <p className="text-xs text-muted-foreground mb-4">Distribuição por tipo de análise.</p>
           {loading ? (
             <Skeleton className="h-56 w-full" />
           ) : (
@@ -802,22 +758,18 @@ function DashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend
-                    wrapperStyle={{ fontSize: 10 }}
-                    iconType="circle"
-                    align="center"
-                    verticalAlign="bottom"
-                  />
+                  <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" align="center" verticalAlign="bottom" />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           )}
         </Card>
+      </div>
 
-        {/* Recent activity: Agrupado por Paciente */}
-
-        <Card className="p-4 sm:p-6 lg:col-span-1">
-          <h2 className="text-sm font-semibold mb-1">Últimas análises</h2>
+      {/* L3: Últimas Análises + Tendência de Exames */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold mb-1">Últimas Análises</h2>
           <p className="text-xs text-muted-foreground mb-4">Agrupado por paciente.</p>
           {loading ? (
             <div className="space-y-2">
@@ -850,134 +802,26 @@ function DashboardPage() {
                 .slice(0, 6)
                 .map((p) => (
                   <li key={p.patient_id} className="flex items-center justify-between gap-2">
-                    <Link
-                      to="/app/evolution/$patientId"
-                      params={{ patientId: p.patient_id }}
-                      className="truncate hover:underline"
-                    >
+                    <Link to="/app/evolution/$patientId" params={{ patientId: p.patient_id }} className="truncate hover:underline">
                       <span className="font-medium">{p.patientName}</span>
                       <span className="text-muted-foreground"> · {p.count} marcador{p.count > 1 ? 'es' : ''}</span>
                     </Link>
-                    <span className="text-muted-foreground shrink-0">
-                      {format(new Date(p.lastAt), "dd/MM")}
-                    </span>
+                    <span className="text-muted-foreground shrink-0">{format(new Date(p.lastAt), "dd/MM")}</span>
                   </li>
                 ))}
             </ul>
           )}
         </Card>
 
-
-        {/* Follow-up: pacientes sem exame há +60 dias */}
-        <Card className="p-4 sm:p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
-                Reengajar pacientes
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Sem exame há mais de 60 dias — bom momento para um follow-up.
-              </p>
-            </div>
-            <Badge variant="outline" className="text-[10px]">
-              {followUpList.length}
-            </Badge>
-          </div>
-          {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : followUpList.length === 0 ? (
-            <EmptyState text="Todas as pacientes em dia. Excelente acompanhamento." />
-          ) : (
-            <ul className="divide-y">
-              {followUpList.map((p) => (
-                <li key={p.id} className="py-3 flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{p.name}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      {p.hasExam
-                        ? `Último exame em ${format(new Date(p.lastAt), "dd/MM/yyyy")}`
-                        : `Cadastrada em ${format(new Date(p.lastAt), "dd/MM/yyyy")} · sem exames`}
-                      {" · "}
-                      <span className="font-medium text-[#b6743a]">{p.days} dias</span>
-                    </div>
-                  </div>
-                  <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
-                    <Button size="sm" variant="ghost" className="rounded-full gap-1">
-                      Conversar <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
-                    </Button>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Aniversariantes da semana */}
-        <Card className="p-4 sm:p-6 lg:col-span-1">
-          <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
-            <Cake className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
-            Aniversariantes da semana
-          </h2>
-          <p className="text-xs text-muted-foreground mb-4">
-            Um carinho de parabéns vai longe.
-          </p>
-          {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : birthdaysWeek.length === 0 ? (
-            <EmptyState text="Nenhum aniversário nos próximos 7 dias." />
-          ) : (
-            <ul className="space-y-2.5">
-              {birthdaysWeek.map((b) => (
-                <li key={b.id} className="flex items-center justify-between gap-2 text-xs">
-                  <Link
-                    to="/app/evolution/$patientId"
-                    params={{ patientId: b.id }}
-                    className="truncate hover:underline min-w-0"
-                  >
-                    <span className="font-medium">{b.name}</span>
-                    <span className="text-muted-foreground"> · {b.turning} anos</span>
-                  </Link>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                      b.inDays === 0
-                        ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {b.inDays === 0
-                      ? "Hoje!"
-                      : b.inDays === 1
-                        ? "Amanhã"
-                        : format(b.next, "dd/MM")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Tendência semanal de exames */}
-        <Card className="p-4 sm:p-6 lg:col-span-2">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600" {...ICON_PROPS} />
-              Tendência de exames
+              Tendência de Exames
             </h2>
             <span className="text-xs text-muted-foreground">Últimas 8 semanas</span>
           </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Ritmo de trabalho ao longo do tempo.
-          </p>
+          <p className="text-xs text-muted-foreground mb-4">Ritmo de trabalho ao longo do tempo.</p>
           {loading ? (
             <Skeleton className="h-48 w-full" />
           ) : examsTrend.every((w) => w.count === 0) ? (
@@ -996,24 +840,45 @@ function DashboardPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#94a3b8" />
                   <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} width={28} />
                   <Tooltip formatter={(v: number) => [`${v} exames`, "Volume"]} />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#e8a04c"
-                    strokeWidth={2}
-                    fill="url(#trendArea)"
-                  />
+                  <Area type="monotone" dataKey="count" stroke="#e8a04c" strokeWidth={2} fill="url(#trendArea)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           )}
         </Card>
+      </div>
 
-        {/* Última conversa com a Lumma */}
-        <Card className="p-4 sm:p-6 lg:col-span-1">
+      {/* L4: Marcadores Mais Analisados + Últimas Conversas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold">Marcadores Mais Analisados</h2>
+            <span className="text-xs text-muted-foreground">{RANGE_OPTIONS.find((o) => o.key === range)?.label}</span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">Padrão clínico predominante na sua base.</p>
+          {loading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : topMarkers.length === 0 ? (
+            <EmptyState text="Sem marcadores no período." />
+          ) : (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
+                  <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
+                  <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-6">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
-            Últimas conversas
+            Últimas Conversas
           </h2>
           <p className="text-xs text-muted-foreground mb-4">Retome de onde parou.</p>
           {loading ? (
@@ -1057,9 +922,7 @@ function DashboardPage() {
                             .from('patient_chats')
                             .update({ pinned_at: isPinned ? null : new Date().toISOString() })
                             .eq('id', c.id);
-                          
                           if (!error) {
-                            // Recarrega localmente ou via window.reload para simplicidade no dashboard
                             window.location.reload();
                           }
                         }}
@@ -1077,42 +940,14 @@ function DashboardPage() {
             </ul>
           )}
         </Card>
+      </div>
 
-        {/* Top marcadores analisados */}
-        <Card className="p-4 sm:p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold">Marcadores mais analisados</h2>
-            <span className="text-xs text-muted-foreground">
-              {RANGE_OPTIONS.find((o) => o.key === range)?.label}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Padrão clínico predominante na sua base.
-          </p>
-          {loading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : topMarkers.length === 0 ? (
-            <EmptyState text="Sem marcadores no período." />
-          ) : (
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
-                  <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
-                  <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-
-        {/* Perfil da base: gênero + faixa etária */}
-        <Card className="p-4 sm:p-6 lg:col-span-1">
+      {/* L5: Perfil da Base + Aniversariantes + Reengajar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <Card className="p-6">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <PieChartIcon className="h-4 w-4 text-[#7ba88b]" {...ICON_PROPS} />
-            Perfil da base
+            Perfil da Base
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
             {patients.length} pacientes · {baseProfile.totalWithBirth} com idade
@@ -1126,14 +961,7 @@ function DashboardPage() {
               <div className="h-28">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={baseProfile.gender}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={28}
-                      outerRadius={48}
-                      paddingAngle={2}
-                    >
+                    <Pie data={baseProfile.gender} dataKey="value" nameKey="name" innerRadius={28} outerRadius={48} paddingAngle={2}>
                       {baseProfile.gender.map((g) => (
                         <Cell key={g.name} fill={g.color} />
                       ))}
@@ -1145,17 +973,12 @@ function DashboardPage() {
               </div>
               <ul className="space-y-1 text-[11px]">
                 {baseProfile.ages.map((a) => {
-                  const pct = baseProfile.totalWithBirth
-                    ? Math.round((a.count / baseProfile.totalWithBirth) * 100)
-                    : 0;
+                  const pct = baseProfile.totalWithBirth ? Math.round((a.count / baseProfile.totalWithBirth) * 100) : 0;
                   return (
                     <li key={a.name} className="flex items-center gap-2">
                       <span className="w-12 text-muted-foreground">{a.name}</span>
                       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]"
-                          style={{ width: `${pct}%` }}
-                        />
+                        <div className="h-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" style={{ width: `${pct}%` }} />
                       </div>
                       <span className="w-8 text-right tabular-nums text-muted-foreground">{a.count}</span>
                     </li>
@@ -1165,7 +988,90 @@ function DashboardPage() {
             </div>
           )}
         </Card>
+
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
+            <Cake className="h-4 w-4 text-[#e89bcf]" {...ICON_PROPS} />
+            Aniversariantes da Semana
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">Um carinho de parabéns vai longe.</p>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : birthdaysWeek.length === 0 ? (
+            <EmptyState text="Nenhum aniversário nos próximos 7 dias." />
+          ) : (
+            <ul className="space-y-2.5">
+              {birthdaysWeek.map((b) => (
+                <li key={b.id} className="flex items-center justify-between gap-2 text-xs">
+                  <Link to="/app/evolution/$patientId" params={{ patientId: b.id }} className="truncate hover:underline min-w-0">
+                    <span className="font-medium">{b.name}</span>
+                    <span className="text-muted-foreground"> · {b.turning} anos</span>
+                  </Link>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                      b.inDays === 0
+                        ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {b.inDays === 0 ? "Hoje!" : b.inDays === 1 ? "Amanhã" : format(b.next, "dd/MM")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#e8a04c]" {...ICON_PROPS} />
+                Reengajar Pacientes
+              </h2>
+              <p className="text-xs text-muted-foreground">Sem exame há mais de 60 dias.</p>
+            </div>
+            <Badge variant="outline" className="text-[10px]">{followUpList.length}</Badge>
+          </div>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : followUpList.length === 0 ? (
+            <EmptyState text="Todas as pacientes em dia." />
+          ) : (
+            <ul className="divide-y">
+              {followUpList.map((p) => (
+                <li key={p.id} className="py-3 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{p.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {p.hasExam
+                        ? `Último exame em ${format(new Date(p.lastAt), "dd/MM/yyyy")}`
+                        : `Cadastrada em ${format(new Date(p.lastAt), "dd/MM/yyyy")} · sem exames`}
+                      {" · "}
+                      <span className="font-medium text-[#b6743a]">{p.days} dias</span>
+                    </div>
+                  </div>
+                  <Link to="/app/chat/$patientId" params={{ patientId: p.id }} search={{ module: "exames_de_sangue" }}>
+                    <Button size="sm" variant="ghost" className="rounded-full gap-1">
+                      Conversar <ArrowRight className="h-3.5 w-3.5" {...ICON_PROPS} />
+                    </Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
+
 
        <footer className="mt-10 pt-6 border-t flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
          <span>© {new Date().getFullYear()} LUMMA 2.0 · Inteligência integrativa</span>
