@@ -267,6 +267,106 @@ function PlansAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pacotes de créditos avulsos</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Defina o preço (BRL) e a quantidade de créditos de cada pacote de recarga.
+            Pacotes inativos não aparecem no modal de recarga.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {packs.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nenhum pacote cadastrado.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Pacote</TableHead>
+                    <TableHead className="w-[140px]">Créditos</TableHead>
+                    <TableHead className="w-[160px]">Preço (R$)</TableHead>
+                    <TableHead className="w-[100px]">Destaque</TableHead>
+                    <TableHead className="w-[90px]">Ativo</TableHead>
+                    <TableHead className="w-[110px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {packs.map((p) => {
+                    const isDirty = Boolean(packDirty[p.id]);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="font-medium">{p.name}</div>
+                          <div className="text-xs text-muted-foreground">{p.slug}</div>
+                          {p.description && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {p.description}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={p.credits}
+                            onChange={(e) =>
+                              patchPack(p.id, {
+                                credits: Math.max(1, Number(e.target.value) || 1),
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            inputMode="decimal"
+                            defaultValue={centsToBRL(p.price_cents)}
+                            onBlur={(e) => {
+                              const cents = parseBRLToCents(e.target.value);
+                              if (cents === null) return;
+                              patchPack(p.id, { price_cents: cents });
+                              e.target.value = centsToBRL(cents);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={p.is_highlighted}
+                            onCheckedChange={(v) => patchPack(p.id, { is_highlighted: v })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={p.is_active}
+                            onCheckedChange={(v) => patchPack(p.id, { is_active: v })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            disabled={!isDirty || packSaving === p.id}
+                            onClick={() => savePack(p.id)}
+                          >
+                            {packSaving === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-1" /> Salvar
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+
   );
 }
