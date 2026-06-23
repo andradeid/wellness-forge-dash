@@ -192,19 +192,36 @@ function NutritionistsPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Nome</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Email</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Validade</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground w-[160px]">Assentos</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
+                <TableRow
+                  className="hover:bg-transparent"
+                  style={{ borderBottom: "1.5px solid var(--border)" }}
+                >
+                  {["Nome", "Email", "Plano", "Status", "Validade", "Assentos", "Cadastro"].map((h, i) => (
+                    <TableHead
+                      key={h}
+                      className={i === 5 ? "w-[160px]" : undefined}
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: "var(--muted-foreground)",
+                      }}
+                    >
+                      {h}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((r) => (
-                  <TableRow key={r.id} className="border-b last:border-0">
+                  <TableRow
+                    key={r.id}
+                    className="border-b last:border-0 cursor-pointer transition-colors"
+                    style={{ transition: "background 120ms ease" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "oklch(0.97 0.006 285)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                  >
                     <TableCell className="font-medium py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-white text-xs font-semibold uppercase">
@@ -215,7 +232,9 @@ function NutritionistsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{r.email}</TableCell>
                     <TableCell className="capitalize">{r.plan_type ?? "—"}</TableCell>
-                    <TableCell><Badge variant={statusVariant(r.status)} className="rounded-full">{statusLabel(r.status)}</Badge></TableCell>
+                    <TableCell>
+                      <StatusBadge status={r.status} />
+                    </TableCell>
                     <TableCell>{r.current_period_end ? new Date(r.current_period_end).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell>
                       <SeatsEditor
