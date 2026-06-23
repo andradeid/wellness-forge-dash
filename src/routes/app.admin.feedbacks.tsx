@@ -478,7 +478,7 @@ function FeedbacksPage() {
                           </TableCell>
                         </TableRow>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>
