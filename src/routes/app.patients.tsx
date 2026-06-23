@@ -67,6 +67,18 @@ function PatientsPage() {
   const [deleting, setDeleting] = useState(false);
   const [editTarget, setEditTarget] = useState<EditablePatient | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [examPatientIds, setExamPatientIds] = useState<Set<string>>(new Set());
+  const [analyzedPatientIds, setAnalyzedPatientIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<"name" | "birth_date" | "created_at">("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [activeFilter, setActiveFilter] = useState<"all" | "pregnant" | "with_exams" | "no_analysis">("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const toggleSort = (key: "name" | "birth_date" | "created_at") => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  };
 
   const askDelete = (p: Patient) => {
     setDeleteTarget(p);
