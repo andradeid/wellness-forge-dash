@@ -27,6 +27,19 @@ type Plan = {
   sort_order: number;
 };
 
+type Pack = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  credits: number;
+  price_cents: number;
+  is_highlighted: boolean;
+  is_active: boolean;
+  sort_order: number;
+};
+
+
 const centsToBRL = (c: number | null | undefined) =>
   ((c ?? 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -45,8 +58,13 @@ function PlansAdminPage() {
   const [dirty, setDirty] = useState<Record<string, Partial<Plan>>>({});
   const [saving, setSaving] = useState<string | null>(null);
 
+  const [packs, setPacks] = useState<Pack[]>([]);
+  const [packDirty, setPackDirty] = useState<Record<string, Partial<Pack>>>({});
+  const [packSaving, setPackSaving] = useState<string | null>(null);
+
   useEffect(() => {
     void load();
+    void loadPacks();
   }, []);
 
   async function load() {
@@ -60,9 +78,23 @@ function PlansAdminPage() {
     setLoading(false);
   }
 
+  async function loadPacks() {
+    const { data, error } = await supabase
+      .from("credit_packs" as any)
+      .select("*")
+      .order("sort_order");
+    if (error) toast.error(error.message);
+    setPacks(((data as unknown) as Pack[]) ?? []);
+  }
+
   function patch(id: string, p: Partial<Plan>) {
     setDirty((d) => ({ ...d, [id]: { ...d[id], ...p } }));
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...p } : row)));
+  }
+
+  function patchPack(id: string, p: Partial<Pack>) {
+    setPackDirty((d) => ({ ...d, [id]: { ...d[id], ...p } }));
+    setPacks((r) => r.map((row) => (row.id === id ? { ...row, ...p } : row)));
   }
 
   async function save(id: string) {
@@ -83,9 +115,34 @@ function PlansAdminPage() {
     toast.success("Plano atualizado");
   }
 
+  async function savePack(id: string) {
+    const change = packDirty[id];
+    if (!change) return;
+    if (change.credits != null && change.credits < 1) {
+      return toast.error("Créditos deve ser ≥ 1");
+    }
+    if (change.price_cents != null && change.price_cents < 0) {
+      return toast.error("Preço inválido");
+    }
+    setPackSaving(id);
+    const { error } = await supabase
+      .from("credit_packs" as any)
+      .update(change)
+      .eq("id", id);
+    setPackSaving(null);
+    if (error) return toast.error(error.message);
+    setPackDirty((d) => {
+      const n = { ...d };
+      delete n[id];
+      return n;
+    });
+    toast.success("Pacote atualizado");
+  }
+
   if (role && role !== "super_admin" && role !== "admin") {
     return <div className="p-12 text-center text-sm text-muted-foreground">Acesso restrito.</div>;
   }
+
 
   return (
     <div className="p-6 space-y-4">
@@ -210,6 +267,106 @@ function PlansAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pacotes de créditos avulsos</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Defina o preço (BRL) e a quantidade de créditos de cada pacote de recarga.
+            Pacotes inativos não aparecem no modal de recarga.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {packs.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nenhum pacote cadastrado.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Pacote</TableHead>
+                    <TableHead className="w-[140px]">Créditos</TableHead>
+                    <TableHead className="w-[160px]">Preço (R$)</TableHead>
+                    <TableHead className="w-[100px]">Destaque</TableHead>
+                    <TableHead className="w-[90px]">Ativo</TableHead>
+                    <TableHead className="w-[110px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {packs.map((p) => {
+                    const isDirty = Boolean(packDirty[p.id]);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="font-medium">{p.name}</div>
+                          <div className="text-xs text-muted-foreground">{p.slug}</div>
+                          {p.description && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {p.description}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={p.credits}
+                            onChange={(e) =>
+                              patchPack(p.id, {
+                                credits: Math.max(1, Number(e.target.value) || 1),
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            inputMode="decimal"
+                            defaultValue={centsToBRL(p.price_cents)}
+                            onBlur={(e) => {
+                              const cents = parseBRLToCents(e.target.value);
+                              if (cents === null) return;
+                              patchPack(p.id, { price_cents: cents });
+                              e.target.value = centsToBRL(cents);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={p.is_highlighted}
+                            onCheckedChange={(v) => patchPack(p.id, { is_highlighted: v })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={p.is_active}
+                            onCheckedChange={(v) => patchPack(p.id, { is_active: v })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            disabled={!isDirty || packSaving === p.id}
+                            onClick={() => savePack(p.id)}
+                          >
+                            {packSaving === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-1" /> Salvar
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+
   );
 }
