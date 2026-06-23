@@ -118,7 +118,7 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
               </ul>
 
               <Button
-                asChild
+                disabled
                 className={cn(
                   "mt-5 rounded-full",
                   pack.highlight
@@ -127,14 +127,9 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                 )}
                 variant={pack.highlight ? "default" : "outline"}
               >
-                <a
-                  href={buildWhatsAppLink(pack)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Comprar via WhatsApp
-                </a>
+                Comprar crédito
               </Button>
+
             </div>
           ))}
         </div>
