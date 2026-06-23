@@ -120,39 +120,14 @@ export const adjustBalance = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
 
-    const { data: existing } = await context.supabase
-      .from("user_credits")
-      .select("balance")
-      .eq("user_id", data.userId)
-      .maybeSingle();
-    const current = existing?.balance ?? 0;
-    const next = current + data.delta;
-    if (next < 0) throw new Response("Saldo ficaria negativo", { status: 400 });
-
-    if (existing) {
-      const { error } = await context.supabase
-        .from("user_credits")
-        .update({ balance: next, updated_at: new Date().toISOString() })
-        .eq("user_id", data.userId);
-      if (error) throw new Response(error.message, { status: 500 });
-    } else {
-      const { error } = await context.supabase
-        .from("user_credits")
-        .insert({ user_id: data.userId, balance: next });
-      if (error) throw new Response(error.message, { status: 500 });
-    }
-
-    const { error: txErr } = await context.supabase.from("credit_transactions").insert({
-      user_id: data.userId,
-      type: data.delta > 0 ? "grant" : "debit",
-      amount: Math.abs(data.delta),
-      balance_after: next,
-      message_preview: `[Ajuste manual] ${data.reason}`,
-      metadata: { manual: true, by: context.userId, reason: data.reason },
+    const { data: balance, error } = await context.supabase.rpc("adjust_user_balance", {
+      p_user_id: data.userId,
+      p_delta: data.delta,
+      p_admin_id: context.userId,
+      p_reason: data.reason,
     });
-    if (txErr) throw new Response(txErr.message, { status: 500 });
-
-    return { balance: next };
+    if (error) throw new Response(error.message, { status: 400 });
+    return { balance: balance as number };
   });
 
 export const setUnlimited = createServerFn({ method: "POST" })
@@ -167,52 +142,13 @@ export const setUnlimited = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
 
-    // Ensure a subscriptions row exists, then update flag
-    const { data: sub } = await context.supabase
-      .from("subscriptions")
-      .select("id, unlimited_credits")
-      .eq("user_id", data.userId)
-      .maybeSingle();
-
-    if (sub) {
-      const { error } = await context.supabase
-        .from("subscriptions")
-        .update({ unlimited_credits: data.unlimited })
-        .eq("user_id", data.userId);
-      if (error) throw new Response(error.message, { status: 500 });
-    } else {
-      const { error } = await context.supabase
-        .from("subscriptions")
-        .insert({
-          user_id: data.userId,
-          status: "active",
-          plan_type: "free",
-          unlimited_credits: data.unlimited,
-        });
-      if (error) throw new Response(error.message, { status: 500 });
-    }
-
-    // Audit log — registra como uma transação tipo grant com amount 0
-    const { data: bal } = await context.supabase
-      .from("user_credits")
-      .select("balance")
-      .eq("user_id", data.userId)
-      .maybeSingle();
-    const current = bal?.balance ?? 0;
-    await context.supabase.from("credit_transactions").insert({
-      user_id: data.userId,
-      type: "grant",
-      amount: 0,
-      balance_after: current,
-      message_preview: `[${data.unlimited ? "Ativou" : "Desativou"} ilimitado] ${data.reason}`,
-      metadata: {
-        manual: true,
-        unlimited_toggle: true,
-        new_value: data.unlimited,
-        by: context.userId,
-        reason: data.reason,
-      },
+    const { error } = await context.supabase.rpc("toggle_unlimited_credits", {
+      p_user_id: data.userId,
+      p_unlimited: data.unlimited,
+      p_admin_id: context.userId,
+      p_reason: data.reason,
     });
-
+    if (error) throw new Response(error.message, { status: 400 });
     return { unlimited_credits: data.unlimited };
   });
+
