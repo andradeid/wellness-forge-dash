@@ -288,20 +288,12 @@ function FeedbacksPage() {
         <span className="text-foreground/80">Auditoria de Feedbacks</span>
       </div>
 
-      <div className="space-y-4">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-          Painel administrativo
-        </p>
-        <h1 className="font-serif text-5xl md:text-6xl font-normal leading-[1.05] tracking-tight text-foreground">
-          Auditoria de{" "}
-          <span className="italic text-gradient-brand">feedbacks</span>
+      <div className="-mb-6" style={{ marginTop: 8 }}>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+          Auditoria de <span className="italic text-gradient-brand">feedbacks</span>
         </h1>
-        <p className="max-w-2xl text-base text-muted-foreground leading-relaxed">
-          Acompanhe as avaliações que os nutricionistas dão às respostas da
-          Lumma. Use os filtros para identificar padrões e refinar os prompts
-          do Dify.
-        </p>
       </div>
+
 
       <div className="grid gap-4 md:grid-cols-4">
         <StatTile label="Total" value={stats.total} delta={stats.deltaTotal} />
