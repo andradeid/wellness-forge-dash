@@ -130,10 +130,10 @@ const adminGroups: NavGroup[] = [
     icon: Boxes,
     items: [
       { title: "Planos", url: "/app/admin/plans", icon: CreditCard, badge: "NOVO" },
-      { title: "Valores dos Agentes", url: "/app/admin/agent-costs", icon: Sparkles, badge: "NOVO" },
-      { title: "Auditoria de Créditos", url: "/app/admin/credits-audit", icon: CreditCard, badge: "NOVO" },
+      { title: "Assentos", url: "/app/admin/agent-costs", icon: Sparkles, badge: "NOVO" },
+      { title: "Auditoria", url: "/app/admin/credits-audit", icon: CreditCard, badge: "NOVO" },
       { title: "Ofertas Hubla", url: "#hubla", icon: Package },
-      { title: "Vendas sem mapeamento", url: "#vendas", icon: AlertTriangle },
+      { title: "Vendas s/ mapeamento", url: "#vendas", icon: AlertTriangle },
       { title: "Formulações", url: "#formulacoes", icon: FlaskConical },
       { title: "Base de Conhecimento", url: "#kb", icon: BookOpen },
       { title: "Categorias", url: "#categorias", icon: Tag, badge: "NOVO" },
