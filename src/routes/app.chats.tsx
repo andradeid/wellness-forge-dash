@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { MessageSquare, Search, Clock, FileText, Pin, PinOff, Edit2, Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { MessageSquare, Search, Clock, FileText, Pin, PinOff, Edit2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useChatHistory, type ChatItem } from "@/hooks/useChatHistory";
 
@@ -17,12 +18,25 @@ export const Route = createFileRoute("/app/chats")({
   component: ChatsCentralPage,
 });
 
+type ChipFilter = "all" | "active" | "done" | "exams" | "pinned";
+
+const PINNED_STYLE: React.CSSProperties = {
+  borderLeft: "3px solid #e8a04c",
+  borderTop: "none",
+  borderRight: "none",
+  borderBottom: "none",
+  backgroundColor: "oklch(0.995 0.008 65)",
+};
+
 function ChatsCentralPage() {
   const { chats: rows, loading, refresh } = useChatHistory(200);
   const [search, setSearch] = useState("");
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
+  const [chipFilter, setChipFilter] = useState<ChipFilter>("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const handleUpdateTitle = async (e: React.MouseEvent | React.KeyboardEvent, id: string) => {
     e.preventDefault();
@@ -66,15 +80,35 @@ function ChatsCentralPage() {
     }
   };
 
+  const isActiveChat = (r: ChatItem) =>
+    Date.now() - new Date(r.updated_at).getTime() < 24 * 60 * 60 * 1000;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
-      (r) =>
-        (r.title || r.patient_name || "").toLowerCase().includes(q) ||
-        r.last_message?.content?.toLowerCase().includes(q),
-    );
-  }, [rows, search]);
+    let list = rows;
+    if (q) {
+      list = list.filter(
+        (r) =>
+          (r.title || r.patient_name || "").toLowerCase().includes(q) ||
+          r.last_message?.content?.toLowerCase().includes(q),
+      );
+    }
+    if (chipFilter === "active") list = list.filter(isActiveChat);
+    else if (chipFilter === "done") list = list.filter((r) => !isActiveChat(r));
+    else if (chipFilter === "exams") list = list.filter((r) => (r.exam_count ?? 0) > 0);
+    else if (chipFilter === "pinned") list = list.filter((r) => !!r.pinned_at);
+    return list;
+  }, [rows, search, chipFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, chipFilter, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIdx = (currentPage - 1) * pageSize;
+  const endIdx = Math.min(startIdx + pageSize, filtered.length);
+  const paginated = filtered.slice(startIdx, endIdx);
 
   const stats = useMemo(() => {
     const total = rows.length;
@@ -87,6 +121,14 @@ function ChatsCentralPage() {
     return { total, last7, withExams, totalMessages };
   }, [rows]);
 
+  const chips: { id: ChipFilter; label: string }[] = [
+    { id: "all", label: "Todas" },
+    { id: "active", label: "Ativas" },
+    { id: "done", label: "Concluídas" },
+    { id: "exams", label: "Com exames" },
+    { id: "pinned", label: "Fixadas" },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <header className="flex flex-col gap-1">
@@ -96,7 +138,14 @@ function ChatsCentralPage() {
         </p>
       </header>
 
-      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <div
+        className="flex items-start gap-3 px-4 py-3 text-sm text-amber-900"
+        style={{
+          backgroundColor: "oklch(0.98 0.03 85)",
+          borderLeft: "3px solid #e8a04c",
+          borderRadius: "8px",
+        }}
+      >
         <Pin className="h-4 w-4 mt-0.5 shrink-0 fill-amber-500 text-amber-600" />
         <div>
           <span className="font-semibold">Novo:</span> agora você pode fixar conversas no topo clicando no ícone de pin em cada cartão para manter os atendimentos prioritários sempre à mão.
@@ -120,6 +169,34 @@ function ChatsCentralPage() {
         />
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        {chips.map((chip) => {
+          const active = chipFilter === chip.id;
+          return (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => setChipFilter(chip.id)}
+              style={
+                active
+                  ? {
+                      backgroundColor: "oklch(0.94 0.04 285)",
+                      borderColor: "oklch(0.42 0.18 285)",
+                      color: "oklch(0.42 0.18 285)",
+                    }
+                  : undefined
+              }
+              className={cn(
+                "h-8 rounded-full border px-3 text-xs font-medium transition-colors",
+                !active && "border-border bg-transparent text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              {chip.label}
+            </button>
+          );
+        })}
+      </div>
+
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -136,16 +213,20 @@ function ChatsCentralPage() {
           </p>
         </Card>
       ) : (
-        <ul className="space-y-2">
-          {filtered.map((r) => (
-            <li key={r.id}>
-              <Link
-                to={r.patient_id ? "/app/chat/$patientId" : "/app/general/$chatId"}
-                params={r.patient_id ? { patientId: r.patient_id } : { chatId: r.id }}
-                search={r.patient_id ? {} : { module: r.agent_type }}
-                className="block"
-              >
-                <Card className={cn("p-4 hover:bg-accent/40 transition-colors", r.pinned_at && "border-amber-300 bg-amber-50/40")}>
+        <>
+          <ul className="space-y-2">
+            {paginated.map((r) => (
+              <li key={r.id}>
+                <Link
+                  to={r.patient_id ? "/app/chat/$patientId" : "/app/general/$chatId"}
+                  params={r.patient_id ? { patientId: r.patient_id } : { chatId: r.id }}
+                  search={r.patient_id ? {} : { module: r.agent_type }}
+                  className="block"
+                >
+                  <Card
+                    className="p-4 cursor-pointer transition-[background] duration-[120ms] ease-[ease] hover:bg-[oklch(0.97_0.006_285)]"
+                    style={r.pinned_at ? PINNED_STYLE : undefined}
+                  >
                   <div className="flex items-start gap-4">
                     <Avatar className="h-11 w-11 shrink-0">
                       <AvatarImage src={r.avatar_url ?? undefined} />
@@ -267,11 +348,54 @@ function ChatsCentralPage() {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                </Card>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  </Card>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Exibir:</span>
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                <SelectTrigger className="h-8 w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 25, 50].map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Exibindo {filtered.length === 0 ? 0 : startIdx + 1}–{endIdx} de {filtered.length} conversas
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="px-2 text-xs text-muted-foreground">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -280,7 +404,7 @@ function ChatsCentralPage() {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card className="p-4">
-      <div className="text-2xl font-semibold">{value}</div>
+      <div className="text-2xl font-medium" style={{ fontFamily: "var(--font-mono)" }}>{value}</div>
       <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
     </Card>
   );
@@ -305,6 +429,10 @@ function StatusBadge({ updatedAt }: { updatedAt: string }) {
 }
 
 function preview(s: string) {
+  const trimmed = s.trim();
+  if (trimmed.startsWith("{") || /"markers"|"name":/.test(trimmed)) {
+    return "Análise de exame anexada.";
+  }
   const cleaned = s.replace(/```[\s\S]*?```/g, "").replace(/\s+/g, " ").trim();
   return cleaned.length > 140 ? cleaned.slice(0, 140) + "…" : cleaned;
 }
