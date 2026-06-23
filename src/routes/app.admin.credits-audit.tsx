@@ -1,25 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Search, Wallet, Plus } from "lucide-react";
+import { Loader2, Search, Wallet, Plus, Infinity as InfinityIcon, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   findUsers,
   getUserCredits,
   listTransactions,
   adjustBalance,
+  setUnlimited,
 } from "@/lib/credits-admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -38,22 +40,26 @@ type Tx = {
   balance_after: number;
   message_preview: string | null;
   metadata: any;
+  by_admin: { full_name: string | null; email: string } | null;
 };
 
 const PAGE = 25;
 
 function AuditPage() {
   const { role } = useAuth();
+  const isSuperAdmin = role === "super_admin";
   const fnFind = useServerFn(findUsers);
   const fnCredits = useServerFn(getUserCredits);
   const fnList = useServerFn(listTransactions);
   const fnAdjust = useServerFn(adjustBalance);
+  const fnSetUnlimited = useServerFn(setUnlimited);
 
   const [q, setQ] = useState("");
   const [results, setResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
   const [balance, setBalance] = useState<number>(0);
+  const [unlimited, setUnlimitedState] = useState<boolean>(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -61,10 +67,15 @@ function AuditPage() {
   const [adjustDelta, setAdjustDelta] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
   const [adjusting, setAdjusting] = useState(false);
+  const [unlimitedOpen, setUnlimitedOpen] = useState(false);
+  const [unlimitedTarget, setUnlimitedTarget] = useState(false);
+  const [unlimitedReason, setUnlimitedReason] = useState("");
+  const [savingUnlimited, setSavingUnlimited] = useState(false);
 
   if (role && role !== "super_admin" && role !== "admin") {
     return <div className="p-12 text-center text-sm text-muted-foreground">Acesso restrito.</div>;
   }
+
 
   async function doSearch() {
     if (!q.trim()) return;
@@ -91,13 +102,15 @@ function AuditPage() {
     setLoadingTx(true);
     try {
       const [c, t] = await Promise.all([
-        fnCredits({ data: { userId } }) as Promise<{ balance: number }>,
+        fnCredits({ data: { userId } }) as Promise<{ balance: number; unlimited_credits: boolean }>,
         fnList({ data: { userId, limit: PAGE } }) as Promise<Tx[]>,
       ]);
       setBalance(c.balance);
+      setUnlimitedState(!!c.unlimited_credits);
       setTxs(t);
       setHasMore(t.length === PAGE);
     } finally {
+
       setLoadingTx(false);
     }
   }
@@ -147,6 +160,38 @@ function AuditPage() {
       setAdjusting(false);
     }
   }
+
+  function openUnlimitedDialog(next: boolean) {
+    setUnlimitedTarget(next);
+    setUnlimitedReason("");
+    setUnlimitedOpen(true);
+  }
+
+  async function submitUnlimited() {
+    if (!selected) return;
+    if (unlimitedReason.trim().length < 3) {
+      toast.error("Justifique o motivo");
+      return;
+    }
+    setSavingUnlimited(true);
+    try {
+      await fnSetUnlimited({
+        data: {
+          userId: selected.id,
+          unlimited: unlimitedTarget,
+          reason: unlimitedReason.trim(),
+        },
+      });
+      toast.success(unlimitedTarget ? "Ilimitado ativado" : "Ilimitado desativado");
+      setUnlimitedOpen(false);
+      await refreshUser(selected.id);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao alterar ilimitado");
+    } finally {
+      setSavingUnlimited(false);
+    }
+  }
+
 
   return (
     <div className="p-6 space-y-4">
@@ -198,16 +243,39 @@ function AuditPage() {
             <div>
               <CardTitle>{selected.full_name ?? selected.email}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">{selected.email}</p>
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <Wallet className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Saldo atual:</span>
                 <Badge className="text-base">{balance} créditos</Badge>
+                {unlimited && (
+                  <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0">
+                    <InfinityIcon className="h-3 w-3 mr-1" /> Ilimitado
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-3 rounded-md border bg-muted/30 px-3 py-2">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="unlimited-toggle" className="text-sm flex-1 cursor-pointer">
+                  Créditos ilimitados {isSuperAdmin ? "" : "(somente super_admin)"}
+                </Label>
+                <Switch
+                  id="unlimited-toggle"
+                  checked={unlimited}
+                  disabled={!isSuperAdmin || savingUnlimited}
+                  onCheckedChange={(v) => openUnlimitedDialog(v)}
+                />
               </div>
             </div>
-            <Button onClick={() => setAdjustOpen(true)} variant="outline">
+            <Button
+              onClick={() => setAdjustOpen(true)}
+              variant="outline"
+              disabled={!isSuperAdmin}
+              title={isSuperAdmin ? "" : "Somente super_admin pode ajustar saldo"}
+            >
               <Plus className="h-4 w-4 mr-1" /> Ajustar Saldo Manual
             </Button>
           </CardHeader>
+
           <CardContent>
             <Table>
               <TableHeader>
@@ -215,6 +283,7 @@ function AuditPage() {
                   <TableHead>Data/Hora</TableHead>
                   <TableHead>Agente</TableHead>
                   <TableHead>Mensagem</TableHead>
+                  <TableHead>Feito por</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Saldo após</TableHead>
                 </TableRow>
@@ -223,13 +292,18 @@ function AuditPage() {
                 {txs.map((t) => {
                   const isPositive = t.type === "credit" || t.type === "grant" || t.type === "refund";
                   const sign = isPositive ? "+" : "-";
+                  const isManual = !!t.metadata?.manual;
                   return (
                     <TableRow key={t.id}>
                       <TableCell className="text-xs whitespace-nowrap">
                         {new Date(t.created_at).toLocaleString("pt-BR")}
                       </TableCell>
                       <TableCell>
-                        {t.agent_label ? (
+                        {isManual ? (
+                          <Badge variant="outline" className="border-amber-500 text-amber-700">
+                            Manual
+                          </Badge>
+                        ) : t.agent_label ? (
                           <Badge variant="secondary">{t.agent_label}</Badge>
                         ) : (
                           <Badge variant="outline">{t.type}</Badge>
@@ -238,13 +312,32 @@ function AuditPage() {
                       <TableCell className="max-w-md truncate text-xs text-muted-foreground">
                         {t.message_preview ?? "—"}
                       </TableCell>
+                      <TableCell className="text-xs">
+                        {t.by_admin ? (
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {t.by_admin.full_name ?? t.by_admin.email}
+                            </span>
+                            {t.by_admin.full_name && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {t.by_admin.email}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell
                         className={`text-right font-mono font-medium ${
-                          isPositive ? "text-emerald-600" : "text-red-600"
+                          t.amount === 0
+                            ? "text-muted-foreground"
+                            : isPositive
+                            ? "text-emerald-600"
+                            : "text-red-600"
                         }`}
                       >
-                        {sign}
-                        {t.amount}
+                        {t.amount === 0 ? "—" : `${sign}${t.amount}`}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs">{t.balance_after}</TableCell>
                     </TableRow>
@@ -252,7 +345,8 @@ function AuditPage() {
                 })}
                 {txs.length === 0 && !loadingTx && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+
                       Nenhuma transação.
                     </TableCell>
                   </TableRow>
@@ -306,6 +400,47 @@ function AuditPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={unlimitedOpen} onOpenChange={setUnlimitedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {unlimitedTarget ? "Ativar créditos ilimitados" : "Desativar créditos ilimitados"}
+            </DialogTitle>
+            <DialogDescription>
+              {unlimitedTarget
+                ? "Este usuário deixará de consumir créditos em todas as interações."
+                : "Este usuário voltará a consumir créditos normalmente."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Motivo (obrigatório)</Label>
+              <Textarea
+                placeholder="Ex.: cliente legado com compromisso contratual de ilimitado"
+                value={unlimitedReason}
+                onChange={(e) => setUnlimitedReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlimitedOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={submitUnlimited} disabled={savingUnlimited}>
+              {savingUnlimited ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : unlimitedTarget ? (
+                "Ativar ilimitado"
+              ) : (
+                "Desativar ilimitado"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
