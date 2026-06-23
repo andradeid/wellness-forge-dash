@@ -1083,46 +1083,6 @@ function DashboardPage() {
    );
  }
 
- function KpiCard({
-  icon,
-  label,
-  value,
-  hint,
-  tone,
-  loading,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number | string;
-  hint?: string;
-  tone: "sage" | "brand" | "danger" | "neutral";
-  loading?: boolean;
-}) {
-  const toneClass = {
-    sage: "bg-emerald-50 text-emerald-700",
-    brand: "bg-gradient-to-br from-[#e8a04c]/15 to-[#e89bcf]/15 text-[#b6743a]",
-    danger: "bg-rose-50 text-rose-700",
-    neutral: "bg-slate-100 text-slate-700",
-  }[tone];
-  return (
-    <Card className="p-5 shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {label}
-          </p>
-          {loading ? (
-            <Skeleton className="h-9 w-20 mt-2" />
-          ) : (
-            <p className="text-3xl font-semibold mt-1">{value}</p>
-          )}
-          {hint && <p className="text-xs text-muted-foreground mt-1 capitalize">{hint}</p>}
-        </div>
-        <div className={cn("rounded-xl p-2.5", toneClass)}>{icon}</div>
-      </div>
-    </Card>
-  );
-}
 
 function EmptyState({ text }: { text: string }) {
   return (
