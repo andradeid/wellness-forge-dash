@@ -658,6 +658,7 @@ export type Database = {
           plan_type: Database["public"]["Enums"]["plan_type"]
           seats_override: number | null
           status: Database["public"]["Enums"]["subscription_status"]
+          unlimited_credits: boolean
           updated_at: string
           user_id: string
         }
@@ -668,6 +669,7 @@ export type Database = {
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
+          unlimited_credits?: boolean
           updated_at?: string
           user_id: string
         }
@@ -678,6 +680,7 @@ export type Database = {
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
+          unlimited_credits?: boolean
           updated_at?: string
           user_id?: string
         }
