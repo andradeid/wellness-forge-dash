@@ -18,6 +18,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+
+const AVATAR_GRADIENTS = [
+  "from-[#7c3aed] to-[#a78bfa]", // roxo
+  "from-[#e8a04c] to-[#f4c280]", // âmbar
+  "from-[#e89bcf] to-[#f4c2dd]", // rosa
+  "from-[#6b8e6b] to-[#9bb89b]", // verde-sálvia
+  "from-[#4a6b8a] to-[#7a9bb8]", // azul-aço
+  "from-[#c97b5e] to-[#e09b80]", // terracota
+];
+function avatarGradient(name: string): string {
+  const ch = (name.trim()[0] ?? "?").toUpperCase().charCodeAt(0);
+  return AVATAR_GRADIENTS[ch % AVATAR_GRADIENTS.length];
+}
+const _tableImports = {
+} from "@/components/ui/table";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
