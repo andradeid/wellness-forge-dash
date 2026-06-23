@@ -474,22 +474,34 @@ function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <div className="inline-flex rounded-full bg-muted/60 p-1 flex-wrap">
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setRange(opt.key)}
-                className={cn(
-                  "px-3 sm:px-4 py-1.5 text-xs font-medium rounded-full transition-all min-h-[36px]",
-                  range === opt.key
-                    ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="inline-flex gap-2 flex-wrap">
+            {RANGE_OPTIONS.map((opt) => {
+              const active = range === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setRange(opt.key)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-full border transition-all min-h-[32px]",
+                    active
+                      ? ""
+                      : "border-border bg-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                  style={
+                    active
+                      ? {
+                          backgroundColor: "oklch(0.94 0.04 285)",
+                          borderColor: "oklch(0.42 0.18 285)",
+                          color: "oklch(0.42 0.18 285)",
+                        }
+                      : undefined
+                  }
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
           {role === "nutri" && (
             <Button
