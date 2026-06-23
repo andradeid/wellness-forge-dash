@@ -148,8 +148,28 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Premium card elevation — applies to shadcn Card and generic .card */
+@layer components {
+  [data-slot="card"],
+  .card {
+    border-radius: 12px;
+    box-shadow:
+      0 1px 4px oklch(0.3 0.05 285 / 0.08),
+      0 0 0 1px oklch(0.91 0.008 285);
+    transition: box-shadow 180ms ease;
+  }
+  [data-slot="card"]:hover,
+  .card:hover {
+    box-shadow:
+      0 4px 16px oklch(0.3 0.05 285 / 0.10),
+      0 1px 4px oklch(0.3 0.05 285 / 0.06);
+  }
 
 @layer utilities {
   .bg-gradient-brand {
