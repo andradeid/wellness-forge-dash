@@ -1,25 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Search, Wallet, Plus } from "lucide-react";
+import { Loader2, Search, Wallet, Plus, Infinity as InfinityIcon, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   findUsers,
   getUserCredits,
   listTransactions,
   adjustBalance,
+  setUnlimited,
 } from "@/lib/credits-admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -38,22 +40,26 @@ type Tx = {
   balance_after: number;
   message_preview: string | null;
   metadata: any;
+  by_admin: { full_name: string | null; email: string } | null;
 };
 
 const PAGE = 25;
 
 function AuditPage() {
   const { role } = useAuth();
+  const isSuperAdmin = role === "super_admin";
   const fnFind = useServerFn(findUsers);
   const fnCredits = useServerFn(getUserCredits);
   const fnList = useServerFn(listTransactions);
   const fnAdjust = useServerFn(adjustBalance);
+  const fnSetUnlimited = useServerFn(setUnlimited);
 
   const [q, setQ] = useState("");
   const [results, setResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
   const [balance, setBalance] = useState<number>(0);
+  const [unlimited, setUnlimitedState] = useState<boolean>(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -61,10 +67,15 @@ function AuditPage() {
   const [adjustDelta, setAdjustDelta] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
   const [adjusting, setAdjusting] = useState(false);
+  const [unlimitedOpen, setUnlimitedOpen] = useState(false);
+  const [unlimitedTarget, setUnlimitedTarget] = useState(false);
+  const [unlimitedReason, setUnlimitedReason] = useState("");
+  const [savingUnlimited, setSavingUnlimited] = useState(false);
 
   if (role && role !== "super_admin" && role !== "admin") {
     return <div className="p-12 text-center text-sm text-muted-foreground">Acesso restrito.</div>;
   }
+
 
   async function doSearch() {
     if (!q.trim()) return;
