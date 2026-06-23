@@ -121,7 +121,7 @@ function NutritionistsPage() {
       </div>
 
       {/* Hero */}
-      <div className="-mb-6" style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 8, marginBottom: -24 }}>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           Gerencie os <span className="italic text-gradient-brand">nutricionistas</span>
         </h1>
