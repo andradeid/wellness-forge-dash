@@ -283,6 +283,7 @@ function AuditPage() {
                   <TableHead>Data/Hora</TableHead>
                   <TableHead>Agente</TableHead>
                   <TableHead>Mensagem</TableHead>
+                  <TableHead>Feito por</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Saldo após</TableHead>
                 </TableRow>
@@ -291,13 +292,18 @@ function AuditPage() {
                 {txs.map((t) => {
                   const isPositive = t.type === "credit" || t.type === "grant" || t.type === "refund";
                   const sign = isPositive ? "+" : "-";
+                  const isManual = !!t.metadata?.manual;
                   return (
                     <TableRow key={t.id}>
                       <TableCell className="text-xs whitespace-nowrap">
                         {new Date(t.created_at).toLocaleString("pt-BR")}
                       </TableCell>
                       <TableCell>
-                        {t.agent_label ? (
+                        {isManual ? (
+                          <Badge variant="outline" className="border-amber-500 text-amber-700">
+                            Manual
+                          </Badge>
+                        ) : t.agent_label ? (
                           <Badge variant="secondary">{t.agent_label}</Badge>
                         ) : (
                           <Badge variant="outline">{t.type}</Badge>
@@ -306,13 +312,32 @@ function AuditPage() {
                       <TableCell className="max-w-md truncate text-xs text-muted-foreground">
                         {t.message_preview ?? "—"}
                       </TableCell>
+                      <TableCell className="text-xs">
+                        {t.by_admin ? (
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {t.by_admin.full_name ?? t.by_admin.email}
+                            </span>
+                            {t.by_admin.full_name && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {t.by_admin.email}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell
                         className={`text-right font-mono font-medium ${
-                          isPositive ? "text-emerald-600" : "text-red-600"
+                          t.amount === 0
+                            ? "text-muted-foreground"
+                            : isPositive
+                            ? "text-emerald-600"
+                            : "text-red-600"
                         }`}
                       >
-                        {sign}
-                        {t.amount}
+                        {t.amount === 0 ? "—" : `${sign}${t.amount}`}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs">{t.balance_after}</TableCell>
                     </TableRow>
@@ -320,7 +345,8 @@ function AuditPage() {
                 })}
                 {txs.length === 0 && !loadingTx && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+
                       Nenhuma transação.
                     </TableCell>
                   </TableRow>
