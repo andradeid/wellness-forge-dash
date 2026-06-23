@@ -345,19 +345,12 @@ function UsersPage() {
       </div>
 
       {/* Hero */}
-      <div className="space-y-4">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-          Painel administrativo
-        </p>
-        <h1 className="font-serif text-5xl md:text-6xl font-normal leading-[1.05] tracking-tight text-foreground">
-          Central de{" "}
-          <span className="italic text-gradient-brand">nutricionistas</span>
+      <div className="-mb-6" style={{ marginTop: 8 }}>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+          Central de <span className="italic text-gradient-brand">nutricionistas</span>
         </h1>
-        <p className="max-w-2xl text-base text-muted-foreground leading-relaxed">
-          Gerencie acessos, planos e a saúde financeira da sua base — tudo em
-          um só lugar, calmo e organizado.
-        </p>
       </div>
+
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
