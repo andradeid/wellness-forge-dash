@@ -58,8 +58,13 @@ function PlansAdminPage() {
   const [dirty, setDirty] = useState<Record<string, Partial<Plan>>>({});
   const [saving, setSaving] = useState<string | null>(null);
 
+  const [packs, setPacks] = useState<Pack[]>([]);
+  const [packDirty, setPackDirty] = useState<Record<string, Partial<Pack>>>({});
+  const [packSaving, setPackSaving] = useState<string | null>(null);
+
   useEffect(() => {
     void load();
+    void loadPacks();
   }, []);
 
   async function load() {
@@ -73,9 +78,23 @@ function PlansAdminPage() {
     setLoading(false);
   }
 
+  async function loadPacks() {
+    const { data, error } = await supabase
+      .from("credit_packs" as any)
+      .select("*")
+      .order("sort_order");
+    if (error) toast.error(error.message);
+    setPacks(((data as unknown) as Pack[]) ?? []);
+  }
+
   function patch(id: string, p: Partial<Plan>) {
     setDirty((d) => ({ ...d, [id]: { ...d[id], ...p } }));
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...p } : row)));
+  }
+
+  function patchPack(id: string, p: Partial<Pack>) {
+    setPackDirty((d) => ({ ...d, [id]: { ...d[id], ...p } }));
+    setPacks((r) => r.map((row) => (row.id === id ? { ...row, ...p } : row)));
   }
 
   async function save(id: string) {
@@ -96,9 +115,34 @@ function PlansAdminPage() {
     toast.success("Plano atualizado");
   }
 
+  async function savePack(id: string) {
+    const change = packDirty[id];
+    if (!change) return;
+    if (change.credits != null && change.credits < 1) {
+      return toast.error("Créditos deve ser ≥ 1");
+    }
+    if (change.price_cents != null && change.price_cents < 0) {
+      return toast.error("Preço inválido");
+    }
+    setPackSaving(id);
+    const { error } = await supabase
+      .from("credit_packs" as any)
+      .update(change)
+      .eq("id", id);
+    setPackSaving(null);
+    if (error) return toast.error(error.message);
+    setPackDirty((d) => {
+      const n = { ...d };
+      delete n[id];
+      return n;
+    });
+    toast.success("Pacote atualizado");
+  }
+
   if (role && role !== "super_admin" && role !== "admin") {
     return <div className="p-12 text-center text-sm text-muted-foreground">Acesso restrito.</div>;
   }
+
 
   return (
     <div className="p-6 space-y-4">
