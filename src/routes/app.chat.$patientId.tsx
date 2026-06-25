@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useReactToPrint } from "react-to-print";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
@@ -208,7 +209,9 @@ function ChatPage() {
   const handleNewChat = useCallback(async () => {
     if (thinking) return;
     if (messages.length > 0 && !window.confirm("Iniciar uma nova consulta? A conversa atual será encerrada e arquivada no histórico.")) return;
-    setFilters(emptyFilters());
+    // NÃO resetar filtros: eles refletem o perfil do paciente (sexo/gestante/trimestre)
+    // e não mudam entre conversas. Resetar aqui causava roteamento errado de exames
+    // (perfil vazio caía no agente masculino).
     await resetChat();
   }, [thinking, messages.length, resetChat]);
 
@@ -676,6 +679,8 @@ function ChatPage() {
                           const bestAgent = getAgentForCard(trigger, patientProfile, patient?.pregnancy_type);
                           if (bestAgent) {
                             setAgentType(bestAgent.agent_id);
+                          } else if (trigger === "exames_de_sangue") {
+                            toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
                           }
                         }
                       }}
@@ -765,6 +770,9 @@ function ChatPage() {
                                           if (bestAgent) {
                                             setAgentType(bestAgent.agent_id);
                                             setModuleOpen(false);
+                                          } else if (opt.trigger === "exames_de_sangue") {
+                                            setModuleOpen(false);
+                                            toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
                                           }
                                         }}
                                         className={cn(

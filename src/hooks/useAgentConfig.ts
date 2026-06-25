@@ -41,29 +41,29 @@ export function useAgentConfig() {
     if (matchingAgents.length === 0) return null;
     
     // Special case: exames_de_sangue
+    // SEGURANÇA CLÍNICA: NUNCA caímos em fallback silencioso para o agente masculino.
+    // Se o perfil não estiver definido, retornamos null para forçar o usuário a confirmar
+    // o perfil antes que o exame seja roteado (evita receitar ativos teratogênicos
+    // a gestantes, p.ex.).
     if (cardTrigger === 'exames_de_sangue') {
-      const maleExam = matchingAgents.find(a => a.agent_id === 'exam_masculino');
-      
       if (patientProfile === 'adulto_masculino') {
-        return maleExam || null;
+        return matchingAgents.find(a => a.agent_id === 'exam_masculino') || null;
       }
-      
+
       if (patientProfile === 'adulto_feminino') {
-        return matchingAgents.find(a => a.agent_id === 'exam_feminino') || maleExam || null;
+        return matchingAgents.find(a => a.agent_id === 'exam_feminino') || null;
       }
 
       if (patientProfile === 'gestante') {
         const isGemelar = pregnancyType === 'gemelar' || pregnancyType === 'Gemelar' || pregnancyType === 'multiple';
         if (isGemelar) {
-          return matchingAgents.find(a => a.agent_id === 'exam_gestante_gem') || maleExam || null;
-        } else {
-          // monofetal ou não informado -> mono como default
-          return matchingAgents.find(a => a.agent_id === 'exam_gestante_mono') || maleExam || null;
+          return matchingAgents.find(a => a.agent_id === 'exam_gestante_gem') || null;
         }
+        return matchingAgents.find(a => a.agent_id === 'exam_gestante_mono') || null;
       }
 
-      // Fallback EXPLÍCITO para exames_de_sangue quando perfil é desconhecido
-      return maleExam || null;
+      // Perfil desconhecido em exames_de_sangue: BLOQUEIA. Quem chamou deve avisar o usuário.
+      return null;
     }
 
     return matchingAgents[0];
