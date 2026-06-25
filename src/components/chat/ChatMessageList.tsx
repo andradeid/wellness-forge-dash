@@ -527,6 +527,33 @@ export function ChatMessageList({
                       <ExamResultCard markers={m.structured_data.markers} />
                     </div>
                   )}
+                  {m.role === "assistant" && m.structured_data?.formulacoes_sugeridas && onGenerateRecipe && (
+                    <div className="mb-4 p-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                          <FlaskConical className="h-5 w-5 text-violet-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-violet-900">
+                            {m.structured_data.formulacoes_sugeridas.formulacoes.length} formulação(ões) sugerida(s)
+                          </div>
+                          <div className="text-xs text-violet-700/80 mt-0.5">
+                            Envie ao agente de formulações para gerar a receita pronta para a farmácia.
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-violet-600 hover:bg-violet-700 text-white"
+                              onClick={() => onGenerateRecipe(m.structured_data!.formulacoes_sugeridas!, m.id)}
+                            >
+                              <FlaskConical className="h-3.5 w-3.5 mr-1.5" />
+                              Gerar receita
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {parts
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
