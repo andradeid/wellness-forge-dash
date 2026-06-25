@@ -169,7 +169,8 @@ export function AppSidebar() {
   const { user, profile, role, signOut } = useAuth();
   const { data: credits } = useMyCredits();
   const balance = credits?.balance ?? 0;
-  const lowCredits = balance < LOW_CREDIT_THRESHOLD;
+  const unlimited = !!(credits as any)?.unlimited;
+  const lowCredits = !unlimited && balance < LOW_CREDIT_THRESHOLD;
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
