@@ -82,7 +82,9 @@ function AuditPage() {
   const [unlimited, setUnlimitedState] = useState<boolean>(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalTx, setTotalTx] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(totalTx / PAGE));
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustDelta, setAdjustDelta] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
@@ -95,7 +97,6 @@ function AuditPage() {
   if (role && role !== "super_admin" && role !== "admin") {
     return <div className="p-12 text-center text-sm text-muted-foreground">Acesso restrito.</div>;
   }
-
 
   async function doSearch() {
     if (!q.trim()) return;
@@ -111,49 +112,57 @@ function AuditPage() {
     }
   }
 
-  async function pick(u: User) {
+  async function openAudit(u: User) {
     setSelected(u);
     setResults([]);
-    setQ("");
-    await refreshUser(u.id);
+    setPage(1);
+    await loadCreditsAndPage(u.id, 1);
   }
 
-  async function refreshUser(userId: string) {
+  async function openAdjust(u: User) {
+    setSelected(u);
+    setResults([]);
+    setAdjustDelta("");
+    setAdjustReason("");
+    setAdjustOpen(true);
+    await loadCreditsAndPage(u.id, 1);
+  }
+
+  async function loadCreditsAndPage(userId: string, pageNum: number) {
     setLoadingTx(true);
     try {
       const [c, t] = await Promise.all([
         fnCredits({ data: { userId } }) as Promise<{ balance: number; unlimited_credits: boolean }>,
-        fnList({ data: { userId, limit: PAGE } }) as Promise<Tx[]>,
+        fnList({ data: { userId, page: pageNum, pageSize: PAGE } }) as Promise<{
+          rows: Tx[];
+          total: number;
+        }>,
       ]);
       setBalance(c.balance);
       setUnlimitedState(!!c.unlimited_credits);
-      setTxs(t);
-      setHasMore(t.length === PAGE);
+      setTxs(t.rows);
+      setTotalTx(t.total);
+      setPage(pageNum);
     } finally {
-
       setLoadingTx(false);
     }
   }
 
-  async function loadMore() {
-    if (!selected || txs.length === 0) return;
-    const last = txs[txs.length - 1];
+  async function goToPage(p: number) {
+    if (!selected || p < 1 || p > totalPages || p === page) return;
     setLoadingTx(true);
     try {
-      const more = (await fnList({
-        data: {
-          userId: selected.id,
-          cursorCreatedAt: last.created_at,
-          cursorId: last.id,
-          limit: PAGE,
-        },
-      })) as Tx[];
-      setTxs((prev) => [...prev, ...more]);
-      setHasMore(more.length === PAGE);
+      const t = (await fnList({
+        data: { userId: selected.id, page: p, pageSize: PAGE },
+      })) as { rows: Tx[]; total: number };
+      setTxs(t.rows);
+      setTotalTx(t.total);
+      setPage(p);
     } finally {
       setLoadingTx(false);
     }
   }
+
 
   async function submitAdjust() {
     if (!selected) return;
@@ -173,7 +182,7 @@ function AuditPage() {
       setAdjustOpen(false);
       setAdjustDelta("");
       setAdjustReason("");
-      await refreshUser(selected.id);
+      await loadCreditsAndPage(selected.id, page);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao ajustar");
     } finally {
@@ -204,7 +213,7 @@ function AuditPage() {
       });
       toast.success(unlimitedTarget ? "Ilimitado ativado" : "Ilimitado desativado");
       setUnlimitedOpen(false);
-      await refreshUser(selected.id);
+      await loadCreditsAndPage(selected.id, page);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao alterar ilimitado");
     } finally {
@@ -240,17 +249,14 @@ function AuditPage() {
           {results.length > 0 && (
             <div className="border rounded-lg divide-y">
               {results.map((u) => (
-                <button
+                <UserRow
                   key={u.id}
-                  onClick={() => pick(u)}
-                  className="w-full px-4 py-2 text-left hover:bg-muted/50 flex justify-between items-center"
-                >
-                  <div>
-                    <div className="font-medium">{u.full_name ?? "(sem nome)"}</div>
-                    <div className="text-xs text-muted-foreground">{u.email}</div>
-                  </div>
-                  <div className="text-xs font-mono text-muted-foreground">{u.id.slice(0, 8)}…</div>
-                </button>
+                  user={u}
+                  selected={selected?.id === u.id}
+                  onAudit={() => openAudit(u)}
+                  onAdjust={() => openAdjust(u)}
+                  canAdjust={isSuperAdmin}
+                />
               ))}
             </div>
           )}
@@ -271,19 +277,14 @@ function AuditPage() {
               ) : (
                 <div className="border rounded-lg divide-y max-h-[480px] overflow-y-auto">
                   {filteredNutris.map((u) => (
-                    <button
+                    <UserRow
                       key={u.id}
-                      onClick={() => pick(u)}
-                      className={`w-full px-4 py-2 text-left hover:bg-muted/50 flex justify-between items-center ${
-                        selected?.id === u.id ? "bg-muted/60" : ""
-                      }`}
-                    >
-                      <div>
-                        <div className="font-medium">{u.full_name ?? "(sem nome)"}</div>
-                        <div className="text-xs text-muted-foreground">{u.email}</div>
-                      </div>
-                      <div className="text-xs font-mono text-muted-foreground">{u.id.slice(0, 8)}…</div>
-                    </button>
+                      user={u}
+                      selected={selected?.id === u.id}
+                      onAudit={() => openAudit(u)}
+                      onAdjust={() => openAdjust(u)}
+                      canAdjust={isSuperAdmin}
+                    />
                   ))}
                 </div>
               )}
@@ -410,11 +411,29 @@ function AuditPage() {
               </TableBody>
             </Table>
 
-            {hasMore && (
-              <div className="flex justify-center mt-4">
-                <Button variant="outline" onClick={loadMore} disabled={loadingTx}>
-                  {loadingTx ? <Loader2 className="h-4 w-4 animate-spin" /> : "Carregar mais"}
-                </Button>
+            {totalTx > 0 && (
+              <div className="flex items-center justify-between mt-4 text-sm">
+                <span className="text-muted-foreground">
+                  Página {page} de {totalPages} — {totalTx} transações
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(page - 1)}
+                    disabled={loadingTx || page <= 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(page + 1)}
+                    disabled={loadingTx || page >= totalPages}
+                  >
+                    Próximo
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
@@ -498,5 +517,49 @@ function AuditPage() {
       </Dialog>
     </div>
 
+  );
+}
+
+function UserRow({
+  user,
+  selected,
+  onAudit,
+  onAdjust,
+  canAdjust,
+}: {
+  user: User;
+  selected: boolean;
+  onAudit: () => void;
+  onAdjust: () => void;
+  canAdjust: boolean;
+}) {
+  return (
+    <div
+      className={`w-full px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-muted/50 ${
+        selected ? "bg-muted/60" : ""
+      }`}
+    >
+      <button
+        onClick={onAudit}
+        className="flex-1 min-w-0 text-left"
+      >
+        <div className="font-medium truncate">{user.full_name ?? "(sem nome)"}</div>
+        <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+      </button>
+      <div className="flex items-center gap-2 shrink-0">
+        <Button size="sm" variant="outline" onClick={onAudit}>
+          <Search className="h-3.5 w-3.5 mr-1" /> Ver auditoria
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onAdjust}
+          disabled={!canAdjust}
+          title={canAdjust ? "" : "Somente super_admin"}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1" /> Ajustar saldo
+        </Button>
+      </div>
+    </div>
   );
 }
