@@ -84,27 +84,26 @@ export const listTransactions = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({
       userId: z.string().uuid(),
-      cursorCreatedAt: z.string().nullish(),
-      cursorId: z.string().uuid().nullish(),
-      limit: z.number().int().min(1).max(100).default(25),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(25),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    let q = context.supabase
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: rows, error, count } = await context.supabase
       .from("credit_transactions")
-      .select("id, created_at, agent_key, agent_label, type, amount, balance_after, message_preview, metadata")
+      .select(
+        "id, created_at, agent_key, agent_label, type, amount, balance_after, message_preview, metadata",
+        { count: "exact" },
+      )
       .eq("user_id", data.userId)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
-      .limit(data.limit);
-    if (data.cursorCreatedAt && data.cursorId) {
-      q = q.or(`created_at.lt.${data.cursorCreatedAt},and(created_at.eq.${data.cursorCreatedAt},id.lt.${data.cursorId})`);
-    }
-    const { data: rows, error } = await q;
+      .range(from, to);
     if (error) throw new Response(error.message, { status: 500 });
 
-    // Resolve admin names for manual adjustments (metadata.by)
     const ids = Array.from(
       new Set(
         (rows ?? [])
@@ -122,11 +121,17 @@ export const listTransactions = createServerFn({ method: "POST" })
         nameById[p.id] = { full_name: p.full_name, email: p.email };
       }
     }
-    return (rows ?? []).map((r: any) => ({
-      ...r,
-      by_admin: r?.metadata?.by ? nameById[r.metadata.by] ?? null : null,
-    }));
+    return {
+      rows: (rows ?? []).map((r: any) => ({
+        ...r,
+        by_admin: r?.metadata?.by ? nameById[r.metadata.by] ?? null : null,
+      })),
+      total: count ?? 0,
+      page: data.page,
+      pageSize: data.pageSize,
+    };
   });
+
 
 export const adjustBalance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
