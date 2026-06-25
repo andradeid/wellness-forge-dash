@@ -51,10 +51,17 @@ function AuditPage() {
   const { role } = useAuth();
   const isSuperAdmin = role === "super_admin";
   const fnFind = useServerFn(findUsers);
+  const fnListNutris = useServerFn(listNutritionists);
   const fnCredits = useServerFn(getUserCredits);
   const fnList = useServerFn(listTransactions);
   const fnAdjust = useServerFn(adjustBalance);
   const fnSetUnlimited = useServerFn(setUnlimited);
+
+  const nutrisQuery = useQuery({
+    queryKey: ["admin", "nutritionists"],
+    queryFn: () => fnListNutris() as Promise<User[]>,
+    staleTime: 60_000,
+  });
 
   const [q, setQ] = useState("");
   const [results, setResults] = useState<User[]>([]);
