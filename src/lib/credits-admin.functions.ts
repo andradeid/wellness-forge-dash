@@ -49,14 +49,40 @@ export const listNutritionists = createServerFn({ method: "GET" })
     if (rErr) throw new Response(rErr.message, { status: 500 });
     const ids = (roleRows ?? []).map((r: any) => r.user_id);
     if (ids.length === 0) return [];
-    const { data: rows, error } = await context.supabase
-      .from("profiles")
-      .select("id, full_name, email")
-      .in("id", ids)
-      .order("full_name", { ascending: true });
-    if (error) throw new Response(error.message, { status: 500 });
-    return rows ?? [];
+    const [profilesRes, subsRes, creditsRes] = await Promise.all([
+      context.supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", ids)
+        .order("full_name", { ascending: true }),
+      context.supabase
+        .from("subscriptions")
+        .select("user_id, plan_type, unlimited_credits")
+        .in("user_id", ids),
+      context.supabase
+        .from("user_credits")
+        .select("user_id, balance")
+        .in("user_id", ids),
+    ]);
+    if (profilesRes.error) throw new Response(profilesRes.error.message, { status: 500 });
+    const subById = new Map<string, { plan_type: string | null; unlimited_credits: boolean }>();
+    for (const s of subsRes.data ?? []) {
+      subById.set(s.user_id, { plan_type: s.plan_type, unlimited_credits: !!s.unlimited_credits });
+    }
+    const balById = new Map<string, number>();
+    for (const c of creditsRes.data ?? []) balById.set(c.user_id, c.balance ?? 0);
+    return (profilesRes.data ?? []).map((p: any) => {
+      const sub = subById.get(p.id);
+      const unlimited = !!sub?.unlimited_credits;
+      return {
+        ...p,
+        plan_type: unlimited ? "ilimitado" : sub?.plan_type ?? "free",
+        unlimited_credits: unlimited,
+        balance: balById.get(p.id) ?? 0,
+      };
+    });
   });
+
 
 export const getUserCredits = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
