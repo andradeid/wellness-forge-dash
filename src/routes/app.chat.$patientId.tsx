@@ -789,14 +789,8 @@ function ChatPage() {
 
                       return (
                         <>
-                          {agentType !== "exam" && examContext && (
-                            <div className="mb-2 text-center animate-in fade-in slide-in-from-bottom-1 duration-300">
-                              <span className="text-[10px] text-muted-foreground inline-flex items-center justify-center gap-1 bg-white/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-muted/20">
-                                <ClipboardList className="h-3 w-3 text-muted-foreground/70" />
-                                Usando contexto do exame de {examContext.patient_name}
-                              </span>
-                            </div>
-                          )}
+                          {agentType !== "exam" && examContext && null}
+
                           <ChatInput
                             onSubmit={wrappedSend}
                             disabled={thinking || !chatId || !agentType}
@@ -809,14 +803,8 @@ function ChatPage() {
                       );
                     })()}
 
-                    <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
-                      Máximo de 10 arquivos de 20MB
-                    </p>
-                    {role === "nutri" && (
-                      <p className="mt-1 text-center text-[10px] italic text-amber-700/80 px-2 hidden sm:block">
-                        Nota: Processamento estrutural em modo de validação técnica.
-                      </p>
-                    )}
+
+
                   </>
                 )}
                 <TooltipProvider delayDuration={150}>
