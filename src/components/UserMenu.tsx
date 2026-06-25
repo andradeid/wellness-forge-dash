@@ -21,8 +21,9 @@ export function UserMenu() {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const { data: credits } = useMyCredits();
+  const unlimited = !!credits?.unlimited;
   const balance = credits?.balance ?? 0;
-  const lowCredits = balance < LOW_CREDIT_THRESHOLD;
+  const lowCredits = !unlimited && balance < LOW_CREDIT_THRESHOLD;
 
   const email = profile?.email ?? user?.email ?? "";
   const initials = (profile?.full_name || email).slice(0, 2).toUpperCase();
@@ -75,12 +76,14 @@ export function UserMenu() {
               </span>
               <span
                 className={
-                  lowCredits
-                    ? "text-sm font-semibold text-destructive"
-                    : "text-sm font-semibold text-foreground"
+                  unlimited
+                    ? "text-sm font-semibold bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+                    : lowCredits
+                      ? "text-sm font-semibold text-destructive"
+                      : "text-sm font-semibold text-foreground"
                 }
               >
-                {balance.toLocaleString("pt-BR")}
+                {unlimited ? "Ilimitado" : balance.toLocaleString("pt-BR")}
               </span>
             </div>
             {lowCredits && (
