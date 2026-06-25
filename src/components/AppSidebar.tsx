@@ -217,7 +217,7 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            <CreditsBadge collapsed />
+            {role !== "super_admin" && <CreditsBadge collapsed />}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
@@ -227,9 +227,10 @@ export function AppSidebar() {
                 {role === "nutri" ? "Nutri" : "Admin"}
               </span>
             </div>
-            <CreditsBadge />
+            {role !== "super_admin" && <CreditsBadge />}
           </div>
         )}
+
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
