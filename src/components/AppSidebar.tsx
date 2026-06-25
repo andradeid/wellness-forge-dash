@@ -169,7 +169,8 @@ export function AppSidebar() {
   const { user, profile, role, signOut } = useAuth();
   const { data: credits } = useMyCredits();
   const balance = credits?.balance ?? 0;
-  const lowCredits = balance < LOW_CREDIT_THRESHOLD;
+  const unlimited = !!(credits as any)?.unlimited;
+  const lowCredits = !unlimited && balance < LOW_CREDIT_THRESHOLD;
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -368,12 +369,14 @@ export function AppSidebar() {
                 </span>
                 <span
                   className={
-                    lowCredits
-                      ? "text-sm font-semibold text-destructive"
-                      : "text-sm font-semibold text-foreground"
+                    unlimited
+                      ? "text-sm font-semibold bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+                      : lowCredits
+                        ? "text-sm font-semibold text-destructive"
+                        : "text-sm font-semibold text-foreground"
                   }
                 >
-                  {balance.toLocaleString("pt-BR")}
+                  {unlimited ? "Ilimitado" : balance.toLocaleString("pt-BR")}
                 </span>
               </div>
               {lowCredits && (
