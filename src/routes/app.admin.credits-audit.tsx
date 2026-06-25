@@ -519,3 +519,47 @@ function AuditPage() {
 
   );
 }
+
+function UserRow({
+  user,
+  selected,
+  onAudit,
+  onAdjust,
+  canAdjust,
+}: {
+  user: User;
+  selected: boolean;
+  onAudit: () => void;
+  onAdjust: () => void;
+  canAdjust: boolean;
+}) {
+  return (
+    <div
+      className={`w-full px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-muted/50 ${
+        selected ? "bg-muted/60" : ""
+      }`}
+    >
+      <button
+        onClick={onAudit}
+        className="flex-1 min-w-0 text-left"
+      >
+        <div className="font-medium truncate">{user.full_name ?? "(sem nome)"}</div>
+        <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+      </button>
+      <div className="flex items-center gap-2 shrink-0">
+        <Button size="sm" variant="outline" onClick={onAudit}>
+          <Search className="h-3.5 w-3.5 mr-1" /> Ver auditoria
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onAdjust}
+          disabled={!canAdjust}
+          title={canAdjust ? "" : "Somente super_admin"}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1" /> Ajustar saldo
+        </Button>
+      </div>
+    </div>
+  );
+}
