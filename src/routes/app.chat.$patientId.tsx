@@ -770,6 +770,9 @@ function ChatPage() {
                                           if (bestAgent) {
                                             setAgentType(bestAgent.agent_id);
                                             setModuleOpen(false);
+                                          } else if (opt.trigger === "exames_de_sangue") {
+                                            setModuleOpen(false);
+                                            toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
                                           }
                                         }}
                                         className={cn(
