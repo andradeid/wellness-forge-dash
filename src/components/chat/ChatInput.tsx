@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
 import { AlertCircle, ArrowUp, CheckCircle2, Loader2, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
