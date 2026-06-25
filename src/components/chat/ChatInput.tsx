@@ -213,29 +213,30 @@ export function ChatInput({
       )}
 
       <Textarea
+        ref={textareaRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
         rows={1}
         placeholder={hasModule ? "Pergunte à Lumma sobre o paciente ou anexe um exame..." : "⬆️ Selecione uma tarefa acima para começar"}
-        className="min-h-[44px] sm:min-h-[36px] max-h-40 resize-none border-0 bg-transparent px-1 py-1.5 sm:py-1 shadow-none focus-visible:ring-0 text-[15px]"
+        className="min-h-[44px] sm:min-h-[36px] max-h-80 resize-none overflow-y-auto border-0 bg-transparent px-1 py-1.5 sm:py-1 shadow-none focus-visible:ring-0 text-[15px]"
         disabled={disabled || !hasModule}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm shrink-0"
-          onClick={openPicker}
-          disabled={disabled || !hasModule}
-          aria-label="Anexar exame"
-        >
-          <Paperclip className="h-4 w-4" />
-        </Button>
-        {toolbarSlot && (
-          <div className="flex-1 flex justify-center min-w-0">{toolbarSlot}</div>
-        )}
+        <div className="flex items-center gap-2 min-w-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm shrink-0"
+            onClick={openPicker}
+            disabled={disabled || !hasModule}
+            aria-label="Anexar exame"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          {toolbarSlot && <div className="min-w-0">{toolbarSlot}</div>}
+        </div>
         <Button
           type="button"
           onClick={send}
