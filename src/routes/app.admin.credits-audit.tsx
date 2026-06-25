@@ -82,7 +82,9 @@ function AuditPage() {
   const [unlimited, setUnlimitedState] = useState<boolean>(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalTx, setTotalTx] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(totalTx / PAGE));
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustDelta, setAdjustDelta] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
@@ -95,7 +97,6 @@ function AuditPage() {
   if (role && role !== "super_admin" && role !== "admin") {
     return <div className="p-12 text-center text-sm text-muted-foreground">Acesso restrito.</div>;
   }
-
 
   async function doSearch() {
     if (!q.trim()) return;
@@ -111,49 +112,57 @@ function AuditPage() {
     }
   }
 
-  async function pick(u: User) {
+  async function openAudit(u: User) {
     setSelected(u);
     setResults([]);
-    setQ("");
-    await refreshUser(u.id);
+    setPage(1);
+    await loadCreditsAndPage(u.id, 1);
   }
 
-  async function refreshUser(userId: string) {
+  async function openAdjust(u: User) {
+    setSelected(u);
+    setResults([]);
+    setAdjustDelta("");
+    setAdjustReason("");
+    setAdjustOpen(true);
+    await loadCreditsAndPage(u.id, 1);
+  }
+
+  async function loadCreditsAndPage(userId: string, pageNum: number) {
     setLoadingTx(true);
     try {
       const [c, t] = await Promise.all([
         fnCredits({ data: { userId } }) as Promise<{ balance: number; unlimited_credits: boolean }>,
-        fnList({ data: { userId, limit: PAGE } }) as Promise<Tx[]>,
+        fnList({ data: { userId, page: pageNum, pageSize: PAGE } }) as Promise<{
+          rows: Tx[];
+          total: number;
+        }>,
       ]);
       setBalance(c.balance);
       setUnlimitedState(!!c.unlimited_credits);
-      setTxs(t);
-      setHasMore(t.length === PAGE);
+      setTxs(t.rows);
+      setTotalTx(t.total);
+      setPage(pageNum);
     } finally {
-
       setLoadingTx(false);
     }
   }
 
-  async function loadMore() {
-    if (!selected || txs.length === 0) return;
-    const last = txs[txs.length - 1];
+  async function goToPage(p: number) {
+    if (!selected || p < 1 || p > totalPages || p === page) return;
     setLoadingTx(true);
     try {
-      const more = (await fnList({
-        data: {
-          userId: selected.id,
-          cursorCreatedAt: last.created_at,
-          cursorId: last.id,
-          limit: PAGE,
-        },
-      })) as Tx[];
-      setTxs((prev) => [...prev, ...more]);
-      setHasMore(more.length === PAGE);
+      const t = (await fnList({
+        data: { userId: selected.id, page: p, pageSize: PAGE },
+      })) as { rows: Tx[]; total: number };
+      setTxs(t.rows);
+      setTotalTx(t.total);
+      setPage(p);
     } finally {
       setLoadingTx(false);
     }
   }
+
 
   async function submitAdjust() {
     if (!selected) return;
