@@ -32,8 +32,9 @@ export interface ExamContext {
 
 interface DifyFileRef {
   type: "image" | "document";
-  transfer_method: "local_file";
-  upload_file_id: string;
+  transfer_method: "local_file" | "remote_url";
+  upload_file_id?: string;
+  url?: string;
 }
 
 function inferClassification(s: string): string {
