@@ -411,11 +411,29 @@ function AuditPage() {
               </TableBody>
             </Table>
 
-            {hasMore && (
-              <div className="flex justify-center mt-4">
-                <Button variant="outline" onClick={loadMore} disabled={loadingTx}>
-                  {loadingTx ? <Loader2 className="h-4 w-4 animate-spin" /> : "Carregar mais"}
-                </Button>
+            {totalTx > 0 && (
+              <div className="flex items-center justify-between mt-4 text-sm">
+                <span className="text-muted-foreground">
+                  Página {page} de {totalPages} — {totalTx} transações
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(page - 1)}
+                    disabled={loadingTx || page <= 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(page + 1)}
+                    disabled={loadingTx || page >= totalPages}
+                  >
+                    Próximo
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
