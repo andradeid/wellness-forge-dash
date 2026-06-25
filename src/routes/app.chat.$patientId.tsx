@@ -89,7 +89,7 @@ function ChatPage() {
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { agents, getAgentForCard, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
@@ -582,7 +582,38 @@ function ChatPage() {
                   highlightId={highlightId} 
                   isStreaming={thinking}
                   agentType={agentType}
+                  onGenerateRecipe={(payload) => {
+                    // Handoff: exame → formulações (card_trigger: plano_alimentar).
+                    // Resolve o agente alvo dinamicamente respeitando perfil/gestação.
+                    const target = getAgentForCard("plano_alimentar", patientProfile, patient?.pregnancy_type);
+                    if (!target) {
+                      console.warn("[handoff] Nenhum agente de formulações configurado.");
+                      return;
+                    }
+                    const gestantePeriodo = filters.publico === "gestante" && filters.gestantePeriodo
+                      ? ({ "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const)[filters.gestantePeriodo]
+                      : "";
+                    const gestanteTipo = filters.publico === "gestante" && filters.gestanteTipo
+                      ? (filters.gestanteTipo === "monofetal" ? "Monofetal" : "Gemelar")
+                      : "";
+                    const examContextPayload = {
+                      resumo_exame: payload.resumo_exame ?? "",
+                      formulacoes_sugeridas: payload.formulacoes,
+                      alertas: payload.alertas ?? [],
+                      patient_profile: patientProfile,
+                      patient_sex: filters.sexo ?? "",
+                      gestante_tipo: gestanteTipo,
+                      gestante_periodo: gestantePeriodo,
+                      origem_agente: agentType ?? "",
+                    };
+                    void sendHandoff(
+                      target.agent_id,
+                      { exam_context: JSON.stringify(examContextPayload) },
+                      "Gere a receita pronta para a farmácia a partir das formulações sugeridas no exam_context, mantendo nomes, ativos e doses exatos.",
+                    );
+                  }}
                 />
+
               </div>
             )}
           </div>

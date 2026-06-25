@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
@@ -9,6 +9,7 @@ import { MessageFeedback } from "./MessageFeedback";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
+import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
@@ -22,6 +23,7 @@ export interface ChatMessage {
     parse_error?: boolean;
     processing_ms?: number;
     not_a_lab_report_error?: string;
+    formulacoes_sugeridas?: FormulacoesPayload;
   } | null;
   attachments?: Array<{ name: string }> | null;
   created_at?: string | null;
@@ -89,7 +91,7 @@ function findBalancedJsonEnd(text: string, start: number): number {
 
 /** Removes the markers JSON block (fenced or bare, complete or streaming) from displayed prose. */
 function cleanProse(text: string): string {
-  let out = text;
+  let out = stripFormulacoesMarker(text);
 
   // 1) Bloco com cerca ```json ... ``` contendo "markers": remove cerca + conteúdo.
   out = out.replace(/```json\s*([\s\S]*?)```/gi, (full, body: string) => {
@@ -384,6 +386,7 @@ export function ChatMessageList({
   highlightId,
   isStreaming,
   agentType,
+  onGenerateRecipe,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -391,6 +394,7 @@ export function ChatMessageList({
   highlightId?: string;
   isStreaming?: boolean;
   agentType?: string;
+  onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -521,6 +525,33 @@ export function ChatMessageList({
                    (m.agent_type?.startsWith('exam') || (!m.agent_type && agentType?.startsWith('exam'))) && (
                     <div className="mb-4">
                       <ExamResultCard markers={m.structured_data.markers} />
+                    </div>
+                  )}
+                  {m.role === "assistant" && m.structured_data?.formulacoes_sugeridas && onGenerateRecipe && (
+                    <div className="mb-4 p-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                          <FlaskConical className="h-5 w-5 text-violet-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-violet-900">
+                            {m.structured_data.formulacoes_sugeridas.formulacoes.length} formulação(ões) sugerida(s)
+                          </div>
+                          <div className="text-xs text-violet-700/80 mt-0.5">
+                            Envie ao agente de formulações para gerar a receita pronta para a farmácia.
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-violet-600 hover:bg-violet-700 text-white"
+                              onClick={() => onGenerateRecipe(m.structured_data!.formulacoes_sugeridas!, m.id)}
+                            >
+                              <FlaskConical className="h-3.5 w-3.5 mr-1.5" />
+                              Gerar receita
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {parts

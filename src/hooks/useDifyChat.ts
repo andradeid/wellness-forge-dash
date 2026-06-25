@@ -14,6 +14,7 @@ import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { enforceSessionGuard } from "@/lib/session-guard";
+import { extractFormulacoes } from "@/lib/formulation-marker";
 
 export interface ExamContext {
   patient_name: string;
@@ -165,6 +166,7 @@ export function useDifyChat(
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
   const [agentType, setAgentType] = useState<string>(options?.initialAgentType ?? "");
+  const agentTypeState = agentType;
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string | null>(null);
@@ -335,8 +337,15 @@ export function useDifyChat(
   const { getCost, consume } = useCreditsActions();
   const { refetch: refetchCredits } = useMyCredits();
 
-  const sendMessage = useCallback(async (text: string, files: File[]) => {
+  const sendMessage = useCallback(async (
+    text: string,
+    files: File[],
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown> },
+  ) => {
     if (!chatId || readOnly) return;
+    // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
+    // depender do flush do setState do React.
+    const agentType = opts?.overrideAgent ?? agentTypeState;
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -615,6 +624,7 @@ export function useDifyChat(
             files: difyFiles,
             meta: metaRef.current,
             agent_type: agentType,
+            ...(opts?.extraInputs ? { inputs: opts.extraInputs } : {}),
           }),
         });
 
@@ -720,12 +730,19 @@ export function useDifyChat(
 
                   const processingMs = Math.round(performance.now() - startedAt);
                   const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
-                  
-                  const structured = labReportError
+
+                  // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
+                  // pelos agentes de exame (handoff "Gerar receita").
+                  const formulacoes = agentType?.startsWith("exam")
+                    ? extractFormulacoes(fullText)
+                    : null;
+
+                  const structured: Record<string, unknown> = labReportError
                     ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
+                  if (formulacoes) structured.formulacoes_sugeridas = formulacoes;
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)
@@ -903,5 +920,28 @@ export function useDifyChat(
     setUploadProgress((prev) => prev.filter((item) => item.name !== name));
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
+  /**
+   * Handoff entre agentes: troca para `targetAgent`, reseta o conversation_id
+   * do Dify (cada API key tem conversa isolada) e dispara a primeira mensagem
+   * já carregando o payload em `inputs.exam_context`.
+   */
+  const sendHandoff = useCallback(async (
+    targetAgent: string,
+    extraInputs: Record<string, unknown>,
+    query: string,
+  ) => {
+    if (!chatId || readOnly) return;
+    // Reseta a conversa do Dify para o novo agente (cada API key isolada).
+    conversationIdRef.current = null;
+    if (chatId) {
+      await (supabase as any)
+        .from("patient_chats")
+        .update({ dify_conversation_id: null })
+        .eq("id", chatId);
+    }
+    setAgentType(targetAgent);
+    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs });
+  }, [chatId, readOnly, sendMessage]);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
 }
