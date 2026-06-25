@@ -217,7 +217,7 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            <CreditsBadge collapsed />
+            {role !== "super_admin" && <CreditsBadge collapsed />}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
@@ -227,9 +227,10 @@ export function AppSidebar() {
                 {role === "nutri" ? "Nutri" : "Admin"}
               </span>
             </div>
-            <CreditsBadge />
+            {role !== "super_admin" && <CreditsBadge />}
           </div>
         )}
+
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
@@ -346,8 +347,9 @@ export function AppSidebar() {
                       {profile?.full_name || profile?.email || "Usuário"}
                     </div>
                     <div className="text-[11px] text-white/60 truncate">
-                      Plano {planLabel(planType)}
+                      {role === "super_admin" ? "Analista e Desenvolvedor" : `Plano ${planLabel(planType)}`}
                     </div>
+
                   </div>
                   <ChevronsUpDown className="h-4 w-4 text-white/60 shrink-0" />
                 </>
@@ -361,35 +363,38 @@ export function AppSidebar() {
               </p>
               <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
             </div>
-            <div className="px-3 pb-2">
-              <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
-                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Coins className="h-3.5 w-3.5" />
-                  Créditos
-                </span>
-                <span
-                  className={
-                    unlimited
-                      ? "text-sm font-semibold bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
-                      : lowCredits
-                        ? "text-sm font-semibold text-destructive"
-                        : "text-sm font-semibold text-foreground"
-                  }
-                >
-                  {unlimited ? "Ilimitado" : balance.toLocaleString("pt-BR")}
-                </span>
+            {role !== "super_admin" && (
+              <div className="px-3 pb-2">
+                <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Coins className="h-3.5 w-3.5" />
+                    Créditos
+                  </span>
+                  <span
+                    className={
+                      unlimited
+                        ? "text-sm font-semibold bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
+                        : lowCredits
+                          ? "text-sm font-semibold text-destructive"
+                          : "text-sm font-semibold text-foreground"
+                    }
+                  >
+                    {unlimited ? "Ilimitado" : balance.toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                {lowCredits && (
+                  <button
+                    type="button"
+                    onClick={() => topUpStore.open()}
+                    className="mt-2 w-full flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/15 transition px-2.5 py-2 text-[11px] text-destructive text-left"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>Saldo baixo. Clique aqui para recarregar.</span>
+                  </button>
+                )}
               </div>
-              {lowCredits && (
-                <button
-                  type="button"
-                  onClick={() => topUpStore.open()}
-                  className="mt-2 w-full flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/15 transition px-2.5 py-2 text-[11px] text-destructive text-left"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <span>Saldo baixo. Clique aqui para recarregar.</span>
-                </button>
-              )}
-            </div>
+            )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="rounded-lg gap-3 cursor-pointer py-2.5"
