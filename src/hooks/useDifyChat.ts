@@ -340,7 +340,7 @@ export function useDifyChat(
   const sendMessage = useCallback(async (
     text: string,
     files: File[],
-    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown> },
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string },
   ) => {
     if (!chatId || readOnly) return;
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
