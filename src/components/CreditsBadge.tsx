@@ -10,7 +10,9 @@ interface Props {
 
 export function CreditsBadge({ collapsed, className }: Props) {
   const { data, isLoading } = useMyCredits();
+  const unlimited = !!data?.unlimited;
   const balance = data?.balance ?? 0;
+  const label = unlimited ? "Ilimitado" : `${balance} créditos`;
 
   return (
     <button
