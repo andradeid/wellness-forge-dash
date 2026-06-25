@@ -679,6 +679,8 @@ function ChatPage() {
                           const bestAgent = getAgentForCard(trigger, patientProfile, patient?.pregnancy_type);
                           if (bestAgent) {
                             setAgentType(bestAgent.agent_id);
+                          } else if (trigger === "exames_de_sangue") {
+                            toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
                           }
                         }
                       }}
