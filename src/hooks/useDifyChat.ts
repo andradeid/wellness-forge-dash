@@ -336,8 +336,15 @@ export function useDifyChat(
   const { getCost, consume } = useCreditsActions();
   const { refetch: refetchCredits } = useMyCredits();
 
-  const sendMessage = useCallback(async (text: string, files: File[]) => {
+  const sendMessage = useCallback(async (
+    text: string,
+    files: File[],
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown> },
+  ) => {
     if (!chatId || readOnly) return;
+    // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
+    // depender do flush do setState do React.
+    const agentType = opts?.overrideAgent ?? agentTypeState;
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
