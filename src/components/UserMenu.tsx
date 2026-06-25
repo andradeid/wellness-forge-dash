@@ -21,8 +21,9 @@ export function UserMenu() {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const { data: credits } = useMyCredits();
+  const unlimited = !!credits?.unlimited;
   const balance = credits?.balance ?? 0;
-  const lowCredits = balance < LOW_CREDIT_THRESHOLD;
+  const lowCredits = !unlimited && balance < LOW_CREDIT_THRESHOLD;
 
   const email = profile?.email ?? user?.email ?? "";
   const initials = (profile?.full_name || email).slice(0, 2).toUpperCase();
