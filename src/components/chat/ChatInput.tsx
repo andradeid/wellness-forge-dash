@@ -188,6 +188,7 @@ export function ChatInput({
                   type="button"
                   onClick={() => {
                     setFiles((p) => p.filter((f) => f.file.name !== item.name));
+                    onRemoveAttachment?.(item.name);
                   }}
                   className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/10 transition-colors"
                   aria-label={`Remover ${item.name}`}
