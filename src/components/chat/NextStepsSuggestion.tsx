@@ -3,10 +3,17 @@ import { Button } from "@/components/ui/button";
 
 interface NextStepsSuggestionProps {
   onSelectModule: (trigger: string | null) => void;
+  /**
+   * Oculta o atalho "Sugerir formulações" quando o banner contextual
+   * "Gerar receita" (handoff estruturado) já está ativo, evitando duplicidade.
+   * Caminho de evolução: migrar todos os próximos passos para banners
+   * contextuais emitidos pelo agente (marcadores) e aposentar este grid.
+   */
+  hideFormulacoes?: boolean;
 }
 
-export function NextStepsSuggestion({ onSelectModule }: NextStepsSuggestionProps) {
-  const steps = [
+export function NextStepsSuggestion({ onSelectModule, hideFormulacoes = false }: NextStepsSuggestionProps) {
+  const allSteps = [
     {
       label: "Analisar outro exame",
       icon: "🩸",
