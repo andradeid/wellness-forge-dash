@@ -254,61 +254,31 @@ function LoginPage() {
                 <img src={lummaSymbol} alt="LUMMA" className="h-12 w-12" />
               </div>
               <CardTitle className="text-2xl">Acesse sua conta</CardTitle>
-              <CardDescription>Entre ou crie uma conta para começar.</CardDescription>
+              <CardDescription>Entre com suas credenciais para continuar.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Entrar</TabsTrigger>
-                  <TabsTrigger value="signup">Criar conta</TabsTrigger>
-                </TabsList>
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Senha</Label>
+                  <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full text-white border-0 shadow-md hover:opacity-90 transition-opacity"
+                  style={{ backgroundImage: "var(--gradient-brand)" }}
+                  disabled={submitting}
+                >
+                  {submitting ? "Entrando..." : "Entrar"}
+                </Button>
+              </form>
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                Acesso restrito. Novas contas são criadas pela administração.
+              </p>
 
-                <TabsContent value="signin" className="mt-5">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Senha</Label>
-                      <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full text-white border-0 shadow-md hover:opacity-90 transition-opacity"
-                      style={{ backgroundImage: "var(--gradient-brand)" }}
-                      disabled={submitting}
-                    >
-                      {submitting ? "Entrando..." : "Entrar"}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="signup" className="mt-5">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name">Nome completo</Label>
-                      <Input id="signup-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input id="signup-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Senha</Label>
-                      <Input id="signup-password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full text-white border-0 shadow-md hover:opacity-90 transition-opacity"
-                      style={{ backgroundImage: "var(--gradient-brand)" }}
-                      disabled={submitting}
-                    >
-                      {submitting ? "Criando..." : "Criar conta"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
 
               <div className="mt-6 text-center">
                 <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
