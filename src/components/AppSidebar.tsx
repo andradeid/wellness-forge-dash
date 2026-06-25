@@ -347,8 +347,9 @@ export function AppSidebar() {
                       {profile?.full_name || profile?.email || "Usuário"}
                     </div>
                     <div className="text-[11px] text-white/60 truncate">
-                      Plano {planLabel(planType)}
+                      {role === "super_admin" ? "Analista e Desenvolvedor" : `Plano ${planLabel(planType)}`}
                     </div>
+
                   </div>
                   <ChevronsUpDown className="h-4 w-4 text-white/60 shrink-0" />
                 </>
