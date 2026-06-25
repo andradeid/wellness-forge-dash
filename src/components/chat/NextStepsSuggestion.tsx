@@ -3,10 +3,17 @@ import { Button } from "@/components/ui/button";
 
 interface NextStepsSuggestionProps {
   onSelectModule: (trigger: string | null) => void;
+  /**
+   * Oculta o atalho "Sugerir formulações" quando o banner contextual
+   * "Gerar receita" (handoff estruturado) já está ativo, evitando duplicidade.
+   * Caminho de evolução: migrar todos os próximos passos para banners
+   * contextuais emitidos pelo agente (marcadores) e aposentar este grid.
+   */
+  hideFormulacoes?: boolean;
 }
 
-export function NextStepsSuggestion({ onSelectModule }: NextStepsSuggestionProps) {
-  const steps = [
+export function NextStepsSuggestion({ onSelectModule, hideFormulacoes = false }: NextStepsSuggestionProps) {
+  const allSteps = [
     {
       label: "Analisar outro exame",
       icon: "🩸",
@@ -38,6 +45,12 @@ export function NextStepsSuggestion({ onSelectModule }: NextStepsSuggestionProps
       trigger: "pesquisa_cientifica",
     },
   ];
+
+  // Filtra o atalho duplicado quando o banner contextual de receita está ativo.
+  // Marcador para a migração C: trocar este array por banners emitidos pelos agentes.
+  const steps = hideFormulacoes
+    ? allSteps.filter((s) => s.label !== "Sugerir formulações para este paciente")
+    : allSteps;
 
   return (
     <div className="mx-auto w-full max-w-2xl mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">

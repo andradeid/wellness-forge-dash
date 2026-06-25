@@ -672,6 +672,7 @@ function ChatPage() {
                 {isFirstExamResponse && !forceShowChat ? (
                   <div className="pb-2">
                     <NextStepsSuggestion
+                      hideFormulacoes={!!pendingFormulacoes}
                       onSelectModule={(trigger) => {
                         if (!trigger) {
                           setForceShowChat(true);
