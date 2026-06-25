@@ -15,15 +15,11 @@ interface NextStepsSuggestionProps {
 export function NextStepsSuggestion({ onSelectModule, hideFormulacoes = false }: NextStepsSuggestionProps) {
   const allSteps = [
     {
-      label: "Analisar outro exame",
-      icon: "🩸",
-      trigger: "exames_de_sangue",
-    },
-    {
       label: "Criar plano alimentar para este paciente",
       icon: "📋",
       trigger: "plano_alimentar",
     },
+
     {
       label: "Sugerir formulações para este paciente",
       icon: "💊",
@@ -85,7 +81,7 @@ export function NextStepsSuggestion({ onSelectModule, hideFormulacoes = false }:
             className="w-full h-8 px-4 justify-center bg-[#e8a04c]/5 hover:bg-[#e8a04c]/10 text-xs font-medium gap-2 text-[#e8a04c] transition-all"
           >
             <span className="text-base">💬</span>
-            Tenho uma dúvida sobre este exame
+            Continuar conversa ou anexar novo exame
           </Button>
         </div>
       </div>
