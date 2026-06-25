@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 
 interface AuditPayload {
   source?: string;
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/api/audit/structured")({
         const supabase = createClient(url, key, {
           auth: { persistSession: false, autoRefreshToken: false },
           global: { headers: { Authorization: `Bearer ${token}` } },
+          realtime: disabledRealtimeOptions,
         });
 
         const { data: userRes, error: userErr } = await supabase.auth.getUser(token);

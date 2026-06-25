@@ -4,6 +4,7 @@
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { disabledRealtimeOptions } from './disabled-realtime';
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -25,17 +26,7 @@ function createSupabaseAdminClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
-    // Projeto NÃO usa Realtime — evita warning de WebSocket no Node < 22.
-    realtime: {
-      transport: class NoopWebSocket {
-        readyState = 3;
-        constructor() {}
-        close() {}
-        send() {}
-        addEventListener() {}
-        removeEventListener() {}
-      } as any,
-    },
+    realtime: disabledRealtimeOptions,
   });
 
 }

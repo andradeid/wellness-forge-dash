@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 
 export interface DifyConfig {
   baseUrl: string;
@@ -30,6 +31,7 @@ function makeUserClient(token: string): SupabaseClient {
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${token}` } },
+    realtime: disabledRealtimeOptions,
   });
 }
 
@@ -40,6 +42,7 @@ function makeServiceClient(): SupabaseClient | null {
 
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    realtime: disabledRealtimeOptions,
   });
 }
 
