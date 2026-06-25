@@ -803,14 +803,8 @@ function ChatPage() {
                       );
                     })()}
 
-                    <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
-                      Máximo de 10 arquivos de 20MB
-                    </p>
-                    {role === "nutri" && (
-                      <p className="mt-1 text-center text-[10px] italic text-amber-700/80 px-2 hidden sm:block">
-                        Nota: Processamento estrutural em modo de validação técnica.
-                      </p>
-                    )}
+
+
                   </>
                 )}
                 <TooltipProvider delayDuration={150}>
