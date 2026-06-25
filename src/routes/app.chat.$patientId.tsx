@@ -636,6 +636,29 @@ function ChatPage() {
 
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
+            {pendingFormulacoes && !readOnly && (
+              <div className="mb-2 flex items-center gap-3 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white px-4 py-3 shadow-sm animate-in fade-in slide-in-from-bottom-1">
+                <div className="shrink-0 h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-violet-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-violet-900">
+                    {pendingFormulacoes.payload.formulacoes.length} formulação(ões) sugerida(s)
+                  </div>
+                  <div className="text-xs text-violet-700/80">
+                    Envie ao agente de formulações para gerar a receita pronta para a farmácia.
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+                  onClick={() => handleGenerateRecipe(pendingFormulacoes.payload)}
+                  disabled={thinking}
+                >
+                  Gerar receita
+                </Button>
+              </div>
+            )}
             {readOnly ? (
               <div className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-xs text-amber-800 text-center">
                 <Eye className="h-3.5 w-3.5 shrink-0" />
