@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search, Wallet, Plus, Infinity as InfinityIcon, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   findUsers,
+  listNutritionists,
   getUserCredits,
   listTransactions,
   adjustBalance,
@@ -49,12 +51,30 @@ function AuditPage() {
   const { role } = useAuth();
   const isSuperAdmin = role === "super_admin";
   const fnFind = useServerFn(findUsers);
+  const fnListNutris = useServerFn(listNutritionists);
   const fnCredits = useServerFn(getUserCredits);
   const fnList = useServerFn(listTransactions);
   const fnAdjust = useServerFn(adjustBalance);
   const fnSetUnlimited = useServerFn(setUnlimited);
 
+  const nutrisQuery = useQuery({
+    queryKey: ["admin", "nutritionists"],
+    queryFn: () => fnListNutris() as Promise<User[]>,
+    staleTime: 60_000,
+  });
+
   const [q, setQ] = useState("");
+
+  const filteredNutris = useMemo<User[]>(() => {
+    const list = nutrisQuery.data ?? [];
+    const term = q.trim().toLowerCase();
+    if (!term) return list;
+    return list.filter(
+      (u) =>
+        (u.full_name ?? "").toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term),
+    );
+  }, [nutrisQuery.data, q]);
   const [results, setResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
@@ -208,11 +228,11 @@ function AuditPage() {
             }}
           >
             <Input
-              placeholder="Buscar usuário por e-mail ou ID..."
+              placeholder="Filtrar por nome ou e-mail..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            <Button type="submit" disabled={searching}>
+            <Button type="submit" disabled={searching} title="Busca avançada (ID/qualquer usuário)">
               {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </form>
@@ -234,8 +254,44 @@ function AuditPage() {
               ))}
             </div>
           )}
+
+          {results.length === 0 && (
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Nutricionistas {nutrisQuery.data ? `(${filteredNutris.length})` : ""}
+              </div>
+              {nutrisQuery.isLoading ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
+                </div>
+              ) : filteredNutris.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  Nenhum nutricionista encontrado.
+                </div>
+              ) : (
+                <div className="border rounded-lg divide-y max-h-[480px] overflow-y-auto">
+                  {filteredNutris.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => pick(u)}
+                      className={`w-full px-4 py-2 text-left hover:bg-muted/50 flex justify-between items-center ${
+                        selected?.id === u.id ? "bg-muted/60" : ""
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium">{u.full_name ?? "(sem nome)"}</div>
+                        <div className="text-xs text-muted-foreground">{u.email}</div>
+                      </div>
+                      <div className="text-xs font-mono text-muted-foreground">{u.id.slice(0, 8)}…</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
+
 
       {selected && (
         <Card>
