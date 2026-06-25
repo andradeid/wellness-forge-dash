@@ -185,6 +185,19 @@ function ChatPage() {
     messages.length > 0 &&
     messages[messages.length - 1]?.role === "assistant";
 
+  // Última mensagem do assistente com formulações sugeridas (handoff pendente).
+  // Só mostramos o card sticky enquanto não houver mensagem do usuário depois dela.
+  const pendingFormulacoes = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "user") return null;
+      if (m.role === "assistant" && m.structured_data?.formulacoes_sugeridas) {
+        return { id: m.id, payload: m.structured_data.formulacoes_sugeridas };
+      }
+    }
+    return null;
+  }, [messages]);
+
   // Reset forceShowChat when agent changes or when new messages arrive
   useEffect(() => {
     setForceShowChat(false);
