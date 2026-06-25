@@ -31,7 +31,14 @@ export const Route = createFileRoute("/app/admin/credits-audit")({
   component: AuditPage,
 });
 
-type User = { id: string; full_name: string | null; email: string };
+type User = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  plan_type?: string | null;
+  unlimited_credits?: boolean;
+  balance?: number;
+};
 type Tx = {
   id: string;
   created_at: string;
