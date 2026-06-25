@@ -411,48 +411,49 @@ export function useDifyChat(
     if (!token || !user) { setThinking(false); setUploadProgress([]); return; }
 
 
-    // 1) Upload files to Dify + storage
+    // 1) Upload files DIRECT to Supabase Storage and pass signed URLs to Dify
+    //    via `transfer_method: "remote_url"`. Isso elimina o proxy /api/dify/upload
+    //    (que está sob limite de payload do Cloudflare Worker ~10MB) e o limite
+    //    efetivo passa a ser o do próprio Dify, suportando PDFs grandes de exame.
     const difyFiles: DifyFileRef[] = [];
     const attachments: Array<{ name: string }> = [];
     let lastExamId: string | null = null;
+    const resetUploadUI = () => setUploadProgress([]);
+
     for (const file of files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
-      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
+      updateFileProgress(file, "enviando", 20, "Salvando exame no histórico");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
 
-      // Storage
+      // Storage (upload direto do browser → Supabase, sem passar pelo Worker)
       const path = `${user.id}/${patientId}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage.from("exams").upload(path, file);
+      const { error: upErr } = await supabase.storage.from("exams").upload(path, file, {
+        contentType: file.type || undefined,
+        upsert: false,
+      });
       if (upErr) {
         updateFileProgress(file, "erro", 100, "Falha ao salvar exame");
-        toast.error(`Falha ao salvar ${file.name}`, { id: toastId });
-        setError(upErr.message); setThinking(false); return;
-      }
-
-      updateFileProgress(file, "processando", 45, "Enviando à Lumma");
-      toast.loading(`Processando ${file.name} na Lumma...`, { id: toastId });
-
-      // Dify
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("agent_type", agentType);
-      fd.append("nutritionist_name", metaRef.current.nutritionist_name);
-      fd.append("patient_name", metaRef.current.patient_name);
-      const res = await fetch("/api/dify/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
-      if (!res.ok) {
-        updateFileProgress(file, "erro", 100, "Falha ao enviar exame");
-        toast.error(`Falha ao enviar ${file.name} (${res.status})`, { id: toastId });
-        setError(`Falha ao enviar exame para análise (${res.status})`);
+        toast.error(`Falha ao salvar ${file.name}: ${upErr.message}`, { id: toastId });
+        setError(upErr.message);
         setThinking(false);
+        resetUploadUI();
         return;
       }
-      const json = await res.json() as { id?: string; mime_type?: string };
-      const difyId = json.id;
-      updateFileProgress(file, "processando", 70, "Arquivo recebido — analisando");
+
+      updateFileProgress(file, "processando", 60, "Gerando link seguro para a Lumma");
+
+      // Signed URL (1h) — Dify baixa o arquivo direto do Supabase Storage
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("exams")
+        .createSignedUrl(path, 3600);
+      if (signErr || !signed?.signedUrl) {
+        updateFileProgress(file, "erro", 100, "Falha ao gerar link de acesso");
+        toast.error(`Falha ao preparar ${file.name}`, { id: toastId });
+        setError(signErr?.message ?? "Falha ao gerar URL assinada");
+        setThinking(false);
+        resetUploadUI();
+        return;
+      }
 
       const { data: examIns } = await (supabase as any).from("patient_exams").insert({
         patient_id: patientId,
@@ -462,17 +463,15 @@ export function useDifyChat(
         file_name: file.name,
         mime_type: file.type,
         size_bytes: file.size,
-        dify_file_id: difyId,
+        dify_file_id: null,
       }).select("id").single();
       if (examIns?.id) lastExamId = examIns.id as string;
 
-      if (difyId) {
-        difyFiles.push({
-          type: file.type.startsWith("image/") ? "image" : "document",
-          transfer_method: "local_file",
-          upload_file_id: difyId,
-        });
-      }
+      difyFiles.push({
+        type: file.type.startsWith("image/") ? "image" : "document",
+        transfer_method: "remote_url",
+        url: signed.signedUrl,
+      });
       attachments.push({ name: file.name });
       updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
