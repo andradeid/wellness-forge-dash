@@ -692,9 +692,7 @@ function ChatPage() {
                     {(() => {
                       const currentAgent = agents.find(a => a.agent_id === agentType);
                       const cardTrigger = currentAgent?.card_trigger;
-                      const activeLabel = cardTrigger ? CARD_LABELS[cardTrigger] || currentAgent.label : currentAgent?.label || "Módulo";
-                      const ActiveIcon = cardTrigger ? CARD_ICONS[cardTrigger] || Sparkles : Sparkles;
-                      
+
                       // Agrupar agentes por card_trigger únicos
                       const cardOptions = Array.from(
                         new Map(
@@ -709,119 +707,108 @@ function ChatPage() {
                         ).values()
                       );
 
-                      return (
-                        <div className="mb-2 flex justify-center relative">
-                          <Popover open={moduleOpen} onOpenChange={setModuleOpen}>
-                            <PopoverTrigger asChild>
-                              <button
-                                type="button"
-                                className={cn(
-                                  "inline-flex items-center gap-1.5 rounded-full backdrop-blur-sm border shadow-sm transition group",
-                                  !agentType 
-                                    ? "bg-yellow-400 border-yellow-500 text-black font-bold px-5 py-2 text-sm animate-pulse shadow-lg hover:bg-yellow-300" 
-                                    : "bg-white/80 border-[#e8a04c]/30 text-foreground hover:bg-white px-3 py-1 text-[11px] font-medium"
-                                )}
-                                title="Trocar de módulo"
-                              >
-                                {(() => {
-                                  const currentAgent = agents.find(a => a.agent_id === agentType);
-                                  const cardTrigger = currentAgent?.card_trigger;
-                                  const label = cardTrigger ? CARD_LABELS[cardTrigger] : (agentType ? currentAgent?.label : "Selecione uma tarefa");
-                                  const Icon = cardTrigger ? CARD_ICONS[cardTrigger] : Sparkles;
-                                  
-                                  if (loadingAgents) return <span>Carregando...</span>;
-                                  
-                                  return (
-                                    <>
-                                      {!agentType ? (
-                                        <span className="flex items-center gap-2">
-                                          <span className="text-lg">⚠️</span>
-                                          <span>{label}</span>
-                                        </span>
-                                      ) : (
-                                        <>
-                                          <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />
-                                          <span>{label}</span>
-                                        </>
-                                      )}
-                                    </>
-                                  );
-                                })()}
-                                {agentType && <span className="text-muted-foreground/70 text-[10px]">• trocar</span>}
-                                <ChevronDown className={cn("transition-colors", !agentType ? "h-4 w-4 text-black" : "h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground")} />
-                              </button>
-
-                            </PopoverTrigger>
-                            <PopoverContent 
-                              side="top" 
-                              align="center" 
-                              className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
+                      const moduleSelector = (
+                        <Popover open={moduleOpen} onOpenChange={setModuleOpen}>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className={cn(
+                                "inline-flex items-center gap-1.5 rounded-full transition group max-w-full",
+                                !agentType
+                                  ? "bg-yellow-400 border border-yellow-500 text-black font-bold px-4 py-1.5 text-xs animate-pulse shadow-md hover:bg-yellow-300"
+                                  : "bg-muted/50 hover:bg-muted text-foreground px-3 py-1 text-[11px] font-medium"
+                              )}
+                              title="Trocar de módulo"
                             >
-                              <div className="space-y-1">
-                                {cardOptions.map((opt, idx) => {
-                                  const Icon = opt.icon;
-                                  const iconColor = opt.color;
-                                  const isActive = cardTrigger === opt.trigger;
-                                  return (
-                                    <div key={opt.trigger}>
-                                      {idx === 3 && <div className="my-1 border-t border-slate-100" />}
-                                      <button
-                                        onClick={() => {
-                                          const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
-                                          if (bestAgent) {
-                                            setAgentType(bestAgent.agent_id);
-                                            setModuleOpen(false);
-                                          } else if (opt.trigger === "exames_de_sangue") {
-                                            setModuleOpen(false);
-                                            toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
-                                          }
-                                        }}
-                                        className={cn(
-                                          "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
-                                          isActive 
-                                            ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20" 
-                                            : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
-                                        )}
-                                      >
-                                        <div className={cn(
-                                          "p-1.5 rounded-lg transition-colors",
-                                          isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
-                                        )}>
-                                          <Icon className="h-3.5 w-3.5" style={{ color: iconColor }} />
-                                        </div>
-                                        <span className="flex-1 text-left">{opt.label}</span>
-                                        {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
+                              {(() => {
+                                const label = cardTrigger ? CARD_LABELS[cardTrigger] : (agentType ? currentAgent?.label : "Selecione uma tarefa");
+                                const Icon = cardTrigger ? CARD_ICONS[cardTrigger] : Sparkles;
+                                if (loadingAgents) return <span>Carregando...</span>;
+                                return !agentType ? (
+                                  <span className="flex items-center gap-2 truncate">
+                                    <span>⚠️</span>
+                                    <span className="truncate">{label}</span>
+                                  </span>
+                                ) : (
+                                  <>
+                                    <Icon className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
+                                    <span className="truncate">{label}</span>
+                                  </>
+                                );
+                              })()}
+                              <ChevronDown className={cn("shrink-0", !agentType ? "h-4 w-4 text-black" : "h-3 w-3 text-muted-foreground/60 group-hover:text-muted-foreground")} />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            side="top"
+                            align="center"
+                            className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
+                          >
+                            <div className="space-y-1">
+                              {cardOptions.map((opt, idx) => {
+                                const Icon = opt.icon;
+                                const iconColor = opt.color;
+                                const isActive = cardTrigger === opt.trigger;
+                                return (
+                                  <div key={opt.trigger}>
+                                    {idx === 3 && <div className="my-1 border-t border-slate-100" />}
+                                    <button
+                                      onClick={() => {
+                                        const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
+                                        if (bestAgent) {
+                                          setAgentType(bestAgent.agent_id);
+                                          setModuleOpen(false);
+                                        } else if (opt.trigger === "exames_de_sangue") {
+                                          setModuleOpen(false);
+                                          toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
+                                        }
+                                      }}
+                                      className={cn(
+                                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
+                                        isActive
+                                          ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20"
+                                          : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                                      )}
+                                    >
+                                      <div className={cn(
+                                        "p-1.5 rounded-lg transition-colors",
+                                        isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
+                                      )}>
+                                        <Icon className="h-3.5 w-3.5" style={{ color: iconColor }} />
+                                      </div>
+                                      <span className="flex-1 text-left">{opt.label}</span>
+                                      {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      );
+
+                      return (
+                        <>
+                          {agentType !== "exam" && examContext && (
+                            <div className="mb-2 text-center animate-in fade-in slide-in-from-bottom-1 duration-300">
+                              <span className="text-[10px] text-muted-foreground inline-flex items-center justify-center gap-1 bg-white/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-muted/20">
+                                <ClipboardList className="h-3 w-3 text-muted-foreground/70" />
+                                Usando contexto do exame de {examContext.patient_name}
+                              </span>
+                            </div>
+                          )}
+                          <ChatInput
+                            onSubmit={wrappedSend}
+                            disabled={thinking || !chatId || !agentType}
+                            hasModule={!!agentType}
+                            uploadProgress={uploadProgress}
+                            onRemoveAttachment={removeUploadItem}
+                            toolbarSlot={moduleSelector}
+                          />
+                        </>
                       );
                     })()}
-                    {agentType !== "exam" && examContext && (
-                      <div className="mb-2 text-center animate-in fade-in slide-in-from-bottom-1 duration-300">
-                        <span className="text-[10px] text-muted-foreground inline-flex items-center justify-center gap-1 bg-white/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-muted/20">
-                          <ClipboardList className="h-3 w-3 text-muted-foreground/70" />
-                          Usando contexto do exame de {examContext.patient_name}
-                        </span>
-                      </div>
-                    )}
-                    {!agentType && (
-                      <p className="mb-1 text-center text-xs text-yellow-600 font-medium animate-pulse">
-                        👇 Comece aqui
-                      </p>
-                    )}
-                    <ChatInput 
 
-                      onSubmit={wrappedSend} 
-                      disabled={thinking || !chatId || !agentType} 
-                      hasModule={!!agentType}
-                      uploadProgress={uploadProgress} 
-                      onRemoveAttachment={removeUploadItem}
-                    />
                     <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                       Máximo de 10 arquivos de 20MB
                     </p>
