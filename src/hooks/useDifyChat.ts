@@ -166,6 +166,7 @@ export function useDifyChat(
   const [thinkingMode, setThinkingMode] = useState<"analysis" | "simple">("analysis");
   const [error, setError] = useState<string | null>(null);
   const [agentType, setAgentType] = useState<string>(options?.initialAgentType ?? "");
+  const agentTypeState = agentType;
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string | null>(null);
