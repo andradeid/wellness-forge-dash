@@ -899,5 +899,9 @@ export function useDifyChat(
     };
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
+  const removeUploadItem = useCallback((name: string) => {
+    setUploadProgress((prev) => prev.filter((item) => item.name !== name));
+  }, []);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
 }
