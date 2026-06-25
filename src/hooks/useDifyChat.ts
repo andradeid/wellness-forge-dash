@@ -920,5 +920,28 @@ export function useDifyChat(
     setUploadProgress((prev) => prev.filter((item) => item.name !== name));
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
+  /**
+   * Handoff entre agentes: troca para `targetAgent`, reseta o conversation_id
+   * do Dify (cada API key tem conversa isolada) e dispara a primeira mensagem
+   * já carregando o payload em `inputs.exam_context`.
+   */
+  const sendHandoff = useCallback(async (
+    targetAgent: string,
+    extraInputs: Record<string, unknown>,
+    query: string,
+  ) => {
+    if (!chatId || readOnly) return;
+    // Reseta a conversa do Dify para o novo agente (cada API key isolada).
+    conversationIdRef.current = null;
+    if (chatId) {
+      await (supabase as any)
+        .from("patient_chats")
+        .update({ dify_conversation_id: null })
+        .eq("id", chatId);
+    }
+    setAgentType(targetAgent);
+    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs });
+  }, [chatId, readOnly, sendMessage]);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
 }
