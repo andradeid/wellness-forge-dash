@@ -64,6 +64,17 @@ function AuditPage() {
   });
 
   const [q, setQ] = useState("");
+
+  const filteredNutris = useMemo<User[]>(() => {
+    const list = nutrisQuery.data ?? [];
+    const term = q.trim().toLowerCase();
+    if (!term) return list;
+    return list.filter(
+      (u) =>
+        (u.full_name ?? "").toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term),
+    );
+  }, [nutrisQuery.data, q]);
   const [results, setResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
