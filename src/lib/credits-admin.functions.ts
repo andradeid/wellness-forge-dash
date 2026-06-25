@@ -38,6 +38,26 @@ export const findUsers = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+export const listNutritionists = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: roleRows, error: rErr } = await context.supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "nutri");
+    if (rErr) throw new Response(rErr.message, { status: 500 });
+    const ids = (roleRows ?? []).map((r: any) => r.user_id);
+    if (ids.length === 0) return [];
+    const { data: rows, error } = await context.supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", ids)
+      .order("full_name", { ascending: true });
+    if (error) throw new Response(error.message, { status: 500 });
+    return rows ?? [];
+  });
+
 export const getUserCredits = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
