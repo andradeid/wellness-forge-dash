@@ -624,6 +624,7 @@ export function useDifyChat(
             files: difyFiles,
             meta: metaRef.current,
             agent_type: agentType,
+            ...(opts?.extraInputs ? { inputs: opts.extraInputs } : {}),
           }),
         });
 
