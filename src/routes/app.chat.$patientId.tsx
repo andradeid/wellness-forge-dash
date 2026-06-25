@@ -185,6 +185,19 @@ function ChatPage() {
     messages.length > 0 &&
     messages[messages.length - 1]?.role === "assistant";
 
+  // Última mensagem do assistente com formulações sugeridas (handoff pendente).
+  // Só mostramos o card sticky enquanto não houver mensagem do usuário depois dela.
+  const pendingFormulacoes = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "user") return null;
+      if (m.role === "assistant" && m.structured_data?.formulacoes_sugeridas) {
+        return { id: m.id, payload: m.structured_data.formulacoes_sugeridas };
+      }
+    }
+    return null;
+  }, [messages]);
+
   // Reset forceShowChat when agent changes or when new messages arrive
   useEffect(() => {
     setForceShowChat(false);
@@ -208,6 +221,38 @@ function ChatPage() {
       await sendMessage(finalChatText, files);
     },
     [sendMessage],
+  );
+
+  const handleGenerateRecipe = useCallback(
+    (payload: NonNullable<NonNullable<typeof messages[number]["structured_data"]>["formulacoes_sugeridas"]>) => {
+      const target = getAgentForCard("plano_alimentar", patientProfile, patient?.pregnancy_type);
+      if (!target) {
+        console.warn("[handoff] Nenhum agente de formulações configurado.");
+        return;
+      }
+      const gestantePeriodo = filters.publico === "gestante" && filters.gestantePeriodo
+        ? ({ "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const)[filters.gestantePeriodo]
+        : "";
+      const gestanteTipo = filters.publico === "gestante" && filters.gestanteTipo
+        ? (filters.gestanteTipo === "monofetal" ? "Monofetal" : "Gemelar")
+        : "";
+      const examContextPayload = {
+        resumo_exame: payload.resumo_exame ?? "",
+        formulacoes_sugeridas: payload.formulacoes,
+        alertas: payload.alertas ?? [],
+        patient_profile: patientProfile,
+        patient_sex: filters.sexo ?? "",
+        gestante_tipo: gestanteTipo,
+        gestante_periodo: gestantePeriodo,
+        origem_agente: agentType ?? "",
+      };
+      void sendHandoff(
+        target.agent_id,
+        { exam_context: JSON.stringify(examContextPayload) },
+        "Gere a receita pronta para a farmácia a partir das formulações sugeridas no exam_context, mantendo nomes, ativos e doses exatos.",
+      );
+    },
+    [agentType, filters, patient?.pregnancy_type, patientProfile, sendHandoff],
   );
 
   useEffect(() => {
@@ -582,36 +627,6 @@ function ChatPage() {
                   highlightId={highlightId} 
                   isStreaming={thinking}
                   agentType={agentType}
-                  onGenerateRecipe={(payload) => {
-                    // Handoff: exame → formulações (card_trigger: plano_alimentar).
-                    // Resolve o agente alvo dinamicamente respeitando perfil/gestação.
-                    const target = getAgentForCard("plano_alimentar", patientProfile, patient?.pregnancy_type);
-                    if (!target) {
-                      console.warn("[handoff] Nenhum agente de formulações configurado.");
-                      return;
-                    }
-                    const gestantePeriodo = filters.publico === "gestante" && filters.gestantePeriodo
-                      ? ({ "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const)[filters.gestantePeriodo]
-                      : "";
-                    const gestanteTipo = filters.publico === "gestante" && filters.gestanteTipo
-                      ? (filters.gestanteTipo === "monofetal" ? "Monofetal" : "Gemelar")
-                      : "";
-                    const examContextPayload = {
-                      resumo_exame: payload.resumo_exame ?? "",
-                      formulacoes_sugeridas: payload.formulacoes,
-                      alertas: payload.alertas ?? [],
-                      patient_profile: patientProfile,
-                      patient_sex: filters.sexo ?? "",
-                      gestante_tipo: gestanteTipo,
-                      gestante_periodo: gestantePeriodo,
-                      origem_agente: agentType ?? "",
-                    };
-                    void sendHandoff(
-                      target.agent_id,
-                      { exam_context: JSON.stringify(examContextPayload) },
-                      "Gere a receita pronta para a farmácia a partir das formulações sugeridas no exam_context, mantendo nomes, ativos e doses exatos.",
-                    );
-                  }}
                 />
 
               </div>
@@ -621,6 +636,29 @@ function ChatPage() {
 
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
+            {pendingFormulacoes && !readOnly && (
+              <div className="mb-2 flex items-center gap-3 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white px-4 py-3 shadow-sm animate-in fade-in slide-in-from-bottom-1">
+                <div className="shrink-0 h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-violet-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-violet-900">
+                    {pendingFormulacoes.payload.formulacoes.length} formulação(ões) sugerida(s)
+                  </div>
+                  <div className="text-xs text-violet-700/80">
+                    Envie ao agente de formulações para gerar a receita pronta para a farmácia.
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+                  onClick={() => handleGenerateRecipe(pendingFormulacoes.payload)}
+                  disabled={thinking}
+                >
+                  Gerar receita
+                </Button>
+              </div>
+            )}
             {readOnly ? (
               <div className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-xs text-amber-800 text-center">
                 <Eye className="h-3.5 w-3.5 shrink-0" />
