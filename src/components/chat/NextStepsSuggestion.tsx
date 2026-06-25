@@ -46,6 +46,12 @@ export function NextStepsSuggestion({ onSelectModule, hideFormulacoes = false }:
     },
   ];
 
+  // Filtra o atalho duplicado quando o banner contextual de receita está ativo.
+  // Marcador para a migração C: trocar este array por banners emitidos pelos agentes.
+  const steps = hideFormulacoes
+    ? allSteps.filter((s) => s.label !== "Sugerir formulações para este paciente")
+    : allSteps;
+
   return (
     <div className="mx-auto w-full max-w-2xl mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white/60 backdrop-blur-md border border-[#e8a04c]/20 rounded-2xl p-3 sm:p-4 shadow-lg">
