@@ -352,11 +352,13 @@ export function useDifyChat(
         if (cost > 0) {
           const fresh = await refetchCredits();
           const balance = fresh.data?.balance ?? 0;
-          if (balance < cost) {
+          const unlimited = (fresh.data as any)?.unlimited === true;
+          if (!unlimited && balance < cost) {
             paywallStore.open(cost, balance, label);
             return;
           }
         }
+
       } catch (e) {
         console.warn("[credits] pré-check falhou, prosseguindo:", e);
       }
