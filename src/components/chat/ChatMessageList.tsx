@@ -23,6 +23,7 @@ export interface ChatMessage {
     parse_error?: boolean;
     processing_ms?: number;
     not_a_lab_report_error?: string;
+    formulacoes_sugeridas?: FormulacoesPayload;
   } | null;
   attachments?: Array<{ name: string }> | null;
   created_at?: string | null;
