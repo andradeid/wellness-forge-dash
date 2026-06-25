@@ -340,7 +340,7 @@ export function useDifyChat(
   const sendMessage = useCallback(async (
     text: string,
     files: File[],
-    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown> },
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string },
   ) => {
     if (!chatId || readOnly) return;
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
@@ -477,12 +477,14 @@ export function useDifyChat(
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
 
-    // 2) Persist user message
+    // 2) Persist user message — usa displayText (texto amigável) quando o
+    // chamador quer esconder o prompt técnico enviado ao Dify (ex: handoff).
+    const displayContent = opts?.displayText ?? text;
     const userMsgPayload = {
       chat_id: chatId,
       created_by: user.id,
       role: "user" as const,
-      content: text,
+      content: displayContent,
       agent_type: agentType,
       attachments: attachments.length ? attachments : null,
     };
@@ -494,7 +496,7 @@ export function useDifyChat(
     const isFirstUserMessage = messages.length === 0;
     
     if (isFirstUserMessage && agentType === 'research') {
-      const title = text.trim().slice(0, 60);
+      const title = displayContent.trim().slice(0, 60);
       await (supabase as any)
         .from("patient_chats")
         .update({ title })
@@ -503,7 +505,7 @@ export function useDifyChat(
     const userMsg: ChatMessage = {
       id: userInserted?.id ?? crypto.randomUUID(),
       role: "user",
-      content: text,
+      content: displayContent,
       attachments: attachments.length ? attachments : null,
       created_at: new Date().toISOString(),
     };
@@ -940,7 +942,7 @@ export function useDifyChat(
         .eq("id", chatId);
     }
     setAgentType(targetAgent);
-    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs });
+    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs, displayText: "Gerar receita" });
   }, [chatId, readOnly, sendMessage]);
 
   return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
