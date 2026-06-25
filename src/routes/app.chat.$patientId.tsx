@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useReactToPrint } from "react-to-print";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useDifyChat } from "@/hooks/useDifyChat";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
