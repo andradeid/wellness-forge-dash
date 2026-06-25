@@ -386,6 +386,7 @@ export function ChatMessageList({
   highlightId,
   isStreaming,
   agentType,
+  onGenerateRecipe,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -393,6 +394,7 @@ export function ChatMessageList({
   highlightId?: string;
   isStreaming?: boolean;
   agentType?: string;
+  onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
