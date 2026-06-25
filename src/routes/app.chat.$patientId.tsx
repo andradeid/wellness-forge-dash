@@ -789,14 +789,8 @@ function ChatPage() {
 
                       return (
                         <>
-                          {agentType !== "exam" && examContext && (
-                            <div className="mb-2 text-center animate-in fade-in slide-in-from-bottom-1 duration-300">
-                              <span className="text-[10px] text-muted-foreground inline-flex items-center justify-center gap-1 bg-white/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-muted/20">
-                                <ClipboardList className="h-3 w-3 text-muted-foreground/70" />
-                                Usando contexto do exame de {examContext.patient_name}
-                              </span>
-                            </div>
-                          )}
+                          {agentType !== "exam" && examContext && null}
+
                           <ChatInput
                             onSubmit={wrappedSend}
                             disabled={thinking || !chatId || !agentType}
