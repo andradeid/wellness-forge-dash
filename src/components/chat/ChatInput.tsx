@@ -59,6 +59,14 @@ export function ChatInput({
   const [files, setFiles] = useState<PendingFile[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+  }, [text]);
 
   const addFiles = useCallback((picked: File[]) => {
     if (!picked.length) return;
