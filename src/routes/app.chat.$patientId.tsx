@@ -742,6 +742,7 @@ function ChatPage() {
                       disabled={thinking || !chatId || !agentType} 
                       hasModule={!!agentType}
                       uploadProgress={uploadProgress} 
+                      onRemoveAttachment={removeUploadItem}
                     />
                     <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                       Máximo de 10 arquivos de 20MB
