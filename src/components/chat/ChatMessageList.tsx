@@ -481,6 +481,7 @@ export function ChatMessageList({
             
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
+            const hasPrescriptionMsg = !isUser && m.content.includes("MODELO DE RECEITUÁRIO PARA FARMÁCIA");
 
             return (
               <div
@@ -489,7 +490,7 @@ export function ChatMessageList({
                 className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md transition-all ${
+                  className={`${hasPrescriptionMsg ? "w-full max-w-full" : "max-w-[85%]"} rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md transition-all ${
                     isUser
                       ? "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border border-white/10"
                       : "bg-white/70 border border-white/60 text-foreground"
