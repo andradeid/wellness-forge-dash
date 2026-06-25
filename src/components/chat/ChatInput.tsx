@@ -44,11 +44,13 @@ export function ChatInput({
   disabled,
   hasModule = true,
   uploadProgress = [],
+  onRemoveAttachment,
 }: {
   onSubmit: (text: string, files: File[]) => Promise<void> | void;
   disabled?: boolean;
   hasModule?: boolean;
   uploadProgress?: AttachmentProgressItem[];
+  onRemoveAttachment?: (name: string) => void;
 }) {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<PendingFile[]>([]);
