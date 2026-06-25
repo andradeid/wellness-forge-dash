@@ -540,6 +540,12 @@ function UserRow({
   onAdjust: () => void;
   canAdjust: boolean;
 }) {
+  const planLabel = user.unlimited_credits
+    ? "Ilimitado"
+    : user.plan_type
+    ? user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1)
+    : "—";
+  const creditsLabel = user.unlimited_credits ? "Ilimitado" : `${user.balance ?? 0} créditos`;
   return (
     <div
       className={`w-full px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-muted/50 ${
@@ -553,6 +559,16 @@ function UserRow({
         <div className="font-medium truncate">{user.full_name ?? "(sem nome)"}</div>
         <div className="text-xs text-muted-foreground truncate">{user.email}</div>
       </button>
+      <div className="hidden md:flex items-center gap-2 shrink-0">
+        {user.unlimited_credits ? (
+          <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0">
+            <InfinityIcon className="h-3 w-3 mr-1" /> {planLabel}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">{planLabel}</Badge>
+        )}
+        <Badge variant="outline" className="font-mono">{creditsLabel}</Badge>
+      </div>
       <div className="flex items-center gap-2 shrink-0">
         <Button size="sm" variant="outline" onClick={onAudit}>
           <Search className="h-3.5 w-3.5 mr-1" /> Ver auditoria
@@ -570,3 +586,4 @@ function UserRow({
     </div>
   );
 }
+
