@@ -182,7 +182,7 @@ function AuditPage() {
       setAdjustOpen(false);
       setAdjustDelta("");
       setAdjustReason("");
-      await refreshUser(selected.id);
+      await loadCreditsAndPage(selected.id, page);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao ajustar");
     } finally {
@@ -213,7 +213,7 @@ function AuditPage() {
       });
       toast.success(unlimitedTarget ? "Ilimitado ativado" : "Ilimitado desativado");
       setUnlimitedOpen(false);
-      await refreshUser(selected.id);
+      await loadCreditsAndPage(selected.id, page);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao alterar ilimitado");
     } finally {
