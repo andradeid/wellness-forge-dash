@@ -11,11 +11,17 @@ export const getMyCredits = createServerFn({ method: "GET" })
       .select("balance, monthly_quota, quota_reset_at")
       .eq("user_id", context.userId)
       .maybeSingle();
+    const { data: sub } = await context.supabase
+      .from("subscriptions" as any)
+      .select("unlimited_credits")
+      .eq("user_id", context.userId)
+      .maybeSingle();
     const row = (data as any) ?? null;
     return {
       balance: row?.balance ?? 0,
       monthly_quota: row?.monthly_quota ?? 0,
       quota_reset_at: row?.quota_reset_at ?? null,
+      unlimited: !!(sub as any)?.unlimited_credits,
     };
   });
 
