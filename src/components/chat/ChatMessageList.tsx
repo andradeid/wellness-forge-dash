@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
@@ -9,6 +9,7 @@ import { MessageFeedback } from "./MessageFeedback";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
+import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
