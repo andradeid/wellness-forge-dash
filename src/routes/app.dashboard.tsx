@@ -453,7 +453,7 @@ function DashboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-6 w-full overflow-x-hidden">
-      <TestEnvironmentNotice />
+      
       <SupportWidget />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-4 md:gap-5">
