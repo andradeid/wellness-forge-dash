@@ -223,6 +223,38 @@ function ChatPage() {
     [sendMessage],
   );
 
+  const handleGenerateRecipe = useCallback(
+    (payload: NonNullable<NonNullable<typeof messages[number]["structured_data"]>["formulacoes_sugeridas"]>) => {
+      const target = getAgentForCard("plano_alimentar", patientProfile, patient?.pregnancy_type);
+      if (!target) {
+        console.warn("[handoff] Nenhum agente de formulações configurado.");
+        return;
+      }
+      const gestantePeriodo = filters.publico === "gestante" && filters.gestantePeriodo
+        ? ({ "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const)[filters.gestantePeriodo]
+        : "";
+      const gestanteTipo = filters.publico === "gestante" && filters.gestanteTipo
+        ? (filters.gestanteTipo === "monofetal" ? "Monofetal" : "Gemelar")
+        : "";
+      const examContextPayload = {
+        resumo_exame: payload.resumo_exame ?? "",
+        formulacoes_sugeridas: payload.formulacoes,
+        alertas: payload.alertas ?? [],
+        patient_profile: patientProfile,
+        patient_sex: filters.sexo ?? "",
+        gestante_tipo: gestanteTipo,
+        gestante_periodo: gestantePeriodo,
+        origem_agente: agentType ?? "",
+      };
+      void sendHandoff(
+        target.agent_id,
+        { exam_context: JSON.stringify(examContextPayload) },
+        "Gere a receita pronta para a farmácia a partir das formulações sugeridas no exam_context, mantendo nomes, ativos e doses exatos.",
+      );
+    },
+    [agentType, filters, patient?.pregnancy_type, patientProfile, sendHandoff],
+  );
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
