@@ -942,7 +942,7 @@ export function useDifyChat(
         .eq("id", chatId);
     }
     setAgentType(targetAgent);
-    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs });
+    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs, displayText: "Gerar receita" });
   }, [chatId, readOnly, sendMessage]);
 
   return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
