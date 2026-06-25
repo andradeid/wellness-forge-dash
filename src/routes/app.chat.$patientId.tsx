@@ -89,7 +89,7 @@ function ChatPage() {
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { agents, getAgentForCard, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
@@ -742,6 +742,7 @@ function ChatPage() {
                       disabled={thinking || !chatId || !agentType} 
                       hasModule={!!agentType}
                       uploadProgress={uploadProgress} 
+                      onRemoveAttachment={removeUploadItem}
                     />
                     <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
                       Máximo de 10 arquivos de 20MB
