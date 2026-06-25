@@ -730,12 +730,19 @@ export function useDifyChat(
 
                   const processingMs = Math.round(performance.now() - startedAt);
                   const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
-                  
-                  const structured = labReportError
+
+                  // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
+                  // pelos agentes de exame (handoff "Gerar receita").
+                  const formulacoes = agentType?.startsWith("exam")
+                    ? extractFormulacoes(fullText)
+                    : null;
+
+                  const structured: Record<string, unknown> = labReportError
                     ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
+                  if (formulacoes) structured.formulacoes_sugeridas = formulacoes;
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)
