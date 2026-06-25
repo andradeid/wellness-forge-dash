@@ -23,8 +23,22 @@ function createSupabaseClient() {
       storage: typeof window !== 'undefined' ? localStorage : undefined,
       persistSession: true,
       autoRefreshToken: true,
-    }
+    },
+    // Projeto NÃO usa Realtime. Em Node < 22 (sem WebSocket nativo),
+    // o RealtimeClient emite warning na construção. Fornecemos um
+    // transport noop para silenciar e garantir que nenhum socket seja aberto.
+    realtime: {
+      transport: class NoopWebSocket {
+        readyState = 3;
+        constructor() {}
+        close() {}
+        send() {}
+        addEventListener() {}
+        removeEventListener() {}
+      } as any,
+    },
   });
+
 }
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;

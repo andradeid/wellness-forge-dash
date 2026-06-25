@@ -24,8 +24,20 @@ function createSupabaseAdminClient() {
       storage: undefined,
       persistSession: false,
       autoRefreshToken: false,
-    }
+    },
+    // Projeto NÃO usa Realtime — evita warning de WebSocket no Node < 22.
+    realtime: {
+      transport: class NoopWebSocket {
+        readyState = 3;
+        constructor() {}
+        close() {}
+        send() {}
+        addEventListener() {}
+        removeEventListener() {}
+      } as any,
+    },
   });
+
 }
 
 let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
