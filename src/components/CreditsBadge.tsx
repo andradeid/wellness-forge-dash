@@ -25,13 +25,13 @@ export function CreditsBadge({ collapsed, className }: Props) {
         collapsed && "px-2 py-1",
         className,
       )}
-      title={`${balance} créditos disponíveis — clique para recarregar`}
-      aria-label={`Saldo: ${balance} créditos. Clique para recarregar.`}
+      title={unlimited ? "Créditos ilimitados" : `${balance} créditos disponíveis — clique para recarregar`}
+      aria-label={unlimited ? "Créditos ilimitados" : `Saldo: ${balance} créditos. Clique para recarregar.`}
     >
       <Coins className="h-3.5 w-3.5 shrink-0" />
       {!collapsed && (
         <span className="tabular-nums">
-          {isLoading ? "…" : `${balance} créditos`}
+          {isLoading ? "…" : label}
         </span>
       )}
     </button>
