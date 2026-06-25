@@ -223,29 +223,29 @@ export function ChatInput({
         disabled={disabled || !hasModule}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm shrink-0"
-            onClick={openPicker}
-            disabled={disabled || !hasModule}
-            aria-label="Anexar exame"
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
-          {toolbarSlot && <div className="min-w-0">{toolbarSlot}</div>}
-        </div>
         <Button
           type="button"
-          onClick={send}
-          disabled={!canSend || !hasModule}
-          aria-label="Enviar"
-          className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50 shrink-0"
+          variant="ghost"
+          size="icon"
+          className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm shrink-0"
+          onClick={openPicker}
+          disabled={disabled || !hasModule}
+          aria-label="Anexar exame"
         >
-          <ArrowUp className="h-4 w-4" />
+          <Paperclip className="h-4 w-4" />
         </Button>
+        <div className="flex items-center gap-2 min-w-0">
+          {toolbarSlot && <div className="min-w-0">{toolbarSlot}</div>}
+          <Button
+            type="button"
+            onClick={send}
+            disabled={!canSend || !hasModule}
+            aria-label="Enviar"
+            className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50 shrink-0"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
     </div>
