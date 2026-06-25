@@ -213,28 +213,32 @@ export function ChatInput({
         className="min-h-[44px] sm:min-h-[36px] max-h-40 resize-none border-0 bg-transparent px-1 py-1.5 sm:py-1 shadow-none focus-visible:ring-0 text-[15px]"
         disabled={disabled || !hasModule}
       />
-      <div className="mt-2 flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between gap-2">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm"
+          className="rounded-full h-9 w-9 bg-gradient-to-br from-[#fdba8c] to-[#fb923c] text-white hover:opacity-90 shadow-sm shrink-0"
           onClick={openPicker}
           disabled={disabled || !hasModule}
           aria-label="Anexar exame"
         >
           <Paperclip className="h-4 w-4" />
         </Button>
+        {toolbarSlot && (
+          <div className="flex-1 flex justify-center min-w-0">{toolbarSlot}</div>
+        )}
         <Button
           type="button"
           onClick={send}
           disabled={!canSend || !hasModule}
           aria-label="Enviar"
-          className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50"
+          className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50 shrink-0"
         >
           <ArrowUp className="h-4 w-4" />
         </Button>
       </div>
+
     </div>
   );
 }
