@@ -275,9 +275,6 @@ function LoginPage() {
                   {submitting ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                Acesso restrito. Novas contas são criadas pela administração.
-              </p>
 
 
               <div className="mt-6 text-center">
