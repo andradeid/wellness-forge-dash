@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { authSuperAdmin } from "@/lib/admin-auth.server";
 import { invalidateDifyConfigCache } from "@/lib/dify-config.server";
+import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 
 export const Route = createFileRoute("/api/dify/reset-conversations")({
   server: {
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/api/dify/reset-conversations")({
           const supabase = createClient(url, key, {
             auth: { persistSession: false, autoRefreshToken: false },
             global: { headers: { Authorization: `Bearer ${auth.token}` } },
+            realtime: disabledRealtimeOptions,
           });
 
           invalidateDifyConfigCache();

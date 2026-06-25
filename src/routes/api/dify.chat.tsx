@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -12,7 +13,7 @@ async function authUser(request: Request): Promise<{ userId: string; token: stri
   const supabase = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { persistSession: false } },
+    { auth: { persistSession: false }, realtime: disabledRealtimeOptions },
   );
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) return null;

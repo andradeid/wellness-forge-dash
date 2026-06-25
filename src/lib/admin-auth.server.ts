@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 
 export async function authSuperAdmin(
   request: Request,
@@ -14,6 +15,7 @@ export async function authSuperAdmin(
   const supabase = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${token}` } },
+    realtime: disabledRealtimeOptions,
   });
 
   const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
