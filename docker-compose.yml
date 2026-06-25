@@ -1,0 +1,38 @@
+services:
+  app:
+    build: .
+    image: app-app-deploy:latest
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
+      - VITE_SUPABASE_SERVICE_ROLE_KEY=${VITE_SUPABASE_SERVICE_ROLE_KEY}
+    networks:
+      - proxy
+    container_name: app-app-deploy
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy_network_global"
+      - "traefik.http.services.app-deploy.loadbalancer.server.port=3000"
+      - "traefik.http.routers.app-deploy.rule=Host(`lumma.ia.br`)"
+      - "traefik.http.routers.app-deploy.entrypoints=websecure"
+      - "traefik.http.routers.app-deploy.tls=true"
+      - "traefik.http.routers.app-deploy.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.app-deploy.priority=100"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  proxy:
+    external: true
+    name: proxy_network_global

@@ -12,4 +12,8 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  // VPS/Docker: node-server. Lovable Cloud usa cloudflare-module automaticamente no sandbox.
+  nitro: {
+    preset: process.env.NITRO_PRESET || "node-server",
+  },
 });
