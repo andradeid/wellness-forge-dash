@@ -52,7 +52,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
   const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("");
   const [isPregnant, setIsPregnant] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState<string>("");
-  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
+  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple" | "">("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -68,7 +68,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
     setMenstrualCyclePhase(patient.menstrual_cycle_phase ?? "");
     setIsPregnant(patient.is_pregnant ?? false);
     setGestationalWeeks(patient.gestational_weeks ? String(patient.gestational_weeks) : "");
-    setPregnancyType((patient.pregnancy_type as "single" | "multiple") ?? "single");
+    setPregnancyType((patient.pregnancy_type as "single" | "multiple") ?? "");
   }, [patient]);
 
   const initials = name
@@ -105,6 +105,20 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!patient || !user) return;
+
+    // Trava de segurança clínica: gestante exige trimestre + tipo
+    if (gender === "female" && isPregnant) {
+      const weeks = parseInt(gestationalWeeks);
+      if (!gestationalWeeks || isNaN(weeks) || weeks < 1 || weeks > 42) {
+        toast.error("Informe as semanas gestacionais (1 a 42) antes de salvar.");
+        return;
+      }
+      if (pregnancyType !== "single" && pregnancyType !== "multiple") {
+        toast.error("Selecione o tipo de gestação (única ou gemelar) antes de salvar.");
+        return;
+      }
+    }
+
     setSaving(true);
     const { error } = await (supabase as any)
       .from("patients")
@@ -255,8 +269,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
-                    <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
-                      <SelectTrigger className="rounded-xl h-11 bg-white"><SelectValue /></SelectTrigger>
+                    <Select value={pregnancyType || undefined} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                      <SelectTrigger className="rounded-xl h-11 bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="single">Única (monofetal)</SelectItem>
                         <SelectItem value="multiple">Gemelar</SelectItem>
@@ -308,7 +322,11 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
             </Button>
             <Button
               type="submit"
-              disabled={saving || uploading}
+              disabled={
+                saving ||
+                uploading ||
+                (gender === "female" && isPregnant && (!gestationalWeeks || (pregnancyType !== "single" && pregnancyType !== "multiple")))
+              }
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md"
             >
               {saving ? (
