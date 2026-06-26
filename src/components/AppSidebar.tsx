@@ -17,6 +17,7 @@ import {
   FileText,
   Tag,
   Users,
+  Stethoscope,
   Shield,
   Plug,
   FlaskRound,
@@ -147,7 +148,7 @@ const adminGroups: NavGroup[] = [
     subtitle: "Usuários e permissões",
     icon: KeyRound,
     items: [
-      { title: "Usuários", url: "/app/admin/users", icon: Users },
+      { title: "Nutricionistas", url: "/app/admin/nutritionists", icon: Stethoscope, badge: "NOVO" },
       { title: "Administradores", url: "/app/admin/administrators", icon: Shield, badge: "NOVO" },
       { title: "Sistema", url: "/app/admin/system", icon: SettingsIcon, superAdminOnly: true, badge: "NOVO" },
     ],
