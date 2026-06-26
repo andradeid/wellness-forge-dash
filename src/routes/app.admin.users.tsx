@@ -141,7 +141,19 @@ function UsersPage() {
   }, [search]);
 
   // reset da página ao alterar filtros
-  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter, planFilter]);
+  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter, planFilter, tagFilter, pageSize]);
+
+  // Carrega catálogo de etiquetas
+  const loadTags = useCallback(async () => {
+    const { data, error } = await (supabase as any)
+      .from("user_tags")
+      .select("id, label, color")
+      .order("label", { ascending: true });
+    if (error) { toast.error(error.message); return; }
+    setTags((data ?? []) as UserTag[]);
+  }, []);
+  useEffect(() => { loadTags(); }, [loadTags]);
+
 
   const ensureNutriIds = useCallback(async (): Promise<string[]> => {
     if (nutriIdsRef.current) return nutriIdsRef.current;
