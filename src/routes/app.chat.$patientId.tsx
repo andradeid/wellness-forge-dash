@@ -445,8 +445,8 @@ function ChatPage() {
           variant="ghost"
           className="w-full justify-start gap-2 h-10 rounded-lg"
         >
-          <Download className="h-4 w-4" />
-          Exportar Conversa
+          <MessageSquare className="h-4 w-4" />
+          Exportar conversa
         </Button>
         <Button
           onClick={() => { closeMenu(); handlePrint(); }}
@@ -454,8 +454,8 @@ function ChatPage() {
           variant="ghost"
           className="w-full justify-start gap-2 h-10 rounded-lg"
         >
-          <FileDown className="h-4 w-4" />
-          Gerar Laudo PDF
+          <Stethoscope className="h-4 w-4" />
+          Gerar laudo clínico
         </Button>
         <Link
           to="/app/evolution/$patientId"
