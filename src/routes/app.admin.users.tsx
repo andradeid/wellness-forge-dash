@@ -49,7 +49,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 const DEFAULT_COLORS = ["#e8a04c", "#e89bcf", "#7c9a92", "#6b7fd7", "#d97757", "#8a8a8a", "#2c2c2c"];
 
 
-type PlanType = "free" | "basic" | "pro" | "premium";
+type PlanType = "free" | "starter" | "pro" | "clinica";
 type SubStatus = "trial" | "active" | "past_due" | "canceled";
 
 interface UserRow {
@@ -84,7 +84,7 @@ function statusLabel(status: string | null, blocked?: boolean) {
 }
 
 function planLabel(plan: string | null) {
-  return ({ free: "Free", basic: "Basic", pro: "Pro", premium: "Premium" } as Record<string, string>)[plan ?? ""] ?? "—";
+  return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica" } as Record<string, string>)[plan ?? ""] ?? "—";
 }
 
 function UsersPage() {
@@ -503,9 +503,9 @@ function UsersPage() {
               <SelectContent>
                 <SelectItem value="all">Todos os planos</SelectItem>
                 <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="basic">Basic</SelectItem>
-                <SelectItem value="pro">Pro</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
+                <SelectItem value="pro">Pro Individual</SelectItem>
+                <SelectItem value="clinica">Clínica</SelectItem>
               </SelectContent>
             </Select>
             <Select value={tagFilter} onValueChange={setTagFilter}>
@@ -762,9 +762,9 @@ function UsersPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="pro">Pro Individual</SelectItem>
+                  <SelectItem value="clinica">Clínica</SelectItem>
                 </SelectContent>
               </Select>
             </div>

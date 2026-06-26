@@ -11,8 +11,9 @@ const DEFAULT_SEATS_BY_SLUG: Record<string, number> = {
 };
 const DEFAULT_SEATS_BY_PLAN_TYPE: Record<string, number> = {
   free: 1,
-  basic: 1,
+  starter: 1,
   pro: 2,
+  clinica: 5,
 };
 const FALLBACK_SEAT_LIMIT = 1;
 
