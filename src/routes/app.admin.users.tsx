@@ -465,14 +465,19 @@ function UsersPage() {
                 Lista de nutricionistas ({total})
               </CardTitle>
             </div>
-            <Button
-              onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
-              className="bg-gradient-brand text-white rounded-full"
-            >
-              <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setManageTagsOpen(true)} className="rounded-full">
+                <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
+              </Button>
+              <Button
+                onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
+                className="bg-gradient-brand text-white rounded-full"
+              >
+                <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-3 flex-wrap items-center">
             <div className="relative flex-1 min-w-64">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -503,7 +508,39 @@ function UsersPage() {
                 <SelectItem value="premium">Premium</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={tagFilter} onValueChange={setTagFilter}>
+              <SelectTrigger className="w-48 rounded-xl"><SelectValue placeholder="Etiqueta" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as etiquetas</SelectItem>
+                {tags.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: t.color }} />
+                      {t.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="w-28 rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n}/pág</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(debouncedSearch || statusFilter !== "all" || planFilter !== "all" || tagFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setSearch(""); setStatusFilter("all"); setPlanFilter("all"); setTagFilter("all"); }}
+              >
+                Limpar filtros
+              </Button>
+            )}
           </div>
+
         </CardHeader>
         <CardContent className="pt-6">
           {loading ? (
