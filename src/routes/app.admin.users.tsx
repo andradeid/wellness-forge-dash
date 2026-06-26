@@ -95,9 +95,21 @@ function UsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(25);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState({ total: 0, active: 0, trial: 0, blocked: 0 });
+
+  // Etiquetas (tags)
+  type UserTag = { id: string; label: string; color: string };
+  const [tags, setTags] = useState<UserTag[]>([]);
+  const [rowTags, setRowTags] = useState<Record<string, UserTag[]>>({});
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [newTagLabel, setNewTagLabel] = useState("");
+  const [newTagColor, setNewTagColor] = useState(DEFAULT_COLORS[0]);
+  const [creatingTag, setCreatingTag] = useState(false);
+
 
   const nutriIdsRef = useRef<string[] | null>(null);
 
