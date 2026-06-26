@@ -269,8 +269,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tipo</Label>
-                    <Select value={pregnancyType} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
-                      <SelectTrigger className="rounded-xl h-11 bg-white"><SelectValue /></SelectTrigger>
+                    <Select value={pregnancyType || undefined} onValueChange={(v) => setPregnancyType(v as "single" | "multiple")}>
+                      <SelectTrigger className="rounded-xl h-11 bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="single">Única (monofetal)</SelectItem>
                         <SelectItem value="multiple">Gemelar</SelectItem>
