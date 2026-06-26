@@ -68,7 +68,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
     setMenstrualCyclePhase(patient.menstrual_cycle_phase ?? "");
     setIsPregnant(patient.is_pregnant ?? false);
     setGestationalWeeks(patient.gestational_weeks ? String(patient.gestational_weeks) : "");
-    setPregnancyType((patient.pregnancy_type as "single" | "multiple") ?? "single");
+    setPregnancyType((patient.pregnancy_type as "single" | "multiple") ?? "");
   }, [patient]);
 
   const initials = name
