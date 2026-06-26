@@ -58,7 +58,7 @@ import { cn } from "@/lib/utils";
 import lummaLockup from "@/assets/lumma-lockup.svg";
 
 const planLabel = (p?: string | null) =>
-  p === "pro" ? "Master" : p === "basic" ? "Essencial" : "Gratuito";
+  p === "clinica" ? "Clínica" : p === "pro" ? "Pro Individual" : p === "starter" ? "Starter" : "Free";
 
 type NavItem = {
   title: string;

@@ -43,7 +43,7 @@ export const Route = createFileRoute("/app/settings")({
 const HUBLA_PORTAL_URL = "https://app.hub.la/customer/subscriptions";
 
 type Subscription = {
-  plan_type: "free" | "basic" | "pro";
+  plan_type: "free" | "starter" | "pro" | "clinica";
   status: string;
   current_period_end: string;
 };
@@ -57,7 +57,7 @@ function maskPhone(v: string) {
 }
 
 const planLabel = (p?: string | null) =>
-  p === "pro" ? "Master" : p === "basic" ? "Essencial" : "Gratuito";
+  p === "clinica" ? "Clínica" : p === "pro" ? "Pro Individual" : p === "starter" ? "Starter" : "Free";
 
 function SettingsPage() {
   const { user, profile, refresh } = useAuth();
