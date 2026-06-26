@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ClipboardList, Download, Eye, FileDown, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, ClipboardList, Eye, MessageSquare, Stethoscope, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -445,8 +445,8 @@ function ChatPage() {
           variant="ghost"
           className="w-full justify-start gap-2 h-10 rounded-lg"
         >
-          <Download className="h-4 w-4" />
-          Exportar Conversa
+          <MessageSquare className="h-4 w-4" />
+          Exportar conversa
         </Button>
         <Button
           onClick={() => { closeMenu(); handlePrint(); }}
@@ -454,8 +454,8 @@ function ChatPage() {
           variant="ghost"
           className="w-full justify-start gap-2 h-10 rounded-lg"
         >
-          <FileDown className="h-4 w-4" />
-          Gerar Laudo PDF
+          <Stethoscope className="h-4 w-4" />
+          Gerar laudo clínico
         </Button>
         <Link
           to="/app/evolution/$patientId"
@@ -578,18 +578,19 @@ function ChatPage() {
               size="sm"
               className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden lg:inline">Exportar</span>
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden lg:inline">Exportar conversa</span>
             </Button>
             <Button
               onClick={handlePrint}
               disabled={!branding || reportMarkers.length === 0}
               variant="ghost"
               size="sm"
+              title="Gera o laudo clínico formal com marcadores do paciente"
               className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
             >
-              <FileDown className="h-4 w-4" />
-              <span className="hidden lg:inline">Laudo PDF</span>
+              <Stethoscope className="h-4 w-4" />
+              <span className="hidden lg:inline">Laudo clínico</span>
             </Button>
             <Link
               to="/app/evolution/$patientId"
