@@ -578,18 +578,19 @@ function ChatPage() {
               size="sm"
               className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden lg:inline">Exportar</span>
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden lg:inline">Exportar conversa</span>
             </Button>
             <Button
               onClick={handlePrint}
               disabled={!branding || reportMarkers.length === 0}
               variant="ghost"
               size="sm"
+              title="Gera o laudo clínico formal com marcadores do paciente"
               className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
             >
-              <FileDown className="h-4 w-4" />
-              <span className="hidden lg:inline">Laudo PDF</span>
+              <Stethoscope className="h-4 w-4" />
+              <span className="hidden lg:inline">Laudo clínico</span>
             </Button>
             <Link
               to="/app/evolution/$patientId"
