@@ -221,6 +221,18 @@ function UsersPage() {
       if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
     }
 
+    // Filtro por etiqueta
+    if (tagFilter !== "all") {
+      const { data, error } = await (supabase as any)
+        .from("profile_tags")
+        .select("profile_id")
+        .eq("tag_id", tagFilter)
+        .in("profile_id", scopedIds);
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      scopedIds = (data ?? []).map((r: any) => r.profile_id);
+      if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+    }
+
     let pq = (supabase as any)
       .from("profiles")
       .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
@@ -234,8 +246,8 @@ function UsersPage() {
       pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
     }
 
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
     pq = pq.order("created_at", { ascending: false }).range(from, to);
 
     const { data: profiles, count, error: pErr } = await pq;
@@ -251,6 +263,20 @@ function UsersPage() {
       if (sErr) toast.error(sErr.message);
       (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
     }
+
+    // Tags por linha
+    const tagMap: Record<string, UserTag[]> = {};
+    if (pageIds.length > 0) {
+      const { data: pt } = await (supabase as any)
+        .from("profile_tags")
+        .select("profile_id, user_tags(id, label, color)")
+        .in("profile_id", pageIds);
+      (pt ?? []).forEach((r: any) => {
+        if (!tagMap[r.profile_id]) tagMap[r.profile_id] = [];
+        if (r.user_tags) tagMap[r.profile_id].push(r.user_tags as UserTag);
+      });
+    }
+    setRowTags(tagMap);
 
     const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
@@ -269,14 +295,48 @@ function UsersPage() {
     setRows(merged);
     setTotal(count ?? merged.length);
     setLoading(false);
-  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, page]);
+  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadStats(); }, [loadStats]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const refreshAll = async () => { await Promise.all([load(), loadStats()]); };
+
+  // CRUD de etiquetas
+  const createTag = async () => {
+    const label = newTagLabel.trim();
+    if (label.length < 2) { toast.error("Nome muito curto"); return; }
+    setCreatingTag(true);
+    const { error } = await (supabase as any).from("user_tags").insert({ label, color: newTagColor });
+    setCreatingTag(false);
+    if (error) { toast.error(error.message); return; }
+    setNewTagLabel("");
+    toast.success("Etiqueta criada");
+    loadTags();
+  };
+
+  const deleteTag = async (id: string) => {
+    const { error } = await (supabase as any).from("user_tags").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Etiqueta removida");
+    loadTags();
+    load();
+  };
+
+  const toggleRowTag = async (profileId: string, tag: UserTag, currently: boolean) => {
+    if (currently) {
+      const { error } = await (supabase as any).from("profile_tags").delete()
+        .eq("profile_id", profileId).eq("tag_id", tag.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { error } = await (supabase as any).from("profile_tags").insert({ profile_id: profileId, tag_id: tag.id });
+      if (error) { toast.error(error.message); return; }
+    }
+    load();
+  };
+
 
   // ações
   const openDetails = async (u: UserRow) => {
