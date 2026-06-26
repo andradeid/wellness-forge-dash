@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronRight,
   Search,
@@ -14,6 +14,9 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   UserPlus,
+  Tag as TagIcon,
+  Plus,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +36,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -41,7 +45,9 @@ export const Route = createFileRoute("/app/admin/users")({
   component: UsersPage,
 });
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+const DEFAULT_COLORS = ["#e8a04c", "#e89bcf", "#7c9a92", "#6b7fd7", "#d97757", "#8a8a8a", "#2c2c2c"];
+
 
 type PlanType = "free" | "basic" | "pro" | "premium";
 type SubStatus = "trial" | "active" | "past_due" | "canceled";
@@ -89,9 +95,21 @@ function UsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(25);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState({ total: 0, active: 0, trial: 0, blocked: 0 });
+
+  // Etiquetas (tags)
+  type UserTag = { id: string; label: string; color: string };
+  const [tags, setTags] = useState<UserTag[]>([]);
+  const [rowTags, setRowTags] = useState<Record<string, UserTag[]>>({});
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [newTagLabel, setNewTagLabel] = useState("");
+  const [newTagColor, setNewTagColor] = useState(DEFAULT_COLORS[0]);
+  const [creatingTag, setCreatingTag] = useState(false);
+
 
   const nutriIdsRef = useRef<string[] | null>(null);
 
@@ -123,7 +141,19 @@ function UsersPage() {
   }, [search]);
 
   // reset da página ao alterar filtros
-  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter, planFilter]);
+  useEffect(() => { setPage(0); }, [debouncedSearch, statusFilter, planFilter, tagFilter, pageSize]);
+
+  // Carrega catálogo de etiquetas
+  const loadTags = useCallback(async () => {
+    const { data, error } = await (supabase as any)
+      .from("user_tags")
+      .select("id, label, color")
+      .order("label", { ascending: true });
+    if (error) { toast.error(error.message); return; }
+    setTags((data ?? []) as UserTag[]);
+  }, []);
+  useEffect(() => { loadTags(); }, [loadTags]);
+
 
   const ensureNutriIds = useCallback(async (): Promise<string[]> => {
     if (nutriIdsRef.current) return nutriIdsRef.current;
@@ -191,6 +221,18 @@ function UsersPage() {
       if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
     }
 
+    // Filtro por etiqueta
+    if (tagFilter !== "all") {
+      const { data, error } = await (supabase as any)
+        .from("profile_tags")
+        .select("profile_id")
+        .eq("tag_id", tagFilter)
+        .in("profile_id", scopedIds);
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      scopedIds = (data ?? []).map((r: any) => r.profile_id);
+      if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+    }
+
     let pq = (supabase as any)
       .from("profiles")
       .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
@@ -204,8 +246,8 @@ function UsersPage() {
       pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
     }
 
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
     pq = pq.order("created_at", { ascending: false }).range(from, to);
 
     const { data: profiles, count, error: pErr } = await pq;
@@ -221,6 +263,20 @@ function UsersPage() {
       if (sErr) toast.error(sErr.message);
       (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
     }
+
+    // Tags por linha
+    const tagMap: Record<string, UserTag[]> = {};
+    if (pageIds.length > 0) {
+      const { data: pt } = await (supabase as any)
+        .from("profile_tags")
+        .select("profile_id, user_tags(id, label, color)")
+        .in("profile_id", pageIds);
+      (pt ?? []).forEach((r: any) => {
+        if (!tagMap[r.profile_id]) tagMap[r.profile_id] = [];
+        if (r.user_tags) tagMap[r.profile_id].push(r.user_tags as UserTag);
+      });
+    }
+    setRowTags(tagMap);
 
     const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
@@ -239,14 +295,48 @@ function UsersPage() {
     setRows(merged);
     setTotal(count ?? merged.length);
     setLoading(false);
-  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, page]);
+  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadStats(); }, [loadStats]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const refreshAll = async () => { await Promise.all([load(), loadStats()]); };
+
+  // CRUD de etiquetas
+  const createTag = async () => {
+    const label = newTagLabel.trim();
+    if (label.length < 2) { toast.error("Nome muito curto"); return; }
+    setCreatingTag(true);
+    const { error } = await (supabase as any).from("user_tags").insert({ label, color: newTagColor });
+    setCreatingTag(false);
+    if (error) { toast.error(error.message); return; }
+    setNewTagLabel("");
+    toast.success("Etiqueta criada");
+    loadTags();
+  };
+
+  const deleteTag = async (id: string) => {
+    const { error } = await (supabase as any).from("user_tags").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Etiqueta removida");
+    loadTags();
+    load();
+  };
+
+  const toggleRowTag = async (profileId: string, tag: UserTag, currently: boolean) => {
+    if (currently) {
+      const { error } = await (supabase as any).from("profile_tags").delete()
+        .eq("profile_id", profileId).eq("tag_id", tag.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { error } = await (supabase as any).from("profile_tags").insert({ profile_id: profileId, tag_id: tag.id });
+      if (error) { toast.error(error.message); return; }
+    }
+    load();
+  };
+
 
   // ações
   const openDetails = async (u: UserRow) => {
@@ -375,14 +465,19 @@ function UsersPage() {
                 Lista de nutricionistas ({total})
               </CardTitle>
             </div>
-            <Button
-              onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
-              className="bg-gradient-brand text-white rounded-full"
-            >
-              <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setManageTagsOpen(true)} className="rounded-full">
+                <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
+              </Button>
+              <Button
+                onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
+                className="bg-gradient-brand text-white rounded-full"
+              >
+                <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-3 flex-wrap items-center">
             <div className="relative flex-1 min-w-64">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -413,7 +508,39 @@ function UsersPage() {
                 <SelectItem value="premium">Premium</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={tagFilter} onValueChange={setTagFilter}>
+              <SelectTrigger className="w-48 rounded-xl"><SelectValue placeholder="Etiqueta" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as etiquetas</SelectItem>
+                {tags.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: t.color }} />
+                      {t.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="w-28 rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n}/pág</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(debouncedSearch || statusFilter !== "all" || planFilter !== "all" || tagFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setSearch(""); setStatusFilter("all"); setPlanFilter("all"); setTagFilter("all"); }}
+              >
+                Limpar filtros
+              </Button>
+            )}
           </div>
+
         </CardHeader>
         <CardContent className="pt-6">
           {loading ? (
@@ -436,11 +563,15 @@ function UsersPage() {
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Etiquetas</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r) => (
+                  {rows.map((r) => {
+                    const rt = rowTags[r.id] ?? [];
+                    const rtIds = new Set(rt.map((t) => t.id));
+                    return (
                     <TableRow key={r.id} className="border-b last:border-0">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
@@ -466,6 +597,46 @@ function UsersPage() {
                       <TableCell className="text-muted-foreground">
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
+                      <TableCell>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1 flex-wrap min-h-[28px] hover:opacity-80">
+                              {rt.length === 0 ? (
+                                <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                                  <Plus className="h-3 w-3" /> Adicionar
+                                </span>
+                              ) : rt.map((t) => (
+                                <span key={t.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full text-white" style={{ background: t.color }}>
+                                  {t.label}
+                                </span>
+                              ))}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            {tags.length === 0 ? (
+                              <p className="text-xs text-muted-foreground p-2">Nenhuma etiqueta cadastrada. Use "Etiquetas" para criar.</p>
+                            ) : (
+                              <div className="space-y-1 max-h-64 overflow-y-auto">
+                                {tags.map((t) => {
+                                  const has = rtIds.has(t.id);
+                                  return (
+                                    <button
+                                      key={t.id}
+                                      onClick={() => toggleRowTag(r.id, t, has)}
+                                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent text-left text-sm"
+                                    >
+                                      <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: t.color }} />
+                                      <span className="flex-1 truncate">{t.label}</span>
+                                      {has && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+
                       <TableCell>
                         <div className="flex items-center gap-1 justify-end">
                           <Button size="icon" variant="ghost" onClick={() => openDetails(r)} title="Ver detalhes">
@@ -496,7 +667,9 @@ function UsersPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
+
                 </TableBody>
               </Table>
 
@@ -704,6 +877,60 @@ function UsersPage() {
               {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Criar nutricionista
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Modal: Gerenciar Etiquetas */}
+      <Dialog open={manageTagsOpen} onOpenChange={setManageTagsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-normal">Etiquetas</DialogTitle>
+            <DialogDescription>Crie e gerencie etiquetas reutilizáveis para classificar nutricionistas.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="rounded-xl border p-3 space-y-3">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nova etiqueta</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: ex-black, beta-tester"
+                  value={newTagLabel}
+                  onChange={(e) => setNewTagLabel(e.target.value)}
+                  maxLength={40}
+                />
+                <Button onClick={createTag} disabled={creatingTag} className="bg-gradient-brand text-white shrink-0">
+                  {creatingTag ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                </Button>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {DEFAULT_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setNewTagColor(c)}
+                    className={`h-7 w-7 rounded-full border-2 ${newTagColor === c ? "border-foreground" : "border-transparent"}`}
+                    style={{ background: c }}
+                    aria-label={c}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1 max-h-72 overflow-y-auto">
+              {tags.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Nenhuma etiqueta criada.</p>
+              ) : tags.map((t) => (
+                <div key={t.id} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-accent">
+                  <span className="h-3 w-3 rounded-full shrink-0" style={{ background: t.color }} />
+                  <span className="flex-1 text-sm">{t.label}</span>
+                  <Button size="icon" variant="ghost" onClick={() => deleteTag(t.id)} title="Remover etiqueta">
+                    <X className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageTagsOpen(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
