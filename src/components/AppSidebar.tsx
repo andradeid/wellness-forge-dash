@@ -148,7 +148,7 @@ const adminGroups: NavGroup[] = [
     subtitle: "Usuários e permissões",
     icon: KeyRound,
     items: [
-      { title: "Nutricionistas", url: "/app/admin/nutritionists", icon: Stethoscope, badge: "NOVO" },
+      { title: "Nutricionistas", url: "/app/admin/users", icon: Stethoscope },
       { title: "Administradores", url: "/app/admin/administrators", icon: Shield, badge: "NOVO" },
       { title: "Sistema", url: "/app/admin/system", icon: SettingsIcon, superAdminOnly: true, badge: "NOVO" },
     ],
