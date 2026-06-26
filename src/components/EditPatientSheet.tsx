@@ -322,7 +322,11 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
             </Button>
             <Button
               type="submit"
-              disabled={saving || uploading}
+              disabled={
+                saving ||
+                uploading ||
+                (gender === "female" && isPregnant && (!gestationalWeeks || (pregnancyType !== "single" && pregnancyType !== "multiple")))
+              }
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90 shadow-md"
             >
               {saving ? (
