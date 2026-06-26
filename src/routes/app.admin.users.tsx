@@ -880,6 +880,60 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Modal: Gerenciar Etiquetas */}
+      <Dialog open={manageTagsOpen} onOpenChange={setManageTagsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-normal">Etiquetas</DialogTitle>
+            <DialogDescription>Crie e gerencie etiquetas reutilizáveis para classificar nutricionistas.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="rounded-xl border p-3 space-y-3">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nova etiqueta</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: ex-black, beta-tester"
+                  value={newTagLabel}
+                  onChange={(e) => setNewTagLabel(e.target.value)}
+                  maxLength={40}
+                />
+                <Button onClick={createTag} disabled={creatingTag} className="bg-gradient-brand text-white shrink-0">
+                  {creatingTag ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                </Button>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {DEFAULT_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setNewTagColor(c)}
+                    className={`h-7 w-7 rounded-full border-2 ${newTagColor === c ? "border-foreground" : "border-transparent"}`}
+                    style={{ background: c }}
+                    aria-label={c}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1 max-h-72 overflow-y-auto">
+              {tags.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Nenhuma etiqueta criada.</p>
+              ) : tags.map((t) => (
+                <div key={t.id} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-accent">
+                  <span className="h-3 w-3 rounded-full shrink-0" style={{ background: t.color }} />
+                  <span className="flex-1 text-sm">{t.label}</span>
+                  <Button size="icon" variant="ghost" onClick={() => deleteTag(t.id)} title="Remover etiqueta">
+                    <X className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageTagsOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
