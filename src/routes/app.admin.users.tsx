@@ -563,11 +563,15 @@ function UsersPage() {
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Etiquetas</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r) => (
+                  {rows.map((r) => {
+                    const rt = rowTags[r.id] ?? [];
+                    const rtIds = new Set(rt.map((t) => t.id));
+                    return (
                     <TableRow key={r.id} className="border-b last:border-0">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
@@ -593,6 +597,46 @@ function UsersPage() {
                       <TableCell className="text-muted-foreground">
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
+                      <TableCell>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1 flex-wrap min-h-[28px] hover:opacity-80">
+                              {rt.length === 0 ? (
+                                <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                                  <Plus className="h-3 w-3" /> Adicionar
+                                </span>
+                              ) : rt.map((t) => (
+                                <span key={t.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full text-white" style={{ background: t.color }}>
+                                  {t.label}
+                                </span>
+                              ))}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            {tags.length === 0 ? (
+                              <p className="text-xs text-muted-foreground p-2">Nenhuma etiqueta cadastrada. Use "Etiquetas" para criar.</p>
+                            ) : (
+                              <div className="space-y-1 max-h-64 overflow-y-auto">
+                                {tags.map((t) => {
+                                  const has = rtIds.has(t.id);
+                                  return (
+                                    <button
+                                      key={t.id}
+                                      onClick={() => toggleRowTag(r.id, t, has)}
+                                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent text-left text-sm"
+                                    >
+                                      <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: t.color }} />
+                                      <span className="flex-1 truncate">{t.label}</span>
+                                      {has && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+
                       <TableCell>
                         <div className="flex items-center gap-1 justify-end">
                           <Button size="icon" variant="ghost" onClick={() => openDetails(r)} title="Ver detalhes">
