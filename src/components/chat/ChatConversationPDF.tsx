@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
 import { format, differenceInYears } from "date-fns";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { BrandingDocumentPreview, type BrandingDocData } from "@/components/branding/BrandingDocumentPreview";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
 
