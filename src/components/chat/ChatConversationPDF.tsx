@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
 import { format, differenceInYears } from "date-fns";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { BrandingDocumentPreview, type BrandingDocData } from "@/components/branding/BrandingDocumentPreview";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
 
@@ -106,7 +108,38 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                         📎 {m.attachments.map((a) => a.name).join(", ")}
                       </div>
                     )}
-                    {text && <div className="whitespace-pre-wrap">{text}</div>}
+                    {text && (
+                      isUser ? (
+                        <div className="whitespace-pre-wrap">{text}</div>
+                      ) : (
+                        <div className="prose-pdf">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({ children }) => <p className="mb-1.5 leading-relaxed">{children}</p>,
+                              h1: ({ children }) => <h1 className="text-[13px] font-bold mt-2 mb-1">{children}</h1>,
+                              h2: ({ children }) => <h2 className="text-[12px] font-bold mt-2 mb-1">{children}</h2>,
+                              h3: ({ children }) => <h3 className="text-[11px] font-semibold mt-1.5 mb-1">{children}</h3>,
+                              h4: ({ children }) => <h4 className="text-[11px] font-semibold mt-1 mb-0.5">{children}</h4>,
+                              ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
+                              ol: ({ children }) => <ol className="list-decimal pl-4 my-1 space-y-0.5">{children}</ol>,
+                              li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                              strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                              em: ({ children }) => <em className="italic">{children}</em>,
+                              code: ({ children }) => <code className="px-1 rounded bg-slate-100 text-[10px]">{children}</code>,
+                              blockquote: ({ children }) => <blockquote className="border-l-2 border-slate-300 pl-2 italic text-slate-700 my-1">{children}</blockquote>,
+                              hr: () => <hr className="my-2 border-slate-200" />,
+                              a: ({ children, href }) => <a href={href} className="text-blue-700 underline">{children}</a>,
+                              table: ({ children }) => <table className="w-full border border-slate-200 my-1 text-[10px]">{children}</table>,
+                              th: ({ children }) => <th className="border border-slate-200 px-1.5 py-0.5 bg-slate-50 text-left font-medium">{children}</th>,
+                              td: ({ children }) => <td className="border border-slate-200 px-1.5 py-0.5 align-top">{children}</td>,
+                            }}
+                          >
+                            {text}
+                          </ReactMarkdown>
+                        </div>
+                      )
+                    )}
                     {markers.length > 0 && (
                       <div className="mt-2 overflow-hidden rounded border border-slate-200 bg-white">
                         <table className="w-full text-[10px] text-slate-800">
