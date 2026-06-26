@@ -715,16 +715,18 @@ function FaleComLummaPage() {
                         { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" }
                       ].map((card, idx) => {
                         const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
-                        if (!agent) return null;
-                        
+                        // Exames de sangue depende do perfil clínico do paciente — se ainda não há paciente
+                        // selecionado, mantemos o card visível e abrimos a identificação no clique.
+                        if (!agent && card.trigger !== "exames_de_sangue") return null;
+
                         return (
-                          <motion.button 
+                          <motion.button
                             key={card.trigger}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: idx * 0.2, ease: "easeOut" }}
                             onClick={() => {
-                              if (requiresPatient(agent.agent_id)) {
+                              if (!agent || requiresPatient(agent.agent_id)) {
                                 setPendingTrigger(card.trigger);
                                 setIdentifyOpen(true);
                               } else {
@@ -741,6 +743,7 @@ function FaleComLummaPage() {
                           </motion.button>
                         );
                       })}
+
                     </div>
                   </div>
                 )}
