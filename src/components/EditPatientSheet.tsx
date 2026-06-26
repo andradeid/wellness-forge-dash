@@ -52,7 +52,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
   const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("");
   const [isPregnant, setIsPregnant] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState<string>("");
-  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple">("single");
+  const [pregnancyType, setPregnancyType] = useState<"single" | "multiple" | "">("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
