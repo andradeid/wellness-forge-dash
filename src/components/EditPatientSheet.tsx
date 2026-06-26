@@ -105,6 +105,20 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!patient || !user) return;
+
+    // Trava de segurança clínica: gestante exige trimestre + tipo
+    if (gender === "female" && isPregnant) {
+      const weeks = parseInt(gestationalWeeks);
+      if (!gestationalWeeks || isNaN(weeks) || weeks < 1 || weeks > 42) {
+        toast.error("Informe as semanas gestacionais (1 a 42) antes de salvar.");
+        return;
+      }
+      if (pregnancyType !== "single" && pregnancyType !== "multiple") {
+        toast.error("Selecione o tipo de gestação (única ou gemelar) antes de salvar.");
+        return;
+      }
+    }
+
     setSaving(true);
     const { error } = await (supabase as any)
       .from("patients")
