@@ -17,6 +17,7 @@ import {
   FileText,
   Tag,
   Users,
+  Stethoscope,
   Shield,
   Plug,
   FlaskRound,
