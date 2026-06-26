@@ -95,11 +95,31 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     return acc;
   }, {} as Record<string, Marker[]>);
 
-  // Order categories according to the briefing or alphabetical
+  // Ordem clínica explícita (briefing curadoria)
+  const CATEGORY_ORDER = [
+    "hemograma_anemias",
+    "hemograma",
+    "perfil_glicidico",
+    "perfil_lipidico",
+    "perfil_tireoidiano",
+    "perfil_hormonal",
+    "funcao_hepatica",
+    "funcao_renal",
+    "vitaminas_minerais",
+    "inflamatorio",
+    "metabolismo_osseo",
+    "sorologia_infecciosa",
+    "coagulacao",
+    "urinalise",
+    "outros",
+  ];
   const categories = Object.keys(groups).sort((a, b) => {
-    if (a === "outros") return 1;
-    if (b === "outros") return -1;
-    return a.localeCompare(b);
+    const ia = CATEGORY_ORDER.indexOf(a);
+    const ib = CATEGORY_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
   });
 
   return (
