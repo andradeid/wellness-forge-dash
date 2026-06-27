@@ -42,6 +42,8 @@ import { Button } from "@/components/ui/button";
 import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
 import { SupportWidget } from "@/components/SupportWidget";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/dashboard")({
