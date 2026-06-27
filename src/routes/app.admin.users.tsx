@@ -117,7 +117,7 @@ function UsersPage() {
   const [creatingTag, setCreatingTag] = useState(false);
 
 
-  const nutriIdsRef = useRef<string[] | null>(null);
+  // (legado removido — agora usamos excludeIdsRef)
 
   // Modais
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
