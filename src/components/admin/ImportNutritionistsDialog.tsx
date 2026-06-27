@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Papa from "papaparse";
-import { Upload, Loader2, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, AlertCircle, FileText, ChevronDown, Sparkles } from "lucide-react";
+
 import { useServerFn } from "@tanstack/react-start";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -25,7 +26,15 @@ type CsvRow = {
   cancelled_at?: string | null;
   legacy_status?: string | null;
   legacy_last_login_at?: string | null;
+  name_inferred?: boolean;
 };
+
+type DetailRow = {
+  email: string;
+  status: "created" | "skipped" | "failed" | "inferred";
+  reason?: string;
+};
+
 
 function normalizeRow(raw: Record<string, any>): CsvRow | null {
   const get = (...keys: string[]) => {
@@ -38,8 +47,9 @@ function normalizeRow(raw: Record<string, any>): CsvRow | null {
   const email = get("email", "Email", "e-mail").toLowerCase();
   if (!email) return null;
   let full_name = get("full_name", "name", "nome");
+  let name_inferred = false;
   if (!full_name) {
-    // Fallback: deriva nome do email (ex.: "monica.silva@x.com" -> "Monica Silva")
+    name_inferred = true;
     const localPart = email.split("@")[0] ?? "";
     full_name = localPart
       .replace(/[._-]+/g, " ")
@@ -62,8 +72,10 @@ function normalizeRow(raw: Record<string, any>): CsvRow | null {
     cancelled_at: get("cancelled_at", "canceled_at", "cancelado_em") || null,
     legacy_status: get("old_status", "legacy_status", "status") || null,
     legacy_last_login_at: get("last_login_at", "last_sign_in_at", "ultimo_login") || null,
+    name_inferred,
   };
 }
+
 
 export function ImportNutritionistsDialog({
   open,
