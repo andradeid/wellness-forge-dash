@@ -73,6 +73,17 @@ function buildExamContextFromAnalysis({
   };
 }
 
+function hasExamMarkersMessage(message: ChatMessage): message is ChatMessage & {
+  structured_data: NonNullable<ChatMessage["structured_data"]> & { markers: Marker[] };
+} {
+  return (
+    message.role === "assistant" &&
+    message.agent_type?.startsWith("exam") === true &&
+    Array.isArray(message.structured_data?.markers) &&
+    message.structured_data.markers.length > 0
+  );
+}
+
 interface DifyFileRef {
   type: "image" | "document";
   transfer_method: "local_file" | "remote_url";
