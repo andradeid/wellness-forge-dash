@@ -144,19 +144,29 @@ function PatientsPage() {
     const { data, error } = await (supabase as any)
       .from("patients")
       .select("id, name, birth_date, gender, created_at, email, phone, avatar_url, notes, is_pregnant, gestational_weeks, pregnancy_type, menstrual_cycle_phase")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
     if (error) toast.error(error.message);
-    setPatients((data as Patient[]) ?? []);
+    const list = (data as Patient[]) ?? [];
+    setPatients(list);
 
-    const [examsRes, resultsRes] = await Promise.all([
-      (supabase as any).from("patient_exams").select("patient_id"),
-      (supabase as any).from("patient_exam_results").select("patient_id"),
-    ]);
-    setExamPatientIds(new Set(((examsRes.data ?? []) as { patient_id: string }[]).map((r) => r.patient_id)));
-    setAnalyzedPatientIds(new Set(((resultsRes.data ?? []) as { patient_id: string }[]).map((r) => r.patient_id)));
+    // Filtra exames/resultados apenas dos pacientes carregados (evita full-scan)
+    const ids = list.map((p) => p.id);
+    if (ids.length > 0) {
+      const [examsRes, resultsRes] = await Promise.all([
+        (supabase as any).from("patient_exams").select("patient_id").in("patient_id", ids),
+        (supabase as any).from("patient_exam_results").select("patient_id").in("patient_id", ids),
+      ]);
+      setExamPatientIds(new Set(((examsRes.data ?? []) as { patient_id: string }[]).map((r) => r.patient_id)));
+      setAnalyzedPatientIds(new Set(((resultsRes.data ?? []) as { patient_id: string }[]).map((r) => r.patient_id)));
+    } else {
+      setExamPatientIds(new Set());
+      setAnalyzedPatientIds(new Set());
+    }
 
     setLoading(false);
   };
+
 
   useEffect(() => {
     load();
