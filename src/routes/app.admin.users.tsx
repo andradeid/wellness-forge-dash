@@ -92,6 +92,8 @@ function planLabel(plan: string | null) {
 
 function UsersPage() {
   const { role } = useAuth();
+  const canAccess = role === "super_admin";
+  const isForbidden = role !== null && !canAccess;
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -131,14 +133,6 @@ function UsersPage() {
   const [examCount, setExamCount] = useState<number | null>(null);
   
 
-  if (role && role !== "super_admin") {
-    return (
-      <div className="p-12 text-center text-sm text-muted-foreground">
-        Acesso restrito ao Super Admin.
-      </div>
-    );
-  }
-
   // debounce da busca
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -150,17 +144,19 @@ function UsersPage() {
 
   // Carrega catálogo de etiquetas
   const loadTags = useCallback(async () => {
+    if (!canAccess) return;
     const { data, error } = await (supabase as any)
       .from("user_tags")
       .select("id, label, color")
       .order("label", { ascending: true });
     if (error) { toast.error(error.message); return; }
     setTags((data ?? []) as UserTag[]);
-  }, []);
-  useEffect(() => { loadTags(); }, [loadTags]);
+  }, [canAccess]);
+  useEffect(() => { if (canAccess) loadTags(); }, [canAccess, loadTags]);
 
 
   const ensureNutriIds = useCallback(async (): Promise<string[]> => {
+    if (!canAccess) return [];
     if (nutriIdsRef.current) return nutriIdsRef.current;
     const { data, error } = await (supabase as any)
       .from("user_roles")
@@ -170,10 +166,11 @@ function UsersPage() {
     const ids = (data ?? []).map((r: any) => r.user_id);
     nutriIdsRef.current = ids;
     return ids;
-  }, []);
+  }, [canAccess]);
 
   // Estatísticas (head count) — atualizadas no mount e após escritas
   const loadStats = useCallback(async () => {
+    if (!canAccess) return;
     const ids = await ensureNutriIds();
     if (ids.length === 0) { setStats({ total: 0, active: 0, trial: 0, blocked: 0 }); return; }
 
@@ -202,10 +199,11 @@ function UsersPage() {
       trial: trialRes.count ?? 0,
       blocked: blockedRes.count ?? 0,
     });
-  }, [ensureNutriIds]);
+  }, [canAccess, ensureNutriIds]);
 
   // Página atual com filtros aplicados no servidor
   const load = useCallback(async () => {
+    if (!canAccess) return;
     setLoading(true);
     const ids = await ensureNutriIds();
     if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
@@ -313,10 +311,10 @@ function UsersPage() {
     setRows(merged);
     setTotal(count ?? merged.length);
     setLoading(false);
-  }, [ensureNutriIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
+  }, [canAccess, ensureNutriIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { loadStats(); }, [loadStats]);
+  useEffect(() => { if (canAccess) load(); }, [canAccess, load]);
+  useEffect(() => { if (canAccess) loadStats(); }, [canAccess, loadStats]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -442,6 +440,14 @@ function UsersPage() {
     setCreateOpen(false);
     refreshAll();
   };
+
+  if (isForbidden) {
+    return (
+      <div className="p-12 text-center text-sm text-muted-foreground">
+        Acesso restrito ao Super Admin.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl">
