@@ -17,7 +17,6 @@ import {
   Tag as TagIcon,
   Plus,
   X,
-  Upload,
 } from "lucide-react";
 
 
