@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
 import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
+import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel } from "@/lib/agent-labels";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
@@ -94,7 +95,7 @@ function findBalancedJsonEnd(text: string, start: number): number {
 
 /** Removes the markers JSON block (fenced or bare, complete or streaming) from displayed prose. */
 function cleanProse(text: string): string {
-  let out = stripFormulacoesMarker(text);
+  let out = stripAgentScaffolding(stripFormulacoesMarker(text));
 
   // 1) Bloco com cerca ```json ... ``` contendo "markers": remove cerca + conteúdo.
   out = out.replace(/```json\s*([\s\S]*?)```/gi, (full, body: string) => {
