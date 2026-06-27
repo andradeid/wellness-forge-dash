@@ -87,6 +87,7 @@ export function ImportNutritionistsDialog({
   onFinished: () => void;
 }) {
   const importFn = useServerFn(importNutritionistsBatch);
+  const checkPrereqFn = useServerFn(checkImportPrerequisites);
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<CsvRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
