@@ -899,6 +899,8 @@ export function useDifyChat(
       .single();
     if (cErr) { setError(cErr.message); return; }
     conversationIdRef.current = "";
+    conversationMapRef.current = {};
+    setActiveAgents([]);
     setMessages([]);
     setError(null);
     setAgentType("exam");
@@ -909,22 +911,34 @@ export function useDifyChat(
   const switchAgent = useCallback((next: string) => {
     setAgentType((prev) => {
       if (prev === next) return prev;
-      
-      // Ao trocar de agente, queremos manter o contexto da conversa NO MESMO CHAT do Supabase,
-      // mas resetar o conversation_id do Dify para que o novo agente comece do zero.
-      // IMPORTANTE: IDs de conversa do Dify são vinculados à API Key (App). Como cada agente
-      // possui sua própria chave, usar o ID de um agente anterior causará erro no Dify.
-      
-      conversationIdRef.current = null;
-      
+
+      // Salva o conversation_id atual sob o agente anterior, para que
+      // o usuário possa voltar e retomar exatamente de onde parou.
+      // IMPORTANTE: cada agente do Dify tem sua própria API key, então
+      // só podemos reusar um conversation_id quando estamos no mesmo agente.
+      if (prev && conversationIdRef.current) {
+        conversationMapRef.current = {
+          ...conversationMapRef.current,
+          [prev]: conversationIdRef.current,
+        };
+      }
+
+      // Rehidrata a conversa do agente alvo (se já existir).
+      const restored = conversationMapRef.current[next] ?? null;
+      conversationIdRef.current = restored;
+      setActiveAgents(Object.keys(conversationMapRef.current));
+
       if (chatId) {
         (supabase as any)
           .from("patient_chats")
-          .update({ dify_conversation_id: null })
+          .update({
+            dify_conversation_id: restored,
+            dify_conversations: conversationMapRef.current,
+          })
           .eq("id", chatId)
           .then(() => {});
       }
-      
+
       return next;
     });
   }, [chatId]);
@@ -952,9 +966,9 @@ export function useDifyChat(
   }, []);
 
   /**
-   * Handoff entre agentes: troca para `targetAgent`, reseta o conversation_id
-   * do Dify (cada API key tem conversa isolada) e dispara a primeira mensagem
-   * já carregando o payload em `inputs.exam_context`.
+   * Handoff entre agentes: troca para `targetAgent`, preserva a sessão
+   * Dify do agente anterior no mapa (para retomada futura) e dispara a
+   * primeira mensagem já carregando o payload em `inputs.exam_context`.
    */
   const sendHandoff = useCallback(async (
     targetAgent: string,
@@ -962,17 +976,31 @@ export function useDifyChat(
     query: string,
   ) => {
     if (!chatId || readOnly) return;
-    // Reseta a conversa do Dify para o novo agente (cada API key isolada).
-    conversationIdRef.current = null;
+    // Preserva a conversa do agente atual no mapa antes de trocar.
+    const prevAgent = agentType;
+    if (prevAgent && conversationIdRef.current) {
+      conversationMapRef.current = {
+        ...conversationMapRef.current,
+        [prevAgent]: conversationIdRef.current,
+      };
+    }
+    // Rehidrata (ou zera) a conversa do agente alvo.
+    const restored = conversationMapRef.current[targetAgent] ?? null;
+    conversationIdRef.current = restored;
+    setActiveAgents(Object.keys(conversationMapRef.current));
+
     if (chatId) {
       await (supabase as any)
         .from("patient_chats")
-        .update({ dify_conversation_id: null })
+        .update({
+          dify_conversation_id: restored,
+          dify_conversations: conversationMapRef.current,
+        })
         .eq("id", chatId);
     }
     setAgentType(targetAgent);
     await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs, displayText: "Gerar receita" });
-  }, [chatId, readOnly, sendMessage]);
+  }, [chatId, readOnly, sendMessage, agentType]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents };
 }
