@@ -109,6 +109,7 @@ function UsersPage() {
   type UserTag = { id: string; label: string; color: string };
   const [tags, setTags] = useState<UserTag[]>([]);
   const [rowTags, setRowTags] = useState<Record<string, UserTag[]>>({});
+  const [rowPatients, setRowPatients] = useState<Record<string, number>>({});
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
   const [newTagLabel, setNewTagLabel] = useState("");
   const [newTagColor, setNewTagColor] = useState(DEFAULT_COLORS[0]);
