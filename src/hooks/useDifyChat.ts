@@ -171,6 +171,10 @@ export function useDifyChat(
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string | null>(null);
+  // Mapa { agent_id -> dify_conversation_id } para retomar a sessão correta
+  // do Dify ao alternar entre agentes no mesmo chat (preserva contexto).
+  const conversationMapRef = useRef<Record<string, string>>({});
+  const [activeAgents, setActiveAgents] = useState<string[]>([]);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
@@ -233,25 +237,25 @@ export function useDifyChat(
       // Se forceChatId for passado, carrega exatamente aquele chat.
       // Caso contrário, prefere o chat com MAIOR atividade (última mensagem
       // mais recente) — assim "Novo Chat" vazio não esconde o histórico antigo.
-      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any } | null = null;
+      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any } | null = null;
 
       if (forceChatId) {
         const { data } = await (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, exam_context, created_by")
+          .select("id, dify_conversation_id, exam_context, dify_conversations, created_by")
           .eq("patient_id", patientId)
           .eq("id", forceChatId)
           .maybeSingle();
-        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context };
+        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context, dify_conversations: data.dify_conversations };
       } else {
         let listQuery = (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, exam_context, created_by, created_at")
+          .select("id, dify_conversation_id, exam_context, dify_conversations, created_by, created_at")
           .eq("patient_id", patientId)
           .order("created_at", { ascending: false });
         if (!readOnly) listQuery = listQuery.eq("created_by", user.id);
         const { data: chats } = await listQuery;
-        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any }>) ?? [];
+        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any }>) ?? [];
         if (list.length > 0) {
           const { data: lastMsg } = await (supabase as any)
             .from("chat_messages")
@@ -300,11 +304,17 @@ export function useDifyChat(
         const { data: created, error: cErr } = await (supabase as any)
           .from("patient_chats")
           .insert({ patient_id: patientId, created_by: user.id })
-          .select("id, dify_conversation_id")
+          .select("id, dify_conversation_id, dify_conversations")
           .single();
         if (cErr) { setError(cErr.message); return; }
         id = created.id;
+        conversationMapRef.current = {};
       } else {
+        const rawMap = (chosenChat as any).dify_conversations;
+        const map: Record<string, string> =
+          rawMap && typeof rawMap === "object" && !Array.isArray(rawMap) ? { ...rawMap } : {};
+        conversationMapRef.current = map;
+        // conversationIdRef será ajustado abaixo com base no agente final.
         conversationIdRef.current = chosenChat!.dify_conversation_id ?? "";
         if (chosenChat!.exam_context) setExamContext(chosenChat!.exam_context as ExamContext);
       }
@@ -319,11 +329,16 @@ export function useDifyChat(
       if (!cancelled) {
         setMessages((msgs as ChatMessage[]) ?? []);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
-        if (lastMsgWithAgent) {
-          setAgentType(lastMsgWithAgent.agent_type);
+        const resolvedAgent = lastMsgWithAgent?.agent_type ?? "";
+        if (resolvedAgent) {
+          setAgentType(resolvedAgent);
+          // Rehidrata o conversation_id do agente atual a partir do mapa.
+          const mapped = conversationMapRef.current[resolvedAgent];
+          if (mapped) conversationIdRef.current = mapped;
         } else {
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
+        setActiveAgents(Object.keys(conversationMapRef.current));
       }
     };
     init();
@@ -515,12 +530,19 @@ export function useDifyChat(
 
     const saveAssistantToSupabase = async (content: string, convId?: string) => {
       if (!content.trim() && !convId) return;
-      
+
       if (convId) {
         conversationIdRef.current = convId;
+        if (agentType) {
+          conversationMapRef.current = { ...conversationMapRef.current, [agentType]: convId };
+          setActiveAgents(Object.keys(conversationMapRef.current));
+        }
         await (supabase as any)
           .from("patient_chats")
-          .update({ dify_conversation_id: convId })
+          .update({
+            dify_conversation_id: convId,
+            dify_conversations: conversationMapRef.current,
+          })
           .eq("id", chatId);
       }
 
@@ -719,9 +741,16 @@ export function useDifyChat(
                   assistantSavedRef.current = true;
                   if (data.conversation_id) {
                     conversationIdRef.current = data.conversation_id;
+                    if (agentType) {
+                      conversationMapRef.current = { ...conversationMapRef.current, [agentType]: data.conversation_id };
+                      setActiveAgents(Object.keys(conversationMapRef.current));
+                    }
                     await (supabase as any)
                       .from("patient_chats")
-                      .update({ dify_conversation_id: data.conversation_id })
+                      .update({
+                        dify_conversation_id: data.conversation_id,
+                        dify_conversations: conversationMapRef.current,
+                      })
                       .eq("id", chatId);
                   }
 
@@ -870,6 +899,8 @@ export function useDifyChat(
       .single();
     if (cErr) { setError(cErr.message); return; }
     conversationIdRef.current = "";
+    conversationMapRef.current = {};
+    setActiveAgents([]);
     setMessages([]);
     setError(null);
     setAgentType("exam");
@@ -880,22 +911,34 @@ export function useDifyChat(
   const switchAgent = useCallback((next: string) => {
     setAgentType((prev) => {
       if (prev === next) return prev;
-      
-      // Ao trocar de agente, queremos manter o contexto da conversa NO MESMO CHAT do Supabase,
-      // mas resetar o conversation_id do Dify para que o novo agente comece do zero.
-      // IMPORTANTE: IDs de conversa do Dify são vinculados à API Key (App). Como cada agente
-      // possui sua própria chave, usar o ID de um agente anterior causará erro no Dify.
-      
-      conversationIdRef.current = null;
-      
+
+      // Salva o conversation_id atual sob o agente anterior, para que
+      // o usuário possa voltar e retomar exatamente de onde parou.
+      // IMPORTANTE: cada agente do Dify tem sua própria API key, então
+      // só podemos reusar um conversation_id quando estamos no mesmo agente.
+      if (prev && conversationIdRef.current) {
+        conversationMapRef.current = {
+          ...conversationMapRef.current,
+          [prev]: conversationIdRef.current,
+        };
+      }
+
+      // Rehidrata a conversa do agente alvo (se já existir).
+      const restored = conversationMapRef.current[next] ?? null;
+      conversationIdRef.current = restored;
+      setActiveAgents(Object.keys(conversationMapRef.current));
+
       if (chatId) {
         (supabase as any)
           .from("patient_chats")
-          .update({ dify_conversation_id: null })
+          .update({
+            dify_conversation_id: restored,
+            dify_conversations: conversationMapRef.current,
+          })
           .eq("id", chatId)
           .then(() => {});
       }
-      
+
       return next;
     });
   }, [chatId]);
@@ -923,9 +966,9 @@ export function useDifyChat(
   }, []);
 
   /**
-   * Handoff entre agentes: troca para `targetAgent`, reseta o conversation_id
-   * do Dify (cada API key tem conversa isolada) e dispara a primeira mensagem
-   * já carregando o payload em `inputs.exam_context`.
+   * Handoff entre agentes: troca para `targetAgent`, preserva a sessão
+   * Dify do agente anterior no mapa (para retomada futura) e dispara a
+   * primeira mensagem já carregando o payload em `inputs.exam_context`.
    */
   const sendHandoff = useCallback(async (
     targetAgent: string,
@@ -933,17 +976,31 @@ export function useDifyChat(
     query: string,
   ) => {
     if (!chatId || readOnly) return;
-    // Reseta a conversa do Dify para o novo agente (cada API key isolada).
-    conversationIdRef.current = null;
+    // Preserva a conversa do agente atual no mapa antes de trocar.
+    const prevAgent = agentType;
+    if (prevAgent && conversationIdRef.current) {
+      conversationMapRef.current = {
+        ...conversationMapRef.current,
+        [prevAgent]: conversationIdRef.current,
+      };
+    }
+    // Rehidrata (ou zera) a conversa do agente alvo.
+    const restored = conversationMapRef.current[targetAgent] ?? null;
+    conversationIdRef.current = restored;
+    setActiveAgents(Object.keys(conversationMapRef.current));
+
     if (chatId) {
       await (supabase as any)
         .from("patient_chats")
-        .update({ dify_conversation_id: null })
+        .update({
+          dify_conversation_id: restored,
+          dify_conversations: conversationMapRef.current,
+        })
         .eq("id", chatId);
     }
     setAgentType(targetAgent);
     await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs, displayText: "Gerar receita" });
-  }, [chatId, readOnly, sendMessage]);
+  }, [chatId, readOnly, sendMessage, agentType]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents };
 }

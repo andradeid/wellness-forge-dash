@@ -90,7 +90,7 @@ function ChatPage() {
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { agents, getAgentForCard, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
@@ -750,6 +750,8 @@ function ChatPage() {
                                 const Icon = opt.icon;
                                 const iconColor = opt.color;
                                 const isActive = cardTrigger === opt.trigger;
+                                const bestForCard = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
+                                const hasSession = !!(bestForCard && activeAgents?.includes(bestForCard.agent_id));
                                 return (
                                   <div key={opt.trigger}>
                                     {idx === 3 && <div className="my-1 border-t border-slate-100" />}
@@ -777,7 +779,15 @@ function ChatPage() {
                                       )}>
                                         <Icon className="h-3.5 w-3.5" style={{ color: iconColor }} />
                                       </div>
-                                      <span className="flex-1 text-left">{opt.label}</span>
+                                      <span className="flex-1 text-left flex items-center gap-2">
+                                        {opt.label}
+                                        {hasSession && !isActive && (
+                                          <span
+                                            className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                            title="Sessão ativa — retomar de onde parou"
+                                          />
+                                        )}
+                                      </span>
                                       {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
                                     </button>
                                   </div>
