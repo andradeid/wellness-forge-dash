@@ -102,7 +102,12 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                         isUser ? "text-white/70" : "text-slate-500"
                       }`}
                     >
-                      {isUser ? "Nutricionista" : "Lumma"}
+                      {isUser
+                        ? "Nutricionista"
+                        : `Lumma${(() => {
+                            const a = getAgentLabel(m.agent_type);
+                            return a ? ` · ${a.label}` : "";
+                          })()}`}
                     </div>
                     {m.attachments && m.attachments.length > 0 && (
                       <div className={`text-[10px] mb-1 ${isUser ? "text-white/80" : "text-slate-500"}`}>
