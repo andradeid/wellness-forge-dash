@@ -131,6 +131,22 @@ export function ImportNutritionistsDialog({
   const run = async () => {
     if (rows.length === 0) return;
     setRunning(true);
+
+    // Pré-flight: confirma SUPABASE_SERVICE_ROLE_KEY e permissão antes de processar.
+    try {
+      const prereq = await checkPrereqFn({ data: undefined as never });
+      if (!prereq.ok) {
+        setRunning(false);
+        toast.error(prereq.reason, { duration: 10000 });
+        return;
+      }
+    } catch (err) {
+      setRunning(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Falha ao verificar pré-requisitos da importação: ${msg}`, { duration: 10000 });
+      return;
+    }
+
     setDone(0);
     setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
     setDetails([]);
