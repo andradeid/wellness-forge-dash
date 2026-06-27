@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -611,7 +612,7 @@ export function ChatMessageList({
                                 "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
                                 "[&_hr]:my-4 [&_hr]:border-border"
                               )}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                                   {before}
                                 </ReactMarkdown>
                               </div>
@@ -648,7 +649,7 @@ export function ChatMessageList({
                           )}
                         >
                           <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
+                            remarkPlugins={[remarkGfm, remarkBreaks]}
                             components={isResearch ? {
                               a: ({ href, children }) => (
                                 <a
