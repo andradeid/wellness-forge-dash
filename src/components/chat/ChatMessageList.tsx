@@ -353,7 +353,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
           </div>
         </div>
       )}
-      <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
+      <div className="font-bold border-b mb-3 pb-2 text-foreground">{cleanedTitle}</div>
       <textarea
         value={editableBody}
         readOnly={!isEditing}
