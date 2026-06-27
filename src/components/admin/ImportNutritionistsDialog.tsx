@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { importNutritionistsBatch } from "@/lib/import-nutritionists.functions";
+import { importNutritionistsBatch, checkImportPrerequisites } from "@/lib/import-nutritionists.functions";
 
 const BATCH_SIZE = 25;
 
