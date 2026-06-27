@@ -34,7 +34,23 @@ const InputSchema = z.object({
 });
 
 function missingAdminSecretMessage() {
-  return "Importação bloqueada: a chave admin do Supabase externo (SUPABASE_SERVICE_ROLE_KEY) não está disponível no runtime.";
+  return "Importação bloqueada: a chave admin do Supabase externo não está disponível no runtime. Cadastre SUPABASE_SERVICE_ROLE_KEY nos Secrets do projeto.";
+}
+
+function resolveRuntimeAdminSecret() {
+  const directKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  if (directKey) return directKey;
+
+  const secretKeys = process.env.SUPABASE_SECRET_KEYS;
+  if (!secretKeys) return undefined;
+
+  try {
+    const parsed = JSON.parse(secretKeys) as Record<string, unknown>;
+    const key = parsed.service_role ?? parsed.serviceRole ?? parsed.secret ?? parsed.default;
+    return typeof key === "string" && key.length > 0 ? key : undefined;
+  } catch {
+    return secretKeys;
+  }
 }
 
 function blockedImportResult(rows: Array<{ email: string }>, reason: string) {
@@ -86,10 +102,7 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!roleRow) throw new Response("Forbidden", { status: 403 });
 
-    const adminSecret =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ??
-      process.env.SUPABASE_SECRET_KEY ??
-      process.env.SUPABASE_SECRET_KEYS;
+    const adminSecret = resolveRuntimeAdminSecret();
 
     if (!adminSecret) {
       return blockedImportResult(data.rows, missingAdminSecretMessage());

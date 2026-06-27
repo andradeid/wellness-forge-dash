@@ -6,12 +6,25 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { disabledRealtimeOptions } from './disabled-realtime';
 
+function resolveSupabaseSecretKey() {
+  const directKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  if (directKey) return directKey;
+
+  const secretKeys = process.env.SUPABASE_SECRET_KEYS;
+  if (!secretKeys) return undefined;
+
+  try {
+    const parsed = JSON.parse(secretKeys) as Record<string, unknown>;
+    const key = parsed.service_role ?? parsed.serviceRole ?? parsed.secret ?? parsed.default;
+    return typeof key === 'string' && key.length > 0 ? key : undefined;
+  } catch {
+    return secretKeys;
+  }
+}
+
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SECRET_KEY ??
-    process.env.SUPABASE_SECRET_KEYS;
+  const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = resolveSupabaseSecretKey();
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
