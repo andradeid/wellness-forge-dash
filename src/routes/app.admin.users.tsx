@@ -166,10 +166,12 @@ function UsersPage() {
       .select("user_id")
       .in("role", ["super_admin", "admin"]);
     if (error) { toast.error(error.message); return []; }
-    const ids = Array.from(new Set((data ?? []).map((r: any) => r.user_id as string)));
+    const ids = Array.from(new Set((data ?? []).map((r: any) => r.user_id as string))) as string[];
     excludeIdsRef.current = ids;
     return ids;
   }, [canAccess]);
+
+
 
   // Helper: aplica exclusão de admins numa query de profiles
   const applyNutriScope = (q: any, excludeIds: string[]) => {
