@@ -37,6 +37,19 @@ function missingAdminSecretMessage() {
   return "Importação bloqueada: a chave admin do Supabase externo (SUPABASE_SERVICE_ROLE_KEY) não está disponível no runtime.";
 }
 
+function blockedImportResult(rows: Array<{ email: string }>, reason: string) {
+  return {
+    created: 0,
+    skipped: 0,
+    failed: rows.length,
+    details: rows.map((row) => ({
+      email: row.email,
+      status: "failed" as const,
+      reason,
+    })),
+  };
+}
+
 type PlanMap = {
   plan_type: "free" | "starter" | "pro" | "clinica";
   status: "trial" | "active";
@@ -73,27 +86,25 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!roleRow) throw new Response("Forbidden", { status: 403 });
 
-    const hasAdminSecret = Boolean(
+    const adminSecret =
       process.env.SUPABASE_SERVICE_ROLE_KEY ??
-        process.env.SUPABASE_SECRET_KEY ??
-        process.env.SUPABASE_SECRET_KEYS,
-    );
+      process.env.SUPABASE_SECRET_KEY ??
+      process.env.SUPABASE_SECRET_KEYS;
 
-    if (!hasAdminSecret) {
-      const reason = missingAdminSecretMessage();
-      return {
-        created: 0,
-        skipped: 0,
-        failed: data.rows.length,
-        details: data.rows.map((row) => ({
-          email: row.email,
-          status: "failed" as const,
-          reason,
-        })),
-      };
+    if (!adminSecret) {
+      return blockedImportResult(data.rows, missingAdminSecretMessage());
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+
+    try {
+      ({ supabaseAdmin } = await import("@/integrations/supabase/client.server"));
+      await (supabaseAdmin as any).from("profiles").select("id", { count: "exact", head: true });
+    } catch (err) {
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      const reason = rawMessage.includes("SUPABASE_SERVICE_ROLE_KEY") ? missingAdminSecretMessage() : rawMessage;
+      return blockedImportResult(data.rows, reason);
+    }
 
     // Carrega tags uma vez
     const { data: tagRows } = await (supabaseAdmin as any)
