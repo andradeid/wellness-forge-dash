@@ -655,6 +655,7 @@ export function useDifyChat(
 
       const lines = [
         `[CONTEXTO DO PACIENTE]`,
+        `Use este contexto como fonte da conversa. Se a pergunta puder ser respondida com os dados abaixo, não peça o laudo novamente.`,
         `Paciente: ${ctx.patient_name}`,
         `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}`,
       ];
@@ -664,10 +665,12 @@ export function useDifyChat(
       if (otimos.length > 0) {
         lines.push(`Marcadores ótimos: ${otimos.join(", ")}`);
       }
-      // Fallback: se não temos marcadores estruturados, injeta a análise textual completa
-      // do exame para que o agente tenha contexto clínico real para trabalhar.
-      if (alteracoes.length === 0 && otimos.length === 0 && ctx.resumo_texto) {
-        lines.push(`Análise do exame anterior:`);
+      // Além dos marcadores resumidos, mantemos a análise textual anterior como
+      // fonte completa. Só marcadores alterados/ótimos não bastam para perguntas
+      // seletivas como "traga hemograma/anemia", porque esses dados podem estar
+      // normais e não aparecer no resumo estruturado.
+      if (ctx.resumo_texto) {
+        lines.push(`Análise completa do exame anterior:`);
         lines.push(ctx.resumo_texto);
       }
       lines.push(`[FIM DO CONTEXTO]`);
