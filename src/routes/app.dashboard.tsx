@@ -399,6 +399,45 @@ function DashboardPage() {
       .slice(0, 6);
   }, [filteredResults]);
 
+  // Perfil de Exames Avaliados: distribuição por categoria clínica (dados reais do usuário)
+  const examProfile = useMemo(() => {
+    const PALETTE = [
+      "#e8a04c", "#e89bcf", "#7ba6c4", "#8b5cf6",
+      "#10b981", "#f59e0b", "#ef4444", "#6366f1",
+      "#14b8a6", "#cbd5e1",
+    ];
+    const LABELS: Record<string, string> = {
+      hemograma: "Hemograma",
+      hemograma_anemias: "Hemograma / Anemias",
+      perfil_lipidico: "Perfil Lipídico",
+      perfil_hormonal: "Perfil Hormonal",
+      perfil_tireoidiano: "Perfil Tireoidiano",
+      perfil_glicidico: "Perfil Glicídico",
+      funcao_renal: "Função Renal",
+      funcao_hepatica: "Função Hepática",
+      vitaminas_minerais: "Vitaminas e Minerais",
+      inflamatorio: "Inflamatório",
+      outros: "Outros",
+    };
+    const counts = new Map<string, number>();
+    for (const r of filteredResults) {
+      const key = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+    const top = sorted.slice(0, 9);
+    const restTotal = sorted.slice(9).reduce((s, [, v]) => s + v, 0);
+    const data = top.map(([k, v], i) => ({
+      name: LABELS[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      value: v,
+      color: PALETTE[i % PALETTE.length],
+    }));
+    if (restTotal > 0) {
+      data.push({ name: "Outros", value: restTotal, color: "#cbd5e1" });
+    }
+    return data;
+  }, [filteredResults]);
+
   // Perfil da base: distribuição por gênero e faixa etária
   const baseProfile = useMemo(() => {
     const gender = { feminino: 0, masculino: 0, outro: 0 };
