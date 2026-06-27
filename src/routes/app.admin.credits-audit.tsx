@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search, Wallet, Plus, Infinity as InfinityIcon, ShieldCheck } from "lucide-react";
@@ -64,25 +65,35 @@ function AuditPage() {
   const fnAdjust = useServerFn(adjustBalance);
   const fnSetUnlimited = useServerFn(setUnlimited);
 
+  const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [nutriPage, setNutriPage] = useState(1);
+  const NUTRI_PAGE_SIZE = 25;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedQ(q.trim());
+      setNutriPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
   const nutrisQuery = useQuery({
-    queryKey: ["admin", "nutritionists"],
-    queryFn: () => fnListNutris() as Promise<User[]>,
+    queryKey: ["admin", "nutritionists", debouncedQ, nutriPage],
+    queryFn: () =>
+      fnListNutris({ data: { q: debouncedQ, page: nutriPage, pageSize: NUTRI_PAGE_SIZE } }) as Promise<{
+        rows: User[];
+        total: number;
+      }>,
     enabled: role === "super_admin" || role === "admin",
-    staleTime: 60_000,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
   });
 
-  const [q, setQ] = useState("");
+  const nutriRows = nutrisQuery.data?.rows ?? [];
+  const nutriTotal = nutrisQuery.data?.total ?? 0;
+  const nutriTotalPages = Math.max(1, Math.ceil(nutriTotal / NUTRI_PAGE_SIZE));
 
-  const filteredNutris = useMemo<User[]>(() => {
-    const list = nutrisQuery.data ?? [];
-    const term = q.trim().toLowerCase();
-    if (!term) return list;
-    return list.filter(
-      (u) =>
-        (u.full_name ?? "").toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term),
-    );
-  }, [nutrisQuery.data, q]);
   const [results, setResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
@@ -272,32 +283,58 @@ function AuditPage() {
           {results.length === 0 && (
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Nutricionistas {nutrisQuery.data ? `(${filteredNutris.length})` : ""}
+                Nutricionistas {nutrisQuery.data ? `(${nutriTotal})` : ""}
               </div>
               {nutrisQuery.isLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
                 </div>
-              ) : filteredNutris.length === 0 ? (
+              ) : nutriRows.length === 0 ? (
                 <div className="text-center py-8 text-sm text-muted-foreground">
                   Nenhum nutricionista encontrado.
                 </div>
               ) : (
-                <div className="border rounded-lg divide-y max-h-[480px] overflow-y-auto">
-                  {filteredNutris.map((u) => (
-                    <UserRow
-                      key={u.id}
-                      user={u}
-                      selected={selected?.id === u.id}
-                      onAudit={() => openAudit(u)}
-                      onAdjust={() => openAdjust(u)}
-                      canAdjust={isSuperAdmin}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="border rounded-lg divide-y">
+                    {nutriRows.map((u) => (
+                      <UserRow
+                        key={u.id}
+                        user={u}
+                        selected={selected?.id === u.id}
+                        onAudit={() => openAudit(u)}
+                        onAdjust={() => openAdjust(u)}
+                        canAdjust={isSuperAdmin}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between mt-3 text-sm">
+                    <span className="text-muted-foreground">
+                      Página {nutriPage} de {nutriTotalPages} — {nutriTotal} nutricionistas
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNutriPage((p) => Math.max(1, p - 1))}
+                        disabled={nutrisQuery.isFetching || nutriPage <= 1}
+                      >
+                        Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNutriPage((p) => Math.min(nutriTotalPages, p + 1))}
+                        disabled={nutrisQuery.isFetching || nutriPage >= nutriTotalPages}
+                      >
+                        Próximo
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
+
         </CardContent>
       </Card>
 
