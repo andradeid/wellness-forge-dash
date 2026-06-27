@@ -17,7 +17,10 @@ import {
   Tag as TagIcon,
   Plus,
   X,
+  Upload,
 } from "lucide-react";
+
+
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ImportNutritionistsDialog } from "@/components/admin/ImportNutritionistsDialog";
 
 export const Route = createFileRoute("/app/admin/users")({
   component: UsersPage,
@@ -125,6 +129,7 @@ function UsersPage() {
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
   const [examCount, setExamCount] = useState<number | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   if (role && role !== "super_admin") {
     return (
@@ -468,6 +473,9 @@ function UsersPage() {
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setManageTagsOpen(true)} className="rounded-full">
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
+              </Button>
+              <Button variant="outline" onClick={() => setImportOpen(true)} className="rounded-full">
+                <Upload className="h-4 w-4 mr-2" /> Importar CSV
               </Button>
               <Button
                 onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
@@ -934,6 +942,12 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImportNutritionistsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onFinished={() => { nutriIdsRef.current = null; refreshAll(); }}
+      />
     </div>
   );
 }

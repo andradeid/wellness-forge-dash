@@ -357,6 +357,39 @@ export type Database = {
         }
         Relationships: []
       }
+      import_errors: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          error_message: string
+          id: string
+          import_batch: string
+          payload: Json | null
+          row_number: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          error_message: string
+          id?: string
+          import_batch: string
+          payload?: Json | null
+          row_number?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          error_message?: string
+          id?: string
+          import_batch?: string
+          payload?: Json | null
+          row_number?: number | null
+        }
+        Relationships: []
+      }
       integration_logs: {
         Row: {
           created_at: string
