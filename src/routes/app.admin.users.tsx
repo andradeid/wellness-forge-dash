@@ -378,7 +378,7 @@ function UsersPage() {
     }));
 
     setRows(merged);
-    setTotal(count ?? merged.length);
+    setTotal(totalCount);
     setLoading(false);
   }, [canAccess, ensureExcludeIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
 
