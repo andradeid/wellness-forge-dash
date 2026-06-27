@@ -30,6 +30,60 @@ export interface ExamContext {
   agent_type?: string;
 }
 
+type ExamContextMeta = Pick<
+  ExamContext,
+  "patient_name" | "patient_profile" | "patient_sex" | "gestante_tipo" | "gestante_periodo"
+>;
+
+function buildExamContextFromAnalysis({
+  text,
+  markers,
+  meta,
+  agentType,
+  previous,
+}: {
+  text: string;
+  markers: Marker[];
+  meta: Partial<ExamContextMeta>;
+  agentType?: string | null;
+  previous?: ExamContext | null;
+}): ExamContext {
+  const safeMarkers = markers ?? [];
+  return {
+    patient_name: meta.patient_name || previous?.patient_name || "Paciente",
+    patient_profile: meta.patient_profile || previous?.patient_profile || "",
+    patient_sex: meta.patient_sex || previous?.patient_sex || "",
+    gestante_tipo: meta.gestante_tipo || previous?.gestante_tipo || "",
+    gestante_periodo: meta.gestante_periodo || previous?.gestante_periodo || "",
+    exam_date: new Date().toISOString(),
+    alteracoes: safeMarkers
+      .filter((m: Marker) => {
+        const visual = classificationVisualState(m.classification);
+        return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
+      })
+      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
+    otimos: safeMarkers
+      .filter((m: Marker) => classificationVisualState(m.classification) === "otimo")
+      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""}`),
+    resumo_clinico: safeMarkers
+      .map((m: Marker) => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
+      .join(" | "),
+    resumo_texto: text.slice(0, 4000),
+    agent_type: agentType || previous?.agent_type,
+  };
+}
+
+function hasExamMarkersMessage(message: ChatMessage): message is ChatMessage & {
+  structured_data: NonNullable<ChatMessage["structured_data"]> & { markers: Marker[] };
+} {
+  return (
+    message.role === "assistant" &&
+    message.agent_type?.startsWith("exam") === true &&
+    Array.isArray(message.structured_data?.markers) &&
+    message.structured_data.markers.length > 0
+  );
+}
+
 interface DifyFileRef {
   type: "image" | "document";
   transfer_method: "local_file" | "remote_url";
@@ -327,7 +381,8 @@ export function useDifyChat(
         .eq("chat_id", id)
         .order("created_at", { ascending: true });
       if (!cancelled) {
-        setMessages((msgs as ChatMessage[]) ?? []);
+        const loadedMessages = (msgs as ChatMessage[]) ?? [];
+        setMessages(loadedMessages);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
         const resolvedAgent = lastMsgWithAgent?.agent_type ?? "";
         if (resolvedAgent) {
@@ -339,6 +394,31 @@ export function useDifyChat(
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
         setActiveAgents(Object.keys(conversationMapRef.current));
+
+        // Reconstitui o contexto a partir da última análise real de exame.
+        // Isso corrige conversas em que um follow-up simples sobrescreveu
+        // patient_chats.exam_context com uma resposta fria do tipo "envie o laudo".
+        const storedCtx = (chosenChat?.exam_context as ExamContext | null) ?? null;
+        const lastValidExamAnalysis = loadedMessages
+          .slice()
+          .reverse()
+          .find(hasExamMarkersMessage);
+        if (lastValidExamAnalysis) {
+          const repairedCtx = buildExamContextFromAnalysis({
+            text: lastValidExamAnalysis.content,
+            markers: lastValidExamAnalysis.structured_data?.markers ?? [],
+            meta: metaRef.current,
+            agentType: lastValidExamAnalysis.agent_type,
+            previous: storedCtx,
+          });
+          setExamContext(repairedCtx);
+          if (id && storedCtx?.resumo_texto !== repairedCtx.resumo_texto) {
+            void (supabase as any)
+              .from("patient_chats")
+              .update({ exam_context: repairedCtx })
+              .eq("id", id);
+          }
+        }
       }
     };
     init();
@@ -581,6 +661,7 @@ export function useDifyChat(
 
       const lines = [
         `[CONTEXTO DO PACIENTE]`,
+        `Use este contexto como fonte da conversa. Se a pergunta puder ser respondida com os dados abaixo, não peça o laudo novamente.`,
         `Paciente: ${ctx.patient_name}`,
         `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}`,
       ];
@@ -590,10 +671,12 @@ export function useDifyChat(
       if (otimos.length > 0) {
         lines.push(`Marcadores ótimos: ${otimos.join(", ")}`);
       }
-      // Fallback: se não temos marcadores estruturados, injeta a análise textual completa
-      // do exame para que o agente tenha contexto clínico real para trabalhar.
-      if (alteracoes.length === 0 && otimos.length === 0 && ctx.resumo_texto) {
-        lines.push(`Análise do exame anterior:`);
+      // Além dos marcadores resumidos, mantemos a análise textual anterior como
+      // fonte completa. Só marcadores alterados/ótimos não bastam para perguntas
+      // seletivas como "traga hemograma/anemia", porque esses dados podem estar
+      // normais e não aparecer no resumo estruturado.
+      if (ctx.resumo_texto) {
+        lines.push(`Análise completa do exame anterior:`);
         lines.push(ctx.resumo_texto);
       }
       lines.push(`[FIM DO CONTEXTO]`);
@@ -619,12 +702,35 @@ export function useDifyChat(
     };
 
     try {
+      const latestContextFromMessages = (() => {
+        const latest = messages
+          .slice()
+          .reverse()
+          .find(hasExamMarkersMessage);
+        if (!latest) return null;
+        return buildExamContextFromAnalysis({
+          text: latest.content,
+          markers: latest.structured_data?.markers ?? [],
+          meta: metaRef.current,
+          agentType: latest.agent_type,
+          previous: examContext,
+        });
+      })();
+      const effectiveExamContext = latestContextFromMessages ?? examContext;
+
       const finalQuery = (() => {
-        if (agentType.startsWith("exam")) return text;
+        // Follow-ups no mesmo agente de exame também precisam receber o
+        // contexto do exame anterior. Sem isso, se a memória nativa do Dify
+        // falhar, perguntas como "traga só hemograma" viram conversa fria.
+        // Novo exame com anexo continua limpo para não misturar laudos.
+        if (agentType.startsWith("exam")) {
+          if (difyFiles.length === 0 && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
+          return text;
+        }
         if (agentType === "research") return text;
         try {
-          return (examContext 
-              ? buildContextPrefix(examContext) 
+          return (effectiveExamContext
+              ? buildContextPrefix(effectiveExamContext)
               : buildMinimalPrefix()) + text;
         } catch (e) {
           console.error('[finalQuery error]', e);
@@ -831,31 +937,23 @@ export function useDifyChat(
                     });
                   }
 
-                  // Salva contexto após resposta do agente de exame
-                  if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
-                    const safeMarkers = markers ?? [];
-                    const newCtx: ExamContext = {
-                      patient_name: metaRef.current.patient_name,
-                      patient_profile: metaRef.current.patient_profile,
-                      patient_sex: metaRef.current.patient_sex,
-                      gestante_tipo: metaRef.current.gestante_tipo,
-                      gestante_periodo: metaRef.current.gestante_periodo,
-                      exam_date: new Date().toISOString(),
-                      alteracoes: safeMarkers
-                        .filter((m: Marker) => {
-                          const visual = classificationVisualState(m.classification);
-                          return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
-                        })
-                        .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
-                      otimos: safeMarkers
-                        .filter((m: Marker) => classificationVisualState(m.classification) === "otimo")
-                        .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""}`),
-                      resumo_clinico: safeMarkers
-                        .map((m: Marker) => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
-                        .join(" | "),
-                      resumo_texto: fullText.slice(0, 4000),
-                      agent_type: agentType,
-                    };
+                  // Salva contexto apenas quando a resposta é uma análise real
+                  // de exame (upload novo ou marcadores extraídos). Follow-ups
+                  // simples não podem apagar o contexto clínico anterior.
+                  const shouldRefreshExamContext =
+                    agentType?.startsWith("exam") &&
+                    fullText.trim() &&
+                    !labReportError &&
+                    (difyFiles.length > 0 || (markers && markers.length > 0));
+
+                  if (shouldRefreshExamContext) {
+                    const newCtx = buildExamContextFromAnalysis({
+                      text: fullText,
+                      markers: markers ?? [],
+                      meta: metaRef.current,
+                      agentType,
+                      previous: examContext,
+                    });
                     setExamContext(newCtx);
                     await (supabase as any)
                       .from("patient_chats")
@@ -899,7 +997,7 @@ export function useDifyChat(
       setThinking(false);
       setUploadProgress([]);
     }
-  }, [chatId, patientId, readOnly, agentType, examContext, getCost, consume, refetchCredits]);
+  }, [chatId, patientId, readOnly, agentType, examContext, messages, getCost, consume, refetchCredits]);
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;
