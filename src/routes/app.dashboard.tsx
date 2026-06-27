@@ -439,15 +439,36 @@ function DashboardPage() {
     const top = sorted.slice(0, 9);
     const restTotal = sorted.slice(9).reduce((s, [, v]) => s + v, 0);
     const data = top.map(([k, v], i) => ({
+      key: k,
       name: LABELS[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       value: v,
       color: PALETTE[i % PALETTE.length],
+      keys: [k],
     }));
     if (restTotal > 0) {
-      data.push({ name: "Outros", value: restTotal, color: "#cbd5e1" });
+      data.push({
+        key: "__rest__",
+        name: "Outros",
+        value: restTotal,
+        color: "#cbd5e1",
+        keys: sorted.slice(9).map(([k]) => k),
+      });
     }
     return data;
   }, [filteredResults]);
+
+  // Resultados que compõem a categoria selecionada no card de Perfil de Exames
+  const profileDetailRows = useMemo(() => {
+    if (!profileDetail) return [];
+    const entry = examProfile.find((d) => d.key === profileDetail.key);
+    const keys = new Set(entry?.keys ?? [profileDetail.key]);
+    return filteredResults
+      .filter((r) => {
+        const k = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
+        return keys.has(k);
+      })
+      .slice(0, 500);
+  }, [profileDetail, examProfile, filteredResults]);
 
   // Perfil da base: distribuição por gênero e faixa etária
   const baseProfile = useMemo(() => {
