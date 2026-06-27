@@ -706,12 +706,7 @@ export function useDifyChat(
         const latest = messages
           .slice()
           .reverse()
-          .find((m) =>
-            m.role === "assistant" &&
-            m.agent_type?.startsWith("exam") &&
-            Array.isArray(m.structured_data?.markers) &&
-            m.structured_data.markers.length > 0,
-          );
+          .find(hasExamMarkersMessage);
         if (!latest) return null;
         return buildExamContextFromAnalysis({
           text: latest.content,
