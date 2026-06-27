@@ -31,7 +31,7 @@ function createSupabaseAdminClient() {
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
     ];
-    const message = `Variável(is) de ambiente do Supabase ausente(s): ${missing.join(', ')}. Configure no painel de Secrets do projeto (Supabase externo).`;
+    const message = `Variável(is) de ambiente do Supabase ausente(s): ${missing.join(', ')}. A chave precisa estar disponível como secret de runtime do projeto para as server functions acessarem o Supabase externo.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
