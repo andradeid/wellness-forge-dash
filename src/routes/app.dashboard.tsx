@@ -42,6 +42,8 @@ import { Button } from "@/components/ui/button";
 import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
 import { SupportWidget } from "@/components/SupportWidget";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -128,6 +130,16 @@ function DashboardPage() {
   const [recentExams, setRecentExams] = useState<ExamLite[]>([]);
   const [recentChats, setRecentChats] = useState<ChatLite[]>([]);
   const [profileDetail, setProfileDetail] = useState<{ key: string; label: string; color: string } | null>(null);
+  const [detailSearch, setDetailSearch] = useState("");
+  const [detailSort, setDetailSort] = useState<"date_desc" | "date_asc">("date_desc");
+  const [detailPage, setDetailPage] = useState(1);
+  const DETAIL_PAGE_SIZE = 10;
+
+  useEffect(() => {
+    setDetailSearch("");
+    setDetailSort("date_desc");
+    setDetailPage(1);
+  }, [profileDetail?.key]);
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
@@ -462,13 +474,34 @@ function DashboardPage() {
     if (!profileDetail) return [];
     const entry = examProfile.find((d) => d.key === profileDetail.key);
     const keys = new Set(entry?.keys ?? [profileDetail.key]);
-    return filteredResults
-      .filter((r) => {
-        const k = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
-        return keys.has(k);
-      })
-      .slice(0, 500);
+    return filteredResults.filter((r) => {
+      const k = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
+      return keys.has(k);
+    });
   }, [profileDetail, examProfile, filteredResults]);
+
+  const profileDetailFilteredSorted = useMemo(() => {
+    const q = detailSearch.trim().toLowerCase();
+    const rows = q
+      ? profileDetailRows.filter((r) =>
+          (r.marker_name ?? "").toLowerCase().includes(q) ||
+          (patientMap.get(r.patient_id) ?? "").toLowerCase().includes(q)
+        )
+      : profileDetailRows;
+    const sorted = [...rows].sort((a, b) => {
+      const ta = a.measured_at ? new Date(a.measured_at).getTime() : 0;
+      const tb = b.measured_at ? new Date(b.measured_at).getTime() : 0;
+      return detailSort === "date_asc" ? ta - tb : tb - ta;
+    });
+    return sorted;
+  }, [profileDetailRows, detailSearch, detailSort, patientMap]);
+
+  const detailTotalPages = Math.max(1, Math.ceil(profileDetailFilteredSorted.length / DETAIL_PAGE_SIZE));
+  const detailPageSafe = Math.min(detailPage, detailTotalPages);
+  const profileDetailPageRows = useMemo(
+    () => profileDetailFilteredSorted.slice((detailPageSafe - 1) * DETAIL_PAGE_SIZE, detailPageSafe * DETAIL_PAGE_SIZE),
+    [profileDetailFilteredSorted, detailPageSafe]
+  );
 
   // Perfil da base: distribuição por gênero e faixa etária
   const baseProfile = useMemo(() => {
@@ -1176,11 +1209,26 @@ function DashboardPage() {
                {profileDetail?.label ?? "Categoria"}
              </DialogTitle>
              <DialogDescription>
-               {profileDetailRows.length} marcador{profileDetailRows.length === 1 ? "" : "es"} avaliado{profileDetailRows.length === 1 ? "" : "s"} no período selecionado.
+               {profileDetailFilteredSorted.length} de {profileDetailRows.length} marcador{profileDetailRows.length === 1 ? "" : "es"} no período.
              </DialogDescription>
            </DialogHeader>
+           <div className="flex flex-col sm:flex-row gap-2 pb-2">
+             <Input
+               placeholder="Buscar por marcador ou paciente…"
+               value={detailSearch}
+               onChange={(e) => { setDetailSearch(e.target.value); setDetailPage(1); }}
+               className="h-9"
+             />
+             <Select value={detailSort} onValueChange={(v) => setDetailSort(v as "date_desc" | "date_asc")}>
+               <SelectTrigger className="h-9 sm:w-48"><SelectValue /></SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="date_desc">Data ↓ (mais recente)</SelectItem>
+                 <SelectItem value="date_asc">Data ↑ (mais antiga)</SelectItem>
+               </SelectContent>
+             </Select>
+           </div>
            <div className="flex-1 overflow-auto border rounded-lg">
-             {profileDetailRows.length === 0 ? (
+             {profileDetailPageRows.length === 0 ? (
                <div className="p-6 text-center text-sm text-muted-foreground">
                  Nenhum resultado encontrado.
                </div>
@@ -1196,9 +1244,18 @@ function DashboardPage() {
                    </tr>
                  </thead>
                  <tbody>
-                   {profileDetailRows.map((r) => (
+                   {profileDetailPageRows.map((r) => (
                      <tr key={r.id} className="border-t hover:bg-muted/30">
-                       <td className="px-3 py-2">{patientMap.get(r.patient_id) ?? "—"}</td>
+                       <td className="px-3 py-2">
+                         <Link
+                           to="/app/evolution/$patientId"
+                           params={{ patientId: r.patient_id }}
+                           className="text-primary hover:underline"
+                           onClick={() => setProfileDetail(null)}
+                         >
+                           {patientMap.get(r.patient_id) ?? "—"}
+                         </Link>
+                       </td>
                        <td className="px-3 py-2">{r.marker_name}</td>
                        <td className="px-3 py-2 whitespace-nowrap">
                          {r.marker_value_raw ?? "—"}
@@ -1213,6 +1270,13 @@ function DashboardPage() {
                  </tbody>
                </table>
              )}
+           </div>
+           <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
+             <span>Página {detailPageSafe} de {detailTotalPages}</span>
+             <div className="flex gap-2">
+               <Button size="sm" variant="outline" disabled={detailPageSafe <= 1} onClick={() => setDetailPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+               <Button size="sm" variant="outline" disabled={detailPageSafe >= detailTotalPages} onClick={() => setDetailPage((p) => Math.min(detailTotalPages, p + 1))}>Próxima</Button>
+             </div>
            </div>
          </DialogContent>
        </Dialog>
