@@ -18,6 +18,10 @@ type CsvRow = {
   full_name: string;
   old_plan: string;
   professional_id?: string | null;
+  phone?: string | null;
+  clinic_name?: string | null;
+  subscription_created_at?: string | null;
+  current_period_end?: string | null;
 };
 
 function normalizeRow(raw: Record<string, any>): CsvRow | null {
@@ -37,6 +41,10 @@ function normalizeRow(raw: Record<string, any>): CsvRow | null {
     full_name,
     old_plan: (get("plan", "plan_type", "old_plan") || "free").toLowerCase(),
     professional_id: get("professional_id", "crn") || null,
+    phone: get("phone", "telefone", "whatsapp") || null,
+    clinic_name: get("clinic_name", "clinica", "clínica") || null,
+    subscription_created_at: get("subscription_created_at", "subscribed_at", "signed_up_at") || null,
+    current_period_end: get("current_period_end", "next_billing_date", "vencimento") || null,
   };
 }
 
@@ -132,9 +140,11 @@ export function ImportNutritionistsDialog({
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl font-normal">Importar nutricionistas</DialogTitle>
           <DialogDescription>
-            Envie um CSV com colunas: <code>id</code> (opcional, UUID), <code>email</code>, <code>full_name</code>,{" "}
-            <code>plan</code> (free | basic | premium | pro | black). Os usuários entram bloqueados e devem ser
-            liberados manualmente.
+            Colunas aceitas: <code>id</code>, <code>email</code>, <code>full_name</code>,{" "}
+            <code>plan</code> (free | basic | premium | pro | black), <code>professional_id</code>,{" "}
+            <code>phone</code>, <code>clinic_name</code>, <code>subscription_created_at</code>,{" "}
+            <code>current_period_end</code>. Apenas email, full_name e plan são obrigatórios. Usuários entram
+            bloqueados.
           </DialogDescription>
         </DialogHeader>
 

@@ -2,12 +2,27 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const isoOrNull = z
+  .string()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((v) => {
+    if (!v) return null;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  });
+
 const RowSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   email: z.string().email().transform((v) => v.trim().toLowerCase()),
   full_name: z.string().trim().min(1).max(200),
   old_plan: z.string().trim().toLowerCase().default("free"),
   professional_id: z.string().trim().max(80).optional().nullable(),
+  phone: z.string().trim().max(40).optional().nullable(),
+  clinic_name: z.string().trim().max(200).optional().nullable(),
+  subscription_created_at: isoOrNull,
+  current_period_end: isoOrNull,
 });
 
 const InputSchema = z.object({
@@ -108,6 +123,8 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
           .update({
             full_name: row.full_name,
             professional_id: row.professional_id ?? null,
+            phone: row.phone ?? null,
+            clinic_name: row.clinic_name ?? null,
             is_blocked: true,
           })
           .eq("id", userId);
@@ -115,18 +132,19 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
         // 4) Bloqueia no auth também (login impedido)
         await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
 
-        // 5) Subscription
+        // 5) Subscription (preserva datas do Lumma 1.0 quando vierem)
+        const subPayload: any = {
+          user_id: userId,
+          plan_type: map.plan_type,
+          status: map.status,
+          unlimited_credits: map.unlimited,
+        };
+        if (row.subscription_created_at) subPayload.created_at = row.subscription_created_at;
+        if (row.current_period_end) subPayload.current_period_end = row.current_period_end;
+
         await (supabaseAdmin as any)
           .from("subscriptions")
-          .upsert(
-            {
-              user_id: userId,
-              plan_type: map.plan_type,
-              status: map.status,
-              unlimited_credits: map.unlimited,
-            },
-            { onConflict: "user_id" },
-          );
+          .upsert(subPayload, { onConflict: "user_id" });
 
         // 6) Créditos
         if (map.balance > 0) {
