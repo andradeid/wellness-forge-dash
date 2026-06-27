@@ -294,7 +294,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
          </div>`
       : "";
 
-    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${cleanedTitle}</title>
 <style>
   body { 
     font-family: Arial, Helvetica, sans-serif; 
