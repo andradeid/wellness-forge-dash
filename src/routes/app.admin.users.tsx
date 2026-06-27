@@ -48,7 +48,7 @@ export const Route = createFileRoute("/app/admin/users")({
   component: UsersPage,
 });
 
-function DetailCell({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
+function DetailCell({ label, value, highlight }: { label: string; value: ReactNode; highlight?: boolean }) {
   return (
     <div className="rounded-lg border p-3">
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
