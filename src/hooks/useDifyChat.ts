@@ -171,6 +171,10 @@ export function useDifyChat(
   const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [uploadProgress, setUploadProgress] = useState<AttachmentProgressItem[]>([]);
   const conversationIdRef = useRef<string | null>(null);
+  // Mapa { agent_id -> dify_conversation_id } para retomar a sessão correta
+  // do Dify ao alternar entre agentes no mesmo chat (preserva contexto).
+  const conversationMapRef = useRef<Record<string, string>>({});
+  const [activeAgents, setActiveAgents] = useState<string[]>([]);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
