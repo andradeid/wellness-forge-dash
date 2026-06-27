@@ -658,11 +658,24 @@ export function useDifyChat(
       let res = await callDify(initialConv);
 
       // Se o Dify rejeitar o conversation_id (404 / "Conversation Not Exists"),
-      // limpamos a referência e abrimos uma nova conversa automaticamente.
+      // limpamos a referência (e a entrada do mapa) e abrimos nova conversa.
       if (res.status === 404) {
         conversationIdRef.current = "";
+        if (conversationMapRef.current[agentType]) {
+          const { [agentType]: _dead, ...rest } = conversationMapRef.current;
+          conversationMapRef.current = rest;
+          setActiveAgents(Object.keys(rest));
+          if (chatId) {
+            (supabase as any)
+              .from("patient_chats")
+              .update({ dify_conversation_id: null, dify_conversations: rest })
+              .eq("id", chatId)
+              .then(() => {});
+          }
+        }
         res = await callDify(undefined);
       }
+
 
       if (!res.ok) {
         setThinking(false);

@@ -67,15 +67,14 @@ export const Route = createFileRoute("/api/dify/chat")({
         const patientName = sanitize(meta?.patient_name);
         const safeQuery = sanitizeQuery(query || "");
 
-        // Compõe o identificador exibido em "Usuário Final ou Conta" no Dify.
-        const buildDisplayUser = () => {
-          if (!nutriName && !patientName) return userId;
-          const label = [nutriName, patientName].filter(Boolean).join(" · ");
-          const shortId = userId.slice(0, 8);
-          const composed = `${label} [${shortId}]`;
-          return composed.length > 64 ? composed.slice(0, 64) : composed;
-        };
-        const displayUser = buildDisplayUser();
+        // Identificador estável para o Dify (chave de memória da conversa).
+        // NÃO usar nomes — eles variam entre sessões e quebram o vínculo
+        // (conversation_id, user) → Dify devolve resposta "fria".
+        // Formato: <userId>:<patient_id|no-patient>. Único por par nutri+paciente.
+        const patientIdSafe = sanitize(meta?.patient_id) || "no-patient";
+        const composedUser = `${userId}:${patientIdSafe}`;
+        const displayUser = composedUser.length > 64 ? composedUser.slice(0, 64) : composedUser;
+
 
         const mergedInputs = {
           nutritionist_name: nutriName || "",
