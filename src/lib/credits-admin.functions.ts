@@ -38,9 +38,16 @@ export const findUsers = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
-export const listNutritionists = createServerFn({ method: "GET" })
+export const listNutritionists = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d) =>
+    z.object({
+      q: z.string().trim().max(120).optional().default(""),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(25),
+    }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
 
     const { data: adminRoleRows, error: rErr } = await context.supabase
@@ -50,44 +57,54 @@ export const listNutritionists = createServerFn({ method: "GET" })
     if (rErr) throw new Response(rErr.message, { status: 500 });
 
     const adminIds = Array.from(new Set((adminRoleRows ?? []).map((r: any) => r.user_id as string)));
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+
     let profilesQuery = context.supabase
       .from("profiles")
-      .select("id, full_name, email")
+      .select("id, full_name, email", { count: "exact" })
       .is("deleted_at", null);
 
     if (adminIds.length > 0) {
       profilesQuery = profilesQuery.not("id", "in", `(${adminIds.join(",")})`);
     }
+    if (data.q) {
+      const term = `%${data.q}%`;
+      profilesQuery = profilesQuery.or(`full_name.ilike.${term},email.ilike.${term}`);
+    }
 
-    profilesQuery = profilesQuery.order("full_name", { ascending: true }).limit(10000);
-
-    const [profilesRes, subsRes, creditsRes] = await Promise.all([
-      profilesQuery,
-      context.supabase
-        .from("subscriptions")
-        .select("user_id, plan_type, unlimited_credits")
-        .limit(10000),
-      context.supabase
-        .from("user_credits")
-        .select("user_id, balance")
-        .limit(10000),
-    ]);
+    const profilesRes = await profilesQuery
+      .order("full_name", { ascending: true, nullsFirst: false })
+      .range(from, to);
     if (profilesRes.error) throw new Response(profilesRes.error.message, { status: 500 });
-    if (subsRes.error) throw new Response(subsRes.error.message, { status: 500 });
-    if (creditsRes.error) throw new Response(creditsRes.error.message, { status: 500 });
 
-    const profileIds = new Set((profilesRes.data ?? []).map((p: any) => p.id));
+    const pageIds = (profilesRes.data ?? []).map((p: any) => p.id);
+    let subsRes: any = { data: [] };
+    let creditsRes: any = { data: [] };
+    if (pageIds.length > 0) {
+      [subsRes, creditsRes] = await Promise.all([
+        context.supabase
+          .from("subscriptions")
+          .select("user_id, plan_type, unlimited_credits")
+          .in("user_id", pageIds),
+        context.supabase
+          .from("user_credits")
+          .select("user_id, balance")
+          .in("user_id", pageIds),
+      ]);
+      if (subsRes.error) throw new Response(subsRes.error.message, { status: 500 });
+      if (creditsRes.error) throw new Response(creditsRes.error.message, { status: 500 });
+    }
+
     const subById = new Map<string, { plan_type: string | null; unlimited_credits: boolean }>();
     for (const s of subsRes.data ?? []) {
-      if (!profileIds.has(s.user_id)) continue;
       subById.set(s.user_id, { plan_type: s.plan_type, unlimited_credits: !!s.unlimited_credits });
     }
     const balById = new Map<string, number>();
     for (const c of creditsRes.data ?? []) {
-      if (!profileIds.has(c.user_id)) continue;
       balById.set(c.user_id, c.balance ?? 0);
     }
-    return (profilesRes.data ?? []).map((p: any) => {
+    const rows = (profilesRes.data ?? []).map((p: any) => {
       const sub = subById.get(p.id);
       const unlimited = !!sub?.unlimited_credits;
       return {
@@ -97,6 +114,7 @@ export const listNutritionists = createServerFn({ method: "GET" })
         balance: balById.get(p.id) ?? 0,
       };
     });
+    return { rows, total: profilesRes.count ?? 0, page: data.page, pageSize: data.pageSize };
   });
 
 
