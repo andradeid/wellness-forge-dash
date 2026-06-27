@@ -23,6 +23,9 @@ const RowSchema = z.object({
   clinic_name: z.string().trim().max(200).optional().nullable(),
   subscription_created_at: isoOrNull,
   current_period_end: isoOrNull,
+  cancelled_at: isoOrNull,
+  legacy_status: z.string().trim().toLowerCase().optional().nullable().transform((v) => v || null),
+  legacy_last_login_at: isoOrNull,
 });
 
 const InputSchema = z.object({
