@@ -724,6 +724,15 @@ export function ChatMessageList({
                       isUser ? "text-white/70 justify-end" : "text-muted-foreground/70 justify-start"
                     }`}
                   >
+                    {!isUser && agentLabel && (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${agentLabel.chip}`}
+                        title={`Agente: ${agentLabel.label}`}
+                      >
+                        <span>{agentLabel.icon}</span>
+                        <span>{agentLabel.label}</span>
+                      </span>
+                    )}
                     {m.created_at && (
                       <span title={new Date(m.created_at).toLocaleString("pt-BR")}>
                         {new Date(m.created_at).toLocaleString("pt-BR", {
@@ -740,6 +749,7 @@ export function ChatMessageList({
                         ⏱ {(m.structured_data.processing_ms / 1000).toFixed(2)}s
                       </span>
                     )}
+                  </div>
                   </div>
                 </div>
               </div>
