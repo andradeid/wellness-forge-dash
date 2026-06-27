@@ -1,0 +1,1 @@
+ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ; ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS legacy_status TEXT; ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS legacy_last_login_at TIMESTAMPTZ;

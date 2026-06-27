@@ -716,6 +716,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_blocked: boolean
+          legacy_last_login_at: string | null
           phone: string | null
           policy_accepted_at: string | null
           professional_id: string | null
@@ -733,6 +734,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_blocked?: boolean
+          legacy_last_login_at?: string | null
           phone?: string | null
           policy_accepted_at?: string | null
           professional_id?: string | null
@@ -750,6 +752,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_blocked?: boolean
+          legacy_last_login_at?: string | null
           phone?: string | null
           policy_accepted_at?: string | null
           professional_id?: string | null
@@ -805,9 +808,11 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          cancelled_at: string | null
           created_at: string
           current_period_end: string
           id: string
+          legacy_status: string | null
           plan_type: Database["public"]["Enums"]["plan_type"]
           seats_override: number | null
           status: Database["public"]["Enums"]["subscription_status"]
@@ -816,9 +821,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancelled_at?: string | null
           created_at?: string
           current_period_end?: string
           id?: string
+          legacy_status?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -827,9 +834,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancelled_at?: string | null
           created_at?: string
           current_period_end?: string
           id?: string
+          legacy_status?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
