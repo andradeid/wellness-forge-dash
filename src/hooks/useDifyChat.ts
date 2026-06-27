@@ -693,19 +693,40 @@ export function useDifyChat(
     };
 
     try {
+      const latestContextFromMessages = (() => {
+        const latest = messages
+          .slice()
+          .reverse()
+          .find((m) =>
+            m.role === "assistant" &&
+            m.agent_type?.startsWith("exam") &&
+            Array.isArray(m.structured_data?.markers) &&
+            m.structured_data.markers.length > 0,
+          );
+        if (!latest) return null;
+        return buildExamContextFromAnalysis({
+          text: latest.content,
+          markers: latest.structured_data?.markers ?? [],
+          meta: metaRef.current,
+          agentType: latest.agent_type,
+          previous: examContext,
+        });
+      })();
+      const effectiveExamContext = latestContextFromMessages ?? examContext;
+
       const finalQuery = (() => {
         // Follow-ups no mesmo agente de exame também precisam receber o
         // contexto do exame anterior. Sem isso, se a memória nativa do Dify
         // falhar, perguntas como "traga só hemograma" viram conversa fria.
         // Novo exame com anexo continua limpo para não misturar laudos.
         if (agentType.startsWith("exam")) {
-          if (difyFiles.length === 0 && examContext) return buildContextPrefix(examContext) + text;
+          if (difyFiles.length === 0 && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
           return text;
         }
         if (agentType === "research") return text;
         try {
-          return (examContext 
-              ? buildContextPrefix(examContext) 
+          return (effectiveExamContext
+              ? buildContextPrefix(effectiveExamContext)
               : buildMinimalPrefix()) + text;
         } catch (e) {
           console.error('[finalQuery error]', e);
@@ -972,7 +993,7 @@ export function useDifyChat(
       setThinking(false);
       setUploadProgress([]);
     }
-  }, [chatId, patientId, readOnly, agentType, examContext, getCost, consume, refetchCredits]);
+  }, [chatId, patientId, readOnly, agentType, examContext, messages, getCost, consume, refetchCredits]);
 
   const resetChat = useCallback(async () => {
     if (readOnly) return;
