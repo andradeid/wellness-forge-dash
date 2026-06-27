@@ -41,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
 import { SupportWidget } from "@/components/SupportWidget";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -119,12 +120,14 @@ function DashboardPage() {
   const { user, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [range, setRange] = useState<RangeKey>("month");
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
   const [recentExams, setRecentExams] = useState<ExamLite[]>([]);
   const [recentChats, setRecentChats] = useState<ChatLite[]>([]);
+  const [profileDetail, setProfileDetail] = useState<{ key: string; label: string; color: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
@@ -137,78 +140,86 @@ function DashboardPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const startIso = rangeStartIso(range);
+      setLoadError(null);
+      try {
+        const startIso = rangeStartIso(range);
 
-      const examsQuery = (supabase as any)
-        .from("patient_exams")
-        .select("id", { count: "exact", head: true })
-        .eq("uploaded_by", user.id);
-      if (startIso) examsQuery.gte("created_at", startIso);
-
-      const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
-
-      // Paginação para buscar TODOS os resultados (Supabase limita 1000 por requisição)
-      const fetchAllResults = async () => {
-        const pageSize = 1000;
-        let from = 0;
-        const all: any[] = [];
-        // hard cap de segurança (50k linhas)
-        for (let i = 0; i < 50; i++) {
-          const { data, error } = await (supabase as any)
-            .from("patient_exam_results")
-            .select(
-              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at, category",
-            )
-            .eq("created_by", user.id)
-            .order("measured_at", { ascending: false })
-            .range(from, from + pageSize - 1);
-          if (error || !data) break;
-          all.push(...data);
-          if (data.length < pageSize) break;
-          from += pageSize;
-        }
-        return all;
-      };
-
-      const [
-        { data: pts },
-        res,
-        { count: examCount },
-        { data: exs },
-        { data: chs },
-      ] = await Promise.all([
-        (supabase as any)
-          .from("patients")
-          .select("id, name, birth_date, created_at, gender")
-          .eq("created_by", user.id),
-        fetchAllResults(),
-        examsQuery,
-        (supabase as any)
+        const examsQuery = (supabase as any)
           .from("patient_exams")
-          .select("id, created_at")
-          .eq("uploaded_by", user.id)
-          .gte("created_at", sinceSparkline)
-          .order("created_at", { ascending: true })
-          .limit(2000),
-        (supabase as any)
-          .from("patient_chats")
-          .select("id, patient_id, title, updated_at, pinned_at")
-          .eq("created_by", user.id)
-          .order("pinned_at", { ascending: false, nullsFirst: false })
-          .order("updated_at", { ascending: false })
-          .limit(5),
-      ]);
+          .select("id", { count: "exact", head: true })
+          .eq("uploaded_by", user.id);
+        if (startIso) examsQuery.gte("created_at", startIso);
 
+        const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
 
+        // Paginação para buscar TODOS os resultados (Supabase limita 1000 por requisição)
+        const fetchAllResults = async () => {
+          const pageSize = 1000;
+          let from = 0;
+          const all: any[] = [];
+          for (let i = 0; i < 50; i++) {
+            const { data, error } = await (supabase as any)
+              .from("patient_exam_results")
+              .select(
+                "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at, category",
+              )
+              .eq("created_by", user.id)
+              .order("measured_at", { ascending: false })
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+            if (!data) break;
+            all.push(...data);
+            if (data.length < pageSize) break;
+            from += pageSize;
+          }
+          return all;
+        };
 
+        const [
+          { data: pts, error: ptsErr },
+          res,
+          { count: examCount, error: examCountErr },
+          { data: exs, error: exsErr },
+          { data: chs, error: chsErr },
+        ] = await Promise.all([
+          (supabase as any)
+            .from("patients")
+            .select("id, name, birth_date, created_at, gender")
+            .eq("created_by", user.id),
+          fetchAllResults(),
+          examsQuery,
+          (supabase as any)
+            .from("patient_exams")
+            .select("id, created_at")
+            .eq("uploaded_by", user.id)
+            .gte("created_at", sinceSparkline)
+            .order("created_at", { ascending: true })
+            .limit(2000),
+          (supabase as any)
+            .from("patient_chats")
+            .select("id, patient_id, title, updated_at, pinned_at")
+            .eq("created_by", user.id)
+            .order("pinned_at", { ascending: false, nullsFirst: false })
+            .order("updated_at", { ascending: false })
+            .limit(5),
+        ]);
 
-      if (cancelled) return;
-      setPatients((pts as PatientLite[]) ?? []);
-      setResults((res as ResultRow[]) ?? []);
-      setExamsThisMonth(examCount ?? 0);
-      setRecentExams((exs as ExamLite[]) ?? []);
-      setRecentChats((chs as ChatLite[]) ?? []);
-      setLoading(false);
+        const firstErr = ptsErr || examCountErr || exsErr || chsErr;
+        if (firstErr) throw firstErr;
+
+        if (cancelled) return;
+        setPatients((pts as PatientLite[]) ?? []);
+        setResults((res as ResultRow[]) ?? []);
+        setExamsThisMonth(examCount ?? 0);
+        setRecentExams((exs as ExamLite[]) ?? []);
+        setRecentChats((chs as ChatLite[]) ?? []);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.error("[dashboard] erro ao carregar dados", err);
+        setLoadError(err?.message ?? "Não foi possível carregar os dados do painel.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -428,15 +439,36 @@ function DashboardPage() {
     const top = sorted.slice(0, 9);
     const restTotal = sorted.slice(9).reduce((s, [, v]) => s + v, 0);
     const data = top.map(([k, v], i) => ({
+      key: k,
       name: LABELS[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       value: v,
       color: PALETTE[i % PALETTE.length],
+      keys: [k],
     }));
     if (restTotal > 0) {
-      data.push({ name: "Outros", value: restTotal, color: "#cbd5e1" });
+      data.push({
+        key: "__rest__",
+        name: "Outros",
+        value: restTotal,
+        color: "#cbd5e1",
+        keys: sorted.slice(9).map(([k]) => k),
+      });
     }
     return data;
   }, [filteredResults]);
+
+  // Resultados que compõem a categoria selecionada no card de Perfil de Exames
+  const profileDetailRows = useMemo(() => {
+    if (!profileDetail) return [];
+    const entry = examProfile.find((d) => d.key === profileDetail.key);
+    const keys = new Set(entry?.keys ?? [profileDetail.key]);
+    return filteredResults
+      .filter((r) => {
+        const k = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
+        return keys.has(k);
+      })
+      .slice(0, 500);
+  }, [profileDetail, examProfile, filteredResults]);
 
   // Perfil da base: distribuição por gênero e faixa etária
   const baseProfile = useMemo(() => {
@@ -764,6 +796,16 @@ function DashboardPage() {
           <p className="text-xs text-muted-foreground mb-4">Distribuição por tipo de análise.</p>
           {loading ? (
             <Skeleton className="h-56 w-full" />
+          ) : loadError ? (
+            <div className="h-56 flex flex-col items-center justify-center text-center gap-2 px-4">
+              <AlertTriangle className="h-5 w-5 text-amber-500" {...ICON_PROPS} />
+              <p className="text-xs text-muted-foreground">
+                Não foi possível carregar os exames. {loadError}
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setRange((r) => r)}>
+                Tentar novamente
+              </Button>
+            </div>
           ) : examProfile.length === 0 ? (
             <EmptyState text="Nenhum exame avaliado no período selecionado." />
           ) : (
@@ -777,13 +819,31 @@ function DashboardPage() {
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={2}
+                    onClick={(d: any) =>
+                      d?.payload &&
+                      setProfileDetail({
+                        key: d.payload.key,
+                        label: d.payload.name,
+                        color: d.payload.color,
+                      })
+                    }
+                    style={{ cursor: "pointer" }}
                   >
                     {examProfile.map((d, i) => (
                       <Cell key={i} fill={d.color} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v: number, n: string) => [`${v} marcadores`, n]} />
-                  <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" align="center" verticalAlign="bottom" />
+                  <Legend
+                    wrapperStyle={{ fontSize: 10, cursor: "pointer" }}
+                    iconType="circle"
+                    align="center"
+                    verticalAlign="bottom"
+                    onClick={(e: any) => {
+                      const entry = examProfile.find((d) => d.name === e?.value);
+                      if (entry) setProfileDetail({ key: entry.key, label: entry.name, color: entry.color });
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -1104,6 +1164,58 @@ function DashboardPage() {
            Políticas e Termos de Uso
          </Link>
        </footer>
+
+       <Dialog open={!!profileDetail} onOpenChange={(o) => !o && setProfileDetail(null)}>
+         <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+           <DialogHeader>
+             <DialogTitle className="flex items-center gap-2">
+               <span
+                 className="inline-block h-3 w-3 rounded-full"
+                 style={{ background: profileDetail?.color ?? "#cbd5e1" }}
+               />
+               {profileDetail?.label ?? "Categoria"}
+             </DialogTitle>
+             <DialogDescription>
+               {profileDetailRows.length} marcador{profileDetailRows.length === 1 ? "" : "es"} avaliado{profileDetailRows.length === 1 ? "" : "s"} no período selecionado.
+             </DialogDescription>
+           </DialogHeader>
+           <div className="flex-1 overflow-auto border rounded-lg">
+             {profileDetailRows.length === 0 ? (
+               <div className="p-6 text-center text-sm text-muted-foreground">
+                 Nenhum resultado encontrado.
+               </div>
+             ) : (
+               <table className="w-full text-xs">
+                 <thead className="bg-muted/50 sticky top-0">
+                   <tr className="text-left">
+                     <th className="px-3 py-2 font-medium">Paciente</th>
+                     <th className="px-3 py-2 font-medium">Marcador</th>
+                     <th className="px-3 py-2 font-medium">Valor</th>
+                     <th className="px-3 py-2 font-medium">Classificação</th>
+                     <th className="px-3 py-2 font-medium">Data</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {profileDetailRows.map((r) => (
+                     <tr key={r.id} className="border-t hover:bg-muted/30">
+                       <td className="px-3 py-2">{patientMap.get(r.patient_id) ?? "—"}</td>
+                       <td className="px-3 py-2">{r.marker_name}</td>
+                       <td className="px-3 py-2 whitespace-nowrap">
+                         {r.marker_value_raw ?? "—"}
+                         {r.marker_unit ? ` ${r.marker_unit}` : ""}
+                       </td>
+                       <td className="px-3 py-2">{r.classification ?? "—"}</td>
+                       <td className="px-3 py-2 whitespace-nowrap">
+                         {r.measured_at ? format(new Date(r.measured_at), "dd/MM/yyyy") : "—"}
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             )}
+           </div>
+         </DialogContent>
+       </Dialog>
      </div>
    );
  }
