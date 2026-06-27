@@ -36,8 +36,19 @@ function normalizeRow(raw: Record<string, any>): CsvRow | null {
     return "";
   };
   const email = get("email", "Email", "e-mail").toLowerCase();
-  const full_name = get("full_name", "name", "nome");
-  if (!email || !full_name) return null;
+  if (!email) return null;
+  let full_name = get("full_name", "name", "nome");
+  if (!full_name) {
+    // Fallback: deriva nome do email (ex.: "monica.silva@x.com" -> "Monica Silva")
+    const localPart = email.split("@")[0] ?? "";
+    full_name = localPart
+      .replace(/[._-]+/g, " ")
+      .replace(/\d+/g, "")
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ") || email;
+  }
   return {
     id: get("id", "user_id") || null,
     email,
