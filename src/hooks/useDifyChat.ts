@@ -370,7 +370,8 @@ export function useDifyChat(
         .eq("chat_id", id)
         .order("created_at", { ascending: true });
       if (!cancelled) {
-        setMessages((msgs as ChatMessage[]) ?? []);
+        const loadedMessages = (msgs as ChatMessage[]) ?? [];
+        setMessages(loadedMessages);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
         const resolvedAgent = lastMsgWithAgent?.agent_type ?? "";
         if (resolvedAgent) {
@@ -382,6 +383,36 @@ export function useDifyChat(
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
         setActiveAgents(Object.keys(conversationMapRef.current));
+
+        // Reconstitui o contexto a partir da última análise real de exame.
+        // Isso corrige conversas em que um follow-up simples sobrescreveu
+        // patient_chats.exam_context com uma resposta fria do tipo "envie o laudo".
+        const storedCtx = (chosenChat?.exam_context as ExamContext | null) ?? null;
+        const lastValidExamAnalysis = loadedMessages
+          .slice()
+          .reverse()
+          .find((m) =>
+            m.role === "assistant" &&
+            m.agent_type?.startsWith("exam") &&
+            Array.isArray(m.structured_data?.markers) &&
+            m.structured_data.markers.length > 0,
+          );
+        if (lastValidExamAnalysis) {
+          const repairedCtx = buildExamContextFromAnalysis({
+            text: lastValidExamAnalysis.content,
+            markers: lastValidExamAnalysis.structured_data?.markers ?? [],
+            meta: metaRef.current,
+            agentType: lastValidExamAnalysis.agent_type,
+            previous: storedCtx,
+          });
+          setExamContext(repairedCtx);
+          if (id && storedCtx?.resumo_texto !== repairedCtx.resumo_texto) {
+            void (supabase as any)
+              .from("patient_chats")
+              .update({ exam_context: repairedCtx })
+              .eq("id", id);
+          }
+        }
       }
     };
     init();
