@@ -1164,6 +1164,58 @@ function DashboardPage() {
            Políticas e Termos de Uso
          </Link>
        </footer>
+
+       <Dialog open={!!profileDetail} onOpenChange={(o) => !o && setProfileDetail(null)}>
+         <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+           <DialogHeader>
+             <DialogTitle className="flex items-center gap-2">
+               <span
+                 className="inline-block h-3 w-3 rounded-full"
+                 style={{ background: profileDetail?.color ?? "#cbd5e1" }}
+               />
+               {profileDetail?.label ?? "Categoria"}
+             </DialogTitle>
+             <DialogDescription>
+               {profileDetailRows.length} marcador{profileDetailRows.length === 1 ? "" : "es"} avaliado{profileDetailRows.length === 1 ? "" : "s"} no período selecionado.
+             </DialogDescription>
+           </DialogHeader>
+           <div className="flex-1 overflow-auto border rounded-lg">
+             {profileDetailRows.length === 0 ? (
+               <div className="p-6 text-center text-sm text-muted-foreground">
+                 Nenhum resultado encontrado.
+               </div>
+             ) : (
+               <table className="w-full text-xs">
+                 <thead className="bg-muted/50 sticky top-0">
+                   <tr className="text-left">
+                     <th className="px-3 py-2 font-medium">Paciente</th>
+                     <th className="px-3 py-2 font-medium">Marcador</th>
+                     <th className="px-3 py-2 font-medium">Valor</th>
+                     <th className="px-3 py-2 font-medium">Classificação</th>
+                     <th className="px-3 py-2 font-medium">Data</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {profileDetailRows.map((r) => (
+                     <tr key={r.id} className="border-t hover:bg-muted/30">
+                       <td className="px-3 py-2">{patientMap.get(r.patient_id) ?? "—"}</td>
+                       <td className="px-3 py-2">{r.marker_name}</td>
+                       <td className="px-3 py-2 whitespace-nowrap">
+                         {r.marker_value_raw ?? "—"}
+                         {r.marker_unit ? ` ${r.marker_unit}` : ""}
+                       </td>
+                       <td className="px-3 py-2">{r.classification ?? "—"}</td>
+                       <td className="px-3 py-2 whitespace-nowrap">
+                         {r.measured_at ? format(new Date(r.measured_at), "dd/MM/yyyy") : "—"}
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             )}
+           </div>
+         </DialogContent>
+       </Dialog>
      </div>
    );
  }
