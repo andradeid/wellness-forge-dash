@@ -284,6 +284,20 @@ function UsersPage() {
     }
     setRowTags(tagMap);
 
+    // Contagem de pacientes por usuária (created_by) — feita ao vivo
+    const patientsCountMap: Record<string, number> = {};
+    if (pageIds.length > 0) {
+      const { data: pats } = await (supabase as any)
+        .from("patients")
+        .select("created_by")
+        .in("created_by", pageIds)
+        .is("deleted_at", null);
+      (pats ?? []).forEach((row: any) => {
+        patientsCountMap[row.created_by] = (patientsCountMap[row.created_by] ?? 0) + 1;
+      });
+    }
+    setRowPatients(patientsCountMap);
+
     const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
