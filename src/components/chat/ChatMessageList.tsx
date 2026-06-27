@@ -500,7 +500,7 @@ export function ChatMessageList({
 
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
-            const hasPrescriptionMsg = !isUser && /(?:MODELO DE )?RECEITU[ÁA]RIO|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+|FORMULA[ÇC][ÃA]O\s+MANIPULADA/i.test(m.content);
+            const hasPrescriptionMsg = !isUser && m.agent_type === "production" && /(?:MODELO DE )?RECEITU[ÁA]RIO|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+|FORMULA[ÇC][ÃA]O\s+MANIPULADA/i.test(m.content);
 
             // Separador quando o agente muda entre mensagens consecutivas do assistente
             const prevAssistant = [...messages.slice(0, i)].reverse().find((x) => x.role === "assistant");
@@ -627,7 +627,7 @@ export function ChatMessageList({
                       // Detecta cabeçalhos de receita em múltiplas variações que o agente possa devolver.
                       // Regex captura a linha do título (com ou sem markdown ##/**) para usar como cabeçalho do bloco.
                       const prescriptionRegex = /^[#\s*]*((?:MODELO DE )?RECEITU[ÁA]RIO(?:[^\n]*)|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)[^\n]*|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+[^\n]*|FORMULA[ÇC][ÃA]O\s+MANIPULADA[^\n]*)/im;
-                      const prescriptionMatch = finalContent?.match(prescriptionRegex);
+                      const prescriptionMatch = m.agent_type === "production" ? finalContent?.match(prescriptionRegex) : null;
 
                       if (prescriptionMatch && typeof prescriptionMatch.index === "number") {
                         const idx = prescriptionMatch.index;
