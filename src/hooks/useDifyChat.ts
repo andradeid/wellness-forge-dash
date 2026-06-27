@@ -912,31 +912,23 @@ export function useDifyChat(
                     });
                   }
 
-                  // Salva contexto após resposta do agente de exame
-                  if (agentType?.startsWith("exam") && fullText.trim() && !labReportError) {
-                    const safeMarkers = markers ?? [];
-                    const newCtx: ExamContext = {
-                      patient_name: metaRef.current.patient_name,
-                      patient_profile: metaRef.current.patient_profile,
-                      patient_sex: metaRef.current.patient_sex,
-                      gestante_tipo: metaRef.current.gestante_tipo,
-                      gestante_periodo: metaRef.current.gestante_periodo,
-                      exam_date: new Date().toISOString(),
-                      alteracoes: safeMarkers
-                        .filter((m: Marker) => {
-                          const visual = classificationVisualState(m.classification);
-                          return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
-                        })
-                        .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
-                      otimos: safeMarkers
-                        .filter((m: Marker) => classificationVisualState(m.classification) === "otimo")
-                        .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""}`),
-                      resumo_clinico: safeMarkers
-                        .map((m: Marker) => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
-                        .join(" | "),
-                      resumo_texto: fullText.slice(0, 4000),
-                      agent_type: agentType,
-                    };
+                  // Salva contexto apenas quando a resposta é uma análise real
+                  // de exame (upload novo ou marcadores extraídos). Follow-ups
+                  // simples não podem apagar o contexto clínico anterior.
+                  const shouldRefreshExamContext =
+                    agentType?.startsWith("exam") &&
+                    fullText.trim() &&
+                    !labReportError &&
+                    (difyFiles.length > 0 || (markers && markers.length > 0) || !!formulacoes);
+
+                  if (shouldRefreshExamContext) {
+                    const newCtx = buildExamContextFromAnalysis({
+                      text: fullText,
+                      markers: markers ?? [],
+                      meta: metaRef.current,
+                      agentType,
+                      previous: examContext,
+                    });
                     setExamContext(newCtx);
                     await (supabase as any)
                       .from("patient_chats")
