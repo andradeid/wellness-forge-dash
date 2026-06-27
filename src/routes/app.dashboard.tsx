@@ -796,6 +796,16 @@ function DashboardPage() {
           <p className="text-xs text-muted-foreground mb-4">Distribuição por tipo de análise.</p>
           {loading ? (
             <Skeleton className="h-56 w-full" />
+          ) : loadError ? (
+            <div className="h-56 flex flex-col items-center justify-center text-center gap-2 px-4">
+              <AlertTriangle className="h-5 w-5 text-amber-500" {...ICON_PROPS} />
+              <p className="text-xs text-muted-foreground">
+                Não foi possível carregar os exames. {loadError}
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setRange((r) => r)}>
+                Tentar novamente
+              </Button>
+            </div>
           ) : examProfile.length === 0 ? (
             <EmptyState text="Nenhum exame avaliado no período selecionado." />
           ) : (
@@ -809,13 +819,31 @@ function DashboardPage() {
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={2}
+                    onClick={(d: any) =>
+                      d?.payload &&
+                      setProfileDetail({
+                        key: d.payload.key,
+                        label: d.payload.name,
+                        color: d.payload.color,
+                      })
+                    }
+                    style={{ cursor: "pointer" }}
                   >
                     {examProfile.map((d, i) => (
                       <Cell key={i} fill={d.color} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v: number, n: string) => [`${v} marcadores`, n]} />
-                  <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" align="center" verticalAlign="bottom" />
+                  <Legend
+                    wrapperStyle={{ fontSize: 10, cursor: "pointer" }}
+                    iconType="circle"
+                    align="center"
+                    verticalAlign="bottom"
+                    onClick={(e: any) => {
+                      const entry = examProfile.find((d) => d.name === e?.value);
+                      if (entry) setProfileDetail({ key: entry.key, label: entry.name, color: entry.color });
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
