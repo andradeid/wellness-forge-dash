@@ -610,7 +610,8 @@ export function useDifyChat(
     // 3) Placeholder assistant message
     const assistantId = crypto.randomUUID();
 
-    const saveAssistantToSupabase = async (content: string, convId?: string) => {
+    const saveAssistantToSupabase = async (rawContent: string, convId?: string) => {
+      const content = stripAgentScaffolding(rawContent);
       if (!content.trim() && !convId) return;
 
       if (convId) {
