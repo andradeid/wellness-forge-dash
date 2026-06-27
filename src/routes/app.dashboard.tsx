@@ -75,6 +75,7 @@ interface ResultRow {
   marker_unit: string | null;
   classification: string | null;
   measured_at: string;
+  category: string | null;
 }
 
 interface PatientLite {
