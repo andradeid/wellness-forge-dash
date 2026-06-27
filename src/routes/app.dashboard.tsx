@@ -764,37 +764,25 @@ function DashboardPage() {
           <p className="text-xs text-muted-foreground mb-4">Distribuição por tipo de análise.</p>
           {loading ? (
             <Skeleton className="h-56 w-full" />
+          ) : examProfile.length === 0 ? (
+            <EmptyState text="Nenhum exame avaliado no período selecionado." />
           ) : (
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={[
-                      { name: "Laboratorial", value: 45, color: "#e8a04c" },
-                      { name: "Genético", value: 15, color: "#e89bcf" },
-                      { name: "BIA", value: 15, color: "#7ba6c4" },
-                      { name: "Microbioma", value: 10, color: "#8b5cf6" },
-                      { name: "Calorimetria", value: 10, color: "#10b981" },
-                      { name: "Outros", value: 5, color: "#cbd5e1" },
-                    ]}
+                    data={examProfile}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={2}
                   >
-                    {[
-                      { name: "Laboratorial", value: 45, color: "#e8a04c" },
-                      { name: "Genético", value: 15, color: "#e89bcf" },
-                      { name: "BIA", value: 15, color: "#7ba6c4" },
-                      { name: "Microbioma", value: 10, color: "#8b5cf6" },
-                      { name: "Calorimetria", value: 10, color: "#10b981" },
-                      { name: "Outros", value: 5, color: "#cbd5e1" },
-                    ].map((d, i) => (
+                    {examProfile.map((d, i) => (
                       <Cell key={i} fill={d.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(v: number, n: string) => [`${v} marcadores`, n]} />
                   <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" align="center" verticalAlign="bottom" />
                 </PieChart>
               </ResponsiveContainer>
