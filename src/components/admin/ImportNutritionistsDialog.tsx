@@ -254,6 +254,44 @@ export function ImportNutritionistsDialog({
             </div>
           )}
 
+          {prereqError && (
+            <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <KeyRound className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-destructive">Importação bloqueada</p>
+                  <p className="text-xs text-muted-foreground">{prereqError}</p>
+                </div>
+              </div>
+              <div className="text-xs space-y-1.5">
+                <p className="font-medium">Como cadastrar a chave admin:</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>
+                    Abra{" "}
+                    <a
+                      href={SUPABASE_SECRETS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      Supabase → Project Settings → API
+                      <ExternalLink className="h-3 w-3" />
+                    </a>{" "}
+                    e copie o valor de <code className="font-mono">service_role</code> (campo "Secret").
+                  </li>
+                  <li>
+                    No painel do Lovable, vá em <strong>Cloud → Secrets</strong> (ícone de banco de dados na barra superior).
+                  </li>
+                  <li>
+                    Clique em <strong>Add new secret</strong>, defina o nome exatamente como{" "}
+                    <code className="font-mono">SUPABASE_SERVICE_ROLE_KEY</code> e cole o valor copiado.
+                  </li>
+                  <li>Salve e tente importar novamente (o backend recarrega automaticamente).</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
           {(running || done > 0) && (
             <div className="space-y-2">
               <div className="flex justify-between text-xs text-muted-foreground">
