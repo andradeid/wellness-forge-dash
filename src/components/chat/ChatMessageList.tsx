@@ -264,7 +264,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
     setEditableBody(cleanedBody);
   }, [cleanedBody]);
 
-  const fullText = `${title}\n\n${editableBody}`;
+  const fullText = `${cleanedTitle}\n\n${editableBody}`;
 
   const handleCopy = async () => {
     try {
