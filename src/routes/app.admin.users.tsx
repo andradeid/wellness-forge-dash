@@ -109,6 +109,7 @@ function UsersPage() {
   type UserTag = { id: string; label: string; color: string };
   const [tags, setTags] = useState<UserTag[]>([]);
   const [rowTags, setRowTags] = useState<Record<string, UserTag[]>>({});
+  const [rowPatients, setRowPatients] = useState<Record<string, number>>({});
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
   const [newTagLabel, setNewTagLabel] = useState("");
   const [newTagColor, setNewTagColor] = useState(DEFAULT_COLORS[0]);
@@ -282,6 +283,19 @@ function UsersPage() {
       });
     }
     setRowTags(tagMap);
+
+    // Contagem de pacientes por usuária (created_by) — feita ao vivo
+    const patientsCountMap: Record<string, number> = {};
+    if (pageIds.length > 0) {
+      const { data: pats } = await (supabase as any)
+        .from("patients")
+        .select("created_by")
+        .in("created_by", pageIds);
+      (pats ?? []).forEach((row: any) => {
+        patientsCountMap[row.created_by] = (patientsCountMap[row.created_by] ?? 0) + 1;
+      });
+    }
+    setRowPatients(patientsCountMap);
 
     const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
@@ -569,6 +583,7 @@ function UsersPage() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Usuária</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pacientes</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Etiquetas</TableHead>
@@ -597,6 +612,7 @@ function UsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>{planLabel(r.plan_type)}</TableCell>
+                      <TableCell className="tabular-nums">{rowPatients[r.id] ?? 0}</TableCell>
                       <TableCell>
                         <Badge variant={statusVariant(r.status, r.is_blocked)} className="rounded-full">
                           {statusLabel(r.status, r.is_blocked)}
