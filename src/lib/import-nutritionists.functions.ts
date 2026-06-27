@@ -123,19 +123,6 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
           .update({
             full_name: row.full_name,
             professional_id: row.professional_id ?? null,
-            is_blocked: true,
-          })
-          .eq("id", userId);
-
-        // 4) Bloqueia no auth também (login impedido)
-        await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
-
-        // 3) handle_new_user trigger criou profile/subscription/role; ajusta
-        await (supabaseAdmin as any)
-          .from("profiles")
-          .update({
-            full_name: row.full_name,
-            professional_id: row.professional_id ?? null,
             phone: row.phone ?? null,
             clinic_name: row.clinic_name ?? null,
             is_blocked: true,
@@ -158,12 +145,6 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
         await (supabaseAdmin as any)
           .from("subscriptions")
           .upsert(subPayload, { onConflict: "user_id" });
-              plan_type: map.plan_type,
-              status: map.status,
-              unlimited_credits: map.unlimited,
-            },
-            { onConflict: "user_id" },
-          );
 
         // 6) Créditos
         if (map.balance > 0) {
