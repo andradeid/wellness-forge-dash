@@ -92,17 +92,20 @@ export function ImportNutritionistsDialog({
   const [fileName, setFileName] = useState<string>("");
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(0);
-  const [stats, setStats] = useState({ created: 0, skipped: 0, failed: 0 });
-  const [errors, setErrors] = useState<Array<{ email: string; reason?: string }>>([]);
+  const [stats, setStats] = useState({ created: 0, skipped: 0, failed: 0, inferred: 0 });
+  const [details, setDetails] = useState<DetailRow[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
 
   const reset = () => {
     setRows([]);
     setFileName("");
     setDone(0);
-    setStats({ created: 0, skipped: 0, failed: 0 });
-    setErrors([]);
+    setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
+    setDetails([]);
+    setShowDetails(false);
     if (fileRef.current) fileRef.current.value = "";
   };
+
 
   const pickFile = (file: File) => {
     setFileName(file.name);
@@ -128,12 +131,14 @@ export function ImportNutritionistsDialog({
     if (rows.length === 0) return;
     setRunning(true);
     setDone(0);
-    setStats({ created: 0, skipped: 0, failed: 0 });
-    setErrors([]);
+    setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
+    setDetails([]);
+    setShowDetails(false);
     const batchId = `import-${Date.now()}`;
+    const inferredByEmail = new Map(rows.map((r) => [r.email, !!r.name_inferred]));
     let processed = 0;
-    let created = 0, skipped = 0, failed = 0;
-    const localErrors: Array<{ email: string; reason?: string }> = [];
+    let created = 0, skipped = 0, failed = 0, inferred = 0;
+    const allDetails: DetailRow[] = [];
 
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const chunk = rows.slice(i, i + BATCH_SIZE);
@@ -143,23 +148,33 @@ export function ImportNutritionistsDialog({
         skipped += res.skipped;
         failed += res.failed;
         for (const d of res.details) {
-          if (d.status === "failed") localErrors.push({ email: d.email, reason: d.reason });
+          const wasInferred = inferredByEmail.get(d.email);
+          if (d.status === "created" && wasInferred) {
+            inferred++;
+            allDetails.push({ email: d.email, status: "inferred", reason: "nome derivado do email" });
+          } else {
+            allDetails.push(d as DetailRow);
+          }
         }
       } catch (err) {
         failed += chunk.length;
         const msg = err instanceof Error ? err.message : String(err);
-        for (const r of chunk) localErrors.push({ email: r.email, reason: msg });
+        for (const r of chunk) allDetails.push({ email: r.email, status: "failed", reason: msg });
       }
       processed += chunk.length;
       setDone(processed);
-      setStats({ created, skipped, failed });
-      setErrors([...localErrors]);
+      setStats({ created, skipped, failed, inferred });
+      setDetails([...allDetails]);
     }
 
     setRunning(false);
-    toast.success(`Importação concluída: ${created} criados, ${skipped} pulados, ${failed} falhas`);
+    setShowDetails(true);
+    toast.success(
+      `Importação concluída: ${created} criados${inferred ? ` (${inferred} c/ nome inferido)` : ""}, ${skipped} pulados, ${failed} falhas`,
+    );
     onFinished();
   };
+
 
   const progress = rows.length > 0 ? Math.round((done / rows.length) * 100) : 0;
 
