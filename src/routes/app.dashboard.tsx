@@ -140,78 +140,86 @@ function DashboardPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const startIso = rangeStartIso(range);
+      setLoadError(null);
+      try {
+        const startIso = rangeStartIso(range);
 
-      const examsQuery = (supabase as any)
-        .from("patient_exams")
-        .select("id", { count: "exact", head: true })
-        .eq("uploaded_by", user.id);
-      if (startIso) examsQuery.gte("created_at", startIso);
-
-      const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
-
-      // Paginação para buscar TODOS os resultados (Supabase limita 1000 por requisição)
-      const fetchAllResults = async () => {
-        const pageSize = 1000;
-        let from = 0;
-        const all: any[] = [];
-        // hard cap de segurança (50k linhas)
-        for (let i = 0; i < 50; i++) {
-          const { data, error } = await (supabase as any)
-            .from("patient_exam_results")
-            .select(
-              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at, category",
-            )
-            .eq("created_by", user.id)
-            .order("measured_at", { ascending: false })
-            .range(from, from + pageSize - 1);
-          if (error || !data) break;
-          all.push(...data);
-          if (data.length < pageSize) break;
-          from += pageSize;
-        }
-        return all;
-      };
-
-      const [
-        { data: pts },
-        res,
-        { count: examCount },
-        { data: exs },
-        { data: chs },
-      ] = await Promise.all([
-        (supabase as any)
-          .from("patients")
-          .select("id, name, birth_date, created_at, gender")
-          .eq("created_by", user.id),
-        fetchAllResults(),
-        examsQuery,
-        (supabase as any)
+        const examsQuery = (supabase as any)
           .from("patient_exams")
-          .select("id, created_at")
-          .eq("uploaded_by", user.id)
-          .gte("created_at", sinceSparkline)
-          .order("created_at", { ascending: true })
-          .limit(2000),
-        (supabase as any)
-          .from("patient_chats")
-          .select("id, patient_id, title, updated_at, pinned_at")
-          .eq("created_by", user.id)
-          .order("pinned_at", { ascending: false, nullsFirst: false })
-          .order("updated_at", { ascending: false })
-          .limit(5),
-      ]);
+          .select("id", { count: "exact", head: true })
+          .eq("uploaded_by", user.id);
+        if (startIso) examsQuery.gte("created_at", startIso);
 
+        const sinceSparkline = subDays(new Date(), 7 * 8).toISOString();
 
+        // Paginação para buscar TODOS os resultados (Supabase limita 1000 por requisição)
+        const fetchAllResults = async () => {
+          const pageSize = 1000;
+          let from = 0;
+          const all: any[] = [];
+          for (let i = 0; i < 50; i++) {
+            const { data, error } = await (supabase as any)
+              .from("patient_exam_results")
+              .select(
+                "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at, category",
+              )
+              .eq("created_by", user.id)
+              .order("measured_at", { ascending: false })
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+            if (!data) break;
+            all.push(...data);
+            if (data.length < pageSize) break;
+            from += pageSize;
+          }
+          return all;
+        };
 
+        const [
+          { data: pts, error: ptsErr },
+          res,
+          { count: examCount, error: examCountErr },
+          { data: exs, error: exsErr },
+          { data: chs, error: chsErr },
+        ] = await Promise.all([
+          (supabase as any)
+            .from("patients")
+            .select("id, name, birth_date, created_at, gender")
+            .eq("created_by", user.id),
+          fetchAllResults(),
+          examsQuery,
+          (supabase as any)
+            .from("patient_exams")
+            .select("id, created_at")
+            .eq("uploaded_by", user.id)
+            .gte("created_at", sinceSparkline)
+            .order("created_at", { ascending: true })
+            .limit(2000),
+          (supabase as any)
+            .from("patient_chats")
+            .select("id, patient_id, title, updated_at, pinned_at")
+            .eq("created_by", user.id)
+            .order("pinned_at", { ascending: false, nullsFirst: false })
+            .order("updated_at", { ascending: false })
+            .limit(5),
+        ]);
 
-      if (cancelled) return;
-      setPatients((pts as PatientLite[]) ?? []);
-      setResults((res as ResultRow[]) ?? []);
-      setExamsThisMonth(examCount ?? 0);
-      setRecentExams((exs as ExamLite[]) ?? []);
-      setRecentChats((chs as ChatLite[]) ?? []);
-      setLoading(false);
+        const firstErr = ptsErr || examCountErr || exsErr || chsErr;
+        if (firstErr) throw firstErr;
+
+        if (cancelled) return;
+        setPatients((pts as PatientLite[]) ?? []);
+        setResults((res as ResultRow[]) ?? []);
+        setExamsThisMonth(examCount ?? 0);
+        setRecentExams((exs as ExamLite[]) ?? []);
+        setRecentChats((chs as ChatLite[]) ?? []);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.error("[dashboard] erro ao carregar dados", err);
+        setLoadError(err?.message ?? "Não foi possível carregar os dados do painel.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
