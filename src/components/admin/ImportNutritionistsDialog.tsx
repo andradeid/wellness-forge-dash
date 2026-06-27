@@ -96,6 +96,9 @@ export function ImportNutritionistsDialog({
   const [stats, setStats] = useState({ created: 0, skipped: 0, failed: 0, inferred: 0 });
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [prereqError, setPrereqError] = useState<string | null>(null);
+
+  const SUPABASE_SECRETS_URL = "https://supabase.com/dashboard/project/bidarktpgytizdgmmqrg/settings/api";
 
   const reset = () => {
     setRows([]);
