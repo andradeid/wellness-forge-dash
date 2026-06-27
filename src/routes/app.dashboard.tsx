@@ -75,6 +75,7 @@ interface ResultRow {
   marker_unit: string | null;
   classification: string | null;
   measured_at: string;
+  category: string | null;
 }
 
 interface PatientLite {
@@ -156,7 +157,7 @@ function DashboardPage() {
           const { data, error } = await (supabase as any)
             .from("patient_exam_results")
             .select(
-              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at",
+              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at, category",
             )
             .eq("created_by", user.id)
             .order("measured_at", { ascending: false })
@@ -396,6 +397,45 @@ function DashboardPage() {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
+  }, [filteredResults]);
+
+  // Perfil de Exames Avaliados: distribuição por categoria clínica (dados reais do usuário)
+  const examProfile = useMemo(() => {
+    const PALETTE = [
+      "#e8a04c", "#e89bcf", "#7ba6c4", "#8b5cf6",
+      "#10b981", "#f59e0b", "#ef4444", "#6366f1",
+      "#14b8a6", "#cbd5e1",
+    ];
+    const LABELS: Record<string, string> = {
+      hemograma: "Hemograma",
+      hemograma_anemias: "Hemograma / Anemias",
+      perfil_lipidico: "Perfil Lipídico",
+      perfil_hormonal: "Perfil Hormonal",
+      perfil_tireoidiano: "Perfil Tireoidiano",
+      perfil_glicidico: "Perfil Glicídico",
+      funcao_renal: "Função Renal",
+      funcao_hepatica: "Função Hepática",
+      vitaminas_minerais: "Vitaminas e Minerais",
+      inflamatorio: "Inflamatório",
+      outros: "Outros",
+    };
+    const counts = new Map<string, number>();
+    for (const r of filteredResults) {
+      const key = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+    const top = sorted.slice(0, 9);
+    const restTotal = sorted.slice(9).reduce((s, [, v]) => s + v, 0);
+    const data = top.map(([k, v], i) => ({
+      name: LABELS[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      value: v,
+      color: PALETTE[i % PALETTE.length],
+    }));
+    if (restTotal > 0) {
+      data.push({ name: "Outros", value: restTotal, color: "#cbd5e1" });
+    }
+    return data;
   }, [filteredResults]);
 
   // Perfil da base: distribuição por gênero e faixa etária
@@ -724,37 +764,25 @@ function DashboardPage() {
           <p className="text-xs text-muted-foreground mb-4">Distribuição por tipo de análise.</p>
           {loading ? (
             <Skeleton className="h-56 w-full" />
+          ) : examProfile.length === 0 ? (
+            <EmptyState text="Nenhum exame avaliado no período selecionado." />
           ) : (
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={[
-                      { name: "Laboratorial", value: 45, color: "#e8a04c" },
-                      { name: "Genético", value: 15, color: "#e89bcf" },
-                      { name: "BIA", value: 15, color: "#7ba6c4" },
-                      { name: "Microbioma", value: 10, color: "#8b5cf6" },
-                      { name: "Calorimetria", value: 10, color: "#10b981" },
-                      { name: "Outros", value: 5, color: "#cbd5e1" },
-                    ]}
+                    data={examProfile}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={2}
                   >
-                    {[
-                      { name: "Laboratorial", value: 45, color: "#e8a04c" },
-                      { name: "Genético", value: 15, color: "#e89bcf" },
-                      { name: "BIA", value: 15, color: "#7ba6c4" },
-                      { name: "Microbioma", value: 10, color: "#8b5cf6" },
-                      { name: "Calorimetria", value: 10, color: "#10b981" },
-                      { name: "Outros", value: 5, color: "#cbd5e1" },
-                    ].map((d, i) => (
+                    {examProfile.map((d, i) => (
                       <Cell key={i} fill={d.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(v: number, n: string) => [`${v} marcadores`, n]} />
                   <Legend wrapperStyle={{ fontSize: 10 }} iconType="circle" align="center" verticalAlign="bottom" />
                 </PieChart>
               </ResponsiveContainer>
