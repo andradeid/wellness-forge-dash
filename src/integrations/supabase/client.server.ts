@@ -22,7 +22,7 @@ function resolveSupabaseSecretKey() {
   }
 }
 
-function createSupabaseAdminClient() {
+export function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = resolveSupabaseSecretKey();
 
