@@ -612,7 +612,7 @@ export function ChatMessageList({
                                 "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
                                 "[&_hr]:my-4 [&_hr]:border-border"
                               )}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                                   {before}
                                 </ReactMarkdown>
                               </div>
