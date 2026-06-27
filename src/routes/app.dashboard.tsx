@@ -157,7 +157,7 @@ function DashboardPage() {
           const { data, error } = await (supabase as any)
             .from("patient_exam_results")
             .select(
-              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at",
+              "id, patient_id, marker_name, marker_value_raw, marker_unit, classification, measured_at, category",
             )
             .eq("created_by", user.id)
             .order("measured_at", { ascending: false })
