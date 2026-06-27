@@ -135,20 +135,29 @@ export function ImportNutritionistsDialog({
     if (rows.length === 0) return;
     setRunning(true);
 
+    setPrereqError(null);
+
     // Pré-flight: confirma SUPABASE_SERVICE_ROLE_KEY e permissão antes de processar.
     try {
       const prereq = await checkPrereqFn();
       if (!prereq.ok) {
         setRunning(false);
-        toast.error(prereq.reason, { duration: 10000 });
+        setPrereqError(prereq.reason);
+        toast.error(prereq.reason, {
+          duration: 12000,
+          description:
+            "Como resolver: 1) Painel Lovable → Cloud → Secrets. 2) Adicione SUPABASE_SERVICE_ROLE_KEY. 3) Copie o valor em Supabase → Project Settings → API → service_role. 4) Salve e tente importar novamente.",
+        });
         return;
       }
     } catch (err) {
       setRunning(false);
       const msg = err instanceof Error ? err.message : String(err);
+      setPrereqError(msg);
       toast.error(`Falha ao verificar pré-requisitos da importação: ${msg}`, { duration: 10000 });
       return;
     }
+
 
     setDone(0);
     setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
