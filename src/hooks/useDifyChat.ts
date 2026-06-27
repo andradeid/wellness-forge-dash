@@ -530,12 +530,19 @@ export function useDifyChat(
 
     const saveAssistantToSupabase = async (content: string, convId?: string) => {
       if (!content.trim() && !convId) return;
-      
+
       if (convId) {
         conversationIdRef.current = convId;
+        if (agentType) {
+          conversationMapRef.current = { ...conversationMapRef.current, [agentType]: convId };
+          setActiveAgents(Object.keys(conversationMapRef.current));
+        }
         await (supabase as any)
           .from("patient_chats")
-          .update({ dify_conversation_id: convId })
+          .update({
+            dify_conversation_id: convId,
+            dify_conversations: conversationMapRef.current,
+          })
           .eq("id", chatId);
       }
 
