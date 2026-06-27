@@ -390,6 +390,30 @@ export type Database = {
         }
         Relationships: []
       }
+      import_nutri_staging: {
+        Row: {
+          email: string
+          full_name: string | null
+          phone: string | null
+          plan_type: string | null
+          tag_label: string | null
+        }
+        Insert: {
+          email: string
+          full_name?: string | null
+          phone?: string | null
+          plan_type?: string | null
+          tag_label?: string | null
+        }
+        Update: {
+          email?: string
+          full_name?: string | null
+          phone?: string | null
+          plan_type?: string | null
+          tag_label?: string | null
+        }
+        Relationships: []
+      }
       integration_logs: {
         Row: {
           created_at: string
