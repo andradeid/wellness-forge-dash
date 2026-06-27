@@ -591,17 +591,20 @@ export function ChatMessageList({
                         ? researchFallback(p.value) 
                         : cleaned;
 
-                      const prescriptionTrigger = "MODELO DE RECEITUÁRIO PARA FARMÁCIA";
-                      const hasPrescription = finalContent?.includes(prescriptionTrigger);
+                      // Detecta cabeçalhos de receita em múltiplas variações que o agente possa devolver.
+                      // Regex captura a linha do título (com ou sem markdown ##/**) para usar como cabeçalho do bloco.
+                      const prescriptionRegex = /^[#\s*]*((?:MODELO DE )?RECEITU[ÁA]RIO(?:[^\n]*)|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)[^\n]*|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+[^\n]*|FORMULA[ÇC][ÃA]O\s+MANIPULADA[^\n]*)/im;
+                      const prescriptionMatch = finalContent?.match(prescriptionRegex);
 
-                      if (hasPrescription) {
-                        const parts = finalContent.split(prescriptionTrigger);
-                        const before = parts[0];
-                        const prescriptionContent = prescriptionTrigger + parts.slice(1).join(prescriptionTrigger);
+                      if (prescriptionMatch && typeof prescriptionMatch.index === "number") {
+                        const idx = prescriptionMatch.index;
+                        const before = finalContent.slice(0, idx);
+                        const matchedTitle = prescriptionMatch[1].trim();
+                        const prescriptionContent = finalContent.slice(idx + prescriptionMatch[0].length).trim();
 
                         return (
                           <div key={i} className="space-y-4">
-                            {before && (
+                            {before.trim() && (
                               <div className={cn(
                                 "prose prose-sm max-w-none",
                                 "prose-p:my-2",
@@ -619,8 +622,8 @@ export function ChatMessageList({
                               </div>
                             )}
                             <PrescriptionBlock
-                              title={`${prescriptionTrigger} DE MANIPULAÇÃO`}
-                              body={prescriptionContent.replace(prescriptionTrigger + " DE MANIPULAÇÃO", "").trim()}
+                              title={matchedTitle.toUpperCase()}
+                              body={prescriptionContent}
                             />
 
                           </div>
