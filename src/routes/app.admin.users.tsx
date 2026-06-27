@@ -307,14 +307,15 @@ function UsersPage() {
       profiles = data ?? [];
       totalCount = count ?? 0;
     } else {
-      if (candidateIds.length === 0) {
+      const ids: string[] = candidateIds;
+      if (ids.length === 0) {
         setRows([]); setTotal(0); setLoading(false); return;
       }
       // Chunk `.in()` para não estourar o limite de URL do PostgREST.
       const CHUNK = 200;
       const matched: any[] = [];
-      for (let i = 0; i < candidateIds.length; i += CHUNK) {
-        const slice = candidateIds.slice(i, i + CHUNK);
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const slice = ids.slice(i, i + CHUNK);
         const { data, error } = await buildProfilesQuery(false).in("id", slice);
         if (error) { toast.error(error.message); setLoading(false); return; }
         if (data) matched.push(...data);
