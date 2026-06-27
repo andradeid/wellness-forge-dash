@@ -33,6 +33,10 @@ const InputSchema = z.object({
   rows: z.array(RowSchema).min(1).max(25),
 });
 
+function missingAdminSecretMessage() {
+  return "Importação bloqueada: a chave admin do Supabase externo (SUPABASE_SERVICE_ROLE_KEY) não está disponível no runtime.";
+}
+
 type PlanMap = {
   plan_type: "free" | "starter" | "pro" | "clinica";
   status: "trial" | "active";
@@ -68,6 +72,26 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
       .eq("role", "super_admin")
       .maybeSingle();
     if (!roleRow) throw new Response("Forbidden", { status: 403 });
+
+    const hasAdminSecret = Boolean(
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+        process.env.SUPABASE_SECRET_KEY ??
+        process.env.SUPABASE_SECRET_KEYS,
+    );
+
+    if (!hasAdminSecret) {
+      const reason = missingAdminSecretMessage();
+      return {
+        created: 0,
+        skipped: 0,
+        failed: data.rows.length,
+        details: data.rows.map((row) => ({
+          email: row.email,
+          status: "failed" as const,
+          reason,
+        })),
+      };
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
