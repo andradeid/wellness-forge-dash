@@ -741,9 +741,16 @@ export function useDifyChat(
                   assistantSavedRef.current = true;
                   if (data.conversation_id) {
                     conversationIdRef.current = data.conversation_id;
+                    if (agentType) {
+                      conversationMapRef.current = { ...conversationMapRef.current, [agentType]: data.conversation_id };
+                      setActiveAgents(Object.keys(conversationMapRef.current));
+                    }
                     await (supabase as any)
                       .from("patient_chats")
-                      .update({ dify_conversation_id: data.conversation_id })
+                      .update({
+                        dify_conversation_id: data.conversation_id,
+                        dify_conversations: conversationMapRef.current,
+                      })
                       .eq("id", chatId);
                   }
 
