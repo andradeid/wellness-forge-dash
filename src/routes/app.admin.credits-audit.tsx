@@ -65,25 +65,35 @@ function AuditPage() {
   const fnAdjust = useServerFn(adjustBalance);
   const fnSetUnlimited = useServerFn(setUnlimited);
 
+  const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [nutriPage, setNutriPage] = useState(1);
+  const NUTRI_PAGE_SIZE = 25;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedQ(q.trim());
+      setNutriPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
   const nutrisQuery = useQuery({
-    queryKey: ["admin", "nutritionists"],
-    queryFn: () => fnListNutris() as Promise<User[]>,
+    queryKey: ["admin", "nutritionists", debouncedQ, nutriPage],
+    queryFn: () =>
+      fnListNutris({ data: { q: debouncedQ, page: nutriPage, pageSize: NUTRI_PAGE_SIZE } }) as Promise<{
+        rows: User[];
+        total: number;
+      }>,
     enabled: role === "super_admin" || role === "admin",
-    staleTime: 60_000,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
   });
 
-  const [q, setQ] = useState("");
+  const nutriRows = nutrisQuery.data?.rows ?? [];
+  const nutriTotal = nutrisQuery.data?.total ?? 0;
+  const nutriTotalPages = Math.max(1, Math.ceil(nutriTotal / NUTRI_PAGE_SIZE));
 
-  const filteredNutris = useMemo<User[]>(() => {
-    const list = nutrisQuery.data ?? [];
-    const term = q.trim().toLowerCase();
-    if (!term) return list;
-    return list.filter(
-      (u) =>
-        (u.full_name ?? "").toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term),
-    );
-  }, [nutrisQuery.data, q]);
   const [results, setResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
