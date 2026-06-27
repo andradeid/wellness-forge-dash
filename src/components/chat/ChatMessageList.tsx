@@ -325,7 +325,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
 </style></head><body>
   ${logoHtml}
   ${nutriInfoHtml}
-  <h1>${title}</h1>
+  <h1>${cleanedTitle}</h1>
   <pre>${editableBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
 <script>window.onload = () => { window.focus(); window.print(); }<\/script>
 </body></html>`);
