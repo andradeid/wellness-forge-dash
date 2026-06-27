@@ -944,7 +944,7 @@ export function useDifyChat(
                     agentType?.startsWith("exam") &&
                     fullText.trim() &&
                     !labReportError &&
-                    (difyFiles.length > 0 || (markers && markers.length > 0) || !!formulacoes);
+                    (difyFiles.length > 0 || (markers && markers.length > 0));
 
                   if (shouldRefreshExamContext) {
                     const newCtx = buildExamContextFromAnalysis({
