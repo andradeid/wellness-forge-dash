@@ -12,6 +12,7 @@ import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
 import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
 import { normalizePrescription } from "@/lib/normalize-prescription";
+import { getAgentLabel } from "@/lib/agent-labels";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
