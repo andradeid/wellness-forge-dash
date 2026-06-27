@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import Papa from "papaparse";
-import { Upload, Loader2, CheckCircle2, AlertCircle, FileText, ChevronDown, Sparkles } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, AlertCircle, FileText, ChevronDown, Sparkles, KeyRound, ExternalLink } from "lucide-react";
 
 import { useServerFn } from "@tanstack/react-start";
 import {
