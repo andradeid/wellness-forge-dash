@@ -67,6 +67,7 @@ function AuditPage() {
   const nutrisQuery = useQuery({
     queryKey: ["admin", "nutritionists"],
     queryFn: () => fnListNutris() as Promise<User[]>,
+    enabled: role === "super_admin" || role === "admin",
     staleTime: 60_000,
   });
 
