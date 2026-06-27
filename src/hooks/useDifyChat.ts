@@ -694,7 +694,14 @@ export function useDifyChat(
 
     try {
       const finalQuery = (() => {
-        if (agentType.startsWith("exam")) return text;
+        // Follow-ups no mesmo agente de exame também precisam receber o
+        // contexto do exame anterior. Sem isso, se a memória nativa do Dify
+        // falhar, perguntas como "traga só hemograma" viram conversa fria.
+        // Novo exame com anexo continua limpo para não misturar laudos.
+        if (agentType.startsWith("exam")) {
+          if (difyFiles.length === 0 && examContext) return buildContextPrefix(examContext) + text;
+          return text;
+        }
         if (agentType === "research") return text;
         try {
           return (examContext 
