@@ -15,6 +15,7 @@ import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
+import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
 
 export interface ExamContext {
   patient_name: string;
@@ -702,33 +703,38 @@ export function useDifyChat(
     };
 
     try {
-      const latestContextFromMessages = (() => {
-        const latest = messages
-          .slice()
-          .reverse()
-          .find(hasExamMarkersMessage);
-        if (!latest) return null;
-        return buildExamContextFromAnalysis({
-          text: latest.content,
-          markers: latest.structured_data?.markers ?? [],
-          meta: metaRef.current,
-          agentType: latest.agent_type,
-          previous: examContext,
-        });
-      })();
+      const latestExamMessage = messages.slice().reverse().find(hasExamMarkersMessage);
+      const latestMarkers: Marker[] = latestExamMessage?.structured_data?.markers ?? [];
+      const latestContextFromMessages = latestExamMessage
+        ? buildExamContextFromAnalysis({
+            text: latestExamMessage.content,
+            markers: latestMarkers,
+            meta: metaRef.current,
+            agentType: latestExamMessage.agent_type,
+            previous: examContext,
+          })
+        : null;
       const effectiveExamContext = latestContextFromMessages ?? examContext;
 
       const finalQuery = (() => {
-        // Follow-ups no mesmo agente de exame também precisam receber o
-        // contexto do exame anterior. Sem isso, se a memória nativa do Dify
-        // falhar, perguntas como "traga só hemograma" viram conversa fria.
-        // Novo exame com anexo continua limpo para não misturar laudos.
+        // exam_*: comportamento ORIGINAL preservado (não passa pelo dispatcher).
         if (agentType.startsWith("exam")) {
           if (difyFiles.length === 0 && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
           return text;
         }
+        // research: sem prefixo (busca pura).
         if (agentType === "research") return text;
+
+        // Dispatcher: tenta builder especializado por agente.
+        // Fallback duplo: builder específico → builder padrão → minimal.
         try {
+          const specialized = effectiveExamContext
+            ? buildAgentContextPrefix(agentType, {
+                examContext: effectiveExamContext,
+                markers: latestMarkers,
+              })
+            : null;
+          if (specialized) return specialized + text;
           return (effectiveExamContext
               ? buildContextPrefix(effectiveExamContext)
               : buildMinimalPrefix()) + text;
