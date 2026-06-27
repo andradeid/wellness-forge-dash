@@ -43,6 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ImportNutritionistsDialog } from "@/components/admin/ImportNutritionistsDialog";
 
 export const Route = createFileRoute("/app/admin/users")({
   component: UsersPage,
