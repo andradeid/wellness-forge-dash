@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BrandingDocumentPreview, type BrandingDocData } from "@/components/branding/BrandingDocumentPreview";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
+import { getAgentLabel } from "@/lib/agent-labels";
 
 interface Patient {
   name: string;
@@ -101,7 +102,12 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                         isUser ? "text-white/70" : "text-slate-500"
                       }`}
                     >
-                      {isUser ? "Nutricionista" : "Lumma"}
+                      {isUser
+                        ? "Nutricionista"
+                        : `Lumma${(() => {
+                            const a = getAgentLabel(m.agent_type);
+                            return a ? ` · ${a.label}` : "";
+                          })()}`}
                     </div>
                     {m.attachments && m.attachments.length > 0 && (
                       <div className={`text-[10px] mb-1 ${isUser ? "text-white/80" : "text-slate-500"}`}>

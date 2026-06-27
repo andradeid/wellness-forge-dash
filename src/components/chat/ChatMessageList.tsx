@@ -12,6 +12,7 @@ import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
 import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
 import { normalizePrescription } from "@/lib/normalize-prescription";
+import { getAgentLabel } from "@/lib/agent-labels";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
@@ -496,17 +497,33 @@ export function ChatMessageList({
           {messages.map((m, i) => {
             const isUser = m.role === "user";
             const isLastUserMessage = isUser && i === lastUserIndex;
-            
+
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
             const hasPrescriptionMsg = !isUser && /(?:MODELO DE )?RECEITU[ÁA]RIO|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+|FORMULA[ÇC][ÃA]O\s+MANIPULADA/i.test(m.content);
 
+            // Separador quando o agente muda entre mensagens consecutivas do assistente
+            const prevAssistant = [...messages.slice(0, i)].reverse().find((x) => x.role === "assistant");
+            const showAgentSwitch =
+              !isUser &&
+              !!m.agent_type &&
+              !!prevAssistant?.agent_type &&
+              prevAssistant.agent_type !== m.agent_type;
+            const agentLabel = !isUser ? getAgentLabel(m.agent_type) : null;
+
             return (
-              <div
-                key={m.id}
-                ref={isHighlighted ? highlightRef : (isLastUserMessage ? lastUserMessageRef : undefined)}
-                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-              >
+              <div key={m.id} className="space-y-3">
+                {showAgentSwitch && agentLabel && (
+                  <div className="flex items-center gap-2 my-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    <div className="flex-1 h-px bg-border/60" />
+                    <span>trocou para {agentLabel.icon} {agentLabel.label}</span>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                )}
+                <div
+                  ref={isHighlighted ? highlightRef : (isLastUserMessage ? lastUserMessageRef : undefined)}
+                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                >
                 <div
                   className={`${hasPrescriptionMsg ? "w-full max-w-full" : "max-w-[85%]"} rounded-2xl px-4 py-3 text-sm shadow-sm backdrop-blur-md transition-all ${
                     isUser
@@ -707,6 +724,15 @@ export function ChatMessageList({
                       isUser ? "text-white/70 justify-end" : "text-muted-foreground/70 justify-start"
                     }`}
                   >
+                    {!isUser && agentLabel && (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${agentLabel.chip}`}
+                        title={`Agente: ${agentLabel.label}`}
+                      >
+                        <span>{agentLabel.icon}</span>
+                        <span>{agentLabel.label}</span>
+                      </span>
+                    )}
                     {m.created_at && (
                       <span title={new Date(m.created_at).toLocaleString("pt-BR")}>
                         {new Date(m.created_at).toLocaleString("pt-BR", {
@@ -723,6 +749,7 @@ export function ChatMessageList({
                         ⏱ {(m.structured_data.processing_ms / 1000).toFixed(2)}s
                       </span>
                     )}
+                  </div>
                   </div>
                 </div>
               </div>
