@@ -107,6 +107,7 @@ export function ImportNutritionistsDialog({
     setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
     setDetails([]);
     setShowDetails(false);
+    setPrereqError(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
