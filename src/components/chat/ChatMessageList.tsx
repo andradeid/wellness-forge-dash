@@ -649,7 +649,7 @@ export function ChatMessageList({
                           )}
                         >
                           <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
+                            remarkPlugins={[remarkGfm, remarkBreaks]}
                             components={isResearch ? {
                               a: ({ href, children }) => (
                                 <a
