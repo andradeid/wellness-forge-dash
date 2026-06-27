@@ -9,13 +9,13 @@ export function useMyCredits() {
   return useQuery({
     queryKey: ["credits", user?.id],
     queryFn: async () => {
+      // Server fn pode lançar Response (401) durante logout/troca de sessão
+      // ou enquanto o bearer ainda não foi anexado. Engolimos QUALQUER erro
+      // para não derrubar a árvore — a UI cai no fallback de saldo.
       try {
         return await fn();
-      } catch (err) {
-        // Server fn pode lançar Response (401) durante logout/troca de sessão.
-        // Não queremos derrubar a árvore — devolvemos null e a UI cai no fallback.
-        if (err instanceof Response) return null;
-        throw err;
+      } catch {
+        return null;
       }
     },
     enabled: !!user?.id,
