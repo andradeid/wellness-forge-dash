@@ -130,7 +130,7 @@ function UsersPage() {
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
   const [examCount, setExamCount] = useState<number | null>(null);
-  const [importOpen, setImportOpen] = useState(false);
+  
 
   if (role && role !== "super_admin") {
     return (
