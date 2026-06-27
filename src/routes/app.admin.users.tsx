@@ -131,6 +131,20 @@ function UsersPage() {
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
   const [examCount, setExamCount] = useState<number | null>(null);
+  const [detailExtra, setDetailExtra] = useState<{
+    patientsCount: number;
+    chatsCount: number;
+    creditsBalance: number;
+    unlimited: boolean;
+    seatsOverride: number | null;
+    currentPeriodEnd: string | null;
+    cancelledAt: string | null;
+    professionalId: string | null;
+    totalSpent: number;
+    totalGranted: number;
+    lastActivityAt: string | null;
+    lastAgent: string | null;
+  } | null>(null);
   
 
   // debounce da busca
