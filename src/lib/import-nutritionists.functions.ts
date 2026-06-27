@@ -145,6 +145,8 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
         };
         if (row.subscription_created_at) subPayload.created_at = row.subscription_created_at;
         if (row.current_period_end) subPayload.current_period_end = row.current_period_end;
+        if (row.cancelled_at) subPayload.cancelled_at = row.cancelled_at;
+        if (row.legacy_status) subPayload.legacy_status = row.legacy_status;
 
         await (supabaseAdmin as any)
           .from("subscriptions")
