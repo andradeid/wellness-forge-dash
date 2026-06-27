@@ -485,6 +485,7 @@ export type Database = {
           created_at: string
           created_by: string
           dify_conversation_id: string | null
+          dify_conversations: Json
           exam_context: Json | null
           id: string
           patient_id: string
@@ -496,6 +497,7 @@ export type Database = {
           created_at?: string
           created_by: string
           dify_conversation_id?: string | null
+          dify_conversations?: Json
           exam_context?: Json | null
           id?: string
           patient_id: string
@@ -507,6 +509,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           dify_conversation_id?: string | null
+          dify_conversations?: Json
           exam_context?: Json | null
           id?: string
           patient_id?: string
