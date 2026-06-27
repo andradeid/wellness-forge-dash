@@ -130,12 +130,34 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
         // 4) Bloqueia no auth também (login impedido)
         await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
 
-        // 5) Subscription
+        // 3) handle_new_user trigger criou profile/subscription/role; ajusta
+        await (supabaseAdmin as any)
+          .from("profiles")
+          .update({
+            full_name: row.full_name,
+            professional_id: row.professional_id ?? null,
+            phone: row.phone ?? null,
+            clinic_name: row.clinic_name ?? null,
+            is_blocked: true,
+          })
+          .eq("id", userId);
+
+        // 4) Bloqueia no auth também (login impedido)
+        await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
+
+        // 5) Subscription (preserva datas do Lumma 1.0 quando vierem)
+        const subPayload: any = {
+          user_id: userId,
+          plan_type: map.plan_type,
+          status: map.status,
+          unlimited_credits: map.unlimited,
+        };
+        if (row.subscription_created_at) subPayload.created_at = row.subscription_created_at;
+        if (row.current_period_end) subPayload.current_period_end = row.current_period_end;
+
         await (supabaseAdmin as any)
           .from("subscriptions")
-          .upsert(
-            {
-              user_id: userId,
+          .upsert(subPayload, { onConflict: "user_id" });
               plan_type: map.plan_type,
               status: map.status,
               unlimited_credits: map.unlimited,
