@@ -48,6 +48,15 @@ export const Route = createFileRoute("/app/admin/users")({
   component: UsersPage,
 });
 
+function DetailCell({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
+  return (
+    <div className="rounded-lg border p-3">
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={`mt-1 ${highlight ? "text-lg font-semibold" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 const DEFAULT_COLORS = ["#e8a04c", "#e89bcf", "#7c9a92", "#6b7fd7", "#d97757", "#8a8a8a", "#2c2c2c"];
 
