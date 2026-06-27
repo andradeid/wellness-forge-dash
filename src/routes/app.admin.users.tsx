@@ -612,6 +612,7 @@ function UsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>{planLabel(r.plan_type)}</TableCell>
+                      <TableCell className="tabular-nums">{rowPatients[r.id] ?? 0}</TableCell>
                       <TableCell>
                         <Badge variant={statusVariant(r.status, r.is_blocked)} className="rounded-full">
                           {statusLabel(r.status, r.is_blocked)}
