@@ -42,35 +42,51 @@ export const listNutritionists = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { data: roleRows, error: rErr } = await context.supabase
+
+    const { data: adminRoleRows, error: rErr } = await context.supabase
       .from("user_roles")
       .select("user_id")
-      .eq("role", "nutri");
+      .in("role", ["admin", "super_admin"]);
     if (rErr) throw new Response(rErr.message, { status: 500 });
-    const ids = (roleRows ?? []).map((r: any) => r.user_id);
-    if (ids.length === 0) return [];
+
+    const adminIds = Array.from(new Set((adminRoleRows ?? []).map((r: any) => r.user_id as string)));
+    let profilesQuery = context.supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .is("deleted_at", null)
+      .order("full_name", { ascending: true })
+      .limit(10000);
+
+    if (adminIds.length > 0) {
+      profilesQuery = profilesQuery.not("id", "in", `(${adminIds.join(",")})`);
+    }
+
     const [profilesRes, subsRes, creditsRes] = await Promise.all([
-      context.supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", ids)
-        .order("full_name", { ascending: true }),
+      profilesQuery,
       context.supabase
         .from("subscriptions")
         .select("user_id, plan_type, unlimited_credits")
-        .in("user_id", ids),
+        .limit(10000),
       context.supabase
         .from("user_credits")
         .select("user_id, balance")
-        .in("user_id", ids),
+        .limit(10000),
     ]);
     if (profilesRes.error) throw new Response(profilesRes.error.message, { status: 500 });
+    if (subsRes.error) throw new Response(subsRes.error.message, { status: 500 });
+    if (creditsRes.error) throw new Response(creditsRes.error.message, { status: 500 });
+
+    const profileIds = new Set((profilesRes.data ?? []).map((p: any) => p.id));
     const subById = new Map<string, { plan_type: string | null; unlimited_credits: boolean }>();
     for (const s of subsRes.data ?? []) {
+      if (!profileIds.has(s.user_id)) continue;
       subById.set(s.user_id, { plan_type: s.plan_type, unlimited_credits: !!s.unlimited_credits });
     }
     const balById = new Map<string, number>();
-    for (const c of creditsRes.data ?? []) balById.set(c.user_id, c.balance ?? 0);
+    for (const c of creditsRes.data ?? []) {
+      if (!profileIds.has(c.user_id)) continue;
+      balById.set(c.user_id, c.balance ?? 0);
+    }
     return (profilesRes.data ?? []).map((p: any) => {
       const sub = subById.get(p.id);
       const unlimited = !!sub?.unlimited_credits;
