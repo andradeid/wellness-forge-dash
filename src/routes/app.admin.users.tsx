@@ -454,7 +454,7 @@ function UsersPage() {
     setCreating(false);
     if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao criar usuário"); return; }
     toast.success("Nutricionista criada com sucesso");
-    nutriIdsRef.current = null;
+    excludeIdsRef.current = null;
     setCreateOpen(false);
     refreshAll();
   };
