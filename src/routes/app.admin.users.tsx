@@ -117,7 +117,7 @@ function UsersPage() {
   const [creatingTag, setCreatingTag] = useState(false);
 
 
-  const nutriIdsRef = useRef<string[] | null>(null);
+  // (legado removido — agora usamos excludeIdsRef)
 
   // Modais
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
@@ -155,36 +155,51 @@ function UsersPage() {
   useEffect(() => { if (canAccess) loadTags(); }, [canAccess, loadTags]);
 
 
-  const ensureNutriIds = useCallback(async (): Promise<string[]> => {
+  // Em vez de carregar TODOS os ids de nutris (2.7k → URL gigante → 400 Bad Request),
+  // carregamos apenas os ids de super_admin/admin e EXCLUÍMOS — lista pequena.
+  const excludeIdsRef = useRef<string[] | null>(null);
+  const ensureExcludeIds = useCallback(async (): Promise<string[]> => {
     if (!canAccess) return [];
-    if (nutriIdsRef.current) return nutriIdsRef.current;
+    if (excludeIdsRef.current) return excludeIdsRef.current;
     const { data, error } = await (supabase as any)
       .from("user_roles")
       .select("user_id")
-      .eq("role", "nutri");
+      .in("role", ["super_admin", "admin"]);
     if (error) { toast.error(error.message); return []; }
-    const ids = (data ?? []).map((r: any) => r.user_id);
-    nutriIdsRef.current = ids;
+    const ids = Array.from(new Set((data ?? []).map((r: any) => r.user_id as string))) as string[];
+    excludeIdsRef.current = ids;
     return ids;
   }, [canAccess]);
+
+
+
+  // Helper: aplica exclusão de admins numa query de profiles
+  const applyNutriScope = (q: any, excludeIds: string[]) => {
+    if (excludeIds.length === 0) return q;
+    return q.not("id", "in", `(${excludeIds.join(",")})`);
+  };
 
   // Estatísticas (head count) — atualizadas no mount e após escritas
   const loadStats = useCallback(async () => {
     if (!canAccess) return;
-    const ids = await ensureNutriIds();
-    if (ids.length === 0) { setStats({ total: 0, active: 0, trial: 0, blocked: 0 }); return; }
+    const excludeIds = await ensureExcludeIds();
 
-    const baseProfiles = () => (supabase as any)
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .in("id", ids)
-      .is("deleted_at", null);
+    const baseProfiles = () => applyNutriScope(
+      (supabase as any)
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null),
+      excludeIds,
+    );
 
-    const baseSubs = (status: SubStatus) => (supabase as any)
-      .from("subscriptions")
-      .select("user_id", { count: "exact", head: true })
-      .in("user_id", ids)
-      .eq("status", status);
+    const baseSubs = (status: SubStatus) => {
+      let q = (supabase as any)
+        .from("subscriptions")
+        .select("user_id", { count: "exact", head: true })
+        .eq("status", status);
+      if (excludeIds.length > 0) q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
+      return q;
+    };
 
     const [totalRes, activeRes, trialRes, blockedRes] = await Promise.all([
       baseProfiles(),
@@ -199,49 +214,23 @@ function UsersPage() {
       trial: trialRes.count ?? 0,
       blocked: blockedRes.count ?? 0,
     });
-  }, [canAccess, ensureNutriIds]);
+  }, [canAccess, ensureExcludeIds]);
 
   // Página atual com filtros aplicados no servidor
   const load = useCallback(async () => {
     if (!canAccess) return;
     setLoading(true);
-    const ids = await ensureNutriIds();
-    if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+    const excludeIds = await ensureExcludeIds();
 
-    // Restringe ids quando há filtro de plano/status (não-bloqueado) — feito em subscriptions
-    let scopedIds: string[] = ids;
-    const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
-    if (subStatusActive || planFilter !== "all") {
-      let q = (supabase as any)
-        .from("subscriptions")
-        .select("user_id")
-        .in("user_id", ids);
-      if (subStatusActive) q = q.eq("status", statusFilter);
-      if (planFilter !== "all") q = q.eq("plan_type", planFilter);
-      const { data, error } = await q;
-      if (error) { toast.error(error.message); setLoading(false); return; }
-      scopedIds = (data ?? []).map((r: any) => r.user_id);
-      if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
-    }
+    let pq = applyNutriScope(
+      (supabase as any)
+        .from("profiles")
+        .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
+        .is("deleted_at", null),
+      excludeIds,
+    );
 
-    // Filtro por etiqueta
-    if (tagFilter !== "all") {
-      const { data, error } = await (supabase as any)
-        .from("profile_tags")
-        .select("profile_id")
-        .eq("tag_id", tagFilter)
-        .in("profile_id", scopedIds);
-      if (error) { toast.error(error.message); setLoading(false); return; }
-      scopedIds = (data ?? []).map((r: any) => r.profile_id);
-      if (scopedIds.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
-    }
-
-    let pq = (supabase as any)
-      .from("profiles")
-      .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
-      .in("id", scopedIds)
-      .is("deleted_at", null);
-
+    // Filtros por status (blocked) e busca aplicam direto em profiles
     if (statusFilter === "blocked") pq = pq.eq("is_blocked", true);
 
     if (debouncedSearch) {
@@ -249,9 +238,38 @@ function UsersPage() {
       pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
     }
 
+    // Filtros por plano/status-de-assinatura/etiqueta — resolvidos por sub-query pequena
+    const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
+    if (subStatusActive || planFilter !== "all") {
+      // Busca todos os user_ids que casam (sem .in gigante, pois não há restrição prévia)
+      let sq = (supabase as any).from("subscriptions").select("user_id");
+      if (subStatusActive) sq = sq.eq("status", statusFilter);
+      if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
+      const { data, error } = await sq.limit(10000);
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      const ids = (data ?? []).map((r: any) => r.user_id);
+      if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+      // Aplica filtro por sub-query textual (PostgREST aceita listas via in.())
+      // Para evitar URL gigante, usamos no máximo 1000 ids — caso ultrapasse, mantemos só os primeiros
+      pq = pq.in("id", ids.slice(0, 1000));
+    }
+
+    if (tagFilter !== "all") {
+      const { data, error } = await (supabase as any)
+        .from("profile_tags")
+        .select("profile_id")
+        .eq("tag_id", tagFilter)
+        .limit(10000);
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      const ids = (data ?? []).map((r: any) => r.profile_id);
+      if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
+      pq = pq.in("id", ids.slice(0, 1000));
+    }
+
     const from = page * pageSize;
     const to = from + pageSize - 1;
     pq = pq.order("created_at", { ascending: false }).range(from, to);
+
 
     const { data: profiles, count, error: pErr } = await pq;
     if (pErr) { toast.error(pErr.message); setLoading(false); return; }
@@ -311,7 +329,7 @@ function UsersPage() {
     setRows(merged);
     setTotal(count ?? merged.length);
     setLoading(false);
-  }, [canAccess, ensureNutriIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
+  }, [canAccess, ensureExcludeIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
 
   useEffect(() => { if (canAccess) load(); }, [canAccess, load]);
   useEffect(() => { if (canAccess) loadStats(); }, [canAccess, loadStats]);
@@ -436,7 +454,7 @@ function UsersPage() {
     setCreating(false);
     if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao criar usuário"); return; }
     toast.success("Nutricionista criada com sucesso");
-    nutriIdsRef.current = null;
+    excludeIdsRef.current = null;
     setCreateOpen(false);
     refreshAll();
   };
