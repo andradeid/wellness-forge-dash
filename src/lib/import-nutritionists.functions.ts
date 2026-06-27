@@ -89,6 +89,45 @@ function mapPlan(old: string): PlanMap {
   }
 }
 
+export const checkImportPrerequisites = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "super_admin")
+      .maybeSingle();
+    if (!roleRow) {
+      return { ok: false as const, reason: "Apenas super_admin pode importar nutricionistas." };
+    }
+
+    if (!resolveRuntimeAdminSecret()) {
+      return { ok: false as const, reason: missingAdminSecretMessage() };
+    }
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await (supabaseAdmin as any)
+        .from("profiles")
+        .select("id", { count: "exact", head: true });
+      if (error) {
+        return {
+          ok: false as const,
+          reason: `Chave admin presente, mas a verificação falhou: ${error.message}`,
+        };
+      }
+    } catch (err) {
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      const reason = rawMessage.includes("SUPABASE_SERVICE_ROLE_KEY")
+        ? missingAdminSecretMessage()
+        : `Não foi possível inicializar o cliente admin: ${rawMessage}`;
+      return { ok: false as const, reason };
+    }
+
+    return { ok: true as const };
+  });
+
 export const importNutritionistsBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => InputSchema.parse(d))
