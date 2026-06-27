@@ -128,6 +128,7 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
             professional_id: row.professional_id ?? null,
             phone: row.phone ?? null,
             clinic_name: row.clinic_name ?? null,
+            legacy_last_login_at: row.legacy_last_login_at ?? null,
             is_blocked: true,
           })
           .eq("id", userId);
