@@ -264,23 +264,10 @@ function UsersPage() {
       pq = pq.in("id", ids.slice(0, 1000));
     }
 
-
-    let pq = (supabase as any)
-      .from("profiles")
-      .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
-      .in("id", scopedIds)
-      .is("deleted_at", null);
-
-    if (statusFilter === "blocked") pq = pq.eq("is_blocked", true);
-
-    if (debouncedSearch) {
-      const term = debouncedSearch.replace(/[%,]/g, "");
-      pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
-    }
-
     const from = page * pageSize;
     const to = from + pageSize - 1;
     pq = pq.order("created_at", { ascending: false }).range(from, to);
+
 
     const { data: profiles, count, error: pErr } = await pq;
     if (pErr) { toast.error(pErr.message); setLoading(false); return; }
