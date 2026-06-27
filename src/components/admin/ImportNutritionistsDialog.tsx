@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import Papa from "papaparse";
-import { Upload, Loader2, CheckCircle2, AlertCircle, FileText, ChevronDown, Sparkles } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, AlertCircle, FileText, ChevronDown, Sparkles, KeyRound, ExternalLink } from "lucide-react";
 
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -96,6 +96,9 @@ export function ImportNutritionistsDialog({
   const [stats, setStats] = useState({ created: 0, skipped: 0, failed: 0, inferred: 0 });
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [prereqError, setPrereqError] = useState<string | null>(null);
+
+  const SUPABASE_SECRETS_URL = "https://supabase.com/dashboard/project/bidarktpgytizdgmmqrg/settings/api";
 
   const reset = () => {
     setRows([]);
@@ -104,6 +107,7 @@ export function ImportNutritionistsDialog({
     setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
     setDetails([]);
     setShowDetails(false);
+    setPrereqError(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -132,20 +136,29 @@ export function ImportNutritionistsDialog({
     if (rows.length === 0) return;
     setRunning(true);
 
+    setPrereqError(null);
+
     // Pré-flight: confirma SUPABASE_SERVICE_ROLE_KEY e permissão antes de processar.
     try {
       const prereq = await checkPrereqFn();
       if (!prereq.ok) {
         setRunning(false);
-        toast.error(prereq.reason, { duration: 10000 });
+        setPrereqError(prereq.reason);
+        toast.error(prereq.reason, {
+          duration: 12000,
+          description:
+            "Como resolver: 1) Painel Lovable → Cloud → Secrets. 2) Adicione SUPABASE_SERVICE_ROLE_KEY. 3) Copie o valor em Supabase → Project Settings → API → service_role. 4) Salve e tente importar novamente.",
+        });
         return;
       }
     } catch (err) {
       setRunning(false);
       const msg = err instanceof Error ? err.message : String(err);
+      setPrereqError(msg);
       toast.error(`Falha ao verificar pré-requisitos da importação: ${msg}`, { duration: 10000 });
       return;
     }
+
 
     setDone(0);
     setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
@@ -239,6 +252,44 @@ export function ImportNutritionistsDialog({
               {!running && (
                 <Button variant="ghost" size="sm" onClick={reset}>Trocar</Button>
               )}
+            </div>
+          )}
+
+          {prereqError && (
+            <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <KeyRound className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-destructive">Importação bloqueada</p>
+                  <p className="text-xs text-muted-foreground">{prereqError}</p>
+                </div>
+              </div>
+              <div className="text-xs space-y-1.5">
+                <p className="font-medium">Como cadastrar a chave admin:</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>
+                    Abra{" "}
+                    <a
+                      href={SUPABASE_SECRETS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      Supabase → Project Settings → API
+                      <ExternalLink className="h-3 w-3" />
+                    </a>{" "}
+                    e copie o valor de <code className="font-mono">service_role</code> (campo "Secret").
+                  </li>
+                  <li>
+                    No painel do Lovable, vá em <strong>Cloud → Secrets</strong> (ícone de banco de dados na barra superior).
+                  </li>
+                  <li>
+                    Clique em <strong>Add new secret</strong>, defina o nome exatamente como{" "}
+                    <code className="font-mono">SUPABASE_SERVICE_ROLE_KEY</code> e cole o valor copiado.
+                  </li>
+                  <li>Salve e tente importar novamente (o backend recarrega automaticamente).</li>
+                </ol>
+              </div>
             </div>
           )}
 
