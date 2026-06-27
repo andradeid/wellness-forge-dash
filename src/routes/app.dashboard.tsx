@@ -472,13 +472,34 @@ function DashboardPage() {
     if (!profileDetail) return [];
     const entry = examProfile.find((d) => d.key === profileDetail.key);
     const keys = new Set(entry?.keys ?? [profileDetail.key]);
-    return filteredResults
-      .filter((r) => {
-        const k = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
-        return keys.has(k);
-      })
-      .slice(0, 500);
+    return filteredResults.filter((r) => {
+      const k = (r.category ?? "outros").toString().trim().toLowerCase() || "outros";
+      return keys.has(k);
+    });
   }, [profileDetail, examProfile, filteredResults]);
+
+  const profileDetailFilteredSorted = useMemo(() => {
+    const q = detailSearch.trim().toLowerCase();
+    const rows = q
+      ? profileDetailRows.filter((r) =>
+          (r.marker_name ?? "").toLowerCase().includes(q) ||
+          (patientMap.get(r.patient_id) ?? "").toLowerCase().includes(q)
+        )
+      : profileDetailRows;
+    const sorted = [...rows].sort((a, b) => {
+      const ta = a.measured_at ? new Date(a.measured_at).getTime() : 0;
+      const tb = b.measured_at ? new Date(b.measured_at).getTime() : 0;
+      return detailSort === "date_asc" ? ta - tb : tb - ta;
+    });
+    return sorted;
+  }, [profileDetailRows, detailSearch, detailSort, patientMap]);
+
+  const detailTotalPages = Math.max(1, Math.ceil(profileDetailFilteredSorted.length / DETAIL_PAGE_SIZE));
+  const detailPageSafe = Math.min(detailPage, detailTotalPages);
+  const profileDetailPageRows = useMemo(
+    () => profileDetailFilteredSorted.slice((detailPageSafe - 1) * DETAIL_PAGE_SIZE, detailPageSafe * DETAIL_PAGE_SIZE),
+    [profileDetailFilteredSorted, detailPageSafe]
+  );
 
   // Perfil da base: distribuição por gênero e faixa etária
   const baseProfile = useMemo(() => {
