@@ -15,6 +15,7 @@ import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
+import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
 
 export interface ExamContext {
   patient_name: string;
