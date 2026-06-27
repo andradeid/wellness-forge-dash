@@ -304,11 +304,17 @@ export function useDifyChat(
         const { data: created, error: cErr } = await (supabase as any)
           .from("patient_chats")
           .insert({ patient_id: patientId, created_by: user.id })
-          .select("id, dify_conversation_id")
+          .select("id, dify_conversation_id, dify_conversations")
           .single();
         if (cErr) { setError(cErr.message); return; }
         id = created.id;
+        conversationMapRef.current = {};
       } else {
+        const rawMap = (chosenChat as any).dify_conversations;
+        const map: Record<string, string> =
+          rawMap && typeof rawMap === "object" && !Array.isArray(rawMap) ? { ...rawMap } : {};
+        conversationMapRef.current = map;
+        // conversationIdRef será ajustado abaixo com base no agente final.
         conversationIdRef.current = chosenChat!.dify_conversation_id ?? "";
         if (chosenChat!.exam_context) setExamContext(chosenChat!.exam_context as ExamContext);
       }
@@ -323,11 +329,16 @@ export function useDifyChat(
       if (!cancelled) {
         setMessages((msgs as ChatMessage[]) ?? []);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
-        if (lastMsgWithAgent) {
-          setAgentType(lastMsgWithAgent.agent_type);
+        const resolvedAgent = lastMsgWithAgent?.agent_type ?? "";
+        if (resolvedAgent) {
+          setAgentType(resolvedAgent);
+          // Rehidrata o conversation_id do agente atual a partir do mapa.
+          const mapped = conversationMapRef.current[resolvedAgent];
+          if (mapped) conversationIdRef.current = mapped;
         } else {
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
+        setActiveAgents(Object.keys(conversationMapRef.current));
       }
     };
     init();
