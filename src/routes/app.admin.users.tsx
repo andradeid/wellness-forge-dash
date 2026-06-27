@@ -390,11 +390,53 @@ function UsersPage() {
   const openDetails = async (u: UserRow) => {
     setDetailUser(u);
     setExamCount(null);
-    const { count } = await (supabase as any)
-      .from("patient_exams")
-      .select("id", { count: "exact", head: true })
-      .eq("uploaded_by", u.id);
-    setExamCount(count ?? 0);
+    setDetailExtra(null);
+
+    const sb = supabase as any;
+    const [
+      examsRes,
+      patientsRes,
+      chatsRes,
+      creditsRes,
+      subRes,
+      profRes,
+      txAggRes,
+      txLastRes,
+    ] = await Promise.all([
+      sb.from("patient_exams").select("id", { count: "exact", head: true }).eq("uploaded_by", u.id),
+      sb.from("patients").select("id", { count: "exact", head: true }).eq("created_by", u.id).is("deleted_at", null),
+      sb.from("patient_chats").select("id", { count: "exact", head: true }).eq("created_by", u.id),
+      sb.from("user_credits").select("balance").eq("user_id", u.id).maybeSingle(),
+      sb.from("subscriptions").select("seats_override, current_period_end, cancelled_at, unlimited_credits").eq("user_id", u.id).maybeSingle(),
+      sb.from("profiles").select("professional_id").eq("id", u.id).maybeSingle(),
+      sb.from("credit_transactions").select("type, amount").eq("user_id", u.id).limit(1000),
+      sb.from("credit_transactions").select("created_at, agent_label, agent_key").eq("user_id", u.id).order("created_at", { ascending: false }).limit(1),
+    ]);
+
+    setExamCount(examsRes.count ?? 0);
+
+    let totalSpent = 0;
+    let totalGranted = 0;
+    for (const t of (txAggRes.data ?? []) as Array<{ type: string; amount: number }>) {
+      if (t.type === "debit") totalSpent += t.amount ?? 0;
+      else if (t.type === "grant") totalGranted += t.amount ?? 0;
+    }
+    const lastTx = (txLastRes.data ?? [])[0] as { created_at: string; agent_label: string | null; agent_key: string | null } | undefined;
+
+    setDetailExtra({
+      patientsCount: patientsRes.count ?? 0,
+      chatsCount: chatsRes.count ?? 0,
+      creditsBalance: (creditsRes.data as any)?.balance ?? 0,
+      unlimited: !!(subRes.data as any)?.unlimited_credits,
+      seatsOverride: (subRes.data as any)?.seats_override ?? null,
+      currentPeriodEnd: (subRes.data as any)?.current_period_end ?? null,
+      cancelledAt: (subRes.data as any)?.cancelled_at ?? null,
+      professionalId: (profRes.data as any)?.professional_id ?? null,
+      totalSpent,
+      totalGranted,
+      lastActivityAt: lastTx?.created_at ?? null,
+      lastAgent: lastTx?.agent_label ?? lastTx?.agent_key ?? null,
+    });
   };
 
   const openPlan = (u: UserRow) => {
