@@ -245,36 +245,24 @@ function UsersPage() {
     setLoading(true);
     const excludeIds = await ensureExcludeIds();
 
-    let pq = applyNutriScope(
-      (supabase as any)
-        .from("profiles")
-        .select("id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at", { count: "exact" })
-        .is("deleted_at", null),
-      excludeIds,
-    );
+    // 1) Calcula candidatos por sub-filtros (status de assinatura / plano / etiqueta).
+    //    Cada um devolve uma lista de user_ids; intersectamos no cliente.
+    let candidateIds: string[] | null = null;
+    const intersect = (next: string[]) => {
+      const setNext = new Set(next);
+      candidateIds = candidateIds === null
+        ? Array.from(setNext)
+        : candidateIds.filter((id) => setNext.has(id));
+    };
 
-    // Filtros por status (blocked) e busca aplicam direto em profiles
-    if (statusFilter === "blocked") pq = pq.eq("is_blocked", true);
-
-    if (debouncedSearch) {
-      const term = debouncedSearch.replace(/[%,]/g, "");
-      pq = pq.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
-    }
-
-    // Filtros por plano/status-de-assinatura/etiqueta — resolvidos por sub-query pequena
     const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
     if (subStatusActive || planFilter !== "all") {
-      // Busca todos os user_ids que casam (sem .in gigante, pois não há restrição prévia)
       let sq = (supabase as any).from("subscriptions").select("user_id");
       if (subStatusActive) sq = sq.eq("status", statusFilter);
       if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
       const { data, error } = await sq.limit(10000);
       if (error) { toast.error(error.message); setLoading(false); return; }
-      const ids = (data ?? []).map((r: any) => r.user_id);
-      if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
-      // Aplica filtro por sub-query textual (PostgREST aceita listas via in.())
-      // Para evitar URL gigante, usamos no máximo 1000 ids — caso ultrapasse, mantemos só os primeiros
-      pq = pq.in("id", ids.slice(0, 1000));
+      intersect((data ?? []).map((r: any) => r.user_id));
     }
 
     if (tagFilter !== "all") {
@@ -284,20 +272,60 @@ function UsersPage() {
         .eq("tag_id", tagFilter)
         .limit(10000);
       if (error) { toast.error(error.message); setLoading(false); return; }
-      const ids = (data ?? []).map((r: any) => r.profile_id);
-      if (ids.length === 0) { setRows([]); setTotal(0); setLoading(false); return; }
-      pq = pq.in("id", ids.slice(0, 1000));
+      intersect((data ?? []).map((r: any) => r.profile_id));
     }
 
-    const from = page * pageSize;
-    const to = from + pageSize - 1;
-    pq = pq.order("created_at", { ascending: false }).range(from, to);
+    // Helper para montar a query base de profiles com filtros estáveis (search/blocked/scope)
+    const buildProfilesQuery = (withCount: boolean) => {
+      let q = (supabase as any)
+        .from("profiles")
+        .select(
+          "id, full_name, email, phone, avatar_url, is_blocked, deleted_at, created_at",
+          withCount ? { count: "exact" } : undefined,
+        )
+        .is("deleted_at", null);
+      q = applyNutriScope(q, excludeIds);
+      if (statusFilter === "blocked") q = q.eq("is_blocked", true);
+      if (debouncedSearch) {
+        const term = debouncedSearch.replace(/[%,]/g, "");
+        q = q.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+      }
+      return q;
+    };
 
+    let profiles: any[] = [];
+    let totalCount = 0;
 
-    const { data: profiles, count, error: pErr } = await pq;
-    if (pErr) { toast.error(pErr.message); setLoading(false); return; }
+    if (candidateIds === null) {
+      // Sem sub-filtros: paginação 100% no servidor.
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      const { data, count, error } = await buildProfilesQuery(true)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      profiles = data ?? [];
+      totalCount = count ?? 0;
+    } else {
+      if (candidateIds.length === 0) {
+        setRows([]); setTotal(0); setLoading(false); return;
+      }
+      // Chunk `.in()` para não estourar o limite de URL do PostgREST.
+      const CHUNK = 200;
+      const matched: any[] = [];
+      for (let i = 0; i < candidateIds.length; i += CHUNK) {
+        const slice = candidateIds.slice(i, i + CHUNK);
+        const { data, error } = await buildProfilesQuery(false).in("id", slice);
+        if (error) { toast.error(error.message); setLoading(false); return; }
+        if (data) matched.push(...data);
+      }
+      matched.sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
+      totalCount = matched.length;
+      const from = page * pageSize;
+      profiles = matched.slice(from, from + pageSize);
+    }
 
-    const pageIds = (profiles ?? []).map((p: any) => p.id);
+    const pageIds = profiles.map((p: any) => p.id);
     let subMap = new Map<string, any>();
     if (pageIds.length > 0) {
       const { data: subs, error: sErr } = await (supabase as any)
