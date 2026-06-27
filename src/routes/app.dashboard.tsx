@@ -128,6 +128,16 @@ function DashboardPage() {
   const [recentExams, setRecentExams] = useState<ExamLite[]>([]);
   const [recentChats, setRecentChats] = useState<ChatLite[]>([]);
   const [profileDetail, setProfileDetail] = useState<{ key: string; label: string; color: string } | null>(null);
+  const [detailSearch, setDetailSearch] = useState("");
+  const [detailSort, setDetailSort] = useState<"date_desc" | "date_asc">("date_desc");
+  const [detailPage, setDetailPage] = useState(1);
+  const DETAIL_PAGE_SIZE = 10;
+
+  useEffect(() => {
+    setDetailSearch("");
+    setDetailSort("date_desc");
+    setDetailPage(1);
+  }, [profileDetail?.key]);
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
