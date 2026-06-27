@@ -120,12 +120,14 @@ function DashboardPage() {
   const { user, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [range, setRange] = useState<RangeKey>("month");
   const [patients, setPatients] = useState<PatientLite[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
   const [examsThisMonth, setExamsThisMonth] = useState(0);
   const [recentExams, setRecentExams] = useState<ExamLite[]>([]);
   const [recentChats, setRecentChats] = useState<ChatLite[]>([]);
+  const [profileDetail, setProfileDetail] = useState<{ key: string; label: string; color: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
