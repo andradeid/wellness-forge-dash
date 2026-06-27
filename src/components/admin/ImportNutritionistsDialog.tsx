@@ -18,6 +18,10 @@ type CsvRow = {
   full_name: string;
   old_plan: string;
   professional_id?: string | null;
+  phone?: string | null;
+  clinic_name?: string | null;
+  subscription_created_at?: string | null;
+  current_period_end?: string | null;
 };
 
 function normalizeRow(raw: Record<string, any>): CsvRow | null {
@@ -37,6 +41,10 @@ function normalizeRow(raw: Record<string, any>): CsvRow | null {
     full_name,
     old_plan: (get("plan", "plan_type", "old_plan") || "free").toLowerCase(),
     professional_id: get("professional_id", "crn") || null,
+    phone: get("phone", "telefone", "whatsapp") || null,
+    clinic_name: get("clinic_name", "clinica", "clínica") || null,
+    subscription_created_at: get("subscription_created_at", "subscribed_at", "signed_up_at") || null,
+    current_period_end: get("current_period_end", "next_billing_date", "vencimento") || null,
   };
 }
 
