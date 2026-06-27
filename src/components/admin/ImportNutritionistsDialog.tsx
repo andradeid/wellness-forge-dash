@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { importNutritionistsBatch } from "@/lib/import-nutritionists.functions";
+import { importNutritionistsBatch, checkImportPrerequisites } from "@/lib/import-nutritionists.functions";
 
 const BATCH_SIZE = 25;
 
@@ -87,6 +87,7 @@ export function ImportNutritionistsDialog({
   onFinished: () => void;
 }) {
   const importFn = useServerFn(importNutritionistsBatch);
+  const checkPrereqFn = useServerFn(checkImportPrerequisites);
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<CsvRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
@@ -130,6 +131,22 @@ export function ImportNutritionistsDialog({
   const run = async () => {
     if (rows.length === 0) return;
     setRunning(true);
+
+    // Pré-flight: confirma SUPABASE_SERVICE_ROLE_KEY e permissão antes de processar.
+    try {
+      const prereq = await checkPrereqFn();
+      if (!prereq.ok) {
+        setRunning(false);
+        toast.error(prereq.reason, { duration: 10000 });
+        return;
+      }
+    } catch (err) {
+      setRunning(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Falha ao verificar pré-requisitos da importação: ${msg}`, { duration: 10000 });
+      return;
+    }
+
     setDone(0);
     setStats({ created: 0, skipped: 0, failed: 0, inferred: 0 });
     setDetails([]);
