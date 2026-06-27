@@ -483,7 +483,7 @@ export function ChatMessageList({
             
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
-            const hasPrescriptionMsg = !isUser && m.content.includes("MODELO DE RECEITUÁRIO PARA FARMÁCIA");
+            const hasPrescriptionMsg = !isUser && /(?:MODELO DE )?RECEITU[ÁA]RIO|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+|FORMULA[ÇC][ÃA]O\s+MANIPULADA/i.test(m.content);
 
             return (
               <div
