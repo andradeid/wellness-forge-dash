@@ -329,7 +329,7 @@ function UsersPage() {
     setRows(merged);
     setTotal(count ?? merged.length);
     setLoading(false);
-  }, [canAccess, ensureNutriIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
+  }, [canAccess, ensureExcludeIds, debouncedSearch, statusFilter, planFilter, tagFilter, page, pageSize]);
 
   useEffect(() => { if (canAccess) load(); }, [canAccess, load]);
   useEffect(() => { if (canAccess) loadStats(); }, [canAccess, loadStats]);
