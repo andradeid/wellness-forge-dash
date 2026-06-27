@@ -72,8 +72,11 @@ export const Route = createFileRoute("/api/dify/chat")({
         // (conversation_id, user) → Dify devolve resposta "fria".
         // Formato: <userId>:<patient_id|no-patient>. Único por par nutri+paciente.
         const patientIdSafe = sanitize(meta?.patient_id) || "no-patient";
-        const composedUser = `${userId}:${patientIdSafe}`;
-        const displayUser = composedUser.length > 64 ? composedUser.slice(0, 64) : composedUser;
+        // Particionamos por agente também: o gateway compartilha namespace
+        // de conversation_id entre apps, então sem incluir o agentType
+        // a memória de um agente "contamina" a do outro.
+        const composedUser = `${userId}:${patientIdSafe}:${agentType}`;
+        const displayUser = composedUser.length > 64 ? composedUser.slice(-64) : composedUser;
 
 
         const mergedInputs = {
