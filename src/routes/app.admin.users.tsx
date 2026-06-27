@@ -488,9 +488,6 @@ function UsersPage() {
               <Button variant="outline" onClick={() => setManageTagsOpen(true)} className="rounded-full">
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
-              <Button variant="outline" onClick={() => setImportOpen(true)} className="rounded-full">
-                <Upload className="h-4 w-4 mr-2" /> Importar CSV
-              </Button>
               <Button
                 onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
