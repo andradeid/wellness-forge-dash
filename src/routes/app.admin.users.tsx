@@ -942,6 +942,12 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImportNutritionistsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onFinished={() => { nutriIdsRef.current = null; refreshAll(); }}
+      />
     </div>
   );
 }
