@@ -290,8 +290,7 @@ function UsersPage() {
       const { data: pats } = await (supabase as any)
         .from("patients")
         .select("created_by")
-        .in("created_by", pageIds)
-        .is("deleted_at", null);
+        .in("created_by", pageIds);
       (pats ?? []).forEach((row: any) => {
         patientsCountMap[row.created_by] = (patientsCountMap[row.created_by] ?? 0) + 1;
       });
