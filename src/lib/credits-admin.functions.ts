@@ -53,13 +53,13 @@ export const listNutritionists = createServerFn({ method: "GET" })
     let profilesQuery = context.supabase
       .from("profiles")
       .select("id, full_name, email")
-      .is("deleted_at", null)
-      .order("full_name", { ascending: true })
-      .limit(10000);
+      .is("deleted_at", null);
 
     if (adminIds.length > 0) {
       profilesQuery = profilesQuery.not("id", "in", `(${adminIds.join(",")})`);
     }
+
+    profilesQuery = profilesQuery.order("full_name", { ascending: true }).limit(10000);
 
     const [profilesRes, subsRes, creditsRes] = await Promise.all([
       profilesQuery,
