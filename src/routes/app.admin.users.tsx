@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ChevronRight,
   Search,
@@ -47,6 +47,15 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/app/admin/users")({
   component: UsersPage,
 });
+
+function DetailCell({ label, value, highlight }: { label: string; value: ReactNode; highlight?: boolean }) {
+  return (
+    <div className="rounded-lg border p-3">
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={`mt-1 ${highlight ? "text-lg font-semibold" : ""}`}>{value}</p>
+    </div>
+  );
+}
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 const DEFAULT_COLORS = ["#e8a04c", "#e89bcf", "#7c9a92", "#6b7fd7", "#d97757", "#8a8a8a", "#2c2c2c"];
@@ -131,6 +140,20 @@ function UsersPage() {
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
   const [examCount, setExamCount] = useState<number | null>(null);
+  const [detailExtra, setDetailExtra] = useState<{
+    patientsCount: number;
+    chatsCount: number;
+    creditsBalance: number;
+    unlimited: boolean;
+    seatsOverride: number | null;
+    currentPeriodEnd: string | null;
+    cancelledAt: string | null;
+    professionalId: string | null;
+    totalSpent: number;
+    totalGranted: number;
+    lastActivityAt: string | null;
+    lastAgent: string | null;
+  } | null>(null);
   
 
   // debounce da busca
@@ -376,11 +399,53 @@ function UsersPage() {
   const openDetails = async (u: UserRow) => {
     setDetailUser(u);
     setExamCount(null);
-    const { count } = await (supabase as any)
-      .from("patient_exams")
-      .select("id", { count: "exact", head: true })
-      .eq("uploaded_by", u.id);
-    setExamCount(count ?? 0);
+    setDetailExtra(null);
+
+    const sb = supabase as any;
+    const [
+      examsRes,
+      patientsRes,
+      chatsRes,
+      creditsRes,
+      subRes,
+      profRes,
+      txAggRes,
+      txLastRes,
+    ] = await Promise.all([
+      sb.from("patient_exams").select("id", { count: "exact", head: true }).eq("uploaded_by", u.id),
+      sb.from("patients").select("id", { count: "exact", head: true }).eq("created_by", u.id).is("deleted_at", null),
+      sb.from("patient_chats").select("id", { count: "exact", head: true }).eq("created_by", u.id),
+      sb.from("user_credits").select("balance").eq("user_id", u.id).maybeSingle(),
+      sb.from("subscriptions").select("seats_override, current_period_end, cancelled_at, unlimited_credits").eq("user_id", u.id).maybeSingle(),
+      sb.from("profiles").select("professional_id").eq("id", u.id).maybeSingle(),
+      sb.from("credit_transactions").select("type, amount").eq("user_id", u.id).limit(1000),
+      sb.from("credit_transactions").select("created_at, agent_label, agent_key").eq("user_id", u.id).order("created_at", { ascending: false }).limit(1),
+    ]);
+
+    setExamCount(examsRes.count ?? 0);
+
+    let totalSpent = 0;
+    let totalGranted = 0;
+    for (const t of (txAggRes.data ?? []) as Array<{ type: string; amount: number }>) {
+      if (t.type === "debit") totalSpent += t.amount ?? 0;
+      else if (t.type === "grant") totalGranted += t.amount ?? 0;
+    }
+    const lastTx = (txLastRes.data ?? [])[0] as { created_at: string; agent_label: string | null; agent_key: string | null } | undefined;
+
+    setDetailExtra({
+      patientsCount: patientsRes.count ?? 0,
+      chatsCount: chatsRes.count ?? 0,
+      creditsBalance: (creditsRes.data as any)?.balance ?? 0,
+      unlimited: !!(subRes.data as any)?.unlimited_credits,
+      seatsOverride: (subRes.data as any)?.seats_override ?? null,
+      currentPeriodEnd: (subRes.data as any)?.current_period_end ?? null,
+      cancelledAt: (subRes.data as any)?.cancelled_at ?? null,
+      professionalId: (profRes.data as any)?.professional_id ?? null,
+      totalSpent,
+      totalGranted,
+      lastActivityAt: lastTx?.created_at ?? null,
+      lastAgent: lastTx?.agent_label ?? lastTx?.agent_key ?? null,
+    });
   };
 
   const openPlan = (u: UserRow) => {
@@ -738,50 +803,118 @@ function UsersPage() {
 
       {/* Modal: Detalhes */}
       <Dialog open={!!detailUser} onOpenChange={(o) => !o && setDetailUser(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl font-normal">Perfil da nutricionista</DialogTitle>
-            <DialogDescription>Informações detalhadas e atividade.</DialogDescription>
+            <DialogDescription>Informações detalhadas, plano, créditos e atividade.</DialogDescription>
           </DialogHeader>
           {detailUser && (
-            <div className="space-y-4 pt-2">
+            <div className="space-y-5 pt-2">
+              {/* Cabeçalho */}
               <div className="flex items-center gap-3">
-                <div className="h-14 w-14 rounded-full bg-gradient-brand flex items-center justify-center text-white text-lg font-semibold uppercase overflow-hidden">
+                <div className="h-14 w-14 rounded-full bg-gradient-brand flex items-center justify-center text-white text-lg font-semibold uppercase overflow-hidden shrink-0">
                   {detailUser.avatar_url ? (
                     <img src={detailUser.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     (detailUser.full_name || detailUser.email).slice(0, 2)
                   )}
                 </div>
-                <div>
-                  <p className="font-medium">{detailUser.full_name || "—"}</p>
-                  <p className="text-sm text-muted-foreground">{detailUser.email}</p>
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{detailUser.full_name || "—"}</p>
+                  <p className="text-sm text-muted-foreground truncate">{detailUser.email}</p>
+                  {detailExtra?.professionalId && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Registro profissional: {detailExtra.professionalId}</p>
+                  )}
                 </div>
               </div>
+
+              {/* Etiquetas */}
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Etiquetas</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(rowTags[detailUser.id] ?? []).length === 0 ? (
+                    <span className="text-sm text-muted-foreground">Sem etiquetas</span>
+                  ) : (
+                    (rowTags[detailUser.id] ?? []).map((t) => (
+                      <Badge key={t.id} variant="outline" style={{ borderColor: t.color, color: t.color }}>
+                        {t.label}
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Identificação */}
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-lg border p-3">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Telefone</p>
-                  <p className="mt-1">{detailUser.phone || "—"}</p>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Cadastro</p>
-                  <p className="mt-1">{new Date(detailUser.created_at).toLocaleDateString("pt-BR")}</p>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Plano</p>
-                  <p className="mt-1">{planLabel(detailUser.plan_type)}</p>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Status</p>
-                  <p className="mt-1">{statusLabel(detailUser.status, detailUser.is_blocked)}</p>
-                </div>
-                <div className="rounded-lg border p-3 col-span-2">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Exames processados</p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {examCount === null ? <Loader2 className="h-4 w-4 animate-spin inline" /> : examCount}
-                  </p>
-                </div>
+                <DetailCell label="Telefone" value={detailUser.phone || "—"} />
+                <DetailCell label="Cadastro" value={new Date(detailUser.created_at).toLocaleDateString("pt-BR")} />
               </div>
+
+              {/* Plano & Assinatura */}
+              <section className="rounded-xl border p-4 space-y-3">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Plano & assinatura</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <DetailCell label="Plano" value={planLabel(detailUser.plan_type)} />
+                  <DetailCell label="Status" value={statusLabel(detailUser.status, detailUser.is_blocked)} />
+                  <DetailCell
+                    label="Validade"
+                    value={detailExtra?.currentPeriodEnd ? new Date(detailExtra.currentPeriodEnd).toLocaleDateString("pt-BR") : "—"}
+                  />
+                  <DetailCell
+                    label="Assentos (override)"
+                    value={detailExtra?.seatsOverride != null ? String(detailExtra.seatsOverride) : "—"}
+                  />
+                  {detailExtra?.cancelledAt && (
+                    <DetailCell
+                      label="Cancelada em"
+                      value={new Date(detailExtra.cancelledAt).toLocaleDateString("pt-BR")}
+                    />
+                  )}
+                </div>
+              </section>
+
+              {/* Créditos */}
+              <section className="rounded-xl border p-4 space-y-3">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Créditos</p>
+                {detailExtra === null ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : detailExtra.unlimited ? (
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-gradient-brand text-white border-0">Ilimitado</Badge>
+                    <span className="text-sm text-muted-foreground">Acesso liberado sem débito.</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3 text-sm">
+                    <DetailCell label="Saldo atual" value={detailExtra.creditsBalance.toLocaleString("pt-BR")} highlight />
+                    <DetailCell label="Total consumido" value={detailExtra.totalSpent.toLocaleString("pt-BR")} />
+                    <DetailCell label="Total recebido" value={detailExtra.totalGranted.toLocaleString("pt-BR")} />
+                  </div>
+                )}
+              </section>
+
+              {/* Uso */}
+              <section className="rounded-xl border p-4 space-y-3">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Uso da plataforma</p>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <DetailCell label="Pacientes" value={detailExtra?.patientsCount?.toLocaleString("pt-BR") ?? "…"} />
+                  <DetailCell label="Conversas" value={detailExtra?.chatsCount?.toLocaleString("pt-BR") ?? "…"} />
+                  <DetailCell label="Exames" value={examCount === null ? "…" : examCount.toLocaleString("pt-BR")} />
+                </div>
+                <div className="text-xs text-muted-foreground pt-1">
+                  Última atividade:{" "}
+                  {detailExtra?.lastActivityAt
+                    ? `${new Date(detailExtra.lastActivityAt).toLocaleString("pt-BR")}${detailExtra.lastAgent ? ` · ${detailExtra.lastAgent}` : ""}`
+                    : "—"}
+                </div>
+              </section>
+
+              {/* Pagamentos */}
+              <section className="rounded-xl border p-4 space-y-2">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Pagamentos</p>
+                <p className="text-sm text-muted-foreground">
+                  Integração de cobrança ainda não conectada. Recargas e mensalidades estão sendo geridas manualmente.
+                </p>
+              </section>
             </div>
           )}
           <DialogFooter>
@@ -789,6 +922,7 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Modal: Plano */}
       <Dialog open={!!planUser} onOpenChange={(o) => !o && setPlanUser(null)}>
