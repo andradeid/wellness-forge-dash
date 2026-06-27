@@ -140,9 +140,11 @@ export function ImportNutritionistsDialog({
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl font-normal">Importar nutricionistas</DialogTitle>
           <DialogDescription>
-            Envie um CSV com colunas: <code>id</code> (opcional, UUID), <code>email</code>, <code>full_name</code>,{" "}
-            <code>plan</code> (free | basic | premium | pro | black). Os usuários entram bloqueados e devem ser
-            liberados manualmente.
+            Colunas aceitas: <code>id</code>, <code>email</code>, <code>full_name</code>,{" "}
+            <code>plan</code> (free | basic | premium | pro | black), <code>professional_id</code>,{" "}
+            <code>phone</code>, <code>clinic_name</code>, <code>subscription_created_at</code>,{" "}
+            <code>current_period_end</code>. Apenas email, full_name e plan são obrigatórios. Usuários entram
+            bloqueados.
           </DialogDescription>
         </DialogHeader>
 
