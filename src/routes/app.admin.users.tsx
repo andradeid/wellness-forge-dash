@@ -582,7 +582,9 @@ function UsersPage() {
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Usuária</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Usuária</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pacientes</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Etiquetas</TableHead>
