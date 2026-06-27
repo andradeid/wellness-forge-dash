@@ -23,6 +23,9 @@ const RowSchema = z.object({
   clinic_name: z.string().trim().max(200).optional().nullable(),
   subscription_created_at: isoOrNull,
   current_period_end: isoOrNull,
+  cancelled_at: isoOrNull,
+  legacy_status: z.string().trim().toLowerCase().optional().nullable().transform((v) => v || null),
+  legacy_last_login_at: isoOrNull,
 });
 
 const InputSchema = z.object({
@@ -125,6 +128,7 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
             professional_id: row.professional_id ?? null,
             phone: row.phone ?? null,
             clinic_name: row.clinic_name ?? null,
+            legacy_last_login_at: row.legacy_last_login_at ?? null,
             is_blocked: true,
           })
           .eq("id", userId);
@@ -141,6 +145,8 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
         };
         if (row.subscription_created_at) subPayload.created_at = row.subscription_created_at;
         if (row.current_period_end) subPayload.current_period_end = row.current_period_end;
+        if (row.cancelled_at) subPayload.cancelled_at = row.cancelled_at;
+        if (row.legacy_status) subPayload.legacy_status = row.legacy_status;
 
         await (supabaseAdmin as any)
           .from("subscriptions")

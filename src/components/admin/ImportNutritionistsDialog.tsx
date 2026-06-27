@@ -22,6 +22,9 @@ type CsvRow = {
   clinic_name?: string | null;
   subscription_created_at?: string | null;
   current_period_end?: string | null;
+  cancelled_at?: string | null;
+  legacy_status?: string | null;
+  legacy_last_login_at?: string | null;
 };
 
 function normalizeRow(raw: Record<string, any>): CsvRow | null {
@@ -45,6 +48,9 @@ function normalizeRow(raw: Record<string, any>): CsvRow | null {
     clinic_name: get("clinic_name", "clinica", "clínica") || null,
     subscription_created_at: get("subscription_created_at", "subscribed_at", "signed_up_at") || null,
     current_period_end: get("current_period_end", "next_billing_date", "vencimento") || null,
+    cancelled_at: get("cancelled_at", "canceled_at", "cancelado_em") || null,
+    legacy_status: get("old_status", "legacy_status", "status") || null,
+    legacy_last_login_at: get("last_login_at", "last_sign_in_at", "ultimo_login") || null,
   };
 }
 
