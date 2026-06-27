@@ -98,7 +98,7 @@ export function ImportNutritionistsDialog({
   const [showDetails, setShowDetails] = useState(false);
   const [prereqError, setPrereqError] = useState<string | null>(null);
 
-  const SUPABASE_SECRETS_URL = "https://supabase.com/dashboard/project/bidarktpgytizdgmmqrg/settings/api";
+  const SUPABASE_API_SETTINGS_URL = "https://supabase.com/dashboard/project/bidarktpgytizdgmmqrg/settings/api";
 
   const reset = () => {
     setRows([]);
@@ -147,7 +147,7 @@ export function ImportNutritionistsDialog({
         toast.error(prereq.reason, {
           duration: 12000,
           description:
-            "Como resolver: 1) Painel Lovable → Cloud → Secrets. 2) Adicione SUPABASE_SERVICE_ROLE_KEY. 3) Copie o valor em Supabase → Project Settings → API → service_role. 4) Salve e tente importar novamente.",
+            "Como resolver: copie o service_role em Supabase → Project Settings → API e salve como SUPABASE_SERVICE_ROLE_KEY nos secrets de runtime do projeto; depois tente importar novamente.",
         });
         return;
       }
@@ -270,7 +270,7 @@ export function ImportNutritionistsDialog({
                   <li>
                     Abra{" "}
                     <a
-                      href={SUPABASE_SECRETS_URL}
+                      href={SUPABASE_API_SETTINGS_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-primary hover:underline"
@@ -281,7 +281,7 @@ export function ImportNutritionistsDialog({
                     e copie o valor de <code className="font-mono">service_role</code> (campo "Secret").
                   </li>
                   <li>
-                    No painel do Lovable, vá em <strong>Cloud → Secrets</strong> (ícone de banco de dados na barra superior).
+                    Abra os <strong>Secrets de runtime do projeto</strong> e adicione uma nova variável.
                   </li>
                   <li>
                     Clique em <strong>Add new secret</strong>, defina o nome exatamente como{" "}

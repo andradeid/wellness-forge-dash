@@ -34,7 +34,7 @@ const InputSchema = z.object({
 });
 
 function missingAdminSecretMessage() {
-  return "Importação bloqueada: a chave admin do Supabase externo não está disponível no runtime. Cadastre SUPABASE_SERVICE_ROLE_KEY nos Secrets do projeto.";
+  return "Importação bloqueada: a chave admin do Supabase externo não está disponível no runtime desta aplicação. O Supabase está conectado, mas a server function de importação precisa da SUPABASE_SERVICE_ROLE_KEY como secret de runtime para criar usuários.";
 }
 
 function resolveRuntimeAdminSecret() {
@@ -107,7 +107,8 @@ export const checkImportPrerequisites = createServerFn({ method: "POST" })
     }
 
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { createSupabaseAdminClient } = await import("@/integrations/supabase/client.server");
+      const supabaseAdmin = createSupabaseAdminClient();
       const { error } = await (supabaseAdmin as any)
         .from("profiles")
         .select("id", { count: "exact", head: true });
@@ -150,7 +151,8 @@ export const importNutritionistsBatch = createServerFn({ method: "POST" })
     let supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
     try {
-      ({ supabaseAdmin } = await import("@/integrations/supabase/client.server"));
+      const adminModule = await import("@/integrations/supabase/client.server");
+      supabaseAdmin = adminModule.createSupabaseAdminClient();
       await (supabaseAdmin as any).from("profiles").select("id", { count: "exact", head: true });
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : String(err);
