@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
 import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
+import { normalizePrescription } from "@/lib/normalize-prescription";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export interface ChatMessage {
@@ -613,7 +614,7 @@ export function ChatMessageList({
                                 "[&_hr]:my-4 [&_hr]:border-border"
                               )}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                                  {before}
+                                  {normalizePrescription(before)}
                                 </ReactMarkdown>
                               </div>
                             )}
@@ -663,7 +664,7 @@ export function ChatMessageList({
                               )
                             } : undefined}
                           >
-                            {finalContent || ""}
+                            {normalizePrescription(finalContent || "")}
                           </ReactMarkdown>
                         </div>
                       );
