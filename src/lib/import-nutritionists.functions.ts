@@ -2,12 +2,27 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const isoOrNull = z
+  .string()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((v) => {
+    if (!v) return null;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  });
+
 const RowSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   email: z.string().email().transform((v) => v.trim().toLowerCase()),
   full_name: z.string().trim().min(1).max(200),
   old_plan: z.string().trim().toLowerCase().default("free"),
   professional_id: z.string().trim().max(80).optional().nullable(),
+  phone: z.string().trim().max(40).optional().nullable(),
+  clinic_name: z.string().trim().max(200).optional().nullable(),
+  subscription_created_at: isoOrNull,
+  current_period_end: isoOrNull,
 });
 
 const InputSchema = z.object({
