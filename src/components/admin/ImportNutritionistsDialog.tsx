@@ -134,7 +134,7 @@ export function ImportNutritionistsDialog({
 
     // Pré-flight: confirma SUPABASE_SERVICE_ROLE_KEY e permissão antes de processar.
     try {
-      const prereq = await checkPrereqFn({ data: undefined as never });
+      const prereq = await checkPrereqFn();
       if (!prereq.ok) {
         setRunning(false);
         toast.error(prereq.reason, { duration: 10000 });
