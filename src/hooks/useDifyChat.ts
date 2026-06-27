@@ -30,6 +30,49 @@ export interface ExamContext {
   agent_type?: string;
 }
 
+type ExamContextMeta = Pick<
+  ExamContext,
+  "patient_name" | "patient_profile" | "patient_sex" | "gestante_tipo" | "gestante_periodo"
+>;
+
+function buildExamContextFromAnalysis({
+  text,
+  markers,
+  meta,
+  agentType,
+  previous,
+}: {
+  text: string;
+  markers: Marker[];
+  meta: Partial<ExamContextMeta>;
+  agentType?: string | null;
+  previous?: ExamContext | null;
+}): ExamContext {
+  const safeMarkers = markers ?? [];
+  return {
+    patient_name: meta.patient_name || previous?.patient_name || "Paciente",
+    patient_profile: meta.patient_profile || previous?.patient_profile || "",
+    patient_sex: meta.patient_sex || previous?.patient_sex || "",
+    gestante_tipo: meta.gestante_tipo || previous?.gestante_tipo || "",
+    gestante_periodo: meta.gestante_periodo || previous?.gestante_periodo || "",
+    exam_date: new Date().toISOString(),
+    alteracoes: safeMarkers
+      .filter((m: Marker) => {
+        const visual = classificationVisualState(m.classification);
+        return visual !== "otimo" && visual !== "normal" && visual !== "desconhecido";
+      })
+      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""} (${m.classification})`),
+    otimos: safeMarkers
+      .filter((m: Marker) => classificationVisualState(m.classification) === "otimo")
+      .map((m: Marker) => `${m.name}: ${m.value} ${m.unit || ""}`),
+    resumo_clinico: safeMarkers
+      .map((m: Marker) => `${m.name} ${m.value} ${m.unit || ""} — ${m.classification}`)
+      .join(" | "),
+    resumo_texto: text.slice(0, 4000),
+    agent_type: agentType || previous?.agent_type,
+  };
+}
+
 interface DifyFileRef {
   type: "image" | "document";
   transfer_method: "local_file" | "remote_url";
