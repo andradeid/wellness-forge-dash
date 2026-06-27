@@ -232,30 +232,60 @@ export function ImportNutritionistsDialog({
                 <span>{done} / {rows.length} ({progress}%)</span>
               </div>
               <Progress value={progress} />
-              <div className="flex gap-4 text-xs pt-1">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs pt-1">
                 <span className="inline-flex items-center gap-1 text-emerald-600">
                   <CheckCircle2 className="h-3 w-3" /> {stats.created} criados
                 </span>
-                <span className="text-muted-foreground">{stats.skipped} pulados</span>
+                <span className="inline-flex items-center gap-1 text-amber-600">
+                  <Sparkles className="h-3 w-3" /> {stats.inferred} inferidos
+                </span>
+                <span className="text-muted-foreground">{stats.skipped} já existentes</span>
                 <span className="inline-flex items-center gap-1 text-destructive">
-                  <AlertCircle className="h-3 w-3" /> {stats.failed} falhas
+                  <AlertCircle className="h-3 w-3" /> {stats.failed} rejeitados
                 </span>
               </div>
             </div>
           )}
 
-          {errors.length > 0 && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 max-h-40 overflow-y-auto">
-              <p className="text-xs font-medium text-destructive mb-1">Falhas ({errors.length})</p>
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                {errors.slice(0, 50).map((e, i) => (
-                  <li key={i}><span className="font-mono">{e.email}</span> — {e.reason}</li>
-                ))}
-                {errors.length > 50 && <li>… e mais {errors.length - 50}</li>}
-              </ul>
+          {details.length > 0 && (
+            <div className="rounded-xl border bg-card">
+              <button
+                type="button"
+                onClick={() => setShowDetails((s) => !s)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium hover:bg-muted/50 transition"
+              >
+                <span>Ver detalhes ({details.length})</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showDetails ? "rotate-180" : ""}`} />
+              </button>
+              {showDetails && (
+                <ul className="max-h-56 overflow-y-auto border-t divide-y text-xs">
+                  {details.map((d, i) => {
+                    const color =
+                      d.status === "created" ? "text-emerald-600"
+                      : d.status === "inferred" ? "text-amber-600"
+                      : d.status === "skipped" ? "text-muted-foreground"
+                      : "text-destructive";
+                    const label =
+                      d.status === "created" ? "criado"
+                      : d.status === "inferred" ? "criado (nome inferido)"
+                      : d.status === "skipped" ? "já existente"
+                      : "rejeitado";
+                    return (
+                      <li key={i} className="px-3 py-1.5 flex items-start gap-2">
+                        <span className={`font-medium shrink-0 ${color}`}>{label}</span>
+                        <span className="font-mono truncate">{d.email}</span>
+                        {d.reason && d.status !== "inferred" && (
+                          <span className="text-muted-foreground truncate">— {d.reason}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           )}
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={running}>
