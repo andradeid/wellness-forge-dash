@@ -283,32 +283,58 @@ function AuditPage() {
           {results.length === 0 && (
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Nutricionistas {nutrisQuery.data ? `(${filteredNutris.length})` : ""}
+                Nutricionistas {nutrisQuery.data ? `(${nutriTotal})` : ""}
               </div>
               {nutrisQuery.isLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
                 </div>
-              ) : filteredNutris.length === 0 ? (
+              ) : nutriRows.length === 0 ? (
                 <div className="text-center py-8 text-sm text-muted-foreground">
                   Nenhum nutricionista encontrado.
                 </div>
               ) : (
-                <div className="border rounded-lg divide-y max-h-[480px] overflow-y-auto">
-                  {filteredNutris.map((u) => (
-                    <UserRow
-                      key={u.id}
-                      user={u}
-                      selected={selected?.id === u.id}
-                      onAudit={() => openAudit(u)}
-                      onAdjust={() => openAdjust(u)}
-                      canAdjust={isSuperAdmin}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="border rounded-lg divide-y">
+                    {nutriRows.map((u) => (
+                      <UserRow
+                        key={u.id}
+                        user={u}
+                        selected={selected?.id === u.id}
+                        onAudit={() => openAudit(u)}
+                        onAdjust={() => openAdjust(u)}
+                        canAdjust={isSuperAdmin}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between mt-3 text-sm">
+                    <span className="text-muted-foreground">
+                      Página {nutriPage} de {nutriTotalPages} — {nutriTotal} nutricionistas
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNutriPage((p) => Math.max(1, p - 1))}
+                        disabled={nutrisQuery.isFetching || nutriPage <= 1}
+                      >
+                        Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNutriPage((p) => Math.min(nutriTotalPages, p + 1))}
+                        disabled={nutrisQuery.isFetching || nutriPage >= nutriTotalPages}
+                      >
+                        Próximo
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
+
         </CardContent>
       </Card>
 
