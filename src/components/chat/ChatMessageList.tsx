@@ -229,10 +229,25 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   const { user } = useAuth();
   const { data: profile } = useBrandingProfile(user?.id);
 
+  const stripMarkdown = (text: string): string => {
+    return text
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/\*\*\*(.+?)\*\*\*/g, "$1")
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/__(.+?)__/g, "$1")
+      .replace(/(?<!\*)\*(?!\s)([^*\n]+?)\*(?!\*)/g, "$1")
+      .replace(/(?<!_)_(?!\s)([^_\n]+?)_(?!_)/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/```[\s\S]*?```/g, (m) => m.replace(/```\w*\n?/g, "").replace(/```/g, ""))
+      .replace(/^\s*[-*+]\s+/gm, "• ")
+      .replace(/^\s*>\s?/gm, "")
+      .replace(/^\s*---+\s*$/gm, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  };
+
   const getCleanedBody = () => {
-    if (!profile) return body;
-    
-    let cleaned = body;
+    let cleaned = stripMarkdown(body);
+    if (!profile) return cleaned;
     cleaned = cleaned.replace(/\[NOME COMPLETO DO NUTRICIONISTA\]/g, profile.full_name || "");
     cleaned = cleaned.replace(/\[Nº CRN\]|\[Seu CRN\]/g, profile.professional_id || "");
     cleaned = cleaned.replace(/\[Nome da Clínica\]|\[Endereço do Consultório\]/g, profile.clinic_name || "");
@@ -242,13 +257,14 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
   };
 
   const cleanedBody = getCleanedBody();
+  const cleanedTitle = stripMarkdown(title);
   const [editableBody, setEditableBody] = useState(cleanedBody);
 
   useEffect(() => {
     setEditableBody(cleanedBody);
   }, [cleanedBody]);
 
-  const fullText = `${title}\n\n${editableBody}`;
+  const fullText = `${cleanedTitle}\n\n${editableBody}`;
 
   const handleCopy = async () => {
     try {
@@ -278,7 +294,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
          </div>`
       : "";
 
-    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${cleanedTitle}</title>
 <style>
   body { 
     font-family: Arial, Helvetica, sans-serif; 
@@ -309,7 +325,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
 </style></head><body>
   ${logoHtml}
   ${nutriInfoHtml}
-  <h1>${title}</h1>
+  <h1>${cleanedTitle}</h1>
   <pre>${editableBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
 <script>window.onload = () => { window.focus(); window.print(); }<\/script>
 </body></html>`);
@@ -337,7 +353,7 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
           </div>
         </div>
       )}
-      <div className="font-bold border-b mb-3 pb-2 text-foreground">{title}</div>
+      <div className="font-bold border-b mb-3 pb-2 text-foreground">{cleanedTitle}</div>
       <textarea
         value={editableBody}
         readOnly={!isEditing}
