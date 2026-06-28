@@ -238,8 +238,6 @@ function DashboardPage() {
     };
   }, [user, role, range]);
 
-  if (role === "super_admin") return null;
-
   const patientMap = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of patients) m.set(p.id, p.name);
@@ -555,6 +553,8 @@ function DashboardPage() {
     if (!name) return `${t}.`;
     return pronoun ? `${t}, ${pronoun} ${name}.` : `${t}, ${name}.`;
   })();
+
+  if (role === "super_admin") return null;
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-6 w-full overflow-x-hidden">
