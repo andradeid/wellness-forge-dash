@@ -169,6 +169,43 @@ function tryExtractLabReportError(text: string): string | null {
   return null;
 }
 
+/**
+ * Scanner balanceado: a partir do `{` em startIdx, encontra o `}` correspondente
+ * respeitando strings JSON (com escapes). Retorna o índice do `}` ou -1.
+ */
+function findMatchingBrace(text: string, startIdx: number): number {
+  if (text[startIdx] !== "{") return -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = startIdx; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) { escaped = false; continue; }
+      if (ch === "\\") { escaped = true; continue; }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/** Remove a seção de formulações antes do fallback heurístico varrer. */
+function truncateBeforeFormulations(text: string): string {
+  let cutoff = text.length;
+  const markerIdx = text.search(/<!--\s*FORMULACOES_SUGERIDAS/i);
+  if (markerIdx !== -1) cutoff = Math.min(cutoff, markerIdx);
+  const headingIdx = text.search(/^#{1,6}\s*(Formula[cç][aã]o|Formula[cç][oõ]es|Sugest[oõ]es de Formula)/im);
+  if (headingIdx !== -1) cutoff = Math.min(cutoff, headingIdx);
+  return text.slice(0, cutoff);
+}
+
 function tryExtractMarkers(text: string): Marker[] | null {
   // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
   if (tryExtractLabReportError(text)) return null;
@@ -180,22 +217,32 @@ function tryExtractMarkers(text: string): Marker[] | null {
     try {
       const parsed = JSON.parse(m[1].trim());
       if (Array.isArray(parsed?.markers)) return parsed.markers as Marker[];
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[tryExtractMarkers] JSON block parse falhou:", err, m[1].slice(0, 200));
+    }
   }
-  // 2) any { "markers": [...] } substring
+  // 2) { "markers": [...] } solto no texto — scanner balanceado consciente de strings/escapes
   const idx = text.indexOf('"markers"');
   if (idx !== -1) {
     const start = text.lastIndexOf("{", idx);
-    const end = text.indexOf("}", text.indexOf("]", idx));
-    if (start !== -1 && end !== -1) {
-      try {
-        const parsed = JSON.parse(text.slice(start, end + 1));
-        if (Array.isArray(parsed?.markers)) return parsed.markers as Marker[];
-      } catch { /* ignore */ }
+    if (start !== -1) {
+      const end = findMatchingBrace(text, start);
+      if (end !== -1) {
+        try {
+          const parsed = JSON.parse(text.slice(start, end + 1));
+          if (Array.isArray(parsed?.markers)) return parsed.markers as Marker[];
+        } catch (err) {
+          console.warn("[tryExtractMarkers] JSON inline parse falhou:", err, text.slice(start, Math.min(end + 1, start + 200)));
+        }
+      } else {
+        console.warn("[tryExtractMarkers] chave de abertura sem fechamento balanceado a partir de", start);
+      }
     }
   }
-  // 3) Fallback heurístico — extrai marcadores de respostas em linguagem natural.
-  const fromText = extractMarkersFromText(text);
+  // 3) Fallback heurístico — somente sobre o trecho ANTES da seção de formulações,
+  // pra nunca engolir receitas se os estágios 1/2 falharem.
+  const safeText = truncateBeforeFormulations(text);
+  const fromText = extractMarkersFromText(safeText);
   return fromText.length ? fromText : null;
 }
 
