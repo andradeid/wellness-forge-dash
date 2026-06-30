@@ -198,8 +198,15 @@ export function AppSidebar() {
   }, [user]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate({ to: "/login" });
+    try {
+      await signOut();
+    } catch (error) {
+      console.warn("[sidebar] falha ao sair", error);
+    } finally {
+      void navigate({ to: "/login" }).catch((error) => {
+        console.warn("[sidebar] falha ao navegar para login", error);
+      });
+    }
   };
 
   const isActive = (item: NavItem) => {
@@ -404,14 +411,22 @@ export function AppSidebar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="rounded-lg gap-3 cursor-pointer py-2.5"
-              onClick={() => navigate({ to: "/app/settings", search: { tab: "identity" } as any })}
+              onClick={() => {
+                void navigate({ to: "/app/settings", search: { tab: "identity" } as any }).catch((error) => {
+                  console.warn("[sidebar] falha ao navegar para perfil", error);
+                });
+              }}
             >
               <UserIcon className="h-4 w-4" />
               Meu perfil
             </DropdownMenuItem>
             <DropdownMenuItem
               className="rounded-lg gap-3 cursor-pointer py-2.5"
-              onClick={() => navigate({ to: "/app/settings" })}
+              onClick={() => {
+                void navigate({ to: "/app/settings" }).catch((error) => {
+                  console.warn("[sidebar] falha ao navegar para configurações", error);
+                });
+              }}
             >
               <SettingsIcon className="h-4 w-4" />
               Configurações
