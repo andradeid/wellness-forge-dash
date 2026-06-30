@@ -39,7 +39,7 @@ async function fetchProfileAndRole(userId: string): Promise<{
   profile: Profile | null;
   role: AppRole | null;
 }> {
-  const [profileRes, roleRes] = await Promise.all([
+  const [profileRes, roleRes] = await Promise.allSettled([
     (supabase as any)
       .from("profiles")
       .select("id, full_name, email, avatar_url, phone, is_blocked, pronoun")
@@ -54,9 +54,20 @@ async function fetchProfileAndRole(userId: string): Promise<{
       .maybeSingle(),
   ]);
 
+  const profileQuery = profileRes.status === "fulfilled" ? profileRes.value : null;
+  const roleQuery = roleRes.status === "fulfilled" ? roleRes.value : null;
+
+  if (profileRes.status === "rejected" || profileQuery?.error) {
+    console.warn("[auth] falha ao carregar perfil", profileRes.status === "rejected" ? profileRes.reason : profileQuery.error);
+  }
+
+  if (roleRes.status === "rejected" || roleQuery?.error) {
+    console.warn("[auth] falha ao carregar role", roleRes.status === "rejected" ? roleRes.reason : roleQuery.error);
+  }
+
   return {
-    profile: (profileRes.data as Profile | null) ?? null,
-    role: (roleRes.data?.role as AppRole | null) ?? null,
+    profile: (profileQuery?.data as Profile | null) ?? null,
+    role: (roleQuery?.data?.role as AppRole | null) ?? null,
   };
 }
 
@@ -116,6 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setProfile(profile);
       setRole(role);
+    } catch (error) {
+      if (requestId === authRequestRef.current) {
+        console.error("[auth] erro inesperado ao aplicar sessão", error);
+        setProfile(null);
+        setRole(null);
+      }
     } finally {
       if (requestId === authRequestRef.current) setLoading(false);
     }
@@ -146,10 +163,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (initialRequestId !== authRequestRef.current) return;
-      void applySession(data.session);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (initialRequestId !== authRequestRef.current) return;
+        void applySession(data.session);
+      })
+      .catch((error) => {
+        console.error("[auth] erro ao restaurar sessão", error);
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setRole(null);
+        setLoading(false);
+      });
 
     return () => {
       subscription.subscription.unsubscribe();
