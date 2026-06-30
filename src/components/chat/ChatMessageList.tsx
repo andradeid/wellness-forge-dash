@@ -339,9 +339,9 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
     <div className="bg-white border border-border rounded-lg p-6 font-mono text-xs shadow-sm mt-4">
       {profile && (
         <div className="text-center mb-4 border-b pb-4">
-          {profile.clinic_logo_url && (
+          {(profile.clinic_logo_url || profile.avatar_url) && (
             <img 
-              src={profile.clinic_logo_url} 
+              src={profile.clinic_logo_url || profile.avatar_url || ""} 
               className="max-h-16 mx-auto mb-3 object-contain" 
               alt={profile.clinic_name || "Logo"} 
             />
