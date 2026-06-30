@@ -168,7 +168,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, profile, role, signOut } = useAuth();
-  const { data: credits } = useMyCredits();
+  const creditsQuery = useMyCredits();
+  const credits = creditsQuery.data;
   const balance = credits?.balance ?? 0;
   const unlimited = !!(credits as any)?.unlimited;
   const lowCredits = !unlimited && balance < LOW_CREDIT_THRESHOLD;
@@ -218,7 +219,7 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            {role !== "super_admin" && <CreditsBadge collapsed />}
+            {role !== "super_admin" && <CreditsBadge collapsed query={creditsQuery} />}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
@@ -228,7 +229,7 @@ export function AppSidebar() {
                 {role === "nutri" ? "Nutri" : "Admin"}
               </span>
             </div>
-            {role !== "super_admin" && <CreditsBadge />}
+              {role !== "super_admin" && <CreditsBadge query={creditsQuery} />}
           </div>
         )}
 
