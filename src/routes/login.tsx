@@ -50,7 +50,9 @@ function LoginPage() {
 
   useEffect(() => {
     if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
-      navigate({ to: "/manutencao", replace: true });
+      void navigate({ to: "/manutencao", replace: true }).catch((error) => {
+        console.warn("[login] falha ao redirecionar para manutenção", error);
+      });
     }
   }, [systemSettings?.maintenance_enabled, role, navigate]);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
@@ -84,7 +86,9 @@ function LoginPage() {
     if (loading || !session || submitting || pendingUserId) return;
     if (getLocalSessionToken()) return;
     clearLocalSessionToken();
-    void supabase.auth.signOut();
+    void supabase.auth.signOut().catch((error) => {
+      console.warn("[login] falha ao limpar sessão sem assento", error);
+    });
   }, [loading, session, submitting, pendingUserId]);
 
   useEffect(() => {
@@ -96,6 +100,8 @@ function LoginPage() {
       clearLocalSessionToken();
       void supabase.auth.signOut().finally(() => {
         cleanupInProgressRef.current = false;
+      }).catch((error) => {
+        console.warn("[login] falha ao limpar sessão pendente", error);
       });
     };
     if (typeof window === "undefined") return;
