@@ -6,10 +6,12 @@ import { topUpStore } from "@/lib/topup-store";
 interface Props {
   collapsed?: boolean;
   className?: string;
+  query?: ReturnType<typeof useMyCredits>;
 }
 
-export function CreditsBadge({ collapsed, className }: Props) {
-  const { data, isLoading } = useMyCredits();
+export function CreditsBadge({ collapsed, className, query }: Props) {
+  const ownQuery = useMyCredits();
+  const { data, isLoading } = query ?? ownQuery;
   const unlimited = !!data?.unlimited;
   const balance = data?.balance ?? 0;
   const label = unlimited ? "Ilimitado" : `${balance} créditos`;
