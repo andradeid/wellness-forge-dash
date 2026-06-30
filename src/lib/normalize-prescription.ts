@@ -41,8 +41,15 @@ export function normalizePrescription(input: string): string {
 
   let text = input.replace(/\r\n?/g, "\n");
 
-  // Garante quebra antes de cabeçalhos markdown que vierem colados
+  // CRÍTICO: cabeçalhos markdown (## ...) colados inline na frase anterior,
+  // sem quebra de linha nenhuma. Ex.: "...frase anterior. ## 2. TÍTULO"
+  text = text.replace(/([^\n])[ \t]+(#{1,6}\s)/g, "$1\n\n$2");
+
+  // Garante quebra antes de cabeçalhos com quebra simples (\n -> \n\n)
   text = text.replace(/([^\n])\n(#{1,6}\s)/g, "$1\n\n$2");
+
+  // Garante linha em branco DEPOIS do título do heading
+  text = text.replace(/(^|\n)(#{1,6}\s[^\n]+)\n(?!\n)/g, "$1$2\n\n");
 
   // Quebra linha antes de seções clínicas conhecidas quando aparecem inline
   const sectionPattern = new RegExp(
@@ -59,6 +66,14 @@ export function normalizePrescription(input: string): string {
 
   // Quebra antes de marcadores inline comuns
   text = text.replace(/([^\n])\s+(Rx:|Uso:|Posologia:|Indicação:|Indicacao:)/g, "$1\n\n$2");
+
+  // Parágrafos grudados por quebra simples: frase termina em .!? seguida de \n
+  // e nova frase começa em maiúscula → promove para \n\n (separa <p>).
+  // Não toca em listas, headings nem linhas que já têm \n\n.
+  text = text.replace(
+    /([.!?…"'”’\)])\n(?!\n)(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/g,
+    "$1\n\n",
+  );
 
   // Colapsa quebras excessivas
   text = text.replace(/\n{3,}/g, "\n\n");
