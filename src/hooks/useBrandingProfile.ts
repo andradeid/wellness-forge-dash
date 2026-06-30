@@ -7,6 +7,7 @@ export interface BrandingProfile {
   professional_id: string | null;
   clinic_name: string | null;
   clinic_logo_url: string | null;
+  avatar_url: string | null;
   email: string | null;
   phone: string | null;
 }
@@ -29,7 +30,7 @@ export function useBrandingProfile(userId: string | null | undefined) {
       const { data } = await (supabase as any)
         .from("profiles")
         .select(
-          "pronoun, full_name, professional_id, clinic_name, clinic_logo_url, email, phone",
+          "pronoun, full_name, professional_id, clinic_name, clinic_logo_url, avatar_url, email, phone",
         )
         .eq("id", userId)
         .maybeSingle();
