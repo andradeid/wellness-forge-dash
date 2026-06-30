@@ -41,15 +41,20 @@ function Teaser() {
     if (loading || !session?.user) return;
     let cancelled = false;
     (async () => {
-      const localToken = getLocalSessionToken();
-      const valid = localToken ? await isSessionStillValid(session.user.id) : false;
-      if (cancelled) return;
-      if (!valid) {
-        window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
-        clearLocalSessionToken();
-        await supabase.auth.signOut();
-        navigate({ to: "/login", replace: true });
-        return;
+      try {
+        const localToken = getLocalSessionToken();
+        const valid = localToken ? await isSessionStillValid(session.user.id) : true;
+        if (cancelled) return;
+        if (!valid) {
+          window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+          clearLocalSessionToken();
+          await supabase.auth.signOut();
+          navigate({ to: "/login", replace: true });
+          return;
+        }
+      } catch (error) {
+        console.warn("[home] falha ao validar sessão; seguindo para o app", error);
+        if (cancelled) return;
       }
       navigate({ to: role === "nutri" ? "/app/fale-com-lumma" : "/app", replace: true });
     })();
