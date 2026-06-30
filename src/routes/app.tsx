@@ -54,9 +54,31 @@ function AppLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [sessionAllowed, setSessionAllowed] = useState(false);
+  const [validationTimedOut, setValidationTimedOut] = useState(false);
   const paywall = usePaywallState();
   const topup = useTopUpState();
   const { data: systemSettings } = useSystemSettings();
+
+  useEffect(() => {
+    if (!loading && (!session || sessionAllowed)) {
+      setValidationTimedOut(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      console.warn("[app] validação de sessão excedeu o tempo limite; evitando tela presa");
+      setValidationTimedOut(true);
+      if (session?.user) {
+        setSessionAllowed(true);
+        return;
+      }
+      void navigate({ to: "/login", replace: true }).catch((error) => {
+        console.warn("[app] falha ao redirecionar após timeout de sessão", error);
+      });
+    }, 6_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loading, session, sessionAllowed, navigate]);
 
   useEffect(() => {
     if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
@@ -137,7 +159,7 @@ function AppLayout() {
     };
   }, [loading, session?.user?.id, role, navigate]);
 
-  if (loading || (session && !sessionAllowed)) {
+  if (!validationTimedOut && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-sm text-muted-foreground">Validando sessão...</div>

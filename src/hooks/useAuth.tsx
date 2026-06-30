@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearLocalSessionToken } from "@/lib/session-guard";
 
 export type AppRole = "super_admin" | "admin" | "nutri";
 
@@ -35,24 +36,57 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const AUTH_BOOT_TIMEOUT_MS = 4_000;
+
+async function withAuthTimeout<T>(
+  operation: PromiseLike<T>,
+  fallback: T,
+  label: string,
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.warn(`[auth] ${label} excedeu o tempo limite; liberando a tela com fallback`);
+          resolve(fallback);
+        }, AUTH_BOOT_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error) {
+    console.warn(`[auth] ${label} falhou; liberando a tela com fallback`, error);
+    return fallback;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 async function fetchProfileAndRole(userId: string): Promise<{
   profile: Profile | null;
   role: AppRole | null;
 }> {
-  const [profileRes, roleRes] = await Promise.allSettled([
-    (supabase as any)
-      .from("profiles")
-      .select("id, full_name, email, avatar_url, phone, is_blocked, pronoun")
-      .eq("id", userId)
-      .maybeSingle(),
-    (supabase as any)
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .order("role", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const [profileRes, roleRes] = await withAuthTimeout(
+    Promise.allSettled([
+      (supabase as any)
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, phone, is_blocked, pronoun")
+        .eq("id", userId)
+        .maybeSingle(),
+      (supabase as any)
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .order("role", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ]),
+    [
+      { status: "fulfilled", value: { data: null, error: null } },
+      { status: "fulfilled", value: { data: null, error: null } },
+    ] as PromiseSettledResult<any>[],
+    "carregamento de perfil/permissão",
+  );
 
   const profileQuery = profileRes.status === "fulfilled" ? profileRes.value : null;
   const roleQuery = roleRes.status === "fulfilled" ? roleRes.value : null;
@@ -163,14 +197,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth
-      .getSession()
+    withAuthTimeout(
+      supabase.auth.getSession(),
+      { data: { session: null }, error: null },
+      "restauração da sessão",
+    )
       .then(({ data }) => {
         if (initialRequestId !== authRequestRef.current) return;
         void applySession(data.session);
       })
       .catch((error) => {
         console.error("[auth] erro ao restaurar sessão", error);
+        clearLocalSessionToken();
         setSession(null);
         setUser(null);
         setProfile(null);
