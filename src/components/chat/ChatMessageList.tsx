@@ -282,9 +282,10 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
     const win = window.open("", "_blank", "width=800,height=900");
     if (!win) return;
     
-    const logoHtml = profile?.clinic_logo_url 
+    const logoSrc = profile?.clinic_logo_url || profile?.avatar_url;
+    const logoHtml = logoSrc
       ? `<div style="text-align: center; margin-bottom: 20px;">
-           <img src="${profile.clinic_logo_url}" style="max-height: 80px; width: auto;" />
+           <img src="${logoSrc}" style="max-height: 80px; width: auto;" />
          </div>`
       : "";
 
