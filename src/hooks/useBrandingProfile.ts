@@ -7,6 +7,7 @@ export interface BrandingProfile {
   professional_id: string | null;
   clinic_name: string | null;
   clinic_logo_url: string | null;
+  avatar_url: string | null;
   email: string | null;
   phone: string | null;
 }
