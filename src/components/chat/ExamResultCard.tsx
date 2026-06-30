@@ -137,14 +137,25 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
               </div>
               <div className="divide-y divide-muted/50">
                 {groups[cat].map((m, i) => {
-                  const state = classificationVisualState(m.classification);
-                  const style = stateStyles[state];
+                  let state = classificationVisualState(m.classification);
                   const mId = `${cat}-${m.name}-${i}`;
                   const isOpen = openId === mId;
                   const hasAnalysis = !!m.analysis?.toString().trim();
                   const refText = m.reference?.toString().trim();
                   const notIndexed = !!refText && /n[ãa]o\s+indexado/i.test(refText);
                   const showRef = !!refText && !notIndexed;
+                  // Referência textual (sem dígitos): traduzir alto/baixo/atenção → "alterado"
+                  const isTextualRef = !!refText && !/\d/.test(refText);
+                  let textualLabelOverride: string | undefined;
+                  let styleOverride: typeof stateStyles[ClassificationVisualState] | undefined;
+                  if (isTextualRef && (state === "alto" || state === "baixo" || state === "levemente_alto" || state === "levemente_baixo" || state === "atencao")) {
+                    textualLabelOverride = "ALTERADO";
+                    styleOverride = {
+                      badge: "bg-amber-100 text-amber-700 border-amber-200",
+                      icon: <AlertTriangle className="h-3 w-3" />,
+                    };
+                  }
+                  const style = styleOverride ?? stateStyles[state];
                   const showBadge = !!m.classification && state !== "desconhecido";
 
                   return (
@@ -178,7 +189,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                               className={`mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide ${style.badge}`}
                             >
                               {style.icon}
-                              {style.label || m.classification}
+                              {textualLabelOverride || style.label || m.classification}
                             </Badge>
                           )}
                         </div>
