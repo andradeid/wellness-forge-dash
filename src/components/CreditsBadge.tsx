@@ -1,19 +1,16 @@
 import { Coins } from "lucide-react";
-import { useMyCredits } from "@/hooks/useCredits";
 import { cn } from "@/lib/utils";
 import { topUpStore } from "@/lib/topup-store";
 
 interface Props {
   collapsed?: boolean;
   className?: string;
-  query?: ReturnType<typeof useMyCredits>;
+  balance?: number;
+  unlimited?: boolean;
+  isLoading?: boolean;
 }
 
-export function CreditsBadge({ collapsed, className, query }: Props) {
-  const ownQuery = useMyCredits();
-  const { data, isLoading } = query ?? ownQuery;
-  const unlimited = !!data?.unlimited;
-  const balance = data?.balance ?? 0;
+export function CreditsBadge({ collapsed, className, balance = 0, unlimited = false, isLoading = false }: Props) {
   const label = unlimited ? "Ilimitado" : `${balance} créditos`;
 
   return (
