@@ -102,8 +102,11 @@ function AppLayout() {
         const localToken = getLocalSessionToken();
         if (!localToken) {
           if (cancelled) return;
-          await supabase.auth.signOut();
-          await navigate({ to: "/login", replace: true });
+          // Não deixa a aplicação presa em "Validando sessão" quando o token
+          // local ainda não foi gravado/restaurado. Ações sensíveis continuam
+          // protegidas pelo Supabase Auth e pela RLS.
+          console.warn("[app] sessão Supabase sem token local; liberando UI e evitando loop de login");
+          setSessionAllowed(true);
           return;
         }
         const valid = await isSessionStillValid(session.user.id);

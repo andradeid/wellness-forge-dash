@@ -16,6 +16,31 @@ const DEFAULT_SEATS_BY_PLAN_TYPE: Record<string, number> = {
   clinica: 5,
 };
 const FALLBACK_SEAT_LIMIT = 1;
+const SESSION_GUARD_TIMEOUT_MS = 4_000;
+
+async function withSessionGuardTimeout<T>(
+  operation: PromiseLike<T>,
+  fallback: T,
+  label: string,
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.warn(`[session-guard] ${label} excedeu o tempo limite; usando fallback seguro`);
+          resolve(fallback);
+        }, SESSION_GUARD_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error) {
+    console.warn(`[session-guard] ${label} falhou; usando fallback seguro`, error);
+    return fallback;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
 
 export function generateSessionToken(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -126,27 +151,33 @@ export async function fetchActiveSeats(userId: string): Promise<ActiveSeat[]> {
 
 /** Compila informações de assentos do usuário. */
 export async function getSeatInfo(userId: string): Promise<SeatInfo> {
-  const [limitInfo, active] = await Promise.all([
-    resolveSeatLimit(userId),
-    fetchActiveSeats(userId),
-  ]);
-  return { ...limitInfo, active };
+  return withSessionGuardTimeout(
+    Promise.all([
+      resolveSeatLimit(userId),
+      fetchActiveSeats(userId),
+    ]).then(([limitInfo, active]) => ({ ...limitInfo, active })),
+    { limit: FALLBACK_SEAT_LIMIT, unlimited: false, active: [], planLabel: "Starter" },
+    "getSeatInfo",
+  );
 }
 
 /** Insere o novo token como uma sessão adicional do usuário. */
 export async function addSessionSeat(userId: string, token: string): Promise<void> {
   const nowIso = new Date().toISOString();
-  const { error } = await (supabase as any).from("user_sessions").upsert(
-    {
-      user_id: userId,
-      active_session_token: token,
-      updated_at: nowIso,
-    },
-    { onConflict: "user_id,active_session_token" },
+  const result = await withSessionGuardTimeout(
+    (supabase as any).from("user_sessions").upsert(
+      {
+        user_id: userId,
+        active_session_token: token,
+        updated_at: nowIso,
+      },
+      { onConflict: "user_id,active_session_token" },
+    ),
+    { error: null },
+    "addSessionSeat",
   );
-  if (error) {
-    console.error("[session-guard] addSessionSeat error", error);
-    throw error;
+  if (result.error) {
+    console.warn("[session-guard] addSessionSeat error; mantendo token local para não bloquear login", result.error);
   }
   setLocalSessionToken(token);
 }
@@ -182,12 +213,16 @@ export async function replaceOldestSeat(userId: string, newToken: string): Promi
 export async function isSessionStillValid(userId: string): Promise<boolean> {
   const local = getLocalSessionToken();
   if (!local) return true; // sem token local — não derruba (rota sem login interativo)
-  const { data, error } = await (supabase as any)
-    .from("user_sessions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("active_session_token", local)
-    .maybeSingle();
+  const { data, error } = await withSessionGuardTimeout(
+    (supabase as any)
+      .from("user_sessions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("active_session_token", local)
+      .maybeSingle(),
+    { data: { id: "timeout" }, error: null },
+    "isSessionStillValid",
+  );
   if (error) {
     console.error("[session-guard] isSessionStillValid error", error);
     return true; // em caso de erro de rede, não derruba
