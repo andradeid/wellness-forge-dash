@@ -30,7 +30,7 @@ export function useBrandingProfile(userId: string | null | undefined) {
       const { data } = await (supabase as any)
         .from("profiles")
         .select(
-          "pronoun, full_name, professional_id, clinic_name, clinic_logo_url, email, phone",
+          "pronoun, full_name, professional_id, clinic_name, clinic_logo_url, avatar_url, email, phone",
         )
         .eq("id", userId)
         .maybeSingle();
