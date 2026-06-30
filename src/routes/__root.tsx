@@ -73,11 +73,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   useEffect(() => {
     if (!recoverableRouteLoadError || typeof window === "undefined") return;
-    const reloadKey = "lumma:route-load-error-reloaded";
-    const fingerprint = `${error?.name ?? "Error"}:${error?.message ?? ""}`.slice(0, 300);
-    const previous = window.sessionStorage.getItem(reloadKey);
-    if (previous === fingerprint) return;
-    window.sessionStorage.setItem(reloadKey, fingerprint);
+    try {
+      const reloadKey = "lumma:route-load-error-reloaded";
+      const fingerprint = `${error?.name ?? "Error"}:${error?.message ?? ""}`.slice(0, 300);
+      const previous = window.sessionStorage.getItem(reloadKey);
+      if (previous === fingerprint) return;
+      window.sessionStorage.setItem(reloadKey, fingerprint);
+    } catch {
+      // Se o storage estiver bloqueado, ainda tentamos recuperar com um reload único.
+    }
     window.location.reload();
   }, [recoverableRouteLoadError, error?.name, error?.message]);
 
@@ -99,7 +103,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           <button
             onClick={() => {
               if (recoverableRouteLoadError && typeof window !== "undefined") {
-                window.sessionStorage.removeItem("lumma:route-load-error-reloaded");
+                try {
+                  window.sessionStorage.removeItem("lumma:route-load-error-reloaded");
+                } catch {
+                  // ignore
+                }
                 window.location.reload();
                 return;
               }
