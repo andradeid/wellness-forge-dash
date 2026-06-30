@@ -1297,12 +1297,17 @@ const TEST_ENV_ACK_KEY = "lumma_test_environment_acknowledged";
 
 function TestEnvironmentNotice() {
   const [showModal, setShowModal] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const acknowledge = () => {
     setShowModal(false);
   };
 
-  if (!showModal || typeof document === "undefined") return null;
+  if (!mounted || !showModal || typeof document === "undefined") return null;
 
   return createPortal(
     <div
