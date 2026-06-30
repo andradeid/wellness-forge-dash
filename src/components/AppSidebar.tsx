@@ -219,7 +219,9 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            {role !== "super_admin" && <CreditsBadge collapsed query={creditsQuery} />}
+            {role !== "super_admin" && (
+              <CreditsBadge collapsed balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
@@ -229,7 +231,9 @@ export function AppSidebar() {
                 {role === "nutri" ? "Nutri" : "Admin"}
               </span>
             </div>
-              {role !== "super_admin" && <CreditsBadge query={creditsQuery} />}
+              {role !== "super_admin" && (
+                <CreditsBadge balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
+              )}
           </div>
         )}
 
