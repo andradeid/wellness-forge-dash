@@ -41,9 +41,9 @@ export function normalizePrescription(input: string): string {
 
   let text = input.replace(/\r\n?/g, "\n");
 
-  // CRÍTICO: cabeçalhos markdown (## ...) colados inline na frase anterior,
-  // sem quebra de linha nenhuma. Ex.: "...frase anterior. ## 2. TÍTULO"
-  text = text.replace(/([^\n])[ \t]+(#{1,6}\s)/g, "$1\n\n$2");
+  // CRÍTICO: cabeçalhos markdown (#/##/### ...) colados inline na frase anterior,
+  // com ou sem espaço antes do cardinal. Ex.: "...frase anterior.)# 2. TÍTULO"
+  text = text.replace(/([^\n])[ \t]*(#{1,6}[ \t]+(?=\S))/g, "$1\n\n$2");
 
   // Garante quebra antes de cabeçalhos com quebra simples (\n -> \n\n)
   text = text.replace(/([^\n])\n(#{1,6}\s)/g, "$1\n\n$2");
@@ -63,6 +63,13 @@ export function normalizePrescription(input: string): string {
 
   // Garante linha em branco antes de listas
   text = text.replace(/([^\n])\n([-*]\s|\d+\.\s)/g, "$1\n\n$2");
+
+  // Listas que chegam coladas na mesma linha após uma frase/seção.
+  // Ex.: "Marcadores alterados: - Glicose: ... - Insulina: ..."
+  text = text.replace(/([:.;!?…\)])\s+([-*][ \t]+(?=\S))/g, "$1\n\n$2");
+
+  // Dá respiro entre seções conectadas por seta quando o agente junta dois blocos.
+  text = text.replace(/\b(Suplementaç(?:ã|a)o)\s*→\s*(Fitoter[áa]picos)\b/gi, "$1\n\n→ $2");
 
   // Quebra antes de marcadores inline comuns
   text = text.replace(/([^\n])\s+(Rx:|Uso:|Posologia:|Indicação:|Indicacao:)/g, "$1\n\n$2");
