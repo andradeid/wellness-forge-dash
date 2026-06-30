@@ -90,6 +90,7 @@ function LoginPage() {
   useEffect(() => {
     if (!pendingUserId) return;
     const cleanupPendingAuth = () => {
+      if (typeof window === "undefined") return;
       if (conflictConfirmedRef.current || cleanupInProgressRef.current) return;
       cleanupInProgressRef.current = true;
       clearLocalSessionToken();
@@ -97,6 +98,7 @@ function LoginPage() {
         cleanupInProgressRef.current = false;
       });
     };
+    if (typeof window === "undefined") return;
     window.addEventListener("beforeunload", cleanupPendingAuth);
     return () => {
       window.removeEventListener("beforeunload", cleanupPendingAuth);
