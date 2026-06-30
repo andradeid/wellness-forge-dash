@@ -143,7 +143,9 @@ function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
-      navigate({ to: "/app/admin/nutritionists", replace: true });
+      void navigate({ to: "/app/admin/nutritionists", replace: true }).catch((error) => {
+        console.warn("[dashboard] falha ao redirecionar super admin", error);
+      });
     }
   }, [authLoading, role, navigate]);
 
