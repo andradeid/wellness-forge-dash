@@ -159,7 +159,7 @@ function AppLayout() {
     };
   }, [loading, session?.user?.id, role, navigate]);
 
-  if (!validationTimedOut && (loading || (session && !sessionAllowed))) {
+  if (!validationTimedOut && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-sm text-muted-foreground">Validando sessão...</div>
