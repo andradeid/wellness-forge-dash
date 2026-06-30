@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearLocalSessionToken } from "@/lib/session-guard";
 
 export type AppRole = "super_admin" | "admin" | "nutri";
 
@@ -207,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch((error) => {
         console.error("[auth] erro ao restaurar sessão", error);
+        clearLocalSessionToken();
         setSession(null);
         setUser(null);
         setProfile(null);
