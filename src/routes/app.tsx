@@ -60,14 +60,18 @@ function AppLayout() {
 
   useEffect(() => {
     if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
-      navigate({ to: "/manutencao", replace: true });
+      void navigate({ to: "/manutencao", replace: true }).catch((error) => {
+        console.warn("[app] falha ao redirecionar para manutenção", error);
+      });
     }
   }, [systemSettings?.maintenance_enabled, role, navigate]);
 
   useEffect(() => {
     if (!loading && !session) {
       setSessionAllowed(false);
-      navigate({ to: "/login", replace: true });
+      void navigate({ to: "/login", replace: true }).catch((error) => {
+        console.warn("[app] falha ao redirecionar para login", error);
+      });
     }
   }, [session, loading, navigate]);
 
@@ -75,7 +79,9 @@ function AppLayout() {
   useEffect(() => {
     if (loading || !session || !sessionAllowed || !role) return;
     if (!isAllowed(pathname, role)) {
-      navigate({ to: "/unauthorized", replace: true });
+      void navigate({ to: "/unauthorized", replace: true }).catch((error) => {
+        console.warn("[app] falha ao redirecionar para não autorizado", error);
+      });
     }
   }, [loading, session, sessionAllowed, role, pathname, navigate]);
 
@@ -92,27 +98,35 @@ function AppLayout() {
     }
     let cancelled = false;
     (async () => {
-      const localToken = getLocalSessionToken();
-      if (!localToken) {
-        if (cancelled) return;
-        await supabase.auth.signOut();
-        navigate({ to: "/login", replace: true });
-        return;
-      }
-      const valid = await isSessionStillValid(session.user.id);
-      if (cancelled) return;
-      if (valid) {
-        setSessionAllowed(true);
-        return;
-      }
       try {
-        if (typeof window !== "undefined") {
-          window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+        const localToken = getLocalSessionToken();
+        if (!localToken) {
+          if (cancelled) return;
+          await supabase.auth.signOut();
+          await navigate({ to: "/login", replace: true });
+          return;
         }
-        clearLocalSessionToken();
-        await supabase.auth.signOut();
-      } finally {
-        navigate({ to: "/login", replace: true });
+        const valid = await isSessionStillValid(session.user.id);
+        if (cancelled) return;
+        if (valid) {
+          setSessionAllowed(true);
+          return;
+        }
+        try {
+          if (typeof window !== "undefined") {
+            window.sessionStorage.setItem(SESSION_KICKED_KEY, "1");
+          }
+          clearLocalSessionToken();
+          await supabase.auth.signOut();
+        } finally {
+          if (!cancelled) await navigate({ to: "/login", replace: true });
+        }
+      } catch (error) {
+        console.warn("[app] falha ao validar sessão; mantendo UI montada", error);
+        if (cancelled) return;
+        // Em erro transitório de storage/rede/auth, não derruba a rota inteira.
+        // Libera a UI e deixa ações sensíveis revalidarem a sessão depois.
+        setSessionAllowed(true);
       }
     })();
     return () => {
