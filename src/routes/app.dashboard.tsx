@@ -143,7 +143,9 @@ function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && role === "super_admin") {
-      navigate({ to: "/app/admin/nutritionists", replace: true });
+      void navigate({ to: "/app/admin/nutritionists", replace: true }).catch((error) => {
+        console.warn("[dashboard] falha ao redirecionar super admin", error);
+      });
     }
   }, [authLoading, role, navigate]);
 
@@ -1297,12 +1299,17 @@ const TEST_ENV_ACK_KEY = "lumma_test_environment_acknowledged";
 
 function TestEnvironmentNotice() {
   const [showModal, setShowModal] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const acknowledge = () => {
     setShowModal(false);
   };
 
-  if (!showModal || typeof document === "undefined") return null;
+  if (!mounted || !showModal || typeof document === "undefined") return null;
 
   return createPortal(
     <div

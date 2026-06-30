@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
@@ -59,10 +60,30 @@ function NotFoundComponent() {
   );
 }
 
+function isRecoverableRouteLoadError(error: Error): boolean {
+  const text = `${error?.name ?? ""} ${error?.message ?? ""} ${error?.stack ?? ""}`.toLowerCase();
+  return /failed to fetch dynamically imported module|importing a module script failed|failed to load module script|loading chunk|chunkloaderror|fetchmodule|transport was disconnected/.test(text);
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   const errorMessage = error?.message?.trim();
+  const recoverableRouteLoadError = isRecoverableRouteLoadError(error);
+
+  useEffect(() => {
+    if (!recoverableRouteLoadError || typeof window === "undefined") return;
+    try {
+      const reloadKey = "lumma:route-load-error-reloaded";
+      const fingerprint = `${error?.name ?? "Error"}:${error?.message ?? ""}`.slice(0, 300);
+      const previous = window.sessionStorage.getItem(reloadKey);
+      if (previous === fingerprint) return;
+      window.sessionStorage.setItem(reloadKey, fingerprint);
+    } catch {
+      // Se o storage estiver bloqueado, ainda tentamos recuperar com um reload único.
+    }
+    window.location.reload();
+  }, [recoverableRouteLoadError, error?.name, error?.message]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,7 +102,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              router.invalidate();
+              if (recoverableRouteLoadError && typeof window !== "undefined") {
+                try {
+                  window.sessionStorage.removeItem("lumma:route-load-error-reloaded");
+                } catch {
+                  // ignore
+                }
+                window.location.reload();
+                return;
+              }
+              void router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
