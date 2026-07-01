@@ -3,12 +3,23 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { disabledRealtimeOptions } from './disabled-realtime';
 
+const FALLBACK_SUPABASE_URL = 'https://bidarktpgytizdgmmqrg.supabase.co';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpZGFya3RwZ3l0aXpkZ21tcXJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNDg2NzgsImV4cCI6MjA5MzkyNDY3OH0.l4vRyyKIfSozA6-3WkbrkEO1mvDHMjme71w8_XZWjNg';
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
   const runtimeEnv = (globalThis as any)?.process?.env ?? {};
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || runtimeEnv.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || runtimeEnv.SUPABASE_PUBLISHABLE_KEY;
+  const SUPABASE_URL =
+    import.meta.env.VITE_SUPABASE_URL ||
+    runtimeEnv.SUPABASE_URL ||
+    FALLBACK_SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    runtimeEnv.SUPABASE_PUBLISHABLE_KEY ||
+    runtimeEnv.SUPABASE_ANON_KEY ||
+    FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
