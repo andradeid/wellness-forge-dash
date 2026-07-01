@@ -33,6 +33,45 @@ import loginBg from "@/assets/login-bg.png";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import lummaLockup from "@/assets/lumma-lockup-dark.svg";
 
+function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+  if (typeof console !== "undefined") {
+    console.error("[login] errorComponent capturou falha, renderizando fallback", error);
+  }
+  return (
+    <div
+      className="min-h-screen w-full flex items-center justify-center px-4 py-10 bg-cover bg-center"
+      style={{ backgroundImage: `url(${loginBg})` }}
+    >
+      <Card className="w-full max-w-md border-white/40 bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl">
+        <CardHeader className="items-center text-center space-y-3">
+          <div className="h-16 w-16 rounded-2xl bg-white shadow-md flex items-center justify-center">
+            <img src={lummaSymbol} alt="LUMMA" className="h-12 w-12" />
+          </div>
+          <CardTitle className="text-2xl">Login temporariamente indisponível</CardTitle>
+          <CardDescription>
+            Não foi possível carregar a validação de sessão agora. Recarregue a página para tentar novamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button
+            className="w-full text-white border-0 shadow-md"
+            style={{ backgroundImage: "var(--gradient-brand)" }}
+            onClick={() => {
+              try { reset(); } catch { /* noop */ }
+              if (typeof window !== "undefined") window.location.reload();
+            }}
+          >
+            Tentar novamente
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            Se o problema persistir, verifique sua conexão ou tente em alguns instantes.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
@@ -41,6 +80,7 @@ export const Route = createFileRoute("/login")({
     ],
   }),
   component: LoginPage,
+  errorComponent: LoginErrorFallback,
 });
 
 function LoginPage() {
