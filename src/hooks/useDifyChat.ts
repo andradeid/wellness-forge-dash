@@ -560,7 +560,7 @@ export function useDifyChat(
     //    (que está sob limite de payload do Cloudflare Worker ~10MB) e o limite
     //    efetivo passa a ser o do próprio Dify, suportando PDFs grandes de exame.
     const difyFiles: DifyFileRef[] = [];
-    const attachments: Array<{ name: string }> = [];
+    const attachments: Array<{ name: string; path?: string; mime_type?: string }> = [];
     let lastExamId: string | null = null;
     const resetUploadUI = () => setUploadProgress([]);
 
@@ -616,7 +616,7 @@ export function useDifyChat(
         transfer_method: "remote_url",
         url: signed.signedUrl,
       });
-      attachments.push({ name: file.name });
+      attachments.push({ name: file.name, path, mime_type: file.type });
       updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }

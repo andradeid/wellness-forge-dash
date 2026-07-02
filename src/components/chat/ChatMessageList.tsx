@@ -15,6 +15,26 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel } from "@/lib/agent-labels";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
+import { supabase } from "@/integrations/supabase/client";
+
+function AttachmentImagePreview({ path, name }: { path: string; name: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.storage.from("exams").createSignedUrl(path, 3600).then(({ data }) => {
+      if (!cancelled && data?.signedUrl) setUrl(data.signedUrl);
+    });
+    return () => { cancelled = true; };
+  }, [path]);
+  if (!url) {
+    return <div className="mt-1 h-40 w-40 rounded-lg bg-white/20 animate-pulse" />;
+  }
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="block mt-1">
+      <img src={url} alt={name} className="max-h-64 max-w-full rounded-lg border border-white/30 object-cover" />
+    </a>
+  );
+}
 
 export interface ChatMessage {
   id: string;
@@ -29,7 +49,7 @@ export interface ChatMessage {
     not_a_lab_report_error?: string;
     formulacoes_sugeridas?: FormulacoesPayload;
   } | null;
-  attachments?: Array<{ name: string }> | null;
+  attachments?: Array<{ name: string; path?: string; mime_type?: string }> | null;
   created_at?: string | null;
 }
 
@@ -538,12 +558,17 @@ export function ChatMessageList({
                         const name = a.name || "";
                         const ext = name.split(".").pop()?.toLowerCase() ?? "";
                         const isPdf = ext === "pdf";
-                        const isImage = ["png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "heic"].includes(ext);
+                        const isImage = (a.mime_type?.startsWith("image/")) || ["png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "heic"].includes(ext);
                         const Icon = isPdf ? FileText : isImage ? ImageIcon : Paperclip;
                         return (
-                          <div key={idx} className="inline-flex items-center gap-1.5">
-                            <Icon className={`h-3.5 w-3.5 ${isPdf ? "text-rose-300" : isImage ? "text-sky-300" : ""}`} />
-                            <span className="truncate">{name}</span>
+                          <div key={idx} className="flex flex-col gap-1">
+                            <div className="inline-flex items-center gap-1.5">
+                              <Icon className={`h-3.5 w-3.5 ${isPdf ? "text-rose-300" : isImage ? "text-sky-300" : ""}`} />
+                              <span className="truncate">{name}</span>
+                            </div>
+                            {isImage && a.path && (
+                              <AttachmentImagePreview path={a.path} name={name} />
+                            )}
                           </div>
                         );
                       })}
