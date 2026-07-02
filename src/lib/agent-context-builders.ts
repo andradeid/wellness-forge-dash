@@ -175,6 +175,62 @@ function buildGeneticsContext({ examContext }: BuilderInput): string | null {
   return lines.join("\n");
 }
 
+/**
+ * Estimativa de Refeição por Foto: só precisa saber quem é o paciente
+ * (perfil / sexo / gestação) para calibrar necessidades calóricas.
+ * Marcadores laboratoriais são ruído aqui — não entram.
+ */
+function buildMealPhotoContext({ examContext }: BuilderInput): string | null {
+  if (!examContext) return null;
+  const lines = [
+    `[PERFIL DO PACIENTE — ESTIMATIVA DE REFEIÇÃO POR FOTO]`,
+    `Use apenas o perfil para calibrar calorias e macros. Ignore marcadores`,
+    `laboratoriais — foram omitidos de propósito.`,
+    ...patientHeader(examContext),
+    "",
+    `[FIM DO CONTEXTO]`,
+    "",
+  ];
+  return lines.join("\n");
+}
+
+/**
+ * Composição Corporal por Foto: mesmo recorte metabólico/inflamatório do
+ * agente `composition` (antropometria estruturada ainda não existe no banco).
+ * Reaproveita o builder para manter consistência clínica.
+ */
+function buildBodyPhotoContext(input: BuilderInput): string | null {
+  const composition = buildCompositionContext(input);
+  if (composition) return composition;
+  // Sem marcadores metabólicos: cai para header mínimo em vez de null,
+  // para o agente saber com quem está conversando.
+  if (!input.examContext) return null;
+  const lines = [
+    `[PERFIL DO PACIENTE — COMPOSIÇÃO CORPORAL POR FOTO]`,
+    ...patientHeader(input.examContext),
+    "",
+    `[FIM DO CONTEXTO]`,
+    "",
+  ];
+  return lines.join("\n");
+}
+
+/**
+ * Nutrição Visual (geração de imagem): contexto mínimo — menos texto =
+ * geração mais fiel e mais barata. Só o essencial do paciente.
+ */
+function buildVisualNutritionContext({ examContext }: BuilderInput): string | null {
+  if (!examContext) return null;
+  const lines = [
+    `[PERFIL DO PACIENTE — NUTRIÇÃO VISUAL]`,
+    ...patientHeader(examContext),
+    "",
+    `[FIM DO CONTEXTO]`,
+    "",
+  ];
+  return lines.join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Dispatcher
 // ---------------------------------------------------------------------------
@@ -188,7 +244,8 @@ function buildGeneticsContext({ examContext }: BuilderInput): string | null {
  *
  * Nomes confirmados em `dify_agents` (is_active = true):
  *   composition, exam_feminino, exam_gestante_gem, exam_gestante_mono,
- *   exam_masculino, genetics, production, reasoning, research
+ *   exam_masculino, genetics, production, reasoning, research,
+ *   composicao_corporal_foto, estimativa_refeicao_foto, nutricao_visual
  */
 export function buildAgentContextPrefix(
   agentType: string,
@@ -201,6 +258,12 @@ export function buildAgentContextPrefix(
       return buildCompositionContext(input);
     case "genetics":
       return buildGeneticsContext(input);
+    case "estimativa_refeicao_foto":
+      return buildMealPhotoContext(input);
+    case "composicao_corporal_foto":
+      return buildBodyPhotoContext(input);
+    case "nutricao_visual":
+      return buildVisualNutritionContext(input);
     // reasoning: usa o builder padrão (contexto amplo) — fallback no chamador.
     // research: chamador já retorna sem prefixo.
     // exam_*: chamador não invoca o dispatcher.
@@ -208,3 +271,4 @@ export function buildAgentContextPrefix(
       return null;
   }
 }
+
