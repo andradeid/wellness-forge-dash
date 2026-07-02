@@ -15,6 +15,9 @@ const MAP: Record<string, AgentLabel> = {
   reasoning: { label: "Raciocínio", icon: "🧠", chip: "bg-violet-50 text-violet-700 border-violet-200" },
   genetics: { label: "Genética", icon: "🧬", chip: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   research: { label: "Pesquisa científica", icon: "📚", chip: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  estimativa_refeicao_foto: { label: "Refeição por Foto", icon: "🍽️", chip: "bg-amber-50 text-amber-700 border-amber-200" },
+  composicao_corporal_foto: { label: "Composição por Foto", icon: "🧍", chip: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  nutricao_visual: { label: "Nutrição Visual", icon: "📷", chip: "bg-yellow-50 text-yellow-700 border-yellow-200" },
 };
 
 export function getAgentLabel(agentId?: string | null): AgentLabel | null {

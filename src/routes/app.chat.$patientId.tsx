@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ClipboardList, Eye, MessageSquare, Stethoscope, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, ClipboardList, Eye, MessageSquare, Stethoscope, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles, Utensils, Activity, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -42,6 +42,9 @@ const CARD_ICONS: Record<string, any> = {
   casos_clinicos: ClipboardList,
   plano_alimentar: Apple,
   pesquisa_cientifica: Search,
+  estimativa_refeicao_foto: Utensils,
+  composicao_corporal_foto: Activity,
+  nutricao_visual: Camera,
 };
 
 const CARD_LABELS: Record<string, string> = {
@@ -51,6 +54,9 @@ const CARD_LABELS: Record<string, string> = {
   pesquisa_cientifica: "Pesquisa Científica",
   composicao_metabolismo: "Composição e Metabolismo",
   genetica_microbioma: "Genética e Microbioma",
+  estimativa_refeicao_foto: "Refeição por Foto",
+  composicao_corporal_foto: "Composição por Foto",
+  nutricao_visual: "Nutrição Visual",
 };
 
 const CARD_COLORS: Record<string, string> = {
@@ -60,6 +66,9 @@ const CARD_COLORS: Record<string, string> = {
   casos_clinicos: "#e8a04c",
   plano_alimentar: "#e8a04c",
   pesquisa_cientifica: "#e8a04c",
+  estimativa_refeicao_foto: "#e8a04c",
+  composicao_corporal_foto: "#4ade80",
+  nutricao_visual: "#facc15",
 };
 
 interface PatientCtx {
