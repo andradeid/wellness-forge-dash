@@ -712,7 +712,10 @@ function FaleComLummaPage() {
                       {[
                         { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
                         { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
-                        { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" }
+                        { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" },
+                        { trigger: "estimativa_refeicao_foto", icon: Utensils, title: "Refeição por Foto", color: "#e8a04c" },
+                        { trigger: "composicao_corporal_foto", icon: Activity, title: "Composição por Foto", color: "#4ade80" },
+                        { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" }
                       ].map((card, idx) => {
                         const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
                         // Exames de sangue depende do perfil clínico do paciente — se ainda não há paciente
