@@ -33,6 +33,13 @@ const MAP: Record<string, string> = {
   // Suplementação e formulação magistral (uso futuro / cards específicos)
   suplementacao: "suplementacao",
   formulacao_magistral: "formulacao_magistral",
+
+  // Análise/geração visual (visão computacional + geração de imagem)
+  estimativa_refeicao_foto: "analise_visual",
+  composicao_corporal_foto: "analise_visual",
+  nutricao_visual: "geracao_visual",
+  analise_visual: "analise_visual",
+  geracao_visual: "geracao_visual",
 };
 
 export function resolveAgentKey(agentType: string | undefined | null): string | null {
