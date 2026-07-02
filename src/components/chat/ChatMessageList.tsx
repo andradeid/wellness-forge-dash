@@ -558,12 +558,17 @@ export function ChatMessageList({
                         const name = a.name || "";
                         const ext = name.split(".").pop()?.toLowerCase() ?? "";
                         const isPdf = ext === "pdf";
-                        const isImage = ["png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "heic"].includes(ext);
+                        const isImage = (a.mime_type?.startsWith("image/")) || ["png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "heic"].includes(ext);
                         const Icon = isPdf ? FileText : isImage ? ImageIcon : Paperclip;
                         return (
-                          <div key={idx} className="inline-flex items-center gap-1.5">
-                            <Icon className={`h-3.5 w-3.5 ${isPdf ? "text-rose-300" : isImage ? "text-sky-300" : ""}`} />
-                            <span className="truncate">{name}</span>
+                          <div key={idx} className="flex flex-col gap-1">
+                            <div className="inline-flex items-center gap-1.5">
+                              <Icon className={`h-3.5 w-3.5 ${isPdf ? "text-rose-300" : isImage ? "text-sky-300" : ""}`} />
+                              <span className="truncate">{name}</span>
+                            </div>
+                            {isImage && a.path && (
+                              <AttachmentImagePreview path={a.path} name={name} />
+                            )}
                           </div>
                         );
                       })}
