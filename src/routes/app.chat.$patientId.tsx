@@ -228,11 +228,21 @@ function ChatPage() {
     async (text: string, files: File[]) => {
       // Garante que o painel de módulos não esconda a animação "Lumma está pensando…"
       setShowModuleSelector(false);
-      
-      const finalChatText = text?.trim() || (files.length > 0 ? "Analise o exame anexado." : "");
+
+      const currentAgent = agents.find(a => a.agent_id === agentType);
+      const trigger = currentAgent?.card_trigger;
+      const placeholderByTrigger: Record<string, string> = {
+        composicao_corporal_foto: "Analise a composição corporal a partir da foto anexada.",
+        estimativa_refeicao_foto: "Estime as calorias e macronutrientes da refeição na foto anexada.",
+        nutricao_visual: "Analise a imagem anexada e gere a orientação nutricional visual correspondente.",
+      };
+      const fallback = "Analise o exame anexado.";
+      const filePlaceholder = (trigger && placeholderByTrigger[trigger]) || fallback;
+
+      const finalChatText = text?.trim() || (files.length > 0 ? filePlaceholder : "");
       await sendMessage(finalChatText, files);
     },
-    [sendMessage],
+    [sendMessage, agents, agentType],
   );
 
   const handleGenerateRecipe = useCallback(
