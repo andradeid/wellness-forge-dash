@@ -109,6 +109,30 @@ function PatientsPage() {
         .eq("patient_id", patientId);
       const chatIds = (chats ?? []).map((c: { id: string }) => c.id);
 
+      // 1) Coleta arquivos de exame (bucket "exams") antes de apagar as linhas
+      const { data: examFiles } = await (supabase as any)
+        .from("patient_exams")
+        .select("file_path")
+        .eq("patient_id", patientId);
+      const examPaths = ((examFiles ?? []) as { file_path: string | null }[])
+        .map((r) => r.file_path)
+        .filter((p): p is string => !!p);
+
+      // 2) Coleta avatar do paciente (bucket "patient-photos")
+      const { data: patientRow } = await (supabase as any)
+        .from("patients")
+        .select("avatar_url")
+        .eq("id", patientId)
+        .maybeSingle();
+      const avatarUrl: string | null = (patientRow as { avatar_url: string | null } | null)?.avatar_url ?? null;
+      let avatarPath: string | null = null;
+      if (avatarUrl) {
+        const marker = "/patient-photos/";
+        const idx = avatarUrl.indexOf(marker);
+        if (idx !== -1) avatarPath = decodeURIComponent(avatarUrl.slice(idx + marker.length));
+      }
+
+      // 3) Apaga registros do banco (CASCADE cobre mensagens; mantemos deletes explícitos)
       await (supabase as any).from("patient_exam_results").delete().eq("patient_id", patientId);
       await (supabase as any).from("patient_exams").delete().eq("patient_id", patientId);
       if (chatIds.length > 0) {
@@ -127,6 +151,20 @@ function PatientsPage() {
         return;
       }
 
+      // 4) Limpeza no Storage (best-effort — não bloqueia sucesso da exclusão)
+      try {
+        if (examPaths.length > 0) {
+          const { error: exErr } = await supabase.storage.from("exams").remove(examPaths);
+          if (exErr) console.warn("[delete-patient] falha ao remover exames:", exErr.message);
+        }
+        if (avatarPath) {
+          const { error: avErr } = await supabase.storage.from("patient-photos").remove([avatarPath]);
+          if (avErr) console.warn("[delete-patient] falha ao remover avatar:", avErr.message);
+        }
+      } catch (storageErr) {
+        console.warn("[delete-patient] erro inesperado no Storage:", storageErr);
+      }
+
       setPatients((prev) => prev.filter((p) => p.id !== patientId));
       toast.success("Paciente excluído com sucesso");
     } catch (e: any) {
@@ -137,6 +175,7 @@ function PatientsPage() {
       setDeleteTarget(null);
     }
   };
+
 
 
   const load = async () => {
