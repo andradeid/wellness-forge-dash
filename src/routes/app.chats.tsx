@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MessageSquare, Search, Clock, FileText, Pin, PinOff, Edit2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, Search, Clock, FileText, Pin, PinOff, Edit2, Check, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +47,32 @@ function ChatsCentralPage() {
   const [chipFilter, setChipFilter] = useState<ChipFilter>("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [deleteTarget, setDeleteTarget] = useState<ChatItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      if (deleteTarget.patient_id) {
+        await supabase.from("chat_messages").delete().eq("chat_id", deleteTarget.id);
+        const { error } = await supabase.from("patient_chats").delete().eq("id", deleteTarget.id);
+        if (error) throw error;
+      } else {
+        await supabase.from("general_chat_messages").delete().eq("chat_id", deleteTarget.id);
+        const { error } = await supabase.from("general_chats").delete().eq("id", deleteTarget.id);
+        if (error) throw error;
+      }
+      toast.success("Conversa excluída.");
+      setDeleteTarget(null);
+      await refresh();
+    } catch (err) {
+      console.error("Erro ao excluir conversa:", err);
+      toast.error("Não foi possível excluir a conversa.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleUpdateTitle = async (e: React.MouseEvent | React.KeyboardEvent, id: string) => {
     e.preventDefault();
@@ -347,6 +383,20 @@ function ChatsCentralPage() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeleteTarget(r);
+                      }}
+                      className="shrink-0 text-muted-foreground hover:text-rose-600 hover:bg-rose-50"
+                      aria-label="Excluir conversa"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                   </Card>
                 </Link>
@@ -397,6 +447,30 @@ function ChatsCentralPage() {
           </div>
         </>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir esta conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.patient_id
+                ? `Todas as mensagens desta conversa com ${deleteTarget?.patient_name ?? "o paciente"} serão apagadas. Os dados do paciente e os exames não serão afetados.`
+                : "Todas as mensagens desta pesquisa/pergunta serão apagadas permanentemente."}
+              {" "}Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
