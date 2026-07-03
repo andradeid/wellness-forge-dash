@@ -75,7 +75,7 @@ interface PatientCtx {
   id: string;
   name: string;
   birth_date: string | null;
-  gender: "male" | "female" | "other" | null;
+  gender: "male" | "female" | null;
   avatar_url: string | null;
   is_pregnant?: boolean;
   gestational_weeks?: number;

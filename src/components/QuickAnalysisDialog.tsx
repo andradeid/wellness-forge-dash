@@ -25,7 +25,7 @@ import lummaSymbol from "@/assets/lumma-symbol.svg";
 interface PatientData {
   name?: string;
   dob?: string; // YYYY-MM-DD
-  gender?: "male" | "female" | "other" | string;
+  gender?: "male" | "female" | string;
 }
 
 interface Marker { [k: string]: unknown }
@@ -94,12 +94,12 @@ function normalizeDob(input?: string): string | undefined {
   return undefined;
 }
 
-function normalizeGender(input?: string): "male" | "female" | "other" | undefined {
+function normalizeGender(input?: string): "male" | "female" | undefined {
   if (!input) return undefined;
   const s = input.trim().toLowerCase();
   if (["male", "m", "masculino", "homem"].includes(s)) return "male";
   if (["female", "f", "feminino", "mulher"].includes(s)) return "female";
-  if (["other", "outro", "outros"].includes(s)) return "other";
+  // "outro/outros" e valores desconhecidos → undefined, forçando escolha manual
   return undefined;
 }
 
@@ -446,7 +446,7 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
     setCreating(true);
     try {
       const normalizedGender =
-        detected.gender === "male" || detected.gender === "female" || detected.gender === "other"
+        detected.gender === "male" || detected.gender === "female"
           ? detected.gender
           : null;
 
@@ -751,14 +751,13 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
               <div className="space-y-1.5">
                 <Label>Gênero</Label>
                 <Select
-                  value={["male", "female", "other"].includes(detected.gender ?? "") ? detected.gender : undefined}
+                  value={["male", "female"].includes(detected.gender ?? "") ? detected.gender : undefined}
                   onValueChange={(v) => setDetected({ ...detected, gender: v })}
                 >
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Masculino</SelectItem>
                     <SelectItem value="female">Feminino</SelectItem>
-                    <SelectItem value="other">Outro</SelectItem>
+                    <SelectItem value="male">Masculino</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

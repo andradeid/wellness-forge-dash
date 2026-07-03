@@ -33,7 +33,7 @@ interface PatientItem {
   id: string;
   name: string;
   birth_date: string | null;
-  gender: "male" | "female" | "other" | null;
+  gender: "male" | "female" | null;
   avatar_url: string | null;
   is_pregnant?: boolean;
   gestational_weeks?: number;
@@ -41,7 +41,7 @@ interface PatientItem {
   profile?: string;
 }
 
-type Gender = "male" | "female" | "other";
+type Gender = "male" | "female";
 
 function calcAge(birth: string | null): number | null {
   if (!birth) return null;
@@ -895,7 +895,7 @@ function FaleComLummaPage() {
                             </div>
                             <div className="text-xs text-muted-foreground">
                                 {age !== null ? `${age} anos` : "Idade não informada"}
-                                {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : p.gender === "other" ? " • Outro" : ""}
+                                {p.gender === "male" ? " • Masculino" : p.gender === "female" ? " • Feminino" : ""}
                                 {p.is_pregnant && (
                                   <span className="text-[#e8a04c] font-medium">
                                     {" • Gestante"}
@@ -970,9 +970,8 @@ function FaleComLummaPage() {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Masculino</SelectItem>
                   <SelectItem value="female">Feminino</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="male">Masculino</SelectItem>
                 </SelectContent>
               </Select>
             </div>
