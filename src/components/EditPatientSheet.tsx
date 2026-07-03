@@ -22,7 +22,7 @@ export interface EditablePatient {
   email?: string | null;
   phone?: string | null;
   birth_date?: string | null;
-  gender?: "male" | "female" | "other" | null;
+  gender?: "male" | "female" | null;
   notes?: string | null;
   avatar_url?: string | null;
   menstrual_cycle_phase?: string | null;
@@ -212,9 +212,8 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
               <Select value={gender ?? undefined} onValueChange={(v) => setGender(v as EditablePatient["gender"])}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Masculino</SelectItem>
                   <SelectItem value="female">Feminino</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="male">Masculino</SelectItem>
                 </SelectContent>
               </Select>
             </div>

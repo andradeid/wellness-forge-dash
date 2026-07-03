@@ -48,7 +48,7 @@ interface Patient {
   id: string;
   name: string;
   birth_date: string | null;
-  gender: "male" | "female" | "other" | null;
+  gender: "male" | "female" | null;
   created_at: string;
   email: string | null;
   phone: string | null;
@@ -285,7 +285,7 @@ function PatientsPage() {
   };
 
   const genderLabel = (g: Patient["gender"]) =>
-    g === "male" ? "Masculino" : g === "female" ? "Feminino" : g === "other" ? "Outro" : "—";
+    g === "male" ? "Masculino" : g === "female" ? "Feminino" : "—";
 
 
   return (
@@ -438,9 +438,8 @@ function PatientsPage() {
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Masculino</SelectItem>
                         <SelectItem value="female">Feminino</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
+                        <SelectItem value="male">Masculino</SelectItem>
                       </SelectContent>
                   </Select>
                 </div>
