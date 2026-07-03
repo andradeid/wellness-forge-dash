@@ -383,6 +383,20 @@ function ChatsCentralPage() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeleteTarget(r);
+                      }}
+                      className="shrink-0 text-muted-foreground hover:text-rose-600 hover:bg-rose-50"
+                      aria-label="Excluir conversa"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                   </Card>
                 </Link>
