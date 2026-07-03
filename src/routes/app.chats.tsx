@@ -47,6 +47,32 @@ function ChatsCentralPage() {
   const [chipFilter, setChipFilter] = useState<ChipFilter>("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [deleteTarget, setDeleteTarget] = useState<ChatItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      if (deleteTarget.patient_id) {
+        await supabase.from("chat_messages").delete().eq("chat_id", deleteTarget.id);
+        const { error } = await supabase.from("patient_chats").delete().eq("id", deleteTarget.id);
+        if (error) throw error;
+      } else {
+        await supabase.from("general_chat_messages").delete().eq("chat_id", deleteTarget.id);
+        const { error } = await supabase.from("general_chats").delete().eq("id", deleteTarget.id);
+        if (error) throw error;
+      }
+      toast.success("Conversa excluída.");
+      setDeleteTarget(null);
+      await refresh();
+    } catch (err) {
+      console.error("Erro ao excluir conversa:", err);
+      toast.error("Não foi possível excluir a conversa.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleUpdateTitle = async (e: React.MouseEvent | React.KeyboardEvent, id: string) => {
     e.preventDefault();
