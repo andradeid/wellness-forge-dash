@@ -447,6 +447,30 @@ function ChatsCentralPage() {
           </div>
         </>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir esta conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.patient_id
+                ? `Todas as mensagens desta conversa com ${deleteTarget?.patient_name ?? "o paciente"} serão apagadas. Os dados do paciente e os exames não serão afetados.`
+                : "Todas as mensagens desta pesquisa/pergunta serão apagadas permanentemente."}
+              {" "}Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
