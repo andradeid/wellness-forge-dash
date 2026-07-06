@@ -80,23 +80,12 @@ type NavGroup = {
 
 const nutriGroups: NavGroup[] = [
   {
-    key: "visao",
-    label: "VISÃO GERAL",
-    subtitle: "Panorama da sua base",
-    icon: LayoutGrid,
-    items: [
-      { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
-    ],
-  },
-  {
     key: "nutri",
-    label: "ATENDIMENTO",
+    label: "PACIENTES",
     subtitle: "Seus pacientes e análises",
     icon: UserRound,
     items: [
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
-      { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
-      
     ],
   },
   {
@@ -249,7 +238,7 @@ export function AppSidebar() {
       <SidebarContent className="px-3 gap-1">
         {role === "nutri" && (
           <div className={cn("px-1 pb-2", collapsed && "px-0")}>
-            <Link to="/app/fale-com-lumma" title="Fale com a Lumma">
+            <Link to="/app/fale-com-lumma" title="Página Inicial">
               <span
                 className={cn(
                   "flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow-sm hover:opacity-90 transition",
@@ -257,7 +246,7 @@ export function AppSidebar() {
                 )}
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>Fale com a Lumma</span>}
+                {!collapsed && <span>Página Inicial</span>}
               </span>
             </Link>
           </div>
