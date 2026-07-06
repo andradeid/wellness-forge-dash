@@ -336,13 +336,6 @@ function FaleComLummaPage() {
       {/* Painel lateral: últimos chats */}
       <aside className="lumma-sidebar hidden md:flex w-72 shrink-0 flex-col border-r border-white/10 text-white">
         <div className="p-4 border-b border-white/10">
-          <Link
-            to="/app/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors mb-3"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Voltar ao Dashboard
-          </Link>
           <Button
             onClick={() => {
               setPendingTrigger(undefined);
@@ -356,6 +349,25 @@ function FaleComLummaPage() {
             <Plus className="h-4 w-4 mr-2" />
             Nova conversa
           </Button>
+
+          {/* Atalhos (item 9 auditoria) */}
+          <div className="mt-3 space-y-1">
+            <Link
+              to="/app/patients"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <Users className="h-4 w-4 shrink-0" />
+              Pacientes
+            </Link>
+            <Link
+              to="/app/dashboard"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <LayoutDashboard className="h-4 w-4 shrink-0" />
+              Dashboard
+            </Link>
+          </div>
+
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
             <Input
@@ -366,6 +378,7 @@ function FaleComLummaPage() {
             />
           </div>
         </div>
+
 
         <ScrollArea className="flex-1">
           <div className="px-2 py-3 space-y-1">
@@ -520,13 +533,6 @@ function FaleComLummaPage() {
             <SheetContent side="left" className="p-0 border-r border-white/10 w-72 bg-gradient-to-br from-[#1a0b2e] to-[#0b0414] text-white">
               <div className="flex h-full flex-col">
                 <div className="p-4 border-b border-white/10">
-                  <Link
-                    to="/app/dashboard"
-                    className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors mb-3"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Voltar ao Dashboard
-                  </Link>
                   <Button
                     onClick={() => {
                       setPendingTrigger(undefined);
@@ -540,6 +546,25 @@ function FaleComLummaPage() {
                     <Plus className="h-4 w-4 mr-2" />
                     Nova conversa
                   </Button>
+
+                  {/* Atalhos (item 9 auditoria) */}
+                  <div className="mt-3 space-y-1">
+                    <Link
+                      to="/app/patients"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      <Users className="h-4 w-4 shrink-0" />
+                      Pacientes
+                    </Link>
+                    <Link
+                      to="/app/dashboard"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
+                      Dashboard
+                    </Link>
+                  </div>
+
                   <div className="relative mt-3">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
                     <Input
@@ -550,6 +575,7 @@ function FaleComLummaPage() {
                     />
                   </div>
                 </div>
+
 
                 <ScrollArea className="flex-1">
                   <div className="px-2 py-3 space-y-1">
@@ -668,45 +694,7 @@ function FaleComLummaPage() {
             </AnimatePresence>
             
             <div className="w-full space-y-12">
-              {/* Atalhos rápidos (item 9 auditoria: Pacientes + Dashboard) */}
-              <AnimatePresence>
-                {showCards && (
-                  <div className="space-y-4">
-                    <motion.h3
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
-                    >
-                      Atalhos
-                    </motion.h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                      {[
-                        { to: "/app/patients", icon: Users, title: "Pacientes", color: "#e89bcf" },
-                        { to: "/app/dashboard", icon: LayoutDashboard, title: "Dashboard", color: "#e8a04c" },
-                      ].map((shortcut, idx) => (
-                        <motion.div
-                          key={shortcut.to}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.5, delay: idx * 0.08, ease: "easeOut" }}
-                        >
-                          <Link
-                            to={shortcut.to}
-                            className="flex flex-row items-center justify-start gap-3 p-3 sm:p-5 min-h-[52px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300 group cursor-pointer"
-                          >
-                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
-                              <shortcut.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: shortcut.color }} />
-                            </div>
-                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left">{shortcut.title}</span>
-                            <ChevronDown className="h-4 w-4 text-foreground/30 -rotate-90" />
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </AnimatePresence>
+
 
               {/* Análises Clínicas — títulos unificados (item 3 auditoria) */}
               <AnimatePresence>
