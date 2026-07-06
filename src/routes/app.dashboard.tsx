@@ -937,32 +937,9 @@ function DashboardPage() {
         </Card>
       </div>
 
-      {/* L4: Marcadores Mais Analisados + Últimas Conversas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold">Marcadores Mais Analisados</h2>
-            <span className="text-xs text-muted-foreground">{RANGE_OPTIONS.find((o) => o.key === range)?.label}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">Padrão clínico predominante na sua base.</p>
-          {loading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : topMarkers.length === 0 ? (
-            <EmptyState text="Sem marcadores no período." />
-          ) : (
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
-                  <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
-                  <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
+      {/* L4: Últimas Conversas (Marcadores Mais Analisados removido — item 10 auditoria) */}
+      <div className="grid grid-cols-1 gap-5">
+
 
         <Card className="p-6">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
