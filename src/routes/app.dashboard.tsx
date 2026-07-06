@@ -612,7 +612,7 @@ function DashboardPage() {
               asChild
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90 min-h-[44px]"
             >
-              <Link to="/app/patients">
+              <Link to="/app/fale-com-lumma">
                 <Plus className="h-[18px] w-[18px]" {...ICON_PROPS} />
                 Novo Chat
               </Link>
