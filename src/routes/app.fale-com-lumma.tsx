@@ -668,17 +668,17 @@ function FaleComLummaPage() {
             </AnimatePresence>
             
             <div className="w-full space-y-12">
-              {/* Linha 1: Análises e Uploads */}
+              {/* Análises Clínicas — títulos unificados (item 3 auditoria) */}
               <AnimatePresence>
                 {showCards && (
                   <div className="space-y-4">
-                    <motion.h3 
+                    <motion.h3
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.5 }}
                       className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
                     >
-                      Análises e Uploads
+                      Análises Clínicas
                     </motion.h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                       {[
@@ -687,7 +687,10 @@ function FaleComLummaPage() {
                         { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" },
                         { trigger: "estimativa_refeicao_foto", icon: Utensils, title: "Refeição por Foto", color: "#e8a04c" },
                         { trigger: "composicao_corporal_foto", icon: Activity, title: "Composição por Foto", color: "#4ade80" },
-                        { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" }
+                        { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" },
+                        { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
+                        { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
+                        { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" },
                       ].map((card, idx) => {
                         const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
                         // Exames de sangue depende do perfil clínico do paciente — se ainda não há paciente
@@ -699,60 +702,9 @@ function FaleComLummaPage() {
                             key={card.trigger}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: idx * 0.2, ease: "easeOut" }}
+                            transition={{ duration: 0.5, delay: idx * 0.08, ease: "easeOut" }}
                             onClick={() => {
                               if (!agent || requiresPatient(agent.agent_id)) {
-                                setPendingTrigger(card.trigger);
-                                setIdentifyOpen(true);
-                              } else {
-                                startGeneralChat(agent.agent_id);
-                              }
-                            }}
-                            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
-                          >
-                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
-                              <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
-                            </div>
-                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">{card.title}</span>
-                            <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
-                          </motion.button>
-                        );
-                      })}
-
-                    </div>
-                  </div>
-                )}
-              </AnimatePresence>
-
-              {/* Linha 2: Condutas e Entregas */}
-              <AnimatePresence>
-                {showCards && (
-                  <div className="space-y-4">
-                    <motion.h3 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.5, delay: 0.6 }}
-                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
-                    >
-                      Condutas e Entregas
-                    </motion.h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-                      {[
-                        { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
-                        { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
-                        { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" }
-                      ].map((card, idx) => {
-                        const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
-                        if (!agent) return null;
-                        
-                        return (
-                          <motion.button 
-                            key={card.trigger}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.8 + (idx * 0.2), ease: "easeOut" }}
-                            onClick={() => {
-                              if (requiresPatient(agent.agent_id)) {
                                 setPendingTrigger(card.trigger);
                                 setIdentifyOpen(true);
                               } else {
@@ -774,6 +726,7 @@ function FaleComLummaPage() {
                 )}
               </AnimatePresence>
             </div>
+
 
             {selectedPatient && (
               <button
