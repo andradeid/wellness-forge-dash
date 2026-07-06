@@ -81,10 +81,11 @@ type NavGroup = {
 const nutriGroups: NavGroup[] = [
   {
     key: "nutri",
-    label: "PACIENTES",
-    subtitle: "Seus pacientes e análises",
+    label: "",
+    subtitle: "",
     icon: UserRound,
     items: [
+      { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
       { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
     ],
