@@ -299,7 +299,7 @@ function GeneralChatPage() {
                         const isActive = agentType === opt.id;
                         return (
                           <div key={opt.id}>
-                            {idx === 2 && arr.length > 2 && <div className="my-1 border-t border-slate-100" />}
+                            {opt.line === 2 && arr[idx - 1]?.line === 1 && <div className="my-1 border-t border-slate-100" />}
                             <button
                               onClick={() => {
                                 navigate({ to: `/app/general/${chatId}`, search: { module: opt.id } });
