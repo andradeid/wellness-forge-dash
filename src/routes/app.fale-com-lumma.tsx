@@ -631,36 +631,8 @@ function FaleComLummaPage() {
           </Sheet>
         </div>
 
-        {/* Controle de Áudio Flutuante */}
-        <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => toggleAudio(!audioEnabled)}
-            className="rounded-full bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40 transition-all shadow-sm"
-          >
-            {audioEnabled ? (
-              <Volume2 className="h-4 w-4 text-foreground/70" />
-            ) : (
-              <VolumeX className="h-4 w-4 text-foreground/40" />
-            )}
-          </Button>
+        {/* Controle de áudio removido (item 6 da auditoria) */}
 
-          <AnimatePresence>
-            {audioBlocked && audioEnabled && (
-              <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                onClick={handleManualPlay}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-[#e8a04c]/30 shadow-sm text-[10px] font-semibold text-[#e8a04c] hover:bg-white transition-colors animate-pulse"
-              >
-                Clique para ouvir a saudação
-                <Sparkles className="h-3 w-3" />
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
 
         <div className="flex min-h-full flex-col items-center justify-center px-6 pt-6 sm:pt-12 pb-12">
           <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto w-full">
