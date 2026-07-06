@@ -753,41 +753,8 @@ function DashboardPage() {
           )}
         </Card>
 
-        <Card className="p-6 lg:col-span-1">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold">Saúde da Base</h2>
-            <span className="text-xs text-muted-foreground">{stats.totalAnalyzed} marcadores</span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Distribuição da última leitura por classificação.
-          </p>
-          {loading ? (
-            <Skeleton className="h-56 w-full" />
-          ) : stats.totalAnalyzed === 0 ? (
-            <EmptyState text="Sem marcadores ainda. Envie um exame para começar." />
-          ) : (
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.distribution.filter((d) => d.value > 0)}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={2}
-                  >
-                    {stats.distribution.map((d) => (
-                      <Cell key={d.bucket} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" align="center" verticalAlign="bottom" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
+        {/* Card "Saúde da Base" removido — item 10 auditoria */}
+
       </div>
 
       {/* L2: Top 5 Deficiências (2) + Perfil de Exames (1) */}
