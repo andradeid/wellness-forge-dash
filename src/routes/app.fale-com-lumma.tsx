@@ -712,7 +712,6 @@ function FaleComLummaPage() {
               <AnimatePresence>
                 {showCards && (
 
-                {showCards && (
                   <div className="space-y-4">
                     <motion.h3
                       initial={{ opacity: 0 }}
