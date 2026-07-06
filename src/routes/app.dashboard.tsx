@@ -644,9 +644,11 @@ function DashboardPage() {
         ))}
       </div>
 
-      {/* L1: Atenção Prioritária (2) + Saúde da Base (1) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Card className="p-6 lg:col-span-2">
+      {/* L1: Atenção Prioritária (full width — Saúde da Base removida — item 10 auditoria) */}
+      <div className="grid grid-cols-1 gap-5">
+
+        <Card className="p-6">
+
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-semibold flex items-center gap-2">
@@ -751,41 +753,8 @@ function DashboardPage() {
           )}
         </Card>
 
-        <Card className="p-6 lg:col-span-1">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold">Saúde da Base</h2>
-            <span className="text-xs text-muted-foreground">{stats.totalAnalyzed} marcadores</span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Distribuição da última leitura por classificação.
-          </p>
-          {loading ? (
-            <Skeleton className="h-56 w-full" />
-          ) : stats.totalAnalyzed === 0 ? (
-            <EmptyState text="Sem marcadores ainda. Envie um exame para começar." />
-          ) : (
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.distribution.filter((d) => d.value > 0)}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={2}
-                  >
-                    {stats.distribution.map((d) => (
-                      <Cell key={d.bucket} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" align="center" verticalAlign="bottom" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
+        {/* Card "Saúde da Base" removido — item 10 auditoria */}
+
       </div>
 
       {/* L2: Top 5 Deficiências (2) + Perfil de Exames (1) */}
@@ -968,32 +937,9 @@ function DashboardPage() {
         </Card>
       </div>
 
-      {/* L4: Marcadores Mais Analisados + Últimas Conversas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold">Marcadores Mais Analisados</h2>
-            <span className="text-xs text-muted-foreground">{RANGE_OPTIONS.find((o) => o.key === range)?.label}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">Padrão clínico predominante na sua base.</p>
-          {loading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : topMarkers.length === 0 ? (
-            <EmptyState text="Sem marcadores no período." />
-          ) : (
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topMarkers} layout="vertical" margin={{ left: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef2f7" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} stroke="#475569" />
-                  <Tooltip formatter={(v: number) => [`${v} análises`, "Total"]} />
-                  <Bar dataKey="count" fill="#7ba88b" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
+      {/* L4: Últimas Conversas (Marcadores Mais Analisados removido — item 10 auditoria) */}
+      <div className="grid grid-cols-1 gap-5">
+
 
         <Card className="p-6">
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2">
