@@ -86,6 +86,7 @@ const nutriGroups: NavGroup[] = [
     icon: UserRound,
     items: [
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
+      { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
     ],
   },
   {
