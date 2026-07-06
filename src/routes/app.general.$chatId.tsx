@@ -37,9 +37,14 @@ function GeneralChatPage() {
   const [editTitle, setEditTitle] = useState("");
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
+  // Somente agent_ids ATIVOS em dify_agents. 'exam' e 'metabolism' estavam
+  // inativos/inexistentes no banco e causavam "Agente não encontrado".
   const AGENT_OPTIONS = [
-    { id: "exam", title: "Exames de Sangue", icon: Droplet, color: "#e89bcf", line: 1 },
-    { id: "metabolism", title: "Composição e Metabolismo", icon: Scale, color: "#e89bcf", line: 1 },
+    { id: "exam_feminino", title: "Exames — Feminino", icon: Droplet, color: "#e89bcf", line: 1 },
+    { id: "exam_masculino", title: "Exames — Masculino", icon: Droplet, color: "#e89bcf", line: 1 },
+    { id: "exam_gestante_mono", title: "Exames — Gestante (único)", icon: Droplet, color: "#e89bcf", line: 1 },
+    { id: "exam_gestante_gem", title: "Exames — Gestante (gemelar)", icon: Droplet, color: "#e89bcf", line: 1 },
+    { id: "composition", title: "Composição Corporal", icon: Scale, color: "#e89bcf", line: 1 },
     { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
     { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
     { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
@@ -49,10 +54,11 @@ function GeneralChatPage() {
   const getActiveAgentLabel = (id: string | undefined) => {
     const agent = AGENT_OPTIONS.find(a => a.id === id);
     if (!agent) return "Pergunta Clínica";
-    if (agent.id === "exam") return "Analisando Exame";
+    if (agent.id.startsWith("exam")) return "Analisando Exame";
     if (agent.id === "production") return "Elaborando Plano & Receitas";
     return agent.title;
   };
+
 
   const handleUpdateTitle = async (id: string) => {
     if (!editTitle.trim()) return;
@@ -293,7 +299,7 @@ function GeneralChatPage() {
                         const isActive = agentType === opt.id;
                         return (
                           <div key={opt.id}>
-                            {idx === 2 && arr.length > 2 && <div className="my-1 border-t border-slate-100" />}
+                            {opt.line === 2 && arr[idx - 1]?.line === 1 && <div className="my-1 border-t border-slate-100" />}
                             <button
                               onClick={() => {
                                 navigate({ to: `/app/general/${chatId}`, search: { module: opt.id } });
