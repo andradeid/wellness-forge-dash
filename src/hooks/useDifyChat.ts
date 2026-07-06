@@ -815,14 +815,24 @@ export function useDifyChat(
         : null;
       const effectiveExamContext = latestContextFromMessages ?? examContext;
 
+      // Se a mensagem já carrega o laudo/exame (arquivo OU texto colado
+      // com estrutura de laudo), suprime o prefixo automático — o
+      // conteúdo principal já veio na mensagem e o prefixo antigo só
+      // contaminaria o prompt do agente atual (ex.: Genética recebendo
+      // "Marcadores laboratoriais alterados: ..." em cima de um laudo genético).
+      const carriesReport = messageCarriesReport(text, difyFiles.length);
+
       const finalQuery = (() => {
         // exam_*: comportamento ORIGINAL preservado (não passa pelo dispatcher).
         if (agentType.startsWith("exam")) {
-          if (difyFiles.length === 0 && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
+          if (!carriesReport && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
           return text;
         }
         // research: sem prefixo (busca pura).
         if (agentType === "research") return text;
+
+        // Demais agentes: se a mensagem já traz laudo, não prefixa.
+        if (carriesReport) return text;
 
         // Dispatcher: tenta builder especializado por agente.
         // Fallback duplo: builder específico → builder padrão → minimal.
@@ -842,6 +852,7 @@ export function useDifyChat(
           return buildMinimalPrefix() + text;
         }
       })();
+      
       
       const difyQuery = finalQuery || text;
 
