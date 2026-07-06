@@ -135,6 +135,56 @@ function extractMarkersFromText(text: string): Marker[] {
   return out;
 }
 
+/**
+ * Detecta se a mensagem do usuário já traz um LAUDO/EXAME completo
+ * (via arquivo anexado OU texto colado). Quando true, o chamador
+ * SUPRIME o prefixo de contexto automático — o conteúdo principal já
+ * veio na própria mensagem e o prefixo antigo apenas contamina o prompt.
+ *
+ * Regra central: palavra-chave só conta quando aparece grudada a um
+ * valor+unidade (janela de ~40 chars). Isso separa "colei um laudo"
+ * de "estou falando sobre um exame já analisado".
+ */
+const _UNIT = String.raw`(mg\/dL|ng\/mL|pg\/mL|µg\/dL|mcg\/dL|UI\/L|U\/L|mIU\/L|mmol\/L|mEq\/L|g\/dL|%|10\^?\d+\/[µu]?L)`;
+const _NUM = String.raw`\d+[.,]?\d*`;
+const _LAB_KW = String.raw`hemograma|glicose|colesterol|hdl|ldl|triglic\w*|tsh|t3|t4|creatinina|ureia|hemoglobin\w*|leuc[oó]cit\w*|plaquet\w*|ferritin\w*|vitamina\s*d|b12|pcr|insulin\w*`;
+const _GENETIC_KW = String.raw`snp|rs\d{3,}|gen[oó]tipo|polimorfismo|alelo|homozigot\w*|heterozigot\w*|mthfr|comt|apoe|vdr`;
+const _MICROBIOME_KW = String.raw`microbiot\w*|microbiom\w*|firmicutes|bacteroidet\w*|akkermansia|disbios\w*|f\/b\s*ratio`;
+
+const _near = (kw: string) =>
+  new RegExp(
+    `(?:(?:${kw})[^\\n]{0,40}?${_NUM}\\s*${_UNIT})|(?:${_NUM}\\s*${_UNIT}[^\\n]{0,40}?(?:${kw}))`,
+    "i",
+  );
+
+// Genética estruturada: rsXXXX seguido de genótipo (G/G, A/T, C/C...).
+const _GENETIC_STRUCTURED = /\brs\d{3,}\b[^\n]{0,20}?\b[ACGT]\s*[\/|]\s*[ACGT]\b/i;
+// Microbioma estruturado: filo/gênero seguido de percentual.
+const _MICROBIOME_STRUCTURED = new RegExp(
+  `\\b(${_MICROBIOME_KW})\\b[^\\n]{0,20}?${_NUM}\\s*%`,
+  "i",
+);
+
+function messageCarriesReport(text: string, filesCount: number): boolean {
+  if (filesCount > 0) return true;
+  if (!text) return false;
+
+  // Sinal 1 (mais forte): estrutura tabular reconhecida pelo parser existente.
+  if (extractMarkersFromText(text).length >= 3) return true;
+
+  // Sinal 2: palavra-chave PRÓXIMA a valor+unidade (laudo sem bullets).
+  const structuredHits =
+    (_near(_LAB_KW).test(text) ? 1 : 0) +
+    (_near(_GENETIC_KW).test(text) ? 1 : 0) +
+    (_near(_MICROBIOME_KW).test(text) ? 1 : 0) +
+    (_GENETIC_STRUCTURED.test(text) ? 1 : 0) +
+    (_MICROBIOME_STRUCTURED.test(text) ? 1 : 0);
+
+  if (structuredHits >= 2) return true;
+  if (text.length > 800 && structuredHits >= 1) return true;
+  return false;
+}
+
 function tryExtractLabReportError(text: string): string | null {
   if (!text) return null;
   const tryParse = (raw: string): string | null => {
@@ -765,14 +815,24 @@ export function useDifyChat(
         : null;
       const effectiveExamContext = latestContextFromMessages ?? examContext;
 
+      // Se a mensagem já carrega o laudo/exame (arquivo OU texto colado
+      // com estrutura de laudo), suprime o prefixo automático — o
+      // conteúdo principal já veio na mensagem e o prefixo antigo só
+      // contaminaria o prompt do agente atual (ex.: Genética recebendo
+      // "Marcadores laboratoriais alterados: ..." em cima de um laudo genético).
+      const carriesReport = messageCarriesReport(text, difyFiles.length);
+
       const finalQuery = (() => {
         // exam_*: comportamento ORIGINAL preservado (não passa pelo dispatcher).
         if (agentType.startsWith("exam")) {
-          if (difyFiles.length === 0 && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
+          if (!carriesReport && effectiveExamContext) return buildContextPrefix(effectiveExamContext) + text;
           return text;
         }
         // research: sem prefixo (busca pura).
         if (agentType === "research") return text;
+
+        // Demais agentes: se a mensagem já traz laudo, não prefixa.
+        if (carriesReport) return text;
 
         // Dispatcher: tenta builder especializado por agente.
         // Fallback duplo: builder específico → builder padrão → minimal.
@@ -792,6 +852,7 @@ export function useDifyChat(
           return buildMinimalPrefix() + text;
         }
       })();
+      
       
       const difyQuery = finalQuery || text;
 
