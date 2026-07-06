@@ -92,8 +92,8 @@ const nutriGroups: NavGroup[] = [
   },
   {
     key: "ajuda",
-    label: "AJUDA & SUPORTE",
-    subtitle: "Documentação e termos",
+    label: "",
+    subtitle: "",
     icon: LifeBuoy,
     items: [
       { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
