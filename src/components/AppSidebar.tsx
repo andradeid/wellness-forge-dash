@@ -260,24 +260,26 @@ export function AppSidebar() {
           if (visibleItems.length === 0) return null;
           return (
             <div key={g.key} className="py-2">
-              <div
-                className={cn(
-                  "w-full flex items-center gap-3 px-2 py-2",
-                  collapsed && "justify-center",
-                )}
-              >
-                <g.icon className="h-4 w-4 text-white/70 shrink-0" />
-                {!collapsed && (
-                  <div className="flex-1 text-left">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">
-                      {g.label}
+              {g.label && (
+                <div
+                  className={cn(
+                    "w-full flex items-center gap-3 px-2 py-2",
+                    collapsed && "justify-center",
+                  )}
+                >
+                  <g.icon className="h-4 w-4 text-white/70 shrink-0" />
+                  {!collapsed && (
+                    <div className="flex-1 text-left">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">
+                        {g.label}
+                      </div>
+                      <div className="text-[11px] text-white/55 leading-tight">
+                        {g.subtitle}
+                      </div>
                     </div>
-                    <div className="text-[11px] text-white/55 leading-tight">
-                      {g.subtitle}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {true && (
                 <ul className="mt-1 space-y-0.5">
