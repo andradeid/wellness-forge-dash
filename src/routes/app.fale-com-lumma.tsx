@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus, Menu, Camera } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus, Menu, Camera, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence } from "framer-motion";
@@ -668,9 +668,50 @@ function FaleComLummaPage() {
             </AnimatePresence>
             
             <div className="w-full space-y-12">
+              {/* Atalhos rápidos (item 9 auditoria: Pacientes + Dashboard) */}
+              <AnimatePresence>
+                {showCards && (
+                  <div className="space-y-4">
+                    <motion.h3
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
+                    >
+                      Atalhos
+                    </motion.h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                      {[
+                        { to: "/app/patients", icon: Users, title: "Pacientes", color: "#e89bcf" },
+                        { to: "/app/dashboard", icon: LayoutDashboard, title: "Dashboard", color: "#e8a04c" },
+                      ].map((shortcut, idx) => (
+                        <motion.div
+                          key={shortcut.to}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: idx * 0.08, ease: "easeOut" }}
+                        >
+                          <Link
+                            to={shortcut.to}
+                            className="flex flex-row items-center justify-start gap-3 p-3 sm:p-5 min-h-[52px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300 group cursor-pointer"
+                          >
+                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
+                              <shortcut.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: shortcut.color }} />
+                            </div>
+                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left">{shortcut.title}</span>
+                            <ChevronDown className="h-4 w-4 text-foreground/30 -rotate-90" />
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </AnimatePresence>
+
               {/* Análises Clínicas — títulos unificados (item 3 auditoria) */}
               <AnimatePresence>
                 {showCards && (
+
                   <div className="space-y-4">
                     <motion.h3
                       initial={{ opacity: 0 }}
