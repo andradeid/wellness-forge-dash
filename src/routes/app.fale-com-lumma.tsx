@@ -534,35 +534,21 @@ function FaleComLummaPage() {
             <SheetContent side="left" className="p-0 border-r border-white/10 w-72 bg-gradient-to-br from-[#1a0b2e] to-[#0b0414] text-white">
               <div className="flex h-full flex-col">
                 <div className="p-4 border-b border-white/10">
-                  <Button
-                    onClick={() => {
-                      setPendingTrigger(undefined);
-                      setIdentifyOpen(true);
-                    }}
-                    className="w-full rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
-                    style={{
-                      background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova conversa
-                  </Button>
-
-                  {/* Atalhos (item 9 auditoria) */}
-                  <div className="mt-3 space-y-1">
-                    <Link
-                      to="/app/patients"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <Users className="h-4 w-4 shrink-0" />
-                      Pacientes
-                    </Link>
+                  {/* Atalhos (item 9 auditoria) — Dashboard primeiro */}
+                  <div className="space-y-1">
                     <Link
                       to="/app/dashboard"
                       className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                     >
                       <LayoutDashboard className="h-4 w-4 shrink-0" />
                       Dashboard
+                    </Link>
+                    <Link
+                      to="/app/patients"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      <Users className="h-4 w-4 shrink-0" />
+                      Pacientes
                     </Link>
                   </div>
 
@@ -575,7 +561,22 @@ function FaleComLummaPage() {
                       className="pl-8 h-9 text-sm rounded-lg bg-white/10 border-white/15 text-white placeholder:text-white/50 focus-visible:ring-white/30"
                     />
                   </div>
+
+                  <Button
+                    onClick={() => {
+                      setPendingTrigger(undefined);
+                      setIdentifyOpen(true);
+                    }}
+                    className="w-full mt-3 rounded-full text-white shadow-sm hover:shadow-md transition-shadow border-0"
+                    style={{
+                      background: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova conversa
+                  </Button>
                 </div>
+
 
 
                 <ScrollArea className="flex-1">
