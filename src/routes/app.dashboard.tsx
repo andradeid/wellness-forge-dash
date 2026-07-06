@@ -644,8 +644,9 @@ function DashboardPage() {
         ))}
       </div>
 
-      {/* L1: Atenção Prioritária (2) + Saúde da Base (1) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* L1: Atenção Prioritária (full width — Saúde da Base removida — item 10 auditoria) */}
+      <div className="grid grid-cols-1 gap-5">
+
         <Card className="p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
