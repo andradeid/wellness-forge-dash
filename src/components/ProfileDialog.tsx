@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeExtension } from "@/lib/sanitize-filename";
 import { cn } from "@/lib/utils";
 
 export interface ProfileDialogValue {
