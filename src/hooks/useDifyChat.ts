@@ -22,6 +22,7 @@ export interface ExamContext {
   patient_name: string;
   patient_profile: string;
   patient_sex: string;
+  patient_age: string;
   gestante_tipo: string;
   gestante_periodo: string;
   exam_date: string;
@@ -34,7 +35,7 @@ export interface ExamContext {
 
 type ExamContextMeta = Pick<
   ExamContext,
-  "patient_name" | "patient_profile" | "patient_sex" | "gestante_tipo" | "gestante_periodo"
+  "patient_name" | "patient_profile" | "patient_sex" | "patient_age" | "gestante_tipo" | "gestante_periodo"
 >;
 
 function buildExamContextFromAnalysis({
