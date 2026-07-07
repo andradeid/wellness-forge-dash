@@ -352,6 +352,7 @@ export function useDifyChat(
     patient_id: string;
     patient_sex: string;
     patient_profile: string;
+    patient_age: string;
     gestante_tipo: string;
     gestante_periodo: string;
     fase_ciclo: string;
@@ -367,6 +368,7 @@ export function useDifyChat(
     patient_id: patientId,
     patient_sex: "",
     patient_profile: "",
+    patient_age: "",
     gestante_tipo: "",
     gestante_periodo: "",
     fase_ciclo: "",
