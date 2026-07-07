@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeExtension } from "@/lib/sanitize-filename";
 import { useAuth } from "@/hooks/useAuth";
 import { BrandingDocumentPreview } from "@/components/branding/BrandingDocumentPreview";
 import { PRONOUN_OPTIONS } from "@/hooks/useBrandingProfile";
