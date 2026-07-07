@@ -82,6 +82,11 @@ export const Route = createFileRoute("/api/dify/chat")({
         const mergedInputs = {
           nutritionist_name: nutriName || "",
           nutritionist_email: sanitize(meta?.nutritionist_email) || "",
+          nutritionist_crn: sanitize(meta?.nutritionist_crn) || "",
+          nutritionist_pronoun: sanitize(meta?.nutritionist_pronoun) || "",
+          clinic_name: sanitize(meta?.clinic_name) || "",
+          clinic_phone: sanitize(meta?.clinic_phone) || "",
+          clinic_logo_url: sanitize(meta?.clinic_logo_url) || "",
           patient_name: patientName || "",
           patient_id: sanitize(meta?.patient_id) || "",
           patient_sex: sanitize(meta?.patient_sex) || "",
