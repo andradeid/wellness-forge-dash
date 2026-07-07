@@ -226,14 +226,24 @@ function ChatPage() {
 
   // patientProfile useMemo moved up to be available for the pendingModule logic
 
+  const [confirmNewChatOpen, setConfirmNewChatOpen] = useState(false);
+
   const handleNewChat = useCallback(async () => {
     if (thinking) return;
-    if (messages.length > 0 && !window.confirm("Iniciar uma nova consulta? A conversa atual será encerrada e arquivada no histórico.")) return;
+    if (messages.length > 0) {
+      setConfirmNewChatOpen(true);
+      return;
+    }
+    await resetChat();
+  }, [thinking, messages.length, resetChat]);
+
+  const confirmNewChat = useCallback(async () => {
+    setConfirmNewChatOpen(false);
     // NÃO resetar filtros: eles refletem o perfil do paciente (sexo/gestante/trimestre)
     // e não mudam entre conversas. Resetar aqui causava roteamento errado de exames
     // (perfil vazio caía no agente masculino).
     await resetChat();
-  }, [thinking, messages.length, resetChat]);
+  }, [resetChat]);
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
