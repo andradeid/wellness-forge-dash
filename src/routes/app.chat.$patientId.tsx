@@ -15,6 +15,17 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatIntentPanel, emptyFilters, faseCicloToInput, filtersToContext, type ExamFilters } from "@/components/chat/ChatIntentPanel";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { Button } from "@/components/ui/button";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
@@ -215,14 +226,24 @@ function ChatPage() {
 
   // patientProfile useMemo moved up to be available for the pendingModule logic
 
+  const [confirmNewChatOpen, setConfirmNewChatOpen] = useState(false);
+
   const handleNewChat = useCallback(async () => {
     if (thinking) return;
-    if (messages.length > 0 && !window.confirm("Iniciar uma nova consulta? A conversa atual será encerrada e arquivada no histórico.")) return;
+    if (messages.length > 0) {
+      setConfirmNewChatOpen(true);
+      return;
+    }
+    await resetChat();
+  }, [thinking, messages.length, resetChat]);
+
+  const confirmNewChat = useCallback(async () => {
+    setConfirmNewChatOpen(false);
     // NÃO resetar filtros: eles refletem o perfil do paciente (sexo/gestante/trimestre)
     // e não mudam entre conversas. Resetar aqui causava roteamento errado de exames
     // (perfil vazio caía no agente masculino).
     await resetChat();
-  }, [thinking, messages.length, resetChat]);
+  }, [resetChat]);
 
   const wrappedSend = useCallback(
     async (text: string, files: File[]) => {
@@ -875,6 +896,44 @@ function ChatPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={confirmNewChatOpen} onOpenChange={setConfirmNewChatOpen}>
+        <AlertDialogContent className="max-w-md border-0 shadow-xl rounded-2xl overflow-hidden p-0">
+          <div className="h-1 w-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+          <div className="p-6">
+            <AlertDialogHeader>
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#e8a04c]/15 to-[#e89bcf]/15 ring-1 ring-[#e89bcf]/25">
+                <Sparkles className="h-6 w-6 text-transparent bg-clip-text" style={{ stroke: "url(#lumma-grad)" }} />
+                <svg width="0" height="0" className="absolute">
+                  <defs>
+                    <linearGradient id="lumma-grad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#e8a04c" />
+                      <stop offset="100%" stopColor="#e89bcf" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <AlertDialogTitle className="text-center text-lg font-semibold">
+                Iniciar uma nova consulta?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
+                A conversa atual será encerrada e arquivada no histórico do paciente. Você poderá consultá-la a qualquer momento.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-6 flex-row justify-center gap-3 sm:justify-center">
+              <AlertDialogCancel className="rounded-full px-6 mt-0">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmNewChat}
+                className="rounded-full px-6 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0"
+              >
+                Iniciar nova consulta
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
