@@ -22,6 +22,7 @@ export interface ExamContext {
   patient_name: string;
   patient_profile: string;
   patient_sex: string;
+  patient_age: string;
   gestante_tipo: string;
   gestante_periodo: string;
   exam_date: string;
@@ -34,7 +35,7 @@ export interface ExamContext {
 
 type ExamContextMeta = Pick<
   ExamContext,
-  "patient_name" | "patient_profile" | "patient_sex" | "gestante_tipo" | "gestante_periodo"
+  "patient_name" | "patient_profile" | "patient_sex" | "patient_age" | "gestante_tipo" | "gestante_periodo"
 >;
 
 function buildExamContextFromAnalysis({
@@ -55,6 +56,7 @@ function buildExamContextFromAnalysis({
     patient_name: meta.patient_name || previous?.patient_name || "Paciente",
     patient_profile: meta.patient_profile || previous?.patient_profile || "",
     patient_sex: meta.patient_sex || previous?.patient_sex || "",
+    patient_age: meta.patient_age || previous?.patient_age || "",
     gestante_tipo: meta.gestante_tipo || previous?.gestante_tipo || "",
     gestante_periodo: meta.gestante_periodo || previous?.gestante_periodo || "",
     exam_date: new Date().toISOString(),
@@ -350,6 +352,7 @@ export function useDifyChat(
     patient_id: string;
     patient_sex: string;
     patient_profile: string;
+    patient_age: string;
     gestante_tipo: string;
     gestante_periodo: string;
     fase_ciclo: string;
@@ -365,6 +368,7 @@ export function useDifyChat(
     patient_id: patientId,
     patient_sex: "",
     patient_profile: "",
+    patient_age: "",
     gestante_tipo: "",
     gestante_periodo: "",
     fase_ciclo: "",
@@ -429,10 +433,23 @@ export function useDifyChat(
           .maybeSingle(),
         (supabase as any)
           .from("patients")
-          .select("name, menstrual_cycle_phase")
+          .select("name, birth_date, menstrual_cycle_phase")
           .eq("id", patientId)
           .maybeSingle(),
       ]);
+
+      const bd = patient?.birth_date as string | null | undefined;
+      let patient_age = "";
+      if (bd) {
+        const d = new Date(bd);
+        if (!Number.isNaN(d.getTime())) {
+          const now = new Date();
+          let y = now.getFullYear() - d.getFullYear();
+          const m = now.getMonth() - d.getMonth();
+          if (m < 0 || (m === 0 && now.getDate() < d.getDate())) y--;
+          if (y >= 0) patient_age = String(y);
+        }
+      }
 
       metaRef.current = {
         ...metaRef.current,
@@ -445,6 +462,7 @@ export function useDifyChat(
         clinic_logo_url: (profile?.clinic_logo_url as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
         patient_id: patientId,
+        patient_age,
         fase_ciclo: (patient?.menstrual_cycle_phase as string) || "",
       };
 
@@ -763,7 +781,7 @@ export function useDifyChat(
         `[CONTEXTO DO PACIENTE]`,
         `Use este contexto como fonte da conversa. Se a pergunta puder ser respondida com os dados abaixo, não peça o laudo novamente.`,
         `Paciente: ${ctx.patient_name}`,
-        `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}`,
+        `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}${ctx.patient_age ? ` | Idade: ${ctx.patient_age} anos` : ""}`,
       ];
       if (alteracoes.length > 0) {
         lines.push(`Marcadores alterados: ${alteracoes.join(", ")}`);
@@ -793,6 +811,7 @@ export function useDifyChat(
         `Paciente: ${meta.patient_name}`,
         `Perfil: ${meta.patient_profile}`,
         `Sexo: ${meta.patient_sex}`,
+        meta.patient_age ? `Idade: ${meta.patient_age} anos` : "",
         meta.gestante_tipo 
           ? `Gestação: ${meta.gestante_tipo} — ${meta.gestante_periodo}` 
           : "",
