@@ -213,7 +213,7 @@ function SettingsPage() {
     }
     setUploadingLogo(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
+      const ext = sanitizeExtension(file.name.split(".").pop() ?? "png") || "png";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("professional-logos")
