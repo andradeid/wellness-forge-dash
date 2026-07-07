@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeFilename } from "@/lib/sanitize-filename";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { processAndPersistMarkers, type RawMarker } from "@/lib/exam-markers";
