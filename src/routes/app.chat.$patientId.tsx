@@ -15,6 +15,17 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatIntentPanel, emptyFilters, faseCicloToInput, filtersToContext, type ExamFilters } from "@/components/chat/ChatIntentPanel";
 import { ExamHistoryList, type ExamItem } from "@/components/chat/ExamHistoryList";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Sparkles as SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
