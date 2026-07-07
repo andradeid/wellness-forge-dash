@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeFilename } from "@/lib/sanitize-filename";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { processAndPersistMarkers, type RawMarker } from "@/lib/exam-markers";
@@ -275,13 +276,7 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
 
       // 2) Storage upload (provisional path under user's "_quick" folder).
       //    Supabase Storage rejeita colchetes/acentos na key → sanitizar filename.
-      const safeName = file.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^A-Za-z0-9._-]+/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/^_+|_+$/g, "") || "arquivo";
-      const path = `${user.id}/_quick/${Date.now()}-${safeName}`;
+      const path = `${user.id}/_quick/${Date.now()}-${sanitizeFilename(file.name)}`;
       const { error: upErr } = await supabase.storage.from("exams").upload(path, file);
       if (upErr) throw new Error(upErr.message);
       storagePathRef.current = path;

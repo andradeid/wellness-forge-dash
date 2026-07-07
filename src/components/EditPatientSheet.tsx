@@ -12,6 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeExtension } from "@/lib/sanitize-filename";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -86,7 +87,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
       return;
     }
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = sanitizeExtension(file.name.split(".").pop() || "jpg") || "jpg";
     const path = `${patient.id}/avatar-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage
       .from("patient-photos")

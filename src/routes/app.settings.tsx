@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeExtension } from "@/lib/sanitize-filename";
 import { useAuth } from "@/hooks/useAuth";
 import { BrandingDocumentPreview } from "@/components/branding/BrandingDocumentPreview";
 import { PRONOUN_OPTIONS } from "@/hooks/useBrandingProfile";
@@ -127,7 +128,7 @@ function SettingsPage() {
     if (!user) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
+      const ext = sanitizeExtension(file.name.split(".").pop() ?? "png") || "png";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("avatars")
@@ -212,7 +213,7 @@ function SettingsPage() {
     }
     setUploadingLogo(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
+      const ext = sanitizeExtension(file.name.split(".").pop() ?? "png") || "png";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("professional-logos")
