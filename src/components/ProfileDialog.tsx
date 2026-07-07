@@ -77,7 +77,7 @@ export function ProfileDialog({
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
+      const ext = sanitizeExtension(file.name.split(".").pop() ?? "png") || "png";
       const path = `${value.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("avatars")
