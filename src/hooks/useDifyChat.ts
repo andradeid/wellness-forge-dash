@@ -781,7 +781,7 @@ export function useDifyChat(
         `[CONTEXTO DO PACIENTE]`,
         `Use este contexto como fonte da conversa. Se a pergunta puder ser respondida com os dados abaixo, não peça o laudo novamente.`,
         `Paciente: ${ctx.patient_name}`,
-        `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}`,
+        `Perfil: ${ctx.patient_profile} | Sexo: ${ctx.patient_sex}${ctx.patient_age ? ` | Idade: ${ctx.patient_age} anos` : ""}`,
       ];
       if (alteracoes.length > 0) {
         lines.push(`Marcadores alterados: ${alteracoes.join(", ")}`);
