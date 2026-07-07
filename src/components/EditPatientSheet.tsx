@@ -87,7 +87,7 @@ export function EditPatientSheet({ patient, open, onOpenChange, onSaved }: Props
       return;
     }
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = sanitizeExtension(file.name.split(".").pop() || "jpg") || "jpg";
     const path = `${patient.id}/avatar-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage
       .from("patient-photos")
