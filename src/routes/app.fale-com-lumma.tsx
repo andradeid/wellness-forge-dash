@@ -221,7 +221,10 @@ function FaleComLummaPage() {
         agent_type: agentType,
         title: agentType === 'research' 
           ? 'Pesquisa Científica' 
+          : agentType === 'reasoning'
+          ? 'Perguntas Clínicas'
           : 'Pergunta Clínica',
+
         created_by: user.id
       })
       .select('id')
