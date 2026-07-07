@@ -811,6 +811,7 @@ export function useDifyChat(
         `Paciente: ${meta.patient_name}`,
         `Perfil: ${meta.patient_profile}`,
         `Sexo: ${meta.patient_sex}`,
+        meta.patient_age ? `Idade: ${meta.patient_age} anos` : "",
         meta.gestante_tipo 
           ? `Gestação: ${meta.gestante_tipo} — ${meta.gestante_periodo}` 
           : "",
