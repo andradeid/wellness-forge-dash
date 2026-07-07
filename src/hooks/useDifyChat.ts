@@ -56,6 +56,7 @@ function buildExamContextFromAnalysis({
     patient_name: meta.patient_name || previous?.patient_name || "Paciente",
     patient_profile: meta.patient_profile || previous?.patient_profile || "",
     patient_sex: meta.patient_sex || previous?.patient_sex || "",
+    patient_age: meta.patient_age || previous?.patient_age || "",
     gestante_tipo: meta.gestante_tipo || previous?.gestante_tipo || "",
     gestante_periodo: meta.gestante_periodo || previous?.gestante_periodo || "",
     exam_date: new Date().toISOString(),
