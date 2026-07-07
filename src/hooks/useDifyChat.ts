@@ -433,10 +433,23 @@ export function useDifyChat(
           .maybeSingle(),
         (supabase as any)
           .from("patients")
-          .select("name, menstrual_cycle_phase")
+          .select("name, birth_date, menstrual_cycle_phase")
           .eq("id", patientId)
           .maybeSingle(),
       ]);
+
+      const bd = patient?.birth_date as string | null | undefined;
+      let patient_age = "";
+      if (bd) {
+        const d = new Date(bd);
+        if (!Number.isNaN(d.getTime())) {
+          const now = new Date();
+          let y = now.getFullYear() - d.getFullYear();
+          const m = now.getMonth() - d.getMonth();
+          if (m < 0 || (m === 0 && now.getDate() < d.getDate())) y--;
+          if (y >= 0) patient_age = String(y);
+        }
+      }
 
       metaRef.current = {
         ...metaRef.current,
@@ -449,6 +462,7 @@ export function useDifyChat(
         clinic_logo_url: (profile?.clinic_logo_url as string) || "",
         patient_name: (patient?.name as string) || "Paciente",
         patient_id: patientId,
+        patient_age,
         fase_ciclo: (patient?.menstrual_cycle_phase as string) || "",
       };
 
