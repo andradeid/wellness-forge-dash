@@ -722,11 +722,14 @@ function FaleComLummaPage() {
                         { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
                         { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
                         { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" },
+                        { trigger: "perguntas_clinicas", icon: MessageSquare, title: "Perguntas Clínicas", color: "#e8a04c" },
                       ].map((card, idx) => {
                         const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
                         // Exames de sangue depende do perfil clínico do paciente — se ainda não há paciente
                         // selecionado, mantemos o card visível e abrimos a identificação no clique.
-                        if (!agent && card.trigger !== "exames_de_sangue") return null;
+                        // "perguntas_clinicas" é dúvida geral do nutri (sem paciente) — reaproveita o
+                        // agente "reasoning" (mesmo de Casos Clínicos) mas sem trava de paciente.
+                        if (!agent && card.trigger !== "exames_de_sangue" && card.trigger !== "perguntas_clinicas") return null;
 
                         return (
                           <motion.button
@@ -735,6 +738,10 @@ function FaleComLummaPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: idx * 0.08, ease: "easeOut" }}
                             onClick={() => {
+                              if (card.trigger === "perguntas_clinicas") {
+                                startGeneralChat("reasoning");
+                                return;
+                              }
                               if (!agent || requiresPatient(agent.agent_id)) {
                                 setPendingTrigger(card.trigger);
                                 setIdentifyOpen(true);
@@ -742,6 +749,7 @@ function FaleComLummaPage() {
                                 startGeneralChat(agent.agent_id);
                               }
                             }}
+
                             className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
                           >
                             <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
