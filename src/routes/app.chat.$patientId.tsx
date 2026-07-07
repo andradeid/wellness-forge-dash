@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Sparkles as SparklesIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
