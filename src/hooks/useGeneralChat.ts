@@ -135,7 +135,15 @@ export function useGeneralChat(chatId: string, agentType: string) {
           .from("general_chats")
           .update({ title })
           .eq("id", chatId);
+      } else if (isFirstMessage && agentType === 'reasoning') {
+        // Perguntas Clínicas: primeiros 15 caracteres da primeira mensagem
+        const title = text.slice(0, 15);
+        await supabase
+          .from("general_chats")
+          .update({ title })
+          .eq("id", chatId);
       }
+
 
       await supabase
         .from("general_chats")
