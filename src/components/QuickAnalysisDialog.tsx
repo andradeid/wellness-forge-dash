@@ -273,8 +273,15 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
       const { data: profile } = await (supabase as any)
         .from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
 
-      // 2) Storage upload (provisional path under user's "_quick" folder)
-      const path = `${user.id}/_quick/${Date.now()}-${file.name}`;
+      // 2) Storage upload (provisional path under user's "_quick" folder).
+      //    Supabase Storage rejeita colchetes/acentos na key → sanitizar filename.
+      const safeName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Za-z0-9._-]+/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "") || "arquivo";
+      const path = `${user.id}/_quick/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("exams").upload(path, file);
       if (upErr) throw new Error(upErr.message);
       storagePathRef.current = path;

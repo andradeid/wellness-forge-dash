@@ -637,8 +637,27 @@ export function useDifyChat(
       updateFileProgress(file, "enviando", 20, "Salvando exame no histórico");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
 
-      // Storage (upload direto do browser → Supabase, sem passar pelo Worker)
-      const path = `${user.id}/${patientId}/${Date.now()}-${file.name}`;
+      // Storage (upload direto do browser → Supabase, sem passar pelo Worker).
+      // Supabase Storage rejeita caracteres fora de [A-Za-z0-9!\-_.*'()/ ] na key
+      // (colchetes, acentos, etc. → "Invalid key"). Sanitizamos o filename
+      // preservando extensão; o nome original vai em `attachments[].name`.
+      const sanitizeFilename = (name: string) => {
+        const dot = name.lastIndexOf(".");
+        const base = dot > 0 ? name.slice(0, dot) : name;
+        const ext = dot > 0 ? name.slice(dot) : "";
+        const clean = (s: string) =>
+          s
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^A-Za-z0-9._-]+/g, "_")
+            .replace(/_+/g, "_")
+            .replace(/^_+|_+$/g, "");
+        const safeBase = clean(base) || "arquivo";
+        const safeExt = clean(ext.replace(/^\./, ""));
+        return safeExt ? `${safeBase}.${safeExt}` : safeBase;
+      };
+      const safeName = sanitizeFilename(file.name);
+      const path = `${user.id}/${patientId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("exams").upload(path, file, {
         contentType: file.type || undefined,
         upsert: false,
