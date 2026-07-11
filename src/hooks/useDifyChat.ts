@@ -554,12 +554,16 @@ export function useDifyChat(
   const sendMessage = useCallback(async (
     text: string,
     files: File[],
-    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string },
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string },
   ) => {
     if (!chatId || readOnly) return;
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
     const agentType = opts?.overrideAgent ?? agentTypeState;
+    // Super Agentes: `selectedTask` roteia a esteira interna do app Dify e
+    // define a chave financeira. Ausente para agentes comuns → comportamento
+    // idêntico ao de hoje (billingKey resolve pelo agent_id).
+    const selectedTask = opts?.selectedTask?.trim() || undefined;
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -568,7 +572,7 @@ export function useDifyChat(
     if (!sessionOk) return;
 
 
-    const billingKey = resolveAgentKey(agentType);
+    const billingKey = resolveAgentKey(agentType, selectedTask ? { isSuperAgent: true, selectedTask } : undefined);
     if (billingKey) {
       try {
         const { cost, label } = await getCost(billingKey);
