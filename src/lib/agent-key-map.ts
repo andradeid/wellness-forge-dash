@@ -42,7 +42,41 @@ const MAP: Record<string, string> = {
   geracao_visual: "geracao_visual",
 };
 
-export function resolveAgentKey(agentType: string | undefined | null): string | null {
+/**
+ * Super Agentes: mapeia o `task_key` (identificador global da tarefa
+ * interna executada) → `agent_key` da tabela `agent_costs`.
+ *
+ * O custo é POR TAREFA, GLOBAL: rodar `composition` custa o mesmo
+ * independente de qual super agente/perfil executou. Se quiser variar
+ * o preço por task_key, cadastre uma linha em `agent_costs` com
+ * `agent_key = task_key` e aponte aqui direto.
+ */
+const MAP_TASK: Record<string, string> = {
+  composition: "exames_laboratoriais",
+  metabolism: "exames_laboratoriais",
+  genetics: "exames_laboratoriais",
+  exam: "exames_laboratoriais",
+  reasoning: "conversa_geral",
+  production: "plano_alimentar",
+  research: "artigos_cientificos",
+  suplementacao: "suplementacao",
+  formulacao_magistral: "formulacao_magistral",
+  estimativa_refeicao_foto: "analise_visual",
+  composicao_corporal_foto: "analise_visual",
+};
+
+export interface ResolveAgentKeyOptions {
+  isSuperAgent?: boolean;
+  selectedTask?: string | null;
+}
+
+export function resolveAgentKey(
+  agentType: string | undefined | null,
+  opts?: ResolveAgentKeyOptions,
+): string | null {
+  if (opts?.isSuperAgent && opts.selectedTask) {
+    return MAP_TASK[opts.selectedTask] ?? null;
+  }
   if (!agentType) return null;
   return MAP[agentType] ?? null;
 }

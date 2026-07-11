@@ -554,12 +554,16 @@ export function useDifyChat(
   const sendMessage = useCallback(async (
     text: string,
     files: File[],
-    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string },
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string },
   ) => {
     if (!chatId || readOnly) return;
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
     const agentType = opts?.overrideAgent ?? agentTypeState;
+    // Super Agentes: `selectedTask` roteia a esteira interna do app Dify e
+    // define a chave financeira. Ausente para agentes comuns → comportamento
+    // idêntico ao de hoje (billingKey resolve pelo agent_id).
+    const selectedTask = opts?.selectedTask?.trim() || undefined;
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -568,7 +572,7 @@ export function useDifyChat(
     if (!sessionOk) return;
 
 
-    const billingKey = resolveAgentKey(agentType);
+    const billingKey = resolveAgentKey(agentType, selectedTask ? { isSuperAgent: true, selectedTask } : undefined);
     if (billingKey) {
       try {
         const { cost, label } = await getCost(billingKey);
@@ -703,6 +707,7 @@ export function useDifyChat(
       role: "user" as const,
       content: displayContent,
       agent_type: agentType,
+      selected_task: selectedTask ?? null,
       attachments: attachments.length ? attachments : null,
     };
     const { data: userInserted } = await (supabase as any)
@@ -760,6 +765,7 @@ export function useDifyChat(
           role: "assistant",
           content: content,
           agent_type: agentType,
+          selected_task: selectedTask ?? null,
           structured_data: structured,
         })
         .select("id")
@@ -894,6 +900,7 @@ export function useDifyChat(
             files: difyFiles,
             meta: metaRef.current,
             agent_type: agentType,
+            ...(selectedTask ? { selected_task: selectedTask } : {}),
             ...(opts?.extraInputs ? { inputs: opts.extraInputs } : {}),
           }),
         });
@@ -1043,6 +1050,7 @@ export function useDifyChat(
                       role: "assistant",
                       content: fullText,
                       agent_type: agentType,
+                      selected_task: selectedTask ?? null,
                       structured_data: structured,
                     })
                     .select("id")
@@ -1225,6 +1233,7 @@ export function useDifyChat(
     targetAgent: string,
     extraInputs: Record<string, unknown>,
     query: string,
+    opts?: { selectedTask?: string; displayText?: string },
   ) => {
     if (!chatId || readOnly) return;
     // Preserva a conversa do agente atual no mapa antes de trocar.
@@ -1236,6 +1245,9 @@ export function useDifyChat(
       };
     }
     // Rehidrata (ou zera) a conversa do agente alvo.
+    // Super Agentes: se `targetAgent` for o mesmo agente atual (troca só de
+    // tarefa dentro do mesmo super agente), o conversation_id já está preservado
+    // por estar mapeado sob a mesma agent_id — nenhuma mudança extra necessária.
     const restored = conversationMapRef.current[targetAgent] ?? null;
     conversationIdRef.current = restored;
     setActiveAgents(Object.keys(conversationMapRef.current));
@@ -1250,7 +1262,12 @@ export function useDifyChat(
         .eq("id", chatId);
     }
     setAgentType(targetAgent);
-    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs, displayText: "Gerar receita" });
+    await sendMessage(query, [], {
+      overrideAgent: targetAgent,
+      extraInputs,
+      displayText: opts?.displayText ?? "Gerar receita",
+      selectedTask: opts?.selectedTask,
+    });
   }, [chatId, readOnly, sendMessage, agentType]);
 
   return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents };

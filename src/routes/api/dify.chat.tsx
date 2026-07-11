@@ -79,6 +79,11 @@ export const Route = createFileRoute("/api/dify/chat")({
         const displayUser = composedUser.length > 64 ? composedUser.slice(-64) : composedUser;
 
 
+        // Super Agentes: `selected_task` roteia a esteira interna do app Dify.
+        // Só injeta se o cliente enviou (ou seja, veio de um super agente).
+        // Para agentes comuns fica ausente e nada muda no comportamento.
+        const selectedTask = sanitize(body?.selected_task || meta?.selected_task);
+
         const mergedInputs = {
           nutritionist_name: nutriName || "",
           nutritionist_email: sanitize(meta?.nutritionist_email) || "",
@@ -95,6 +100,7 @@ export const Route = createFileRoute("/api/dify/chat")({
           gestante_tipo: sanitize(meta?.gestante_tipo) || "",
           gestante_periodo: sanitize(meta?.gestante_periodo) || "",
           fase_ciclo: sanitize(meta?.fase_ciclo) || "",
+          ...(selectedTask ? { selected_task: selectedTask } : {}),
           ...(inputs ?? {}),
         };
 
