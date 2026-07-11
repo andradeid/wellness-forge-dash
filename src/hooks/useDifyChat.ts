@@ -1233,6 +1233,7 @@ export function useDifyChat(
     targetAgent: string,
     extraInputs: Record<string, unknown>,
     query: string,
+    opts?: { selectedTask?: string; displayText?: string },
   ) => {
     if (!chatId || readOnly) return;
     // Preserva a conversa do agente atual no mapa antes de trocar.
@@ -1244,6 +1245,9 @@ export function useDifyChat(
       };
     }
     // Rehidrata (ou zera) a conversa do agente alvo.
+    // Super Agentes: se `targetAgent` for o mesmo agente atual (troca só de
+    // tarefa dentro do mesmo super agente), o conversation_id já está preservado
+    // por estar mapeado sob a mesma agent_id — nenhuma mudança extra necessária.
     const restored = conversationMapRef.current[targetAgent] ?? null;
     conversationIdRef.current = restored;
     setActiveAgents(Object.keys(conversationMapRef.current));
@@ -1258,7 +1262,12 @@ export function useDifyChat(
         .eq("id", chatId);
     }
     setAgentType(targetAgent);
-    await sendMessage(query, [], { overrideAgent: targetAgent, extraInputs, displayText: "Gerar receita" });
+    await sendMessage(query, [], {
+      overrideAgent: targetAgent,
+      extraInputs,
+      displayText: opts?.displayText ?? "Gerar receita",
+      selectedTask: opts?.selectedTask,
+    });
   }, [chatId, readOnly, sendMessage, agentType]);
 
   return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents };
