@@ -765,6 +765,7 @@ export function useDifyChat(
           role: "assistant",
           content: content,
           agent_type: agentType,
+          selected_task: selectedTask ?? null,
           structured_data: structured,
         })
         .select("id")
