@@ -900,6 +900,7 @@ export function useDifyChat(
             files: difyFiles,
             meta: metaRef.current,
             agent_type: agentType,
+            ...(selectedTask ? { selected_task: selectedTask } : {}),
             ...(opts?.extraInputs ? { inputs: opts.extraInputs } : {}),
           }),
         });
