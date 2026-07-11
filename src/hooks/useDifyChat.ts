@@ -707,6 +707,7 @@ export function useDifyChat(
       role: "user" as const,
       content: displayContent,
       agent_type: agentType,
+      selected_task: selectedTask ?? null,
       attachments: attachments.length ? attachments : null,
     };
     const { data: userInserted } = await (supabase as any)
