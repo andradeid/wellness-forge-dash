@@ -87,6 +87,7 @@ export type Database = {
           created_by: string
           id: string
           role: string
+          selected_task: string | null
           structured_data: Json | null
         }
         Insert: {
@@ -98,6 +99,7 @@ export type Database = {
           created_by: string
           id?: string
           role: string
+          selected_task?: string | null
           structured_data?: Json | null
         }
         Update: {
@@ -109,6 +111,7 @@ export type Database = {
           created_by?: string
           id?: string
           role?: string
+          selected_task?: string | null
           structured_data?: Json | null
         }
         Relationships: [
@@ -254,6 +257,7 @@ export type Database = {
           endpoint: string
           id: string
           is_active: boolean
+          is_super_agent: boolean
           label: string
           patient_required: boolean | null
           sort_order: number
@@ -268,6 +272,7 @@ export type Database = {
           endpoint?: string
           id?: string
           is_active?: boolean
+          is_super_agent?: boolean
           label: string
           patient_required?: boolean | null
           sort_order?: number
@@ -282,6 +287,7 @@ export type Database = {
           endpoint?: string
           id?: string
           is_active?: boolean
+          is_super_agent?: boolean
           label?: string
           patient_required?: boolean | null
           sort_order?: number
@@ -874,6 +880,94 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      super_agent_cards: {
+        Row: {
+          card_trigger: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          card_trigger?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          card_trigger?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "super_agent_cards_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "super_agent_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      super_agent_tasks: {
+        Row: {
+          agent_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          task_key: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          task_key: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          task_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "super_agent_tasks_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "dify_agents"
+            referencedColumns: ["agent_id"]
+          },
+        ]
       }
       system_settings: {
         Row: {
