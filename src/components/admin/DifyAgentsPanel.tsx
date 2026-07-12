@@ -456,6 +456,15 @@ export function DifyAgentsPanel() {
                           ?.label || agent.card_trigger}
                       </Badge>
                     )}
+                    {agent.is_super_agent && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] mt-1 rounded-md border-[#e8a04c]/40 bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10 text-[#a35c1f]"
+                      >
+                        <Layers className="h-3 w-3 mr-1" />
+                        Super Agente
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
