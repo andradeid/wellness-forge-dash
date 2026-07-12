@@ -1081,9 +1081,12 @@ export function useDifyChat(
                     !!agentType &&
                     (agentType.startsWith("exam") || agentType.startsWith("super"));
 
-                  // Extract markers if in exam mode
+                  // Extract markers if in exam mode.
+                  // Para Super Agentes, evitamos o fallback heurístico (prosa)
+                  // — só aceitamos o bloco JSON estruturado, caso venha.
+                  const isSuperAgent = !!agentType && agentType.startsWith("super");
                   const markers: Marker[] | null = isExamLike
-                    ? tryExtractMarkers(fullText)
+                    ? tryExtractMarkers(fullText, { allowHeuristic: !isSuperAgent })
                     : null;
 
                   const processingMs = Math.round(performance.now() - startedAt);
