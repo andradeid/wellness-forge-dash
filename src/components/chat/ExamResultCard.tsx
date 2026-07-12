@@ -169,7 +169,10 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-medium truncate">{m.name}</div>
                           {showRef && (
-                            <div className="text-xs text-muted-foreground truncate">
+                            <div
+                              className="text-xs text-muted-foreground line-clamp-2 break-words"
+                              title={refText}
+                            >
                               Ref.: {refText}
                             </div>
                           )}
