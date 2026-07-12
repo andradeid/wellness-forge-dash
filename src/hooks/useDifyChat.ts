@@ -259,7 +259,8 @@ function truncateBeforeFormulations(text: string): string {
   return text.slice(0, cutoff);
 }
 
-function tryExtractMarkers(text: string): Marker[] | null {
+function tryExtractMarkers(text: string, opts?: { allowHeuristic?: boolean }): Marker[] | null {
+  const allowHeuristic = opts?.allowHeuristic ?? true;
   // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
   if (tryExtractLabReportError(text)) return null;
 
@@ -294,6 +295,9 @@ function tryExtractMarkers(text: string): Marker[] | null {
   }
   // 3) Fallback heurístico — somente sobre o trecho ANTES da seção de formulações,
   // pra nunca engolir receitas se os estágios 1/2 falharem.
+  // Pode ser desabilitado para respostas em prosa (Super Agentes) para evitar
+  // falso positivo — ex.: "Tempo: 12 semanas" (duração) virar marcador laboratorial.
+  if (!allowHeuristic) return null;
   const safeText = truncateBeforeFormulations(text);
   const fromText = extractMarkersFromText(safeText);
   return fromText.length ? fromText : null;
@@ -1077,9 +1081,12 @@ export function useDifyChat(
                     !!agentType &&
                     (agentType.startsWith("exam") || agentType.startsWith("super"));
 
-                  // Extract markers if in exam mode
+                  // Extract markers if in exam mode.
+                  // Para Super Agentes, evitamos o fallback heurístico (prosa)
+                  // — só aceitamos o bloco JSON estruturado, caso venha.
+                  const isSuperAgent = !!agentType && agentType.startsWith("super");
                   const markers: Marker[] | null = isExamLike
-                    ? tryExtractMarkers(fullText)
+                    ? tryExtractMarkers(fullText, { allowHeuristic: !isSuperAgent })
                     : null;
 
                   const processingMs = Math.round(performance.now() - startedAt);
