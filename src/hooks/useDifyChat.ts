@@ -590,6 +590,22 @@ export function useDifyChat(
     const sessionOk = await enforceSessionGuard(currentUser.id);
     if (!sessionOk) return;
 
+    // Super Agentes exigem `selected_task` obrigatoriamente. O Dify retorna
+    // 400 "selected_task is required in input form" se faltar → o assistente
+    // não responde. Validamos antes de gastar recursos/streaming.
+    if (agentType && !selectedTask) {
+      const { data: agentRow } = await (supabase as any)
+        .from("dify_agents")
+        .select("is_super_agent")
+        .eq("agent_id", agentType)
+        .maybeSingle();
+      if (agentRow?.is_super_agent === true) {
+        toast.error("Escolha uma tarefa do Super Agente antes de enviar (ex: Exames de Sangue).");
+        return;
+      }
+    }
+
+
 
     const billingKey = resolveAgentKey(agentType, selectedTask ? { isSuperAgent: true, selectedTask } : undefined);
     if (billingKey) {
@@ -951,9 +967,24 @@ export function useDifyChat(
 
       if (!res.ok) {
         setThinking(false);
-        setError(`Erro na Lumma (${res.status})`);
+        let friendly = `Erro na Lumma (${res.status})`;
+        try {
+          const errBody = await res.clone().json();
+          const raw = (errBody?.error || errBody?.message || "") as string;
+          if (/selected_task is required/i.test(raw)) {
+            friendly = "Escolha uma tarefa do Super Agente antes de enviar.";
+          } else if (raw) {
+            // Mantém a mensagem original para debug, mas prefixa em PT-BR.
+            friendly = `Erro na Lumma: ${raw.slice(0, 180)}`;
+          }
+        } catch {
+          // corpo não-JSON — mantém a mensagem genérica
+        }
+        setError(friendly);
+        toast.error(friendly);
         return;
       }
+
 
       const reader = res.body?.getReader();
       if (!reader) {
