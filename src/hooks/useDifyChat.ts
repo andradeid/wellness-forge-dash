@@ -568,7 +568,10 @@ export function useDifyChat(
     // Super Agentes: `selectedTask` roteia a esteira interna do app Dify e
     // define a chave financeira. Ausente para agentes comuns → comportamento
     // idêntico ao de hoje (billingKey resolve pelo agent_id).
-    const selectedTask = opts?.selectedTask?.trim() || undefined;
+    // Fallback: se opts.selectedTask não veio, usa o task pendente setado
+    // externamente (por ex.: clique num super_agent_card na home).
+    const selectedTask =
+      opts?.selectedTask?.trim() || selectedTaskRef.current?.trim() || undefined;
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
