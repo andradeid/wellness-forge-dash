@@ -175,7 +175,17 @@ function FaleComLummaPage() {
       setPatients((prev) => [...prev, patientWithProfile]);
       
       // Navega automaticamente para o chat com o novo paciente
-      if (pendingTrigger) {
+      if (pendingSuperAgent) {
+        navigate({
+          to: "/app/chat/$patientId",
+          params: { patientId: data.id },
+          search: {
+            agent: pendingSuperAgent.agentId,
+            task: pendingSuperAgent.taskKey,
+          } as any,
+        });
+        setPendingSuperAgent(null);
+      } else if (pendingTrigger) {
         const resolvedProfile = data.is_pregnant
           ? 'gestante'
           : data.gender === 'male'
