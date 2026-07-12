@@ -110,8 +110,8 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { agents, getAgentForCard, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask } = useDifyChat(patientId, {
+  const { agents, tasks: superAgentTasks, getAgentForCard, loading: loadingAgents } = useAgentConfig();
+  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
