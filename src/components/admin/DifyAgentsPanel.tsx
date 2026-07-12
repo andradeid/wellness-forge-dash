@@ -719,6 +719,23 @@ export function DifyAgentsPanel() {
                 }
               />
             </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-gradient-to-r from-[#e8a04c]/5 to-[#e89bcf]/5">
+              <div className="space-y-0.5">
+                <Label className="flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-[#a35c1f]" /> Super Agente
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Um único app Dify com várias tarefas internas (selected_task).
+                  Edite as tarefas e cards depois de salvar.
+                </p>
+              </div>
+              <Switch
+                checked={createForm.is_super_agent}
+                onCheckedChange={(v) =>
+                  setCreateForm((f) => ({ ...f, is_super_agent: v }))
+                }
+              />
+            </div>
             <div className="space-y-1.5">
               <Label>Descrição</Label>
               <Textarea
