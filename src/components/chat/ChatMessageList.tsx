@@ -582,9 +582,13 @@ export function ChatMessageList({
                       </div>
                     </div>
                   )}
-                  {m.structured_data?.markers && 
-                   m.structured_data.markers.length > 0 && 
-                   (m.agent_type?.startsWith('exam') || (!m.agent_type && agentType?.startsWith('exam'))) && (
+                  {m.structured_data?.markers &&
+                   m.structured_data.markers.length > 0 &&
+                   (
+                     m.agent_type?.startsWith('exam') ||
+                     m.agent_type?.startsWith('super') ||
+                     (!m.agent_type && (agentType?.startsWith('exam') || agentType?.startsWith('super')))
+                   ) && (
                     <div className="mb-4">
                       <ExamResultCard markers={m.structured_data.markers} />
                     </div>

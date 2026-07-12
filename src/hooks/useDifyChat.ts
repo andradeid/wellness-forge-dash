@@ -83,7 +83,7 @@ function hasExamMarkersMessage(message: ChatMessage): message is ChatMessage & {
 } {
   return (
     message.role === "assistant" &&
-    message.agent_type?.startsWith("exam") === true &&
+    (message.agent_type?.startsWith("exam") === true || message.agent_type?.startsWith("super") === true) &&
     Array.isArray(message.structured_data?.markers) &&
     message.structured_data.markers.length > 0
   );
@@ -1070,17 +1070,24 @@ export function useDifyChat(
                       .eq("id", chatId);
                   }
 
+                  // Super Agentes também retornam análise de exames em formato
+                  // estruturado; tratamos qualquer resposta com `agent_type` de
+                  // exame OU de super agente como potencial análise de exame.
+                  const isExamLike =
+                    !!agentType &&
+                    (agentType.startsWith("exam") || agentType.startsWith("super"));
+
                   // Extract markers if in exam mode
-                  const markers: Marker[] | null = agentType?.startsWith("exam") 
-                    ? tryExtractMarkers(fullText) 
+                  const markers: Marker[] | null = isExamLike
+                    ? tryExtractMarkers(fullText)
                     : null;
 
                   const processingMs = Math.round(performance.now() - startedAt);
-                  const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
+                  const labReportError = isExamLike ? tryExtractLabReportError(fullText) : null;
 
                   // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
                   // pelos agentes de exame (handoff "Gerar receita").
-                  const formulacoes = agentType?.startsWith("exam")
+                  const formulacoes = isExamLike
                     ? extractFormulacoes(fullText)
                     : null;
 
@@ -1123,7 +1130,7 @@ export function useDifyChat(
                     }
                   }
 
-                  if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
+                  if (markers && markers.length > 0 && isExamLike) {
                     await processAndPersistMarkers({
                       userId: user.id,
                       patientId,
@@ -1139,7 +1146,7 @@ export function useDifyChat(
                   // de exame (upload novo ou marcadores extraídos). Follow-ups
                   // simples não podem apagar o contexto clínico anterior.
                   const shouldRefreshExamContext =
-                    agentType?.startsWith("exam") &&
+                    isExamLike &&
                     fullText.trim() &&
                     !labReportError &&
                     (difyFiles.length > 0 || (markers && markers.length > 0));
