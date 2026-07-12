@@ -336,6 +336,8 @@ export function useDifyChat(
   // e mantido enquanto o usuário permanecer no mesmo agente. Trocar de
   // agente (switchAgent) o limpa — a tarefa pertence ao super agente atual.
   const selectedTaskRef = useRef<string | null>(null);
+  // Espelho reativo do task selecionado para consumo em UI (badges/indicadores).
+  const [selectedTask, setSelectedTaskState] = useState<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
