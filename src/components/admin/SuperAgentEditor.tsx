@@ -288,12 +288,29 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                       }}
                       className="rounded-md text-sm"
                     />
-                    <Badge
-                      variant="outline"
-                      className="font-mono text-[10px] rounded-md justify-self-start"
-                    >
-                      {t.task_key}
-                    </Badge>
+                    <Input
+                      value={t.task_key}
+                      onChange={(e) =>
+                        setTasks((all) =>
+                          all.map((x) =>
+                            x.id === t.id ? { ...x, task_key: e.target.value } : x,
+                          ),
+                        )
+                      }
+                      onBlur={(e) => {
+                        const v = slugifyKey(e.target.value);
+                        if (!v) return;
+                        if (v !== t.task_key) {
+                          updateTask(t, { task_key: v });
+                        } else if (v !== e.target.value) {
+                          setTasks((all) =>
+                            all.map((x) => (x.id === t.id ? { ...x, task_key: v } : x)),
+                          );
+                        }
+                      }}
+                      className="rounded-md text-xs font-mono"
+                      placeholder="task_key"
+                    />
                     <div className="flex items-center gap-1.5">
                       <Switch
                         checked={t.is_active}
@@ -320,6 +337,20 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 ))}
               </div>
             )}
+            <p className="text-[10px] text-muted-foreground/70">
+              Dica: o <code className="font-mono">task_key</code> precisa existir em{" "}
+              <code className="font-mono">MAP_TASK</code> (agent-key-map.ts) para debitar créditos.
+              Chaves válidas: <code className="font-mono">exam</code>,{" "}
+              <code className="font-mono">composition</code>,{" "}
+              <code className="font-mono">metabolism</code>,{" "}
+              <code className="font-mono">genetics</code>,{" "}
+              <code className="font-mono">production</code>,{" "}
+              <code className="font-mono">reasoning</code>,{" "}
+              <code className="font-mono">research</code>,{" "}
+              <code className="font-mono">estimativa_refeicao_foto</code>,{" "}
+              <code className="font-mono">composicao_corporal_foto</code>.
+            </p>
+
 
             {/* Nova tarefa */}
             <div className="rounded-md border border-dashed border-slate-200 p-3 grid gap-2 md:grid-cols-[1fr_1fr_2fr_auto] items-end">
