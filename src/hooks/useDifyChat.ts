@@ -1190,7 +1190,15 @@ export function useDifyChat(
     const norm = taskKey?.trim() || null;
     selectedTaskRef.current = norm;
     setSelectedTaskState(norm);
-  }, []);
+    // Persiste no patient_chats para sobreviver a reload/nova sessão.
+    if (chatId) {
+      (supabase as any)
+        .from("patient_chats")
+        .update({ selected_task: norm })
+        .eq("id", chatId)
+        .then(() => {});
+    }
+  }, [chatId]);
 
   const switchAgent = useCallback((next: string) => {
     setAgentType((prev) => {
@@ -1221,6 +1229,8 @@ export function useDifyChat(
           .update({
             dify_conversation_id: restored,
             dify_conversations: conversationMapRef.current,
+            agent_type: next,
+            selected_task: null,
           })
           .eq("id", chatId)
           .then(() => {});
