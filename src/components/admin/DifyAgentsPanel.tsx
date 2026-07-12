@@ -312,6 +312,7 @@ export function DifyAgentsPanel() {
       card_trigger: agent.card_trigger || "geral",
       patient_required: agent.patient_required,
       is_active: agent.is_active,
+      is_super_agent: agent.is_super_agent ?? false,
     });
   };
 
