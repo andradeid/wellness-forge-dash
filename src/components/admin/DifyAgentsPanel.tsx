@@ -68,6 +68,7 @@ export interface DifyAgent {
   sort_order: number;
   card_trigger: string | null;
   patient_required: boolean;
+  is_super_agent: boolean;
 }
 
 const DEFAULT_ENDPOINT = "https://api.dify.ai/v1";
