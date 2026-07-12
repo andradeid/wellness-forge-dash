@@ -110,7 +110,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { agents, tasks: superAgentTasks, getAgentForCard, loading: loadingAgents } = useAgentConfig();
+  const { agents, tasks: superAgentTasks, cards: superAgentCards, getAgentForCard, loading: loadingAgents } = useAgentConfig();
   const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
@@ -805,8 +805,14 @@ function ChatPage() {
                               title="Trocar de módulo"
                             >
                               {(() => {
-                                const label = (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
-                                const Icon = (cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles;
+                                const isSuperActive = !!currentAgent?.is_super_agent;
+                                const activeTaskLabel = isSuperActive && selectedTask
+                                  ? superAgentTasks.find(t => t.agent_id === currentAgent!.agent_id && t.task_key === selectedTask)?.label
+                                  : null;
+                                const label = isSuperActive
+                                  ? `${currentAgent?.label ?? "Super Agente"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
+                                  : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
+                                const Icon = isSuperActive ? Sparkles : ((cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles);
                                 if (loadingAgents) return <span>Carregando...</span>;
                                 return !agentType ? (
                                   <span className="flex items-center gap-2 truncate">
@@ -843,6 +849,7 @@ function ChatPage() {
                                         const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
                                         if (bestAgent) {
                                           setAgentType(bestAgent.agent_id);
+                                          setSelectedTask(null);
                                           setModuleOpen(false);
                                         } else if (opt.trigger === "exames_de_sangue") {
                                           setModuleOpen(false);
@@ -876,6 +883,60 @@ function ChatPage() {
                                   </div>
                                 );
                               })}
+
+                              {/* Super Agentes — cards de tarefa vinculados a um super_agent */}
+                              {(() => {
+                                const activeSuperCards = superAgentCards
+                                  .filter(c => c.is_active)
+                                  .map(card => {
+                                    const task = superAgentTasks.find(t => t.id === card.task_id && t.is_active);
+                                    if (!task) return null;
+                                    const agent = agents.find(a => a.agent_id === task.agent_id && a.is_super_agent && a.is_active);
+                                    if (!agent) return null;
+                                    return { card, task, agent };
+                                  })
+                                  .filter((x): x is { card: typeof superAgentCards[number]; task: typeof superAgentTasks[number]; agent: typeof agents[number] } => x !== null);
+
+                                if (activeSuperCards.length === 0) return null;
+
+                                return (
+                                  <>
+                                    <div className="my-1.5 border-t border-slate-100" />
+                                    <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-foreground/40 flex items-center gap-1.5">
+                                      <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
+                                      Super Agentes
+                                    </div>
+                                    {activeSuperCards.map(({ card, task, agent }) => {
+                                      const isActive = agentType === agent.agent_id && selectedTask === task.task_key;
+                                      return (
+                                        <button
+                                          key={card.id}
+                                          onClick={() => {
+                                            setAgentType(agent.agent_id);
+                                            setSelectedTask(task.task_key);
+                                            setModuleOpen(false);
+                                          }}
+                                          className={cn(
+                                            "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
+                                            isActive
+                                              ? "bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15 text-foreground border border-[#e8a04c]/30"
+                                              : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                                          )}
+                                        >
+                                          <div className={cn(
+                                            "p-1.5 rounded-lg transition-colors",
+                                            isActive ? "bg-white shadow-sm" : "bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 group-hover/opt:bg-white"
+                                          )}>
+                                            <Sparkles className="h-3.5 w-3.5 text-[#e8a04c]" />
+                                          </div>
+                                          <span className="flex-1 text-left truncate">{card.label}</span>
+                                          {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                                        </button>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </PopoverContent>
                         </Popover>
