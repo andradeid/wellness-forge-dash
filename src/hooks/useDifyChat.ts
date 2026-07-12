@@ -1130,7 +1130,7 @@ export function useDifyChat(
                     }
                   }
 
-                  if (markers && markers.length > 0 && agentType?.startsWith("exam")) {
+                  if (markers && markers.length > 0 && isExamLike) {
                     await processAndPersistMarkers({
                       userId: user.id,
                       patientId,
@@ -1146,7 +1146,7 @@ export function useDifyChat(
                   // de exame (upload novo ou marcadores extraídos). Follow-ups
                   // simples não podem apagar o contexto clínico anterior.
                   const shouldRefreshExamContext =
-                    agentType?.startsWith("exam") &&
+                    isExamLike &&
                     fullText.trim() &&
                     !labReportError &&
                     (difyFiles.length > 0 || (markers && markers.length > 0));
