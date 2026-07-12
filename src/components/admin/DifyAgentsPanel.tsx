@@ -16,7 +16,9 @@ import {
   UserMinus,
   AlertTriangle,
   Trash2,
+  Layers,
 } from "lucide-react";
+import { SuperAgentEditor } from "@/components/admin/SuperAgentEditor";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
