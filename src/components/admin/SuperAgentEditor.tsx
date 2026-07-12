@@ -28,6 +28,7 @@ import {
  */
 
 interface SuperAgentEditorProps {
+  /** Slug do agente (dify_agents.agent_id) — coluna FK das tarefas, não o uuid. */
   agentUuid: string;
   agentLabel: string;
 }
