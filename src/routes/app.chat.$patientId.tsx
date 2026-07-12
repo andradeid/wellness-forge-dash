@@ -942,6 +942,70 @@ function ChatPage() {
                         </Popover>
                       );
 
+                      const isSuperActive = !!currentAgent?.is_super_agent;
+                      const tasksForCurrentSuper = isSuperActive
+                        ? superAgentTasks.filter(t => t.agent_id === currentAgent!.agent_id && t.is_active).sort((a, b) => a.sort_order - b.sort_order)
+                        : [];
+                      const activeTaskObj = isSuperActive && selectedTask
+                        ? tasksForCurrentSuper.find(t => t.task_key === selectedTask)
+                        : null;
+
+                      const taskSelector = isSuperActive && tasksForCurrentSuper.length > 0 ? (
+                        <Popover open={taskOpen} onOpenChange={setTaskOpen}>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className={cn(
+                                "inline-flex items-center gap-1.5 rounded-full transition group max-w-full px-3 py-1 text-[11px] font-medium border",
+                                !selectedTask
+                                  ? "bg-amber-50 border-amber-300 text-amber-900 animate-pulse"
+                                  : "bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10 border-[#e8a04c]/30 text-foreground hover:from-[#e8a04c]/15 hover:to-[#e89bcf]/15"
+                              )}
+                              title="Escolher tarefa do Super Agente"
+                            >
+                              <Sparkles className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
+                              <span className="truncate">
+                                {activeTaskObj ? activeTaskObj.label : "Escolher tarefa"}
+                              </span>
+                              <ChevronDown className="shrink-0 h-3 w-3 text-muted-foreground/60 group-hover:text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            side="top"
+                            align="center"
+                            className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
+                          >
+                            <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-foreground/40 flex items-center gap-1.5">
+                              <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
+                              Tarefas · {currentAgent?.label}
+                            </div>
+                            <div className="space-y-1">
+                              {tasksForCurrentSuper.map(t => {
+                                const isActive = selectedTask === t.task_key;
+                                return (
+                                  <button
+                                    key={t.id}
+                                    onClick={() => {
+                                      setSelectedTask(t.task_key);
+                                      setTaskOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                                      isActive
+                                        ? "bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15 text-foreground border border-[#e8a04c]/30"
+                                        : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                                    )}
+                                  >
+                                    <span className="flex-1 text-left truncate">{t.label}</span>
+                                    {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : null;
+
                       return (
                         <>
                           {agentType !== "exam" && examContext && null}
@@ -952,8 +1016,14 @@ function ChatPage() {
                             hasModule={!!agentType}
                             uploadProgress={uploadProgress}
                             onRemoveAttachment={removeUploadItem}
-                            toolbarSlot={moduleSelector}
+                            toolbarSlot={
+                              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                {moduleSelector}
+                                {taskSelector}
+                              </div>
+                            }
                           />
+
                         </>
                       );
                     })()}
