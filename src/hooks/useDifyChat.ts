@@ -402,25 +402,25 @@ export function useDifyChat(
       // Se forceChatId for passado, carrega exatamente aquele chat.
       // Caso contrário, prefere o chat com MAIOR atividade (última mensagem
       // mais recente) — assim "Novo Chat" vazio não esconde o histórico antigo.
-      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any } | null = null;
+      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any; agent_type?: string | null; selected_task?: string | null } | null = null;
 
       if (forceChatId) {
         const { data } = await (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, exam_context, dify_conversations, created_by")
+          .select("id, dify_conversation_id, exam_context, dify_conversations, agent_type, selected_task, created_by")
           .eq("patient_id", patientId)
           .eq("id", forceChatId)
           .maybeSingle();
-        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context, dify_conversations: data.dify_conversations };
+        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context, dify_conversations: data.dify_conversations, agent_type: data.agent_type, selected_task: data.selected_task };
       } else {
         let listQuery = (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, exam_context, dify_conversations, created_by, created_at")
+          .select("id, dify_conversation_id, exam_context, dify_conversations, agent_type, selected_task, created_by, created_at")
           .eq("patient_id", patientId)
           .order("created_at", { ascending: false });
         if (!readOnly) listQuery = listQuery.eq("created_by", user.id);
         const { data: chats } = await listQuery;
-        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any }>) ?? [];
+        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any; agent_type?: string | null; selected_task?: string | null }>) ?? [];
         if (list.length > 0) {
           const { data: lastMsg } = await (supabase as any)
             .from("chat_messages")
@@ -509,7 +509,10 @@ export function useDifyChat(
         const loadedMessages = (msgs as ChatMessage[]) ?? [];
         setMessages(loadedMessages);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
-        const resolvedAgent = lastMsgWithAgent?.agent_type ?? "";
+        // Prioridade: agent_type salvo em patient_chats > agente da última mensagem.
+        // Isso preserva a seleção do usuário mesmo em chats sem mensagens ainda.
+        const storedAgent = (chosenChat as any)?.agent_type as string | null | undefined;
+        const resolvedAgent = (storedAgent && storedAgent.trim()) || lastMsgWithAgent?.agent_type || "";
         if (resolvedAgent) {
           setAgentType(resolvedAgent);
           // Rehidrata o conversation_id do agente atual a partir do mapa.
@@ -517,6 +520,12 @@ export function useDifyChat(
           if (mapped) conversationIdRef.current = mapped;
         } else {
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
+        }
+        // Rehidrata selected_task (Super Agentes).
+        const storedTask = (chosenChat as any)?.selected_task as string | null | undefined;
+        if (storedTask && storedTask.trim()) {
+          selectedTaskRef.current = storedTask.trim();
+          setSelectedTaskState(storedTask.trim());
         }
         setActiveAgents(Object.keys(conversationMapRef.current));
 
@@ -1169,6 +1178,8 @@ export function useDifyChat(
     if (cErr) { setError(cErr.message); return; }
     conversationIdRef.current = "";
     conversationMapRef.current = {};
+    selectedTaskRef.current = null;
+    setSelectedTaskState(null);
     setActiveAgents([]);
     setMessages([]);
     setError(null);
@@ -1181,7 +1192,15 @@ export function useDifyChat(
     const norm = taskKey?.trim() || null;
     selectedTaskRef.current = norm;
     setSelectedTaskState(norm);
-  }, []);
+    // Persiste no patient_chats para sobreviver a reload/nova sessão.
+    if (chatId) {
+      (supabase as any)
+        .from("patient_chats")
+        .update({ selected_task: norm })
+        .eq("id", chatId)
+        .then(() => {});
+    }
+  }, [chatId]);
 
   const switchAgent = useCallback((next: string) => {
     setAgentType((prev) => {
@@ -1212,6 +1231,8 @@ export function useDifyChat(
           .update({
             dify_conversation_id: restored,
             dify_conversations: conversationMapRef.current,
+            agent_type: next,
+            selected_task: null,
           })
           .eq("id", chatId)
           .then(() => {});
@@ -1277,8 +1298,15 @@ export function useDifyChat(
         .update({
           dify_conversation_id: restored,
           dify_conversations: conversationMapRef.current,
+          agent_type: targetAgent,
+          selected_task: opts?.selectedTask ?? null,
         })
         .eq("id", chatId);
+    }
+    // Espelha o task selecionado no state para a UI (badge/chip).
+    if (opts?.selectedTask) {
+      selectedTaskRef.current = opts.selectedTask;
+      setSelectedTaskState(opts.selectedTask);
     }
     setAgentType(targetAgent);
     await sendMessage(query, [], {
