@@ -422,7 +422,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 {cards.map((c) => (
                   <div
                     key={c.id}
-                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[1.4fr_1fr_1fr_auto_auto] items-center"
+                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[1.2fr_1fr_0.8fr_1fr_auto_auto_auto] items-center"
                   >
                     <Input
                       value={c.label}
@@ -431,18 +431,43 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                           all.map((x) => (x.id === c.id ? { ...x, label: e.target.value } : x)),
                         )
                       }
-                      onBlur={(e) => {
-                        const v = e.target.value.trim();
-                        if (v) updateCard(c, { label: v });
-                      }}
+                      placeholder="Rótulo"
                       className="rounded-md text-sm"
                     />
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px] rounded-md justify-self-start bg-slate-100 text-slate-600"
+                    <Select
+                      value={c.task_id}
+                      onValueChange={(v) =>
+                        setCards((all) =>
+                          all.map((x) => (x.id === c.id ? { ...x, task_id: v } : x)),
+                        )
+                      }
                     >
-                      {tasks.find((t) => t.id === c.task_id)?.task_key ?? "—"}
-                    </Badge>
+                      <SelectTrigger className="rounded-md text-xs">
+                        <SelectValue placeholder="Tarefa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tasks.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.label}{" "}
+                            <span className="text-muted-foreground font-mono">
+                              ({t.task_key})
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      value={c.icon ?? ""}
+                      onChange={(e) =>
+                        setCards((all) =>
+                          all.map((x) =>
+                            x.id === c.id ? { ...x, icon: e.target.value || null } : x,
+                          ),
+                        )
+                      }
+                      placeholder="Ícone (ex: Scale)"
+                      className="rounded-md text-xs font-mono"
+                    />
                     <Input
                       value={c.card_trigger ?? ""}
                       onChange={(e) =>
@@ -452,11 +477,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                           ),
                         )
                       }
-                      onBlur={(e) => {
-                        const v = e.target.value.trim() || null;
-                        updateCard(c, { card_trigger: v });
-                      }}
-                      placeholder="card_trigger (opcional)"
+                      placeholder="card_trigger (opc.)"
                       className="rounded-md text-xs font-mono"
                     />
                     <div className="flex items-center gap-1.5">
@@ -466,19 +487,45 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                       />
                     </div>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const label = c.label.trim();
+                        if (!label) {
+                          toast.error("Rótulo é obrigatório.");
+                          return;
+                        }
+                        const trigger = c.card_trigger?.trim()
+                          ? slugifyKey(c.card_trigger)
+                          : null;
+                        updateCard(c, {
+                          label,
+                          task_id: c.task_id,
+                          icon: c.icon?.trim() || null,
+                          card_trigger: trigger,
+                        });
+                      }}
+                      disabled={savingId === c.id}
+                      className="rounded-full h-8 gap-1.5 text-xs"
+                    >
+                      {savingId === c.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5" />
+                      )}
+                      Salvar
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteCard(c)}
                       disabled={savingId === c.id}
                       className="rounded-full text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      {savingId === c.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
+
                 ))}
               </div>
             )}
