@@ -1175,9 +1175,15 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
+  const setSelectedTask = useCallback((taskKey: string | null) => {
+    selectedTaskRef.current = taskKey?.trim() || null;
+  }, []);
+
   const switchAgent = useCallback((next: string) => {
     setAgentType((prev) => {
       if (prev === next) return prev;
+      // Trocar de agent_id descarta a task pendente — ela pertencia ao agente anterior.
+      selectedTaskRef.current = null;
 
       // Salva o conversation_id atual sob o agente anterior, para que
       // o usuário possa voltar e retomar exatamente de onde parou.
