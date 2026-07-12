@@ -336,6 +336,8 @@ export function useDifyChat(
   // e mantido enquanto o usuário permanecer no mesmo agente. Trocar de
   // agente (switchAgent) o limpa — a tarefa pertence ao super agente atual.
   const selectedTaskRef = useRef<string | null>(null);
+  // Espelho reativo do task selecionado para consumo em UI (badges/indicadores).
+  const [selectedTask, setSelectedTaskState] = useState<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
@@ -1176,7 +1178,9 @@ export function useDifyChat(
   }, [patientId, readOnly]);
 
   const setSelectedTask = useCallback((taskKey: string | null) => {
-    selectedTaskRef.current = taskKey?.trim() || null;
+    const norm = taskKey?.trim() || null;
+    selectedTaskRef.current = norm;
+    setSelectedTaskState(norm);
   }, []);
 
   const switchAgent = useCallback((next: string) => {
@@ -1184,6 +1188,7 @@ export function useDifyChat(
       if (prev === next) return prev;
       // Trocar de agent_id descarta a task pendente — ela pertencia ao agente anterior.
       selectedTaskRef.current = null;
+      setSelectedTaskState(null);
 
       // Salva o conversation_id atual sob o agente anterior, para que
       // o usuário possa voltar e retomar exatamente de onde parou.
@@ -1284,5 +1289,5 @@ export function useDifyChat(
     });
   }, [chatId, readOnly, sendMessage, agentType]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask };
 }
