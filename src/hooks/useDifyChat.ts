@@ -1298,8 +1298,15 @@ export function useDifyChat(
         .update({
           dify_conversation_id: restored,
           dify_conversations: conversationMapRef.current,
+          agent_type: targetAgent,
+          selected_task: opts?.selectedTask ?? null,
         })
         .eq("id", chatId);
+    }
+    // Espelha o task selecionado no state para a UI (badge/chip).
+    if (opts?.selectedTask) {
+      selectedTaskRef.current = opts.selectedTask;
+      setSelectedTaskState(opts.selectedTask);
     }
     setAgentType(targetAgent);
     await sendMessage(query, [], {
