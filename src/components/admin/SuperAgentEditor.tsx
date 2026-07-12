@@ -299,10 +299,10 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                       }
                       onBlur={(e) => {
                         const v = slugifyKey(e.target.value);
-                        if (v && v !== t.task_key) {
+                        if (!v) return;
+                        if (v !== t.task_key) {
                           updateTask(t, { task_key: v });
                         } else if (v !== e.target.value) {
-                          // normaliza visualmente mesmo sem mudança final
                           setTasks((all) =>
                             all.map((x) => (x.id === t.id ? { ...x, task_key: v } : x)),
                           );
@@ -311,26 +311,6 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                       className="rounded-md text-xs font-mono"
                       placeholder="task_key"
                     />
-                    <p className="col-span-full text-[10px] text-muted-foreground -mt-1 md:hidden" />
-                  </div>
-                ))}
-              </div>
-            )}
-            <p className="text-[10px] text-muted-foreground/70 -mt-1">
-              Dica: o <code className="font-mono">task_key</code> precisa existir em{" "}
-              <code className="font-mono">MAP_TASK</code> (agent-key-map.ts) para debitar créditos.
-              Chaves válidas: <code className="font-mono">exam</code>,{" "}
-              <code className="font-mono">composition</code>,{" "}
-              <code className="font-mono">metabolism</code>,{" "}
-              <code className="font-mono">genetics</code>,{" "}
-              <code className="font-mono">production</code>,{" "}
-              <code className="font-mono">reasoning</code>,{" "}
-              <code className="font-mono">research</code>,{" "}
-              <code className="font-mono">estimativa_refeicao_foto</code>,{" "}
-              <code className="font-mono">composicao_corporal_foto</code>.
-            </p>
-            {/* wrapper compensation: fecho artificial abaixo para manter estrutura antiga */}
-            <div className="hidden">
                     <div className="flex items-center gap-1.5">
                       <Switch
                         checked={t.is_active}
@@ -357,6 +337,20 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 ))}
               </div>
             )}
+            <p className="text-[10px] text-muted-foreground/70">
+              Dica: o <code className="font-mono">task_key</code> precisa existir em{" "}
+              <code className="font-mono">MAP_TASK</code> (agent-key-map.ts) para debitar créditos.
+              Chaves válidas: <code className="font-mono">exam</code>,{" "}
+              <code className="font-mono">composition</code>,{" "}
+              <code className="font-mono">metabolism</code>,{" "}
+              <code className="font-mono">genetics</code>,{" "}
+              <code className="font-mono">production</code>,{" "}
+              <code className="font-mono">reasoning</code>,{" "}
+              <code className="font-mono">research</code>,{" "}
+              <code className="font-mono">estimativa_refeicao_foto</code>,{" "}
+              <code className="font-mono">composicao_corporal_foto</code>.
+            </p>
+
 
             {/* Nova tarefa */}
             <div className="rounded-md border border-dashed border-slate-200 p-3 grid gap-2 md:grid-cols-[1fr_1fr_2fr_auto] items-end">
