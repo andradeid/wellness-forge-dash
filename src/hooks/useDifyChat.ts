@@ -331,6 +331,11 @@ export function useDifyChat(
   // do Dify ao alternar entre agentes no mesmo chat (preserva contexto).
   const conversationMapRef = useRef<Record<string, string>>({});
   const [activeAgents, setActiveAgents] = useState<string[]>([]);
+  // Super Agente: task_key pendente para próxima mensagem. Setado por quem
+  // clicou num super_agent_card (home/next-steps). É consumido em cada envio
+  // e mantido enquanto o usuário permanecer no mesmo agente. Trocar de
+  // agente (switchAgent) o limpa — a tarefa pertence ao super agente atual.
+  const selectedTaskRef = useRef<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
