@@ -139,6 +139,7 @@ function ChatPage() {
 
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
   const [pendingModuleFromUrl, setPendingModuleFromUrl] = useState<string | null>(initialModule ?? null);
   const [forceShowChat, setForceShowChat] = useState(false);
 
