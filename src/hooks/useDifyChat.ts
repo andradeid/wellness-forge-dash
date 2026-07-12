@@ -1178,7 +1178,9 @@ export function useDifyChat(
   }, [patientId, readOnly]);
 
   const setSelectedTask = useCallback((taskKey: string | null) => {
-    selectedTaskRef.current = taskKey?.trim() || null;
+    const norm = taskKey?.trim() || null;
+    selectedTaskRef.current = norm;
+    setSelectedTaskState(norm);
   }, []);
 
   const switchAgent = useCallback((next: string) => {
