@@ -1,0 +1,1 @@
+UPDATE public.dify_agents SET card_trigger = NULL WHERE card_trigger = 'geral';

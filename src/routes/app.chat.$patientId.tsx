@@ -783,8 +783,8 @@ function ChatPage() {
                               title="Trocar de módulo"
                             >
                               {(() => {
-                                const label = cardTrigger ? CARD_LABELS[cardTrigger] : (agentType ? currentAgent?.label : "Selecione uma tarefa");
-                                const Icon = cardTrigger ? CARD_ICONS[cardTrigger] : Sparkles;
+                                const label = (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
+                                const Icon = (cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles;
                                 if (loadingAgents) return <span>Carregando...</span>;
                                 return !agentType ? (
                                   <span className="flex items-center gap-2 truncate">
