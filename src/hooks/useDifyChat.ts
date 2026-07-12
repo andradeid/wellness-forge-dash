@@ -1178,6 +1178,8 @@ export function useDifyChat(
     if (cErr) { setError(cErr.message); return; }
     conversationIdRef.current = "";
     conversationMapRef.current = {};
+    selectedTaskRef.current = null;
+    setSelectedTaskState(null);
     setActiveAgents([]);
     setMessages([]);
     setError(null);
