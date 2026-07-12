@@ -273,7 +273,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 {tasks.map((t) => (
                   <div
                     key={t.id}
-                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[1fr_1fr_auto_auto] items-center"
+                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[1fr_1fr_auto_auto_auto] items-center"
                   >
                     <Input
                       value={t.label}
@@ -282,10 +282,6 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                           all.map((x) => (x.id === t.id ? { ...x, label: e.target.value } : x)),
                         )
                       }
-                      onBlur={(e) => {
-                        const v = e.target.value.trim();
-                        if (v && v !== "") updateTask(t, { label: v });
-                      }}
                       className="rounded-md text-sm"
                     />
                     <Input
@@ -297,17 +293,6 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                           ),
                         )
                       }
-                      onBlur={(e) => {
-                        const v = slugifyKey(e.target.value);
-                        if (!v) return;
-                        if (v !== t.task_key) {
-                          updateTask(t, { task_key: v });
-                        } else if (v !== e.target.value) {
-                          setTasks((all) =>
-                            all.map((x) => (x.id === t.id ? { ...x, task_key: v } : x)),
-                          );
-                        }
-                      }}
                       className="rounded-md text-xs font-mono"
                       placeholder="task_key"
                     />
@@ -321,19 +306,38 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                       </span>
                     </div>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const label = t.label.trim();
+                        const key = slugifyKey(t.task_key);
+                        if (!label || !key) {
+                          toast.error("Rótulo e task_key são obrigatórios.");
+                          return;
+                        }
+                        updateTask(t, { label, task_key: key });
+                      }}
+                      disabled={savingId === t.id}
+                      className="rounded-full h-8 gap-1.5 text-xs"
+                    >
+                      {savingId === t.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5" />
+                      )}
+                      Salvar
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteTask(t)}
                       disabled={savingId === t.id}
                       className="rounded-full text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      {savingId === t.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
+
                 ))}
               </div>
             )}
