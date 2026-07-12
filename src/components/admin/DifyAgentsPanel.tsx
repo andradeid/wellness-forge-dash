@@ -635,6 +635,10 @@ export function DifyAgentsPanel() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+
+                {agent.is_super_agent && (
+                  <SuperAgentEditor agentUuid={agent.id} agentLabel={agent.label} />
+                )}
               </div>
             );
           })}
