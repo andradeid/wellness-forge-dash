@@ -42,6 +42,7 @@ export const Route = createFileRoute("/app/chat/$patientId")({
     messageId: typeof s.messageId === "string" ? s.messageId : undefined,
     module: typeof s.module === "string" ? s.module : undefined,
     agent: typeof s.agent === "string" ? s.agent : undefined,
+    task: typeof s.task === "string" ? s.task : undefined,
   }),
   component: ChatPage,
 });
