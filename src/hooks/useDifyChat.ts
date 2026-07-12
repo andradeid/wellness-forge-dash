@@ -1188,6 +1188,14 @@ export function useDifyChat(
         console.warn('[dify] stream encerrado sem message_end — salvando conteúdo parcial');
         const partialNote = "\n\n⚠️ *Análise interrompida antes do encerramento. O conteúdo acima é parcial — reenvie o exame para gerar a análise completa.*";
         await saveAssistantToSupabase(fullText + partialNote, conversationIdRef.current || undefined);
+      } else if (!assistantSavedRef.current && !fullText.trim() && agentType !== 'research') {
+        // Stream fechou sem NENHUM conteúdo — tipicamente workflow do Dify sem branch
+        // para a task selecionada (ex.: super agente + tarefa não implementada).
+        console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
+        toast.error("A Lumma não conseguiu responder desta vez", {
+          description: "Houve uma falha no processamento da tarefa. Por favor, envie sua mensagem novamente.",
+          duration: 8000,
+        });
       }
     } catch (e: any) {
       // Se o stream caiu com erro mas chegou conteúdo, preserva o parcial.
