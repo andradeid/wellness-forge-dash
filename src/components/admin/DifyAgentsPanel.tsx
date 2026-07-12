@@ -106,6 +106,7 @@ interface AgentFormState {
   card_trigger: string;
   patient_required: boolean;
   is_active: boolean;
+  is_super_agent: boolean;
 }
 
 function emptyForm(nextSort: number): AgentFormState {
@@ -119,6 +120,7 @@ function emptyForm(nextSort: number): AgentFormState {
     card_trigger: "geral",
     patient_required: true,
     is_active: true,
+    is_super_agent: false,
   };
 }
 
