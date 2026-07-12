@@ -16,7 +16,9 @@ import {
   UserMinus,
   AlertTriangle,
   Trash2,
+  Layers,
 } from "lucide-react";
+import { SuperAgentEditor } from "@/components/admin/SuperAgentEditor";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +68,7 @@ export interface DifyAgent {
   sort_order: number;
   card_trigger: string | null;
   patient_required: boolean;
+  is_super_agent: boolean;
 }
 
 const DEFAULT_ENDPOINT = "https://api.dify.ai/v1";
@@ -103,6 +106,7 @@ interface AgentFormState {
   card_trigger: string;
   patient_required: boolean;
   is_active: boolean;
+  is_super_agent: boolean;
 }
 
 function emptyForm(nextSort: number): AgentFormState {
@@ -116,6 +120,7 @@ function emptyForm(nextSort: number): AgentFormState {
     card_trigger: "geral",
     patient_required: true,
     is_active: true,
+    is_super_agent: false,
   };
 }
 
@@ -243,6 +248,7 @@ export function DifyAgentsPanel() {
         card_trigger: form.card_trigger,
         patient_required: form.patient_required,
         is_active: form.is_active,
+        is_super_agent: form.is_super_agent,
       });
     setCreatingAgent(false);
     if (error) {
@@ -306,6 +312,7 @@ export function DifyAgentsPanel() {
       card_trigger: agent.card_trigger || "geral",
       patient_required: agent.patient_required,
       is_active: agent.is_active,
+      is_super_agent: agent.is_super_agent ?? false,
     });
   };
 
@@ -346,6 +353,7 @@ export function DifyAgentsPanel() {
         card_trigger: editForm.card_trigger,
         patient_required: editForm.patient_required,
         is_active: editForm.is_active,
+        is_super_agent: editForm.is_super_agent,
       })
       .eq("id", editTarget.id);
     setSavingEdit(false);
@@ -446,6 +454,15 @@ export function DifyAgentsPanel() {
                       >
                         {CARD_TRIGGER_OPTIONS.find((o) => o.value === agent.card_trigger)
                           ?.label || agent.card_trigger}
+                      </Badge>
+                    )}
+                    {agent.is_super_agent && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] mt-1 rounded-md border-[#e8a04c]/40 bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10 text-[#a35c1f]"
+                      >
+                        <Layers className="h-3 w-3 mr-1" />
+                        Super Agente
                       </Badge>
                     )}
                   </div>
@@ -618,6 +635,10 @@ export function DifyAgentsPanel() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+
+                {agent.is_super_agent && (
+                  <SuperAgentEditor agentUuid={agent.agent_id} agentLabel={agent.label} />
+                )}
               </div>
             );
           })}
@@ -695,6 +716,23 @@ export function DifyAgentsPanel() {
                 checked={createForm.patient_required}
                 onCheckedChange={(v) =>
                   setCreateForm((f) => ({ ...f, patient_required: v }))
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-gradient-to-r from-[#e8a04c]/5 to-[#e89bcf]/5">
+              <div className="space-y-0.5">
+                <Label className="flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-[#a35c1f]" /> Super Agente
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Um único app Dify com várias tarefas internas (selected_task).
+                  Edite as tarefas e cards depois de salvar.
+                </p>
+              </div>
+              <Switch
+                checked={createForm.is_super_agent}
+                onCheckedChange={(v) =>
+                  setCreateForm((f) => ({ ...f, is_super_agent: v }))
                 }
               />
             </div>
@@ -888,6 +926,23 @@ export function DifyAgentsPanel() {
                   checked={editForm.is_active}
                   onCheckedChange={(v) =>
                     setEditForm((f) => (f ? { ...f, is_active: v } : f))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-gradient-to-r from-[#e8a04c]/5 to-[#e89bcf]/5">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5 text-[#a35c1f]" /> Super Agente
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Um único app Dify com várias tarefas internas (selected_task).
+                    Tarefas e cards ficam abaixo da linha na lista.
+                  </p>
+                </div>
+                <Switch
+                  checked={editForm.is_super_agent}
+                  onCheckedChange={(v) =>
+                    setEditForm((f) => (f ? { ...f, is_super_agent: v } : f))
                   }
                 />
               </div>

@@ -331,6 +331,11 @@ export function useDifyChat(
   // do Dify ao alternar entre agentes no mesmo chat (preserva contexto).
   const conversationMapRef = useRef<Record<string, string>>({});
   const [activeAgents, setActiveAgents] = useState<string[]>([]);
+  // Super Agente: task_key pendente para próxima mensagem. Setado por quem
+  // clicou num super_agent_card (home/next-steps). É consumido em cada envio
+  // e mantido enquanto o usuário permanecer no mesmo agente. Trocar de
+  // agente (switchAgent) o limpa — a tarefa pertence ao super agente atual.
+  const selectedTaskRef = useRef<string | null>(null);
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
@@ -563,7 +568,10 @@ export function useDifyChat(
     // Super Agentes: `selectedTask` roteia a esteira interna do app Dify e
     // define a chave financeira. Ausente para agentes comuns → comportamento
     // idêntico ao de hoje (billingKey resolve pelo agent_id).
-    const selectedTask = opts?.selectedTask?.trim() || undefined;
+    // Fallback: se opts.selectedTask não veio, usa o task pendente setado
+    // externamente (por ex.: clique num super_agent_card na home).
+    const selectedTask =
+      opts?.selectedTask?.trim() || selectedTaskRef.current?.trim() || undefined;
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -1167,9 +1175,15 @@ export function useDifyChat(
     setChatId(created.id as string);
   }, [patientId, readOnly]);
 
+  const setSelectedTask = useCallback((taskKey: string | null) => {
+    selectedTaskRef.current = taskKey?.trim() || null;
+  }, []);
+
   const switchAgent = useCallback((next: string) => {
     setAgentType((prev) => {
       if (prev === next) return prev;
+      // Trocar de agent_id descarta a task pendente — ela pertencia ao agente anterior.
+      selectedTaskRef.current = null;
 
       // Salva o conversation_id atual sob o agente anterior, para que
       // o usuário possa voltar e retomar exatamente de onde parou.
@@ -1270,5 +1284,5 @@ export function useDifyChat(
     });
   }, [chatId, readOnly, sendMessage, agentType]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask };
 }
