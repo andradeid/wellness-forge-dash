@@ -805,8 +805,14 @@ function ChatPage() {
                               title="Trocar de módulo"
                             >
                               {(() => {
-                                const label = (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
-                                const Icon = (cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles;
+                                const isSuperActive = !!currentAgent?.is_super_agent;
+                                const activeTaskLabel = isSuperActive && selectedTask
+                                  ? superAgentTasks.find(t => t.agent_id === currentAgent!.agent_id && t.task_key === selectedTask)?.label
+                                  : null;
+                                const label = isSuperActive
+                                  ? `${currentAgent?.label ?? "Super Agente"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
+                                  : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
+                                const Icon = isSuperActive ? Sparkles : ((cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles);
                                 if (loadingAgents) return <span>Carregando...</span>;
                                 return !agentType ? (
                                   <span className="flex items-center gap-2 truncate">
