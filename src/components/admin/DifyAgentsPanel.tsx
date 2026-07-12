@@ -353,6 +353,7 @@ export function DifyAgentsPanel() {
         card_trigger: editForm.card_trigger,
         patient_required: editForm.patient_required,
         is_active: editForm.is_active,
+        is_super_agent: editForm.is_super_agent,
       })
       .eq("id", editTarget.id);
     setSavingEdit(false);
