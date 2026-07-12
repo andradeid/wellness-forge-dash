@@ -402,25 +402,25 @@ export function useDifyChat(
       // Se forceChatId for passado, carrega exatamente aquele chat.
       // Caso contrário, prefere o chat com MAIOR atividade (última mensagem
       // mais recente) — assim "Novo Chat" vazio não esconde o histórico antigo.
-      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any } | null = null;
+      let chosenChat: { id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any; agent_type?: string | null; selected_task?: string | null } | null = null;
 
       if (forceChatId) {
         const { data } = await (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, exam_context, dify_conversations, created_by")
+          .select("id, dify_conversation_id, exam_context, dify_conversations, agent_type, selected_task, created_by")
           .eq("patient_id", patientId)
           .eq("id", forceChatId)
           .maybeSingle();
-        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context, dify_conversations: data.dify_conversations };
+        if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context, dify_conversations: data.dify_conversations, agent_type: data.agent_type, selected_task: data.selected_task };
       } else {
         let listQuery = (supabase as any)
           .from("patient_chats")
-          .select("id, dify_conversation_id, exam_context, dify_conversations, created_by, created_at")
+          .select("id, dify_conversation_id, exam_context, dify_conversations, agent_type, selected_task, created_by, created_at")
           .eq("patient_id", patientId)
           .order("created_at", { ascending: false });
         if (!readOnly) listQuery = listQuery.eq("created_by", user.id);
         const { data: chats } = await listQuery;
-        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any }>) ?? [];
+        const list = (chats as Array<{ id: string; dify_conversation_id: string | null; exam_context: any; dify_conversations: any; agent_type?: string | null; selected_task?: string | null }>) ?? [];
         if (list.length > 0) {
           const { data: lastMsg } = await (supabase as any)
             .from("chat_messages")
