@@ -83,6 +83,12 @@ function FaleComLummaPage() {
     }
   };
   const [pendingTrigger, setPendingTrigger] = useState<string | undefined>(searchModule);
+  // Super Agente: quando o clique vem de um super_agent_card, guardamos agent+task
+  // diretamente para navegação após a identificação do paciente (bypass do
+  // getAgentForCard, que só resolve triggers globais).
+  const [pendingSuperAgent, setPendingSuperAgent] = useState<
+    { agentId: string; taskKey: string } | null
+  >(null);
 
   // Estado: modais de paciente
   const [identifyOpen, setIdentifyOpen] = useState(false);
