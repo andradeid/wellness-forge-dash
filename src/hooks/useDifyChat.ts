@@ -83,7 +83,7 @@ function hasExamMarkersMessage(message: ChatMessage): message is ChatMessage & {
 } {
   return (
     message.role === "assistant" &&
-    message.agent_type?.startsWith("exam") === true &&
+    (message.agent_type?.startsWith("exam") === true || message.agent_type?.startsWith("super") === true) &&
     Array.isArray(message.structured_data?.markers) &&
     message.structured_data.markers.length > 0
   );
