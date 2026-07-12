@@ -509,7 +509,10 @@ export function useDifyChat(
         const loadedMessages = (msgs as ChatMessage[]) ?? [];
         setMessages(loadedMessages);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
-        const resolvedAgent = lastMsgWithAgent?.agent_type ?? "";
+        // Prioridade: agent_type salvo em patient_chats > agente da última mensagem.
+        // Isso preserva a seleção do usuário mesmo em chats sem mensagens ainda.
+        const storedAgent = (chosenChat as any)?.agent_type as string | null | undefined;
+        const resolvedAgent = (storedAgent && storedAgent.trim()) || lastMsgWithAgent?.agent_type || "";
         if (resolvedAgent) {
           setAgentType(resolvedAgent);
           // Rehidrata o conversation_id do agente atual a partir do mapa.
@@ -517,6 +520,12 @@ export function useDifyChat(
           if (mapped) conversationIdRef.current = mapped;
         } else {
           setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
+        }
+        // Rehidrata selected_task (Super Agentes).
+        const storedTask = (chosenChat as any)?.selected_task as string | null | undefined;
+        if (storedTask && storedTask.trim()) {
+          selectedTaskRef.current = storedTask.trim();
+          setSelectedTaskState(storedTask.trim());
         }
         setActiveAgents(Object.keys(conversationMapRef.current));
 
