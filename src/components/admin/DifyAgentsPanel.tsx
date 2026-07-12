@@ -248,6 +248,7 @@ export function DifyAgentsPanel() {
         card_trigger: form.card_trigger,
         patient_required: form.patient_required,
         is_active: form.is_active,
+        is_super_agent: form.is_super_agent,
       });
     setCreatingAgent(false);
     if (error) {
