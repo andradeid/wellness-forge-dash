@@ -1070,17 +1070,24 @@ export function useDifyChat(
                       .eq("id", chatId);
                   }
 
+                  // Super Agentes também retornam análise de exames em formato
+                  // estruturado; tratamos qualquer resposta com `agent_type` de
+                  // exame OU de super agente como potencial análise de exame.
+                  const isExamLike =
+                    !!agentType &&
+                    (agentType.startsWith("exam") || agentType.startsWith("super"));
+
                   // Extract markers if in exam mode
-                  const markers: Marker[] | null = agentType?.startsWith("exam") 
-                    ? tryExtractMarkers(fullText) 
+                  const markers: Marker[] | null = isExamLike
+                    ? tryExtractMarkers(fullText)
                     : null;
 
                   const processingMs = Math.round(performance.now() - startedAt);
-                  const labReportError = agentType?.startsWith("exam") ? tryExtractLabReportError(fullText) : null;
+                  const labReportError = isExamLike ? tryExtractLabReportError(fullText) : null;
 
                   // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
                   // pelos agentes de exame (handoff "Gerar receita").
-                  const formulacoes = agentType?.startsWith("exam")
+                  const formulacoes = isExamLike
                     ? extractFormulacoes(fullText)
                     : null;
 
