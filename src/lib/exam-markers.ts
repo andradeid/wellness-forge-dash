@@ -122,8 +122,9 @@ export function validateMarkers(raws: RawMarker[]): MarkerValidation {
     const missing: string[] = [];
     if (!n.name) missing.push("name");
     if (!n.value) missing.push("value");
-    if (!n.unit) missing.push("unit");
-    if (!n.classification) missing.push("classification");
+    // unit é opcional: marcadores adimensionais (HOMA-IR, TG/HDL, CT/HDL, LDL/HDL, índices) são legítimos
+    // classification vazia vira "desconhecido" (fallback defensivo) em vez de rejeitar o marcador
+    if (!n.classification) n.classification = "desconhecido";
     if (missing.length === 0) valid.push(n);
     else invalid.push({ raw: r, missing });
   }
