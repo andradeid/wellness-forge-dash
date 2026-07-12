@@ -850,6 +850,19 @@ function FaleComLummaPage() {
                             setIdentifyOpen(false);
                             toast.success(`Paciente ${p.name} selecionado`);
                             
+                            if (pendingSuperAgent) {
+                              navigate({
+                                to: "/app/chat/$patientId",
+                                params: { patientId: p.id },
+                                search: {
+                                  agent: pendingSuperAgent.agentId,
+                                  task: pendingSuperAgent.taskKey,
+                                } as any,
+                              });
+                              setPendingSuperAgent(null);
+                              return;
+                            }
+
                             const agentId = pendingTrigger ? getAgentForCard(
                               pendingTrigger,
                               p.is_pregnant 
