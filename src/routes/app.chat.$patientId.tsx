@@ -701,6 +701,28 @@ function ChatPage() {
 
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
+            {(() => {
+              const currentAgent = agents.find(a => a.agent_id === agentType);
+              if (!currentAgent?.is_super_agent) return null;
+              const taskLabel = selectedTask
+                ? (superAgentTasks.find(t => t.agent_id === currentAgent.agent_id && t.task_key === selectedTask)?.label ?? selectedTask)
+                : null;
+              return (
+                <div className="mb-2 flex items-center gap-2 rounded-2xl border border-[#e8a04c]/30 bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 px-3 py-2 text-xs text-foreground/80 animate-in fade-in slide-in-from-bottom-1">
+                  <Sparkles className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
+                  <span className="font-semibold text-foreground">Super Agente ativo:</span>
+                  <span className="truncate">{currentAgent.label}</span>
+                  {taskLabel && (
+                    <>
+                      <span className="text-foreground/30">·</span>
+                      <span className="truncate">
+                        <span className="text-foreground/60">Tarefa:</span> <span className="font-medium">{taskLabel}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
             {pendingFormulacoes && !readOnly && (
               <div className="mb-2 flex items-center gap-3 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white px-4 py-3 shadow-sm animate-in fade-in slide-in-from-bottom-1">
                 <div className="shrink-0 h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
