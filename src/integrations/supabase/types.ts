@@ -488,6 +488,7 @@ export type Database = {
       }
       patient_chats: {
         Row: {
+          agent_type: string | null
           created_at: string
           created_by: string
           dify_conversation_id: string | null
@@ -496,10 +497,12 @@ export type Database = {
           id: string
           patient_id: string
           pinned_at: string | null
+          selected_task: string | null
           title: string | null
           updated_at: string
         }
         Insert: {
+          agent_type?: string | null
           created_at?: string
           created_by: string
           dify_conversation_id?: string | null
@@ -508,10 +511,12 @@ export type Database = {
           id?: string
           patient_id: string
           pinned_at?: string | null
+          selected_task?: string | null
           title?: string | null
           updated_at?: string
         }
         Update: {
+          agent_type?: string | null
           created_at?: string
           created_by?: string
           dify_conversation_id?: string | null
@@ -520,6 +525,7 @@ export type Database = {
           id?: string
           patient_id?: string
           pinned_at?: string | null
+          selected_task?: string | null
           title?: string | null
           updated_at?: string
         }
