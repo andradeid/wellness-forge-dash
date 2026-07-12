@@ -125,7 +125,13 @@ function ChatPage() {
       setSelectedTask(initialTask);
       // limpa o ?task da URL para não reaplicar em navegações internas
       navigate({
-        search: (prev: any) => ({ ...prev, task: undefined }),
+        search: {
+          chatId: forceChatId,
+          messageId: highlightId,
+          module: initialModule,
+          agent: initialAgent,
+          task: undefined,
+        } as any,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
