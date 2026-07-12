@@ -1188,6 +1188,7 @@ export function useDifyChat(
       if (prev === next) return prev;
       // Trocar de agent_id descarta a task pendente — ela pertencia ao agente anterior.
       selectedTaskRef.current = null;
+      setSelectedTaskState(null);
 
       // Salva o conversation_id atual sob o agente anterior, para que
       // o usuário possa voltar e retomar exatamente de onde parou.
