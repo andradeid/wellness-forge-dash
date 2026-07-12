@@ -97,7 +97,7 @@ interface PatientCtx {
 
 function ChatPage() {
   const { patientId } = Route.useParams();
-  const { chatId: forceChatId, messageId: highlightId, module: initialModule, agent: initialAgent } = Route.useSearch();
+  const { chatId: forceChatId, messageId: highlightId, module: initialModule, agent: initialAgent, task: initialTask } = Route.useSearch();
   const navigate = useNavigate();
   const { role, profile } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
@@ -111,11 +111,25 @@ function ChatPage() {
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { agents, getAgentForCard, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
   });
+
+  // Super Agente: propaga o task_key vindo da URL para o hook. Consumido na
+  // primeira mensagem que o usuário enviar. Só faz efeito quando a rota vem
+  // acompanhada de ?task=... (super_agent_cards da home).
+  useEffect(() => {
+    if (initialTask) {
+      setSelectedTask(initialTask);
+      // limpa o ?task da URL para não reaplicar em navegações internas
+      navigate({
+        search: (prev: any) => ({ ...prev, task: undefined }),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTask]);
 
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
