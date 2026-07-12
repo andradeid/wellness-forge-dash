@@ -1289,5 +1289,5 @@ export function useDifyChat(
     });
   }, [chatId, readOnly, sendMessage, agentType]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask };
 }
