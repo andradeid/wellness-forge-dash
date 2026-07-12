@@ -259,7 +259,8 @@ function truncateBeforeFormulations(text: string): string {
   return text.slice(0, cutoff);
 }
 
-function tryExtractMarkers(text: string): Marker[] | null {
+function tryExtractMarkers(text: string, opts?: { allowHeuristic?: boolean }): Marker[] | null {
+  const allowHeuristic = opts?.allowHeuristic ?? true;
   // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
   if (tryExtractLabReportError(text)) return null;
 
@@ -294,6 +295,9 @@ function tryExtractMarkers(text: string): Marker[] | null {
   }
   // 3) Fallback heurístico — somente sobre o trecho ANTES da seção de formulações,
   // pra nunca engolir receitas se os estágios 1/2 falharem.
+  // Pode ser desabilitado para respostas em prosa (Super Agentes) para evitar
+  // falso positivo — ex.: "Tempo: 12 semanas" (duração) virar marcador laboratorial.
+  if (!allowHeuristic) return null;
   const safeText = truncateBeforeFormulations(text);
   const fromText = extractMarkersFromText(safeText);
   return fromText.length ? fromText : null;
