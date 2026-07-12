@@ -967,9 +967,24 @@ export function useDifyChat(
 
       if (!res.ok) {
         setThinking(false);
-        setError(`Erro na Lumma (${res.status})`);
+        let friendly = `Erro na Lumma (${res.status})`;
+        try {
+          const errBody = await res.clone().json();
+          const raw = (errBody?.error || errBody?.message || "") as string;
+          if (/selected_task is required/i.test(raw)) {
+            friendly = "Escolha uma tarefa do Super Agente antes de enviar.";
+          } else if (raw) {
+            // Mantém a mensagem original para debug, mas prefixa em PT-BR.
+            friendly = `Erro na Lumma: ${raw.slice(0, 180)}`;
+          }
+        } catch {
+          // corpo não-JSON — mantém a mensagem genérica
+        }
+        setError(friendly);
+        toast.error(friendly);
         return;
       }
+
 
       const reader = res.body?.getReader();
       if (!reader) {
