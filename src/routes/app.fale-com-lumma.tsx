@@ -783,6 +783,72 @@ function FaleComLummaPage() {
                   </div>
                 )}
               </AnimatePresence>
+
+              {/* Super Agentes — quiescente enquanto não houver cards cadastrados */}
+              {(() => {
+                const activeCards = superAgentCards.filter((c) => c.is_active);
+                if (activeCards.length === 0) return null;
+                return (
+                  <div className="space-y-4">
+                    <motion.h3
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2 flex items-center gap-2"
+                    >
+                      <Sparkles className="h-3 w-3 text-[#e8a04c]" />
+                      Super Agentes
+                    </motion.h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                      {activeCards.map((card, idx) => {
+                        const task = superAgentTasks.find((t) => t.id === card.task_id);
+                        if (!task || !task.is_active) return null;
+                        const agent = agents.find((a) => a.agent_id === task.agent_id && a.is_super_agent);
+                        if (!agent || !agent.is_active) return null;
+                        return (
+                          <motion.button
+                            key={card.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: idx * 0.06, ease: "easeOut" }}
+                            onClick={() => {
+                              setPendingSuperAgent({
+                                agentId: agent.agent_id,
+                                taskKey: task.task_key,
+                              });
+                              setPendingTrigger(undefined);
+                              if (requiresPatient(agent.agent_id) && !selectedPatient) {
+                                setIdentifyOpen(true);
+                              } else if (selectedPatient) {
+                                navigate({
+                                  to: "/app/chat/$patientId",
+                                  params: { patientId: selectedPatient.id },
+                                  search: {
+                                    agent: agent.agent_id,
+                                    task: task.task_key,
+                                  } as any,
+                                });
+                                setPendingSuperAgent(null);
+                              } else {
+                                setIdentifyOpen(true);
+                              }
+                            }}
+                            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                          >
+                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/60 group-hover:bg-white transition-colors shrink-0">
+                              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-[#e8a04c]" />
+                            </div>
+                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">
+                              {card.label}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
 
