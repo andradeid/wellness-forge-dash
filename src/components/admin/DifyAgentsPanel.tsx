@@ -637,7 +637,7 @@ export function DifyAgentsPanel() {
                 </div>
 
                 {agent.is_super_agent && (
-                  <SuperAgentEditor agentUuid={agent.id} agentLabel={agent.label} />
+                  <SuperAgentEditor agentUuid={agent.agent_id} agentLabel={agent.label} />
                 )}
               </div>
             );
