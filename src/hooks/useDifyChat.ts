@@ -590,6 +590,22 @@ export function useDifyChat(
     const sessionOk = await enforceSessionGuard(currentUser.id);
     if (!sessionOk) return;
 
+    // Super Agentes exigem `selected_task` obrigatoriamente. O Dify retorna
+    // 400 "selected_task is required in input form" se faltar → o assistente
+    // não responde. Validamos antes de gastar recursos/streaming.
+    if (agentType && !selectedTask) {
+      const { data: agentRow } = await (supabase as any)
+        .from("dify_agents")
+        .select("is_super_agent")
+        .eq("agent_id", agentType)
+        .maybeSingle();
+      if (agentRow?.is_super_agent === true) {
+        toast.error("Escolha uma tarefa do Super Agente antes de enviar (ex: Exames de Sangue).");
+        return;
+      }
+    }
+
+
 
     const billingKey = resolveAgentKey(agentType, selectedTask ? { isSuperAgent: true, selectedTask } : undefined);
     if (billingKey) {
