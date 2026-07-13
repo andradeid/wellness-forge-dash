@@ -82,12 +82,16 @@ function AppLayout() {
   }, [loading, session, sessionAllowed, navigate]);
 
   useEffect(() => {
-    if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
+    if (
+      systemSettings?.maintenance_enabled &&
+      role &&
+      !canBypassMaintenance(role, user?.email ?? null)
+    ) {
       void navigate({ to: "/manutencao", replace: true }).catch((error) => {
         console.warn("[app] falha ao redirecionar para manutenção", error);
       });
     }
-  }, [systemSettings?.maintenance_enabled, role, navigate]);
+  }, [systemSettings?.maintenance_enabled, role, user?.email, navigate]);
 
   useEffect(() => {
     if (!loading && !session) {
