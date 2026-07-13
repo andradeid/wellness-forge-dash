@@ -623,7 +623,7 @@ function PatientsPage() {
                             <span>{p.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell>{p.birth_date ? formatBirthDate(p.birth_date) : "—"}</TableCell>
                         <TableCell>{genderLabel(p.gender)}</TableCell>
                         <TableCell>
                           {p.is_pregnant ? (
