@@ -10,6 +10,7 @@ import {
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { canBypassMaintenance } from "@/lib/maintenance-bypass";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/")({
