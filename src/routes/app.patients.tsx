@@ -31,6 +31,16 @@ function avatarGradient(name: string): string {
   const ch = (name.trim()[0] ?? "?").toUpperCase().charCodeAt(0);
   return AVATAR_GRADIENTS[ch % AVATAR_GRADIENTS.length];
 }
+
+/**
+ * Formata YYYY-MM-DD como DD/MM/AAAA sem passar por `new Date()`,
+ * evitando o bug de fuso (parse como UTC vira dia anterior em BRT).
+ */
+function formatBirthDate(iso: string): string {
+  const [y, m, d] = iso.split("T")[0].split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
