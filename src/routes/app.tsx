@@ -51,7 +51,7 @@ function isAllowed(pathname: string, role: AppRole | null): boolean {
 }
 
 function AppLayout() {
-  const { session, loading, role } = useAuth();
+  const { session, loading, role, user } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [sessionAllowed, setSessionAllowed] = useState(false);
