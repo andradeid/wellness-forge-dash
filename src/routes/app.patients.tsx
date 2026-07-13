@@ -31,6 +31,16 @@ function avatarGradient(name: string): string {
   const ch = (name.trim()[0] ?? "?").toUpperCase().charCodeAt(0);
   return AVATAR_GRADIENTS[ch % AVATAR_GRADIENTS.length];
 }
+
+/**
+ * Formata YYYY-MM-DD como DD/MM/AAAA sem passar por `new Date()`,
+ * evitando o bug de fuso (parse como UTC vira dia anterior em BRT).
+ */
+function formatBirthDate(iso: string): string {
+  const [y, m, d] = iso.split("T")[0].split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -251,7 +261,7 @@ function PatientsPage() {
     if (!searchLower) return true;
     if (p.name.toLowerCase().includes(searchLower)) return true;
     if (p.birth_date) {
-      const formatted = new Date(p.birth_date).toLocaleDateString("pt-BR");
+      const formatted = formatBirthDate(p.birth_date);
       if (formatted.includes(searchLower)) return true;
     }
     return false;
@@ -613,7 +623,7 @@ function PatientsPage() {
                             <span>{p.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{p.birth_date ? new Date(p.birth_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell>{p.birth_date ? formatBirthDate(p.birth_date) : "—"}</TableCell>
                         <TableCell>{genderLabel(p.gender)}</TableCell>
                         <TableCell>
                           {p.is_pregnant ? (

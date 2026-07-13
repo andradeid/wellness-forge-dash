@@ -61,7 +61,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
           <p className="text-xs text-slate-600 mt-1">
             {patient.birth_date && (
               <>
-                Nasc.: {format(new Date(patient.birth_date), "dd/MM/yyyy")}
+                Nasc.: {format(new Date(patient.birth_date + "T00:00:00"), "dd/MM/yyyy")}
                 {age !== null ? ` · ${age} anos` : ""}
               </>
             )}
