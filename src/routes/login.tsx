@@ -18,6 +18,7 @@ import {
 import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { canBypassMaintenance } from "@/lib/maintenance-bypass";
 import {
   addSessionSeat,
   clearLocalSessionToken,
@@ -89,12 +90,16 @@ function LoginPage() {
   const { data: systemSettings } = useSystemSettings();
 
   useEffect(() => {
-    if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
+    if (
+      systemSettings?.maintenance_enabled &&
+      role &&
+      !canBypassMaintenance(role, session?.user?.email ?? null)
+    ) {
       void navigate({ to: "/manutencao", replace: true }).catch((error) => {
         console.warn("[login] falha ao redirecionar para manutenção", error);
       });
     }
-  }, [systemSettings?.maintenance_enabled, role, navigate]);
+  }, [systemSettings?.maintenance_enabled, role, session?.user?.email, navigate]);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
 
   const [email, setEmail] = useState("");

@@ -10,6 +10,7 @@ import {
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { canBypassMaintenance } from "@/lib/maintenance-bypass";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/")({
@@ -27,15 +28,18 @@ export const Route = createFileRoute("/")({
 });
 
 function Teaser() {
-  const { session, loading, role } = useAuth();
+  const { session, loading, role, user } = useAuth();
   const navigate = useNavigate();
   const { data: systemSettings } = useSystemSettings();
 
   useEffect(() => {
-    if (systemSettings?.maintenance_enabled && role !== "super_admin") {
+    if (
+      systemSettings?.maintenance_enabled &&
+      !canBypassMaintenance(role, user?.email ?? null)
+    ) {
       navigate({ to: "/manutencao", replace: true });
     }
-  }, [systemSettings?.maintenance_enabled, role, navigate]);
+  }, [systemSettings?.maintenance_enabled, role, user?.email, navigate]);
 
   useEffect(() => {
     if (loading || !session?.user) return;

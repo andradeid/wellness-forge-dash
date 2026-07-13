@@ -18,6 +18,7 @@ import {
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { canBypassMaintenance } from "@/lib/maintenance-bypass";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -50,7 +51,7 @@ function isAllowed(pathname: string, role: AppRole | null): boolean {
 }
 
 function AppLayout() {
-  const { session, loading, role } = useAuth();
+  const { session, loading, role, user } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [sessionAllowed, setSessionAllowed] = useState(false);
@@ -81,12 +82,16 @@ function AppLayout() {
   }, [loading, session, sessionAllowed, navigate]);
 
   useEffect(() => {
-    if (systemSettings?.maintenance_enabled && role && role !== "super_admin") {
+    if (
+      systemSettings?.maintenance_enabled &&
+      role &&
+      !canBypassMaintenance(role, user?.email ?? null)
+    ) {
       void navigate({ to: "/manutencao", replace: true }).catch((error) => {
         console.warn("[app] falha ao redirecionar para manutenção", error);
       });
     }
-  }, [systemSettings?.maintenance_enabled, role, navigate]);
+  }, [systemSettings?.maintenance_enabled, role, user?.email, navigate]);
 
   useEffect(() => {
     if (!loading && !session) {
