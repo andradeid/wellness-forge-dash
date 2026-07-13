@@ -251,7 +251,7 @@ function PatientsPage() {
     if (!searchLower) return true;
     if (p.name.toLowerCase().includes(searchLower)) return true;
     if (p.birth_date) {
-      const formatted = new Date(p.birth_date).toLocaleDateString("pt-BR");
+      const formatted = formatBirthDate(p.birth_date);
       if (formatted.includes(searchLower)) return true;
     }
     return false;
