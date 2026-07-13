@@ -18,6 +18,7 @@ import {
   SESSION_KICKED_KEY,
 } from "@/lib/session-guard";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { canBypassMaintenance } from "@/lib/maintenance-bypass";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
