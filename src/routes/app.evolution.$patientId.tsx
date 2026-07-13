@@ -239,7 +239,7 @@ function EvolutionPage() {
               {patient.birth_date && (
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {format(new Date(patient.birth_date), "dd/MM/yyyy")}
+                  {format(new Date(patient.birth_date + "T00:00:00"), "dd/MM/yyyy")}
                   {age !== null ? ` · ${age} anos` : ""}
                 </span>
               )}
