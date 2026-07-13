@@ -18,6 +18,7 @@ import {
 import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { canBypassMaintenance } from "@/lib/maintenance-bypass";
 import {
   addSessionSeat,
   clearLocalSessionToken,
