@@ -1,7 +1,7 @@
 // Emails autorizados a acessar o sistema mesmo em modo manutenção.
 // Uso: testes e validações internas.
 export const MAINTENANCE_BYPASS_EMAILS: readonly string[] = [
-  "marcos@setupdigital.com.br",
+  "setupdigitalclientes@gmail.com",
 ];
 
 export function canBypassMaintenance(
