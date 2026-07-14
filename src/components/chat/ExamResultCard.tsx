@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import {
   classificationVisualState,
+  normalizeCategory,
   type ClassificationVisualState,
 } from "@/lib/exam-markers";
 
