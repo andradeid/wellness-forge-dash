@@ -95,6 +95,18 @@ const CATEGORY_NAMES: Record<string, string> = {
   coagulacao: "Coagulação",
   urinalise: "Urinálise",
   inflamatorio: "Marcadores Inflamatórios",
+  // Bioimpedância
+  composicao_corporal: "Composição Corporal",
+  massa_gorda: "Massa Gorda",
+  massa_magra: "Massa Magra",
+  agua_corporal: "Água Corporal",
+  risco_metabolico: "Risco Metabólico",
+  angulo_de_fase: "Ângulo de Fase",
+  // Genética
+  metilacao: "Metilação",
+  resposta_estimulos: "Resposta a Estímulos",
+  eficacia_dietas: "Eficácia de Dietas",
+  comportamento_alimentar: "Comportamento Alimentar",
   outros: "Outros",
 };
 
