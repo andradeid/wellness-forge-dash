@@ -73,18 +73,25 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
           <p className="text-sm text-slate-500">Nenhuma mensagem nesta conversa.</p>
         ) : (
           <section className="space-y-3">
-            {visible.map((m) => {
+            {visible.map((m, idx) => {
               const isUser = m.role === "user";
               const text = isUser ? m.content : cleanText(m.content);
               const markers = m.structured_data?.markers ?? [];
               if (!text && markers.length === 0 && !(m.attachments && m.attachments.length)) {
                 return null;
               }
+              // Start a new page before each exam analysis (except the first one),
+              // so each set of markers + interpretation reads as its own section.
+              const breakBefore = idx > 0 && markers.length > 0;
               return (
                 <div
                   key={m.id}
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                  style={{ pageBreakInside: "avoid" }}
+                  style={{
+                    pageBreakInside: "avoid",
+                    breakInside: "avoid",
+                    ...(breakBefore ? { pageBreakBefore: "always", breakBefore: "page" } : {}),
+                  }}
                 >
                   <div
                     className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] leading-relaxed border ${
