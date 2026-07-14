@@ -311,55 +311,69 @@ function PrescriptionBlock({ title, body, patient }: { title: string; body: stri
     }
   };
 
+  const patientAge = patient?.birth_date
+    ? differenceInYears(new Date(), new Date(patient.birth_date))
+    : null;
+  const today = format(new Date(), "dd/MM/yyyy");
+
   const handlePrint = () => {
     const win = window.open("", "_blank", "width=800,height=900");
     if (!win) return;
-    
-    const logoHtml = profile?.clinic_logo_url 
+
+    const logoHtml = profile?.clinic_logo_url
       ? `<div style="text-align: center; margin-bottom: 20px;">
            <img src="${profile.clinic_logo_url}" style="max-height: 80px; width: auto;" />
          </div>`
       : "";
 
-    const nutriInfoHtml = profile 
-      ? `<div style="text-align: center; margin-bottom: 30px; font-size: 14px; color: #444;">
-           <div style="font-weight: bold; font-size: 16px;">${profile.full_name}</div>
-           <div>${profile.pronoun || "Nutricionista"} - CRN ${profile.professional_id || ""}</div>
+    const nutriInfoHtml = profile
+      ? `<div style="text-align: center; margin-bottom: 24px; font-size: 14px; color: #444;">
+           <div style="font-weight: bold; font-size: 16px;">${profile.full_name ?? ""}</div>
+           <div>${profile.pronoun || "Nutricionista"}${profile.professional_id ? ` - CRN ${profile.professional_id}` : ""}</div>
            ${profile.clinic_name ? `<div>${profile.clinic_name}</div>` : ""}
+           ${profile.phone ? `<div>${profile.phone}</div>` : ""}
          </div>`
       : "";
 
+    const patientHtml = patient?.name
+      ? `<div style="margin: 0 0 20px; padding: 10px 14px; border: 1px solid #e5e5e5; border-radius: 6px; background: #fafafa; font-size: 13px; color: #333;">
+           <div><strong>Paciente:</strong> ${patient.name}${patientAge !== null ? ` &middot; ${patientAge} anos` : ""}</div>
+           <div><strong>Data:</strong> ${today}</div>
+         </div>`
+      : `<div style="margin: 0 0 20px; font-size: 13px; color: #333;"><strong>Data:</strong> ${today}</div>`;
+
     win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${cleanedTitle}</title>
 <style>
-  body { 
-    font-family: Arial, Helvetica, sans-serif; 
-    font-size: 14px; 
-    color: #111; 
-    padding: 40px; 
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #111;
+    padding: 40px;
     line-height: 1.6;
   }
-  h1 { 
-    font-size: 18px; 
-    border-bottom: 2px solid #e8a04c; 
-    padding-bottom: 10px; 
-    margin: 0 0 20px; 
+  h1 {
+    font-size: 18px;
+    border-bottom: 2px solid #e8a04c;
+    padding-bottom: 10px;
+    margin: 0 0 20px;
     text-align: center;
     color: #333;
   }
-  pre { 
-    white-space: pre-wrap; 
-    word-wrap: break-word; 
-    font-family: inherit; 
-    margin: 0; 
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    margin: 0;
     text-align: justify;
   }
-  @media print { 
-    body { padding: 20px; } 
+  @media print {
+    body { padding: 20px; }
     button { display: none; }
   }
 </style></head><body>
   ${logoHtml}
   ${nutriInfoHtml}
+  ${patientHtml}
   <h1>${cleanedTitle}</h1>
   <pre>${editableBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
 <script>window.onload = () => { window.focus(); window.print(); }<\/script>
