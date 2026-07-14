@@ -65,6 +65,21 @@ const stateStyles: Record<ClassificationVisualState, { badge: string; icon: Reac
     badge: "bg-muted text-muted-foreground",
     icon: <HelpCircle className="h-3 w-3" />,
   },
+  risco_baixo: {
+    badge: "bg-green-100 text-green-700 border-green-200",
+    icon: <CircleDot className="h-3 w-3" />,
+    label: "RISCO BAIXO",
+  },
+  risco_moderado: {
+    badge: "bg-amber-100 text-amber-700 border-amber-200",
+    icon: <AlertTriangle className="h-3 w-3" />,
+    label: "RISCO MODERADO",
+  },
+  risco_alto: {
+    badge: "bg-rose-100 text-rose-700 border-rose-200",
+    icon: <AlertTriangle className="h-3 w-3" />,
+    label: "RISCO ALTO",
+  },
 };
 
 const CATEGORY_NAMES: Record<string, string> = {
