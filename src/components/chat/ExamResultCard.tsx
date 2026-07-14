@@ -142,6 +142,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
 
   // Ordem clínica explícita (briefing curadoria)
   const CATEGORY_ORDER = [
+    // Exame de sangue (ordem clínica)
     "hemograma_anemias",
     "hemograma",
     "perfil_glicidico",
@@ -152,6 +153,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "funcao_renal",
     "vitaminas_minerais",
     "inflamatorio",
+    "marcadores_inflamatorios",
     "metabolismo_osseo",
     "sorologia_infecciosa",
     "coagulacao",
@@ -161,13 +163,26 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "massa_gorda",
     "massa_magra",
     "agua_corporal",
-    "risco_metabolico",
+    "composicao_segmentada",
+    "controle_musculo_gordura",
+    "taxa_metabolica",
+    "quociente_respiratorio",
+    "metabolismo_oxidativo",
     "angulo_de_fase",
+    "risco_metabolico",
     // Genética
     "metilacao",
     "resposta_estimulos",
     "eficacia_dietas",
     "comportamento_alimentar",
+    "metabolismo_minerais",
+    "intolerancias",
+    // Microbioma
+    "composicao_bacteriana",
+    "diversidade_ecologia",
+    "eixo_inflamatorio",
+    "archaeoma_micobioma",
+    "patogenos",
     "outros",
   ];
   const categories = Object.keys(groups).sort((a, b) => {
