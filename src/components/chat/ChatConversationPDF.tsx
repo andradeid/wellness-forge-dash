@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BrandingDocumentPreview, type BrandingDocData } from "@/components/branding/BrandingDocumentPreview";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
+import { cleanProse } from "@/components/chat/ChatMessageList";
 import { getAgentLabel } from "@/lib/agent-labels";
 
 interface Patient {
