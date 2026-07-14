@@ -75,6 +75,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
   const [newTaskKey, setNewTaskKey] = useState("");
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [newTaskDesc, setNewTaskDesc] = useState("");
+  const [newTaskIcon, setNewTaskIcon] = useState<string>("sparkles");
 
   // Form: novo card
   const [newCardTaskId, setNewCardTaskId] = useState<string>("");
