@@ -119,7 +119,7 @@ export function normalizeMarker(raw: RawMarker): NormalizedMarker {
   const reference = pickStr(raw, "reference", "reference_value", "valor_referencia");
   const classification = pickStr(raw, "classification", "classificacao");
   const analysis = pickStr(raw, "analysis", "analise");
-  const category = pickStr(raw, "category", "categoria") || "outros";
+  const category = normalizeCategory(pickStr(raw, "category", "categoria"));
   return {
     name,
     value: valueStr,
