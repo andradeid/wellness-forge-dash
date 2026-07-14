@@ -525,7 +525,8 @@ export function ChatMessageList({
 
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
-            const hasPrescriptionMsg = !isUser && m.agent_type === "production" && /(?:MODELO DE )?RECEITU[ÁA]RIO|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+|FORMULA[ÇC][ÃA]O\s+MANIPULADA/i.test(m.content);
+            const isPrescriptionAgent = m.agent_type === "production" || m.agent_type?.startsWith("super") === true;
+            const hasPrescriptionMsg = !isUser && isPrescriptionAgent && /(?:MODELO DE )?RECEITU[ÁA]RIO|PRESCRI[ÇC][ÃA]O\s+(?:MAGISTRAL|MANIPULADA|DE MANIPULA[ÇC][ÃA]O)|F[ÓO]RMULA(?:[ÇC][ÃA]O)?\s+\d+|FORMULA[ÇC][ÃA]O\s+MANIPULADA/i.test(m.content);
 
             // Separador quando o agente muda entre mensagens consecutivas do assistente
             const prevAssistant = [...messages.slice(0, i)].reverse().find((x) => x.role === "assistant");
