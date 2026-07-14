@@ -1009,6 +1009,7 @@ function ChatPage() {
                             <div className="space-y-1">
                               {tasksForCurrentSuper.map(t => {
                                 const isActive = selectedTask === t.task_key;
+                                const TaskIcon = getAgentIcon((t as any).icon);
                                 return (
                                   <button
                                     key={t.id}
@@ -1017,12 +1018,18 @@ function ChatPage() {
                                       setTaskOpen(false);
                                     }}
                                     className={cn(
-                                      "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                                      "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
                                       isActive
                                         ? "bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15 text-foreground border border-[#e8a04c]/30"
                                         : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
                                     )}
                                   >
+                                    <div className={cn(
+                                      "p-1.5 rounded-lg transition-colors",
+                                      isActive ? "bg-white shadow-sm" : "bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 group-hover/opt:bg-white"
+                                    )}>
+                                      <TaskIcon className="h-3.5 w-3.5 text-[#e8a04c]" />
+                                    </div>
                                     <span className="flex-1 text-left truncate">{t.label}</span>
                                     {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
                                   </button>
