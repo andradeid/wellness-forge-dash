@@ -278,8 +278,16 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 {tasks.map((t) => (
                   <div
                     key={t.id}
-                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[1fr_1fr_auto_auto_auto] items-center"
+                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[auto_1fr_1fr_auto_auto_auto] items-center"
                   >
+                    <IconPickerButton
+                      value={t.icon}
+                      onChange={(icon) =>
+                        setTasks((all) =>
+                          all.map((x) => (x.id === t.id ? { ...x, icon } : x)),
+                        )
+                      }
+                    />
                     <Input
                       value={t.label}
                       onChange={(e) =>
@@ -320,7 +328,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                           toast.error("Rótulo e task_key são obrigatórios.");
                           return;
                         }
-                        updateTask(t, { label, task_key: key });
+                        updateTask(t, { label, task_key: key, icon: t.icon });
                       }}
                       disabled={savingId === t.id}
                       className="rounded-full h-8 gap-1.5 text-xs"
