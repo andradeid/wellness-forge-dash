@@ -120,7 +120,7 @@ function findBalancedJsonEnd(text: string, start: number): number {
 }
 
 /** Removes the markers JSON block (fenced or bare, complete or streaming) from displayed prose. */
-function cleanProse(text: string): string {
+export function cleanProse(text: string): string {
   let out = stripBodyAssessmentJson(stripMealEstimationJson(stripAgentScaffolding(stripFormulacoesMarker(text))));
 
   // 1) Bloco com cerca ```json ... ``` contendo "markers": remove cerca + conteúdo.
