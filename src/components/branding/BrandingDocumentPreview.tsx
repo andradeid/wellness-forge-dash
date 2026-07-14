@@ -30,7 +30,7 @@ interface Props {
  * Settings → Branding and as the base layout for "Gerar PDF Profissional".
  */
 export const BrandingDocumentPreview = forwardRef<HTMLDivElement, Props>(
-  function BrandingDocumentPreview({ data, children, documentTitle }, ref) {
+  function BrandingDocumentPreview({ data, children, documentTitle, fluid }, ref) {
     const displayName = [data.pronoun, data.full_name].filter(Boolean).join(" ") || "Seu nome aqui";
     const today = new Date().toLocaleDateString("pt-BR");
 
@@ -40,7 +40,7 @@ export const BrandingDocumentPreview = forwardRef<HTMLDivElement, Props>(
         className="mx-auto bg-white text-slate-900 shadow-md print:shadow-none"
         style={{
           width: "210mm",
-          minHeight: "297mm",
+          ...(fluid ? {} : { minHeight: "297mm" }),
           padding: "20mm 18mm",
           boxSizing: "border-box",
         }}
