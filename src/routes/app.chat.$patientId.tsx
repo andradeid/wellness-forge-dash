@@ -290,11 +290,34 @@ function ChatPage() {
 
   const handleGenerateRecipe = useCallback(
     (payload: NonNullable<NonNullable<typeof messages[number]["structured_data"]>["formulacoes_sugeridas"]>) => {
-      const target = getAgentForCard("plano_alimentar", patientProfile, patient?.pregnancy_type);
-      if (!target) {
-        console.warn("[handoff] Nenhum agente de formulações configurado.");
-        return;
+      // Se o agente atual é um Super Agente, permanece nele e apenas troca a
+      // tarefa interna para "production" (Produção e Formulações SA),
+      // evitando o handoff para o agente comum de formulações.
+      const currentAgent = agents.find(a => a.agent_id === agentType);
+      const isSuper = currentAgent?.is_super_agent === true;
+
+      let targetAgentId: string | null = null;
+      let targetTaskKey: string | undefined;
+
+      if (isSuper) {
+        const productionTask = superAgentTasks.find(
+          t => t.agent_id === currentAgent!.agent_id && t.task_key === "production",
+        );
+        if (productionTask) {
+          targetAgentId = currentAgent!.agent_id;
+          targetTaskKey = productionTask.task_key;
+        }
       }
+
+      if (!targetAgentId) {
+        const target = getAgentForCard("plano_alimentar", patientProfile, patient?.pregnancy_type);
+        if (!target) {
+          console.warn("[handoff] Nenhum agente de formulações configurado.");
+          return;
+        }
+        targetAgentId = target.agent_id;
+      }
+
       const gestantePeriodo = filters.publico === "gestante" && filters.gestantePeriodo
         ? ({ "1t": "1º Trimestre", "2t": "2º Trimestre", "3t": "3º Trimestre" } as const)[filters.gestantePeriodo]
         : "";
@@ -310,14 +333,16 @@ function ChatPage() {
         gestante_tipo: gestanteTipo,
         gestante_periodo: gestantePeriodo,
         origem_agente: agentType ?? "",
+        origem_task: selectedTask ?? "",
       };
       void sendHandoff(
-        target.agent_id,
+        targetAgentId,
         { exam_context: JSON.stringify(examContextPayload) },
         "Gere a receita pronta para a farmácia a partir das formulações sugeridas no exam_context, mantendo nomes, ativos e doses exatos.",
+        targetTaskKey ? { selectedTask: targetTaskKey, displayText: "Gerar receita" } : undefined,
       );
     },
-    [agentType, filters, patient?.pregnancy_type, patientProfile, sendHandoff],
+    [agentType, agents, superAgentTasks, filters, patient?.pregnancy_type, patientProfile, selectedTask, sendHandoff, getAgentForCard],
   );
 
   useEffect(() => {
