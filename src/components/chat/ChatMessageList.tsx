@@ -15,6 +15,7 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
+import { stripBodyAssessmentJson } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,7 +119,7 @@ function findBalancedJsonEnd(text: string, start: number): number {
 
 /** Removes the markers JSON block (fenced or bare, complete or streaming) from displayed prose. */
 function cleanProse(text: string): string {
-  let out = stripMealEstimationJson(stripAgentScaffolding(stripFormulacoesMarker(text)));
+  let out = stripBodyAssessmentJson(stripMealEstimationJson(stripAgentScaffolding(stripFormulacoesMarker(text))));
 
   // 1) Bloco com cerca ```json ... ``` contendo "markers": remove cerca + conteúdo.
   out = out.replace(/```json\s*([\s\S]*?)```/gi, (full, body: string) => {
