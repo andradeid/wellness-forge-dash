@@ -76,7 +76,7 @@ export const BrandingDocumentPreview = forwardRef<HTMLDivElement, Props>(
         </header>
 
         {/* Body */}
-        <main className="py-8 min-h-[170mm]">
+        <main className={fluid ? "py-8" : "py-8 min-h-[170mm]"}>
           {documentTitle && (
             <h1
               className="text-2xl mb-4 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
