@@ -35,6 +35,7 @@ import { NextStepsSuggestion } from "@/components/chat/NextStepsSuggestion";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
+import { getAgentIcon } from "@/lib/agent-icons";
 
 export const Route = createFileRoute("/app/chat/$patientId")({
   validateSearch: (s: Record<string, unknown>) => ({
