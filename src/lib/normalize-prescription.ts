@@ -51,13 +51,16 @@ export function normalizePrescription(input: string): string {
   // Garante linha em branco DEPOIS do título do heading
   text = text.replace(/(^|\n)(#{1,6}\s[^\n]+)\n(?!\n)/g, "$1$2\n\n");
 
-  // Quebra linha antes de seções clínicas conhecidas quando aparecem inline
+  // Quebra linha antes de seções clínicas conhecidas quando aparecem inline.
+  // Só dispara quando o heading está em CAIXA ALTA (cabeçalho real do Dify)
+  // e vem após pontuação forte, início de linha ou marcador markdown — evita
+  // quebrar palavras comuns em minúscula no meio da prosa (ex.: "uso",
+  // "posologia", "composição corporal", "duração").
   const sectionPattern = new RegExp(
-    `([^\\n])\\s*(\\*{0,2}\\s*(?:${SECTION_HEADINGS.join("|")})(?:\\s+\\d+)?\\s*[:\\-–]?)`,
-    "gi",
+    `(^|[\\n\\r]|[.!?;:…\\)\\]])[ \\t]*(\\*{0,2}\\s*(?:${SECTION_HEADINGS.join("|")})(?:\\s+\\d+)?\\s*[:\\-–])`,
+    "g",
   );
   text = text.replace(sectionPattern, (_m, prev: string, heading: string) => {
-    if (/\n/.test(prev)) return `${prev}\n\n${heading}`;
     return `${prev}\n\n${heading}`;
   });
 
