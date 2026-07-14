@@ -19,16 +19,10 @@ interface Props {
   messages: ChatMessage[];
 }
 
-/** Remove JSON blocks and preamble headings (mirrors ChatMessageList cleanProse). */
+/** Strip markers/body_assessment/meal JSON and preamble headings — same as chat UI. */
 function cleanText(text: string): string {
   if (!text) return "";
-  return text
-    .replace(/```json\s*[\s\S]*?```/gi, "")
-    .replace(/(?:^|\n)\s*json\s*\{[\s\S]*?\}(?=\n|$)/gi, "")
-    .replace(/^\s*Parte\s*2\s*[—\-:].*$/gim, "")
-    .replace(/^\s*JSON\s*(obrigat[óo]rio|marcadores)?\s*:?\s*$/gim, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return cleanProse(text);
 }
 
 function toneClass(c: string | null | undefined): string {
