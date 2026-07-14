@@ -1077,18 +1077,20 @@ export function useDifyChat(
 
                   // Super Agentes também retornam análise de exames em formato
                   // estruturado; tratamos qualquer resposta com `agent_type` de
-                  // exame OU de super agente como potencial análise de exame.
+                  // exame OU de super agente (prefixo OU selectedTask presente,
+                  // já que o agent_id do super pode não começar com "super_").
+                  const isSuperAgent =
+                    !!agentType && (agentType.startsWith("super") || !!selectedTask);
                   const isExamLike =
-                    !!agentType &&
-                    (agentType.startsWith("exam") || agentType.startsWith("super"));
+                    (!!agentType && agentType.startsWith("exam")) || isSuperAgent;
 
-                  // Extract markers if in exam mode.
-                  // Para Super Agentes, evitamos o fallback heurístico (prosa)
-                  // — só aceitamos o bloco JSON estruturado, caso venha.
-                  const isSuperAgent = !!agentType && agentType.startsWith("super");
-                  const markers: Marker[] | null = isExamLike
-                    ? tryExtractMarkers(fullText, { allowHeuristic: !isSuperAgent })
-                    : null;
+                  // Bloco JSON estruturado (```json {"markers":[...]}```) é
+                  // determinístico — extrai sempre que existir, independente do
+                  // tipo de agente. Só o fallback heurístico (prosa) depende de
+                  // isExamLike + não ser super agent, pra evitar falso positivo.
+                  const markers: Marker[] | null = tryExtractMarkers(fullText, {
+                    allowHeuristic: isExamLike && !isSuperAgent,
+                  });
 
                   const processingMs = Math.round(performance.now() - startedAt);
                   const labReportError = isExamLike ? tryExtractLabReportError(fullText) : null;
