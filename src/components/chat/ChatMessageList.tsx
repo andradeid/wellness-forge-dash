@@ -2,7 +2,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { format, differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
@@ -249,9 +251,16 @@ function getResearchStatus(text: string): string | null {
   return null;
 }
 
-function PrescriptionBlock({ title, body }: { title: string; body: string }) {
+export interface PrescriptionPatient {
+  name?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+}
+
+function PrescriptionBlock({ title, body, patient }: { title: string; body: string; patient?: PrescriptionPatient | null }) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { user } = useAuth();
   const { data: profile } = useBrandingProfile(user?.id);
 
@@ -302,55 +311,69 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
     }
   };
 
+  const patientAge = patient?.birth_date
+    ? differenceInYears(new Date(), new Date(patient.birth_date))
+    : null;
+  const today = format(new Date(), "dd/MM/yyyy");
+
   const handlePrint = () => {
     const win = window.open("", "_blank", "width=800,height=900");
     if (!win) return;
-    
-    const logoHtml = profile?.clinic_logo_url 
+
+    const logoHtml = profile?.clinic_logo_url
       ? `<div style="text-align: center; margin-bottom: 20px;">
            <img src="${profile.clinic_logo_url}" style="max-height: 80px; width: auto;" />
          </div>`
       : "";
 
-    const nutriInfoHtml = profile 
-      ? `<div style="text-align: center; margin-bottom: 30px; font-size: 14px; color: #444;">
-           <div style="font-weight: bold; font-size: 16px;">${profile.full_name}</div>
-           <div>${profile.pronoun || "Nutricionista"} - CRN ${profile.professional_id || ""}</div>
+    const nutriInfoHtml = profile
+      ? `<div style="text-align: center; margin-bottom: 24px; font-size: 14px; color: #444;">
+           <div style="font-weight: bold; font-size: 16px;">${profile.full_name ?? ""}</div>
+           <div>${profile.pronoun || "Nutricionista"}${profile.professional_id ? ` - CRN ${profile.professional_id}` : ""}</div>
            ${profile.clinic_name ? `<div>${profile.clinic_name}</div>` : ""}
+           ${profile.phone ? `<div>${profile.phone}</div>` : ""}
          </div>`
       : "";
 
+    const patientHtml = patient?.name
+      ? `<div style="margin: 0 0 20px; padding: 10px 14px; border: 1px solid #e5e5e5; border-radius: 6px; background: #fafafa; font-size: 13px; color: #333;">
+           <div><strong>Paciente:</strong> ${patient.name}${patientAge !== null ? ` &middot; ${patientAge} anos` : ""}</div>
+           <div><strong>Data:</strong> ${today}</div>
+         </div>`
+      : `<div style="margin: 0 0 20px; font-size: 13px; color: #333;"><strong>Data:</strong> ${today}</div>`;
+
     win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${cleanedTitle}</title>
 <style>
-  body { 
-    font-family: Arial, Helvetica, sans-serif; 
-    font-size: 14px; 
-    color: #111; 
-    padding: 40px; 
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #111;
+    padding: 40px;
     line-height: 1.6;
   }
-  h1 { 
-    font-size: 18px; 
-    border-bottom: 2px solid #e8a04c; 
-    padding-bottom: 10px; 
-    margin: 0 0 20px; 
+  h1 {
+    font-size: 18px;
+    border-bottom: 2px solid #e8a04c;
+    padding-bottom: 10px;
+    margin: 0 0 20px;
     text-align: center;
     color: #333;
   }
-  pre { 
-    white-space: pre-wrap; 
-    word-wrap: break-word; 
-    font-family: inherit; 
-    margin: 0; 
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    margin: 0;
     text-align: justify;
   }
-  @media print { 
-    body { padding: 20px; } 
+  @media print {
+    body { padding: 20px; }
     button { display: none; }
   }
 </style></head><body>
   ${logoHtml}
   ${nutriInfoHtml}
+  ${patientHtml}
   <h1>${cleanedTitle}</h1>
   <pre>${editableBody.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!))}</pre>
 <script>window.onload = () => { window.focus(); window.print(); }<\/script>
@@ -414,11 +437,99 @@ function PrescriptionBlock({ title, body }: { title: string; body: string }) {
           <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
           <span className="hidden sm:inline">{copied ? "✓ Copiado!" : "Copiar receita"}</span>
         </Button>
-        <Button variant="outline" size="sm" onClick={handlePrint} disabled={isEditing}>
-          <Printer className="h-3.5 w-3.5 sm:mr-1.5" />
-          <span className="hidden sm:inline">Imprimir</span>
+        <Button
+          size="sm"
+          onClick={() => setPreviewOpen(true)}
+          disabled={isEditing}
+          className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-none hover:opacity-90"
+        >
+          <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
+          <span className="hidden sm:inline">Pré-visualizar &amp; finalizar</span>
         </Button>
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Eye className="h-4 w-4 text-[#e8a04c]" />
+              Pré-visualização da receita
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-6">
+            <div className="mx-auto max-w-2xl bg-white shadow-md border border-border rounded-md p-10 text-[13px] text-neutral-900 leading-relaxed" style={{ minHeight: "60vh" }}>
+              {profile && (
+                <div className="text-center mb-6 pb-4 border-b">
+                  {profile.clinic_logo_url && (
+                    <img
+                      src={profile.clinic_logo_url}
+                      alt={profile.clinic_name || "Logo"}
+                      className="max-h-20 mx-auto mb-3 object-contain"
+                    />
+                  )}
+                  <div className="font-semibold text-[15px] text-neutral-900">
+                    {profile.full_name}
+                  </div>
+                  <div className="text-neutral-600">
+                    {profile.pronoun || "Nutricionista"}
+                    {profile.professional_id ? ` · CRN ${profile.professional_id}` : ""}
+                  </div>
+                  {profile.clinic_name && <div className="text-neutral-600">{profile.clinic_name}</div>}
+                  {profile.phone && <div className="text-neutral-600">{profile.phone}</div>}
+                </div>
+              )}
+
+              <div className="mb-5 rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3">
+                {patient?.name ? (
+                  <div>
+                    <span className="font-semibold">Paciente:</span> {patient.name}
+                    {patientAge !== null && <span> · {patientAge} anos</span>}
+                  </div>
+                ) : null}
+                <div>
+                  <span className="font-semibold">Data:</span> {today}
+                </div>
+              </div>
+
+              <h2 className="text-center text-[15px] font-bold uppercase tracking-wide pb-2 mb-4 border-b-2 border-[#e8a04c] text-neutral-800">
+                {cleanedTitle}
+              </h2>
+
+              <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-neutral-900 m-0">
+                {editableBody}
+              </pre>
+
+              {profile && (
+                <div className="mt-12 pt-6 border-t text-center text-neutral-700">
+                  <div className="inline-block min-w-[220px] border-t border-neutral-400 pt-2">
+                    <div className="font-semibold">{profile.full_name}</div>
+                    {profile.professional_id && <div className="text-xs">CRN {profile.professional_id}</div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t bg-background">
+            <Button variant="outline" size="sm" onClick={() => setPreviewOpen(false)}>
+              Voltar e editar
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              <Copy className="h-3.5 w-3.5 mr-1.5" />
+              {copied ? "✓ Copiado!" : "Copiar"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handlePrint}
+              className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-none hover:opacity-90"
+            >
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
+              Finalizar &amp; imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -431,6 +542,7 @@ export function ChatMessageList({
   isStreaming,
   agentType,
   onGenerateRecipe,
+  patient,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -439,6 +551,7 @@ export function ChatMessageList({
   isStreaming?: boolean;
   agentType?: string;
   onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
+  patient?: PrescriptionPatient | null;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -697,6 +810,7 @@ export function ChatMessageList({
                             <PrescriptionBlock
                               title={matchedTitle.toUpperCase()}
                               body={prescriptionContent}
+                              patient={patient}
                             />
 
                           </div>
