@@ -542,6 +542,7 @@ export function ChatMessageList({
   isStreaming,
   agentType,
   onGenerateRecipe,
+  patient,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -550,6 +551,7 @@ export function ChatMessageList({
   isStreaming?: boolean;
   agentType?: string;
   onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
+  patient?: PrescriptionPatient | null;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
