@@ -251,9 +251,16 @@ function getResearchStatus(text: string): string | null {
   return null;
 }
 
-function PrescriptionBlock({ title, body }: { title: string; body: string }) {
+export interface PrescriptionPatient {
+  name?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+}
+
+function PrescriptionBlock({ title, body, patient }: { title: string; body: string; patient?: PrescriptionPatient | null }) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { user } = useAuth();
   const { data: profile } = useBrandingProfile(user?.id);
 
