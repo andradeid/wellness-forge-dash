@@ -39,6 +39,7 @@ interface TaskRow {
   task_key: string;
   label: string;
   description: string | null;
+  icon: string | null;
   is_active: boolean;
   sort_order: number;
 }
