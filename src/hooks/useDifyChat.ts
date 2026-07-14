@@ -18,6 +18,7 @@ import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
+import { extractMealEstimation } from "@/lib/meal-estimation";
 
 export interface ExamContext {
   patient_name: string;
@@ -1098,12 +1099,16 @@ export function useDifyChat(
                     ? extractFormulacoes(fullText)
                     : null;
 
+                  // Estimativa de refeição por foto (Super Agente): bloco { "foods": [...] }
+                  const mealEstimation = extractMealEstimation(fullText);
+
                   const structured: Record<string, unknown> = labReportError
                     ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
                   if (formulacoes) structured.formulacoes_sugeridas = formulacoes;
+                  if (mealEstimation) structured.meal_estimation = mealEstimation;
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)

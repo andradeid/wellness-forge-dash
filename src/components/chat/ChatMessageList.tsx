@@ -14,6 +14,8 @@ import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulati
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel } from "@/lib/agent-labels";
+import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
+import { MealEstimationCard } from "./MealEstimationCard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +50,7 @@ export interface ChatMessage {
     processing_ms?: number;
     not_a_lab_report_error?: string;
     formulacoes_sugeridas?: FormulacoesPayload;
+    meal_estimation?: MealEstimation;
   } | null;
   attachments?: Array<{ name: string; path?: string; mime_type?: string }> | null;
   created_at?: string | null;
@@ -115,7 +118,7 @@ function findBalancedJsonEnd(text: string, start: number): number {
 
 /** Removes the markers JSON block (fenced or bare, complete or streaming) from displayed prose. */
 function cleanProse(text: string): string {
-  let out = stripAgentScaffolding(stripFormulacoesMarker(text));
+  let out = stripMealEstimationJson(stripAgentScaffolding(stripFormulacoesMarker(text)));
 
   // 1) Bloco com cerca ```json ... ``` contendo "markers": remove cerca + conteúdo.
   out = out.replace(/```json\s*([\s\S]*?)```/gi, (full, body: string) => {
@@ -591,6 +594,11 @@ export function ChatMessageList({
                    ) && (
                     <div className="mb-4">
                       <ExamResultCard markers={m.structured_data.markers} />
+                    </div>
+                  )}
+                  {m.role === "assistant" && m.structured_data?.meal_estimation && (
+                    <div className="mb-4">
+                      <MealEstimationCard data={m.structured_data.meal_estimation} />
                     </div>
                   )}
                   {m.role === "assistant" && m.structured_data?.formulacoes_sugeridas && onGenerateRecipe && (
