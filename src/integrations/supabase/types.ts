@@ -936,6 +936,7 @@ export type Database = {
           agent_id: string
           created_at: string
           description: string | null
+          icon: string | null
           id: string
           is_active: boolean
           label: string
@@ -947,6 +948,7 @@ export type Database = {
           agent_id: string
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
           is_active?: boolean
           label: string
@@ -958,6 +960,7 @@ export type Database = {
           agent_id?: string
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
           is_active?: boolean
           label?: string

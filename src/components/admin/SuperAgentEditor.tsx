@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AGENT_ICONS, getAgentIcon } from "@/lib/agent-icons";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ interface TaskRow {
   task_key: string;
   label: string;
   description: string | null;
+  icon: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -73,6 +75,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
   const [newTaskKey, setNewTaskKey] = useState("");
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [newTaskDesc, setNewTaskDesc] = useState("");
+  const [newTaskIcon, setNewTaskIcon] = useState<string>("sparkles");
 
   // Form: novo card
   const [newCardTaskId, setNewCardTaskId] = useState<string>("");
@@ -133,6 +136,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
       task_key: key,
       label,
       description: newTaskDesc.trim() || null,
+      icon: newTaskIcon || null,
       is_active: true,
       sort_order: nextTaskSort,
     });
@@ -145,6 +149,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
     setNewTaskKey("");
     setNewTaskLabel("");
     setNewTaskDesc("");
+    setNewTaskIcon("sparkles");
     load();
   };
 
@@ -273,8 +278,16 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 {tasks.map((t) => (
                   <div
                     key={t.id}
-                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[1fr_1fr_auto_auto_auto] items-center"
+                    className="rounded-md border bg-slate-50/40 p-3 grid gap-2 md:grid-cols-[auto_1fr_1fr_auto_auto_auto] items-center"
                   >
+                    <IconPickerButton
+                      value={t.icon}
+                      onChange={(icon) =>
+                        setTasks((all) =>
+                          all.map((x) => (x.id === t.id ? { ...x, icon } : x)),
+                        )
+                      }
+                    />
                     <Input
                       value={t.label}
                       onChange={(e) =>
@@ -315,7 +328,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                           toast.error("Rótulo e task_key são obrigatórios.");
                           return;
                         }
-                        updateTask(t, { label, task_key: key });
+                        updateTask(t, { label, task_key: key, icon: t.icon });
                       }}
                       disabled={savingId === t.id}
                       className="rounded-full h-8 gap-1.5 text-xs"
@@ -357,7 +370,13 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
 
 
             {/* Nova tarefa */}
-            <div className="rounded-md border border-dashed border-slate-200 p-3 grid gap-2 md:grid-cols-[1fr_1fr_2fr_auto] items-end">
+            <div className="rounded-md border border-dashed border-slate-200 p-3 grid gap-2 md:grid-cols-[auto_1fr_1fr_2fr_auto] items-end">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Ícone
+                </Label>
+                <IconPickerButton value={newTaskIcon} onChange={setNewTaskIcon} />
+              </div>
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   Rótulo
@@ -608,3 +627,58 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
     </div>
   );
 }
+
+// ── Icon Picker ─────────────────────────────────────────────────────────
+interface IconPickerButtonProps {
+  value: string | null;
+  onChange: (icon: string) => void;
+}
+
+function IconPickerButton({ value, onChange }: IconPickerButtonProps) {
+  const [open, setOpen] = useState(false);
+  const Current = getAgentIcon(value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="h-9 w-9 rounded-md border bg-white flex items-center justify-center hover:bg-slate-50 transition"
+          title="Escolher ícone"
+        >
+          <Current className="h-4 w-4 text-[#e8a04c]" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" align="start">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+          Ícones · saúde e nutrição
+        </div>
+        <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
+          {AGENT_ICONS.map((opt) => {
+            const Icon = opt.Icon;
+            const isActive = value === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  onChange(opt.key);
+                  setOpen(false);
+                }}
+                title={opt.label}
+                className={cn(
+                  "h-8 w-8 rounded-md flex items-center justify-center transition",
+                  isActive
+                    ? "bg-gradient-to-br from-[#e8a04c]/20 to-[#e89bcf]/20 ring-1 ring-[#e8a04c]/40"
+                    : "hover:bg-slate-100",
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-[#e8a04c]" : "text-foreground/70")} />
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+

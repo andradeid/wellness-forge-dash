@@ -17,6 +17,7 @@ export interface SuperAgentTask {
   task_key: string;
   label: string;
   description: string | null;
+  icon: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -46,7 +47,7 @@ export function useAgentConfig() {
         .eq("is_active", true),
       supabase
         .from("super_agent_tasks" as any)
-        .select("id, agent_id, task_key, label, description, is_active, sort_order")
+        .select("id, agent_id, task_key, label, description, icon, is_active, sort_order")
         .eq("is_active", true),
       supabase
         .from("super_agent_cards" as any)
