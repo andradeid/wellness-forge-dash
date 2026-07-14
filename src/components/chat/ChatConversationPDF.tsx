@@ -48,6 +48,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         data={branding}
         documentTitle="Conversa com a Lumma"
+        fluid
       >
         {/* Patient */}
         <section className="mb-5 rounded-md border border-slate-200 bg-slate-50/60 p-4">
