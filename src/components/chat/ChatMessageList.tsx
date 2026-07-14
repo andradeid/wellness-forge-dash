@@ -810,6 +810,7 @@ export function ChatMessageList({
                             <PrescriptionBlock
                               title={matchedTitle.toUpperCase()}
                               body={prescriptionContent}
+                              patient={patient}
                             />
 
                           </div>
