@@ -136,6 +136,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
       task_key: key,
       label,
       description: newTaskDesc.trim() || null,
+      icon: newTaskIcon || null,
       is_active: true,
       sort_order: nextTaskSort,
     });
@@ -148,6 +149,7 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
     setNewTaskKey("");
     setNewTaskLabel("");
     setNewTaskDesc("");
+    setNewTaskIcon("sparkles");
     load();
   };
 
