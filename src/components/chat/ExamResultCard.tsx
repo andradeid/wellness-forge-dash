@@ -114,9 +114,9 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (!markers?.length) return null;
 
-  // Group markers by category
+  // Group markers by category (normalização defensiva: trim/lower/sem acento)
   const groups = markers.reduce((acc, m) => {
-    const cat = m.category || "outros";
+    const cat = normalizeCategory(m.category);
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(m);
     return acc;
@@ -138,6 +138,18 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "sorologia_infecciosa",
     "coagulacao",
     "urinalise",
+    // Bioimpedância
+    "composicao_corporal",
+    "massa_gorda",
+    "massa_magra",
+    "agua_corporal",
+    "risco_metabolico",
+    "angulo_de_fase",
+    // Genética
+    "metilacao",
+    "resposta_estimulos",
+    "eficacia_dietas",
+    "comportamento_alimentar",
     "outros",
   ];
   const categories = Object.keys(groups).sort((a, b) => {
