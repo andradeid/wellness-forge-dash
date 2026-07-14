@@ -718,6 +718,7 @@ function ChatPage() {
                   highlightId={highlightId} 
                   isStreaming={thinking}
                   agentType={agentType}
+                  patient={patient}
                 />
 
               </div>
