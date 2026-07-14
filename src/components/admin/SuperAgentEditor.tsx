@@ -627,3 +627,58 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
     </div>
   );
 }
+
+// ── Icon Picker ─────────────────────────────────────────────────────────
+interface IconPickerButtonProps {
+  value: string | null;
+  onChange: (icon: string) => void;
+}
+
+function IconPickerButton({ value, onChange }: IconPickerButtonProps) {
+  const [open, setOpen] = useState(false);
+  const Current = getAgentIcon(value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="h-9 w-9 rounded-md border bg-white flex items-center justify-center hover:bg-slate-50 transition"
+          title="Escolher ícone"
+        >
+          <Current className="h-4 w-4 text-[#e8a04c]" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" align="start">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+          Ícones · saúde e nutrição
+        </div>
+        <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
+          {AGENT_ICONS.map((opt) => {
+            const Icon = opt.Icon;
+            const isActive = value === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  onChange(opt.key);
+                  setOpen(false);
+                }}
+                title={opt.label}
+                className={cn(
+                  "h-8 w-8 rounded-md flex items-center justify-center transition",
+                  isActive
+                    ? "bg-gradient-to-br from-[#e8a04c]/20 to-[#e89bcf]/20 ring-1 ring-[#e8a04c]/40"
+                    : "hover:bg-slate-100",
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-[#e8a04c]" : "text-foreground/70")} />
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
