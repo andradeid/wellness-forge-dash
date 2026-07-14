@@ -1,0 +1,1 @@
+ALTER TABLE public.super_agent_tasks ADD COLUMN IF NOT EXISTS icon TEXT;
