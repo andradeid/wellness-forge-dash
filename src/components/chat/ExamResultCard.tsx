@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import {
   classificationVisualState,
+  normalizeCategory,
   type ClassificationVisualState,
 } from "@/lib/exam-markers";
 
@@ -65,6 +66,21 @@ const stateStyles: Record<ClassificationVisualState, { badge: string; icon: Reac
     badge: "bg-muted text-muted-foreground",
     icon: <HelpCircle className="h-3 w-3" />,
   },
+  risco_baixo: {
+    badge: "bg-green-100 text-green-700 border-green-200",
+    icon: <CircleDot className="h-3 w-3" />,
+    label: "RISCO BAIXO",
+  },
+  risco_moderado: {
+    badge: "bg-amber-100 text-amber-700 border-amber-200",
+    icon: <AlertTriangle className="h-3 w-3" />,
+    label: "RISCO MODERADO",
+  },
+  risco_alto: {
+    badge: "bg-rose-100 text-rose-700 border-rose-200",
+    icon: <AlertTriangle className="h-3 w-3" />,
+    label: "RISCO ALTO",
+  },
 };
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -80,6 +96,18 @@ const CATEGORY_NAMES: Record<string, string> = {
   coagulacao: "Coagulação",
   urinalise: "Urinálise",
   inflamatorio: "Marcadores Inflamatórios",
+  // Bioimpedância
+  composicao_corporal: "Composição Corporal",
+  massa_gorda: "Massa Gorda",
+  massa_magra: "Massa Magra",
+  agua_corporal: "Água Corporal",
+  risco_metabolico: "Risco Metabólico",
+  angulo_de_fase: "Ângulo de Fase",
+  // Genética
+  metilacao: "Metilação",
+  resposta_estimulos: "Resposta a Estímulos",
+  eficacia_dietas: "Eficácia de Dietas",
+  comportamento_alimentar: "Comportamento Alimentar",
   outros: "Outros",
 };
 
@@ -87,9 +115,9 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (!markers?.length) return null;
 
-  // Group markers by category
+  // Group markers by category (normalização defensiva: trim/lower/sem acento)
   const groups = markers.reduce((acc, m) => {
-    const cat = m.category || "outros";
+    const cat = normalizeCategory(m.category);
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(m);
     return acc;
@@ -111,6 +139,18 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "sorologia_infecciosa",
     "coagulacao",
     "urinalise",
+    // Bioimpedância
+    "composicao_corporal",
+    "massa_gorda",
+    "massa_magra",
+    "agua_corporal",
+    "risco_metabolico",
+    "angulo_de_fase",
+    // Genética
+    "metilacao",
+    "resposta_estimulos",
+    "eficacia_dietas",
+    "comportamento_alimentar",
     "outros",
   ];
   const categories = Object.keys(groups).sort((a, b) => {

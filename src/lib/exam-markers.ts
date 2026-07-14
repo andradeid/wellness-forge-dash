@@ -65,28 +65,50 @@ function pickStr(obj: RawMarker, ...keys: string[]): string {
  * The original term is preserved in `classification` for the database;
  * this only drives card colors/badges in the UI.
  */
-export type ClassificationVisualState = "otimo" | "normal" | "atencao" | "baixo" | "alto" | "levemente_alto" | "levemente_baixo" | "desconhecido";
+export type ClassificationVisualState =
+  | "otimo"
+  | "normal"
+  | "atencao"
+  | "baixo"
+  | "alto"
+  | "levemente_alto"
+  | "levemente_baixo"
+  | "risco_baixo"
+  | "risco_moderado"
+  | "risco_alto"
+  | "desconhecido";
 
-export function classificationVisualState(raw: string | null | undefined): ClassificationVisualState {
-  if (!raw) return "desconhecido";
-  const k = raw
+/** Trim + lower + remove acentos + colapsa separadores em `_`. */
+export function normalizeKey(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return raw
     .toString()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .replace(/[\s-]+/g, "_");
+}
+
+/** Normalização defensiva de category (para agentes que retornam variações). */
+export function normalizeCategory(raw: string | null | undefined): string {
+  const k = normalizeKey(raw);
+  return k || "outros";
+}
+
+export function classificationVisualState(raw: string | null | undefined): ClassificationVisualState {
+  if (!raw) return "desconhecido";
+  const k = normalizeKey(raw);
   if (k === "otimo" || k === "ideal" || k === "funcional_otimo") return "otimo";
   if (k === "normal" || k === "dentro_da_referencia" || k === "adequado") return "normal";
   if (k === "levemente_baixo") return "levemente_baixo";
   if (k === "levemente_alto") return "levemente_alto";
-  if (
-    k === "limitrofe" ||
-    k === "atencao" ||
-    k === "alerta"
-  ) return "atencao";
+  if (k === "limitrofe" || k === "atencao" || k === "alerta") return "atencao";
   if (k === "baixo" || k === "deficiente" || k === "insuficiente") return "baixo";
   if (k === "alto" || k === "elevado") return "alto";
+  if (k === "risco_baixo" || k === "baixo_risco") return "risco_baixo";
+  if (k === "risco_moderado" || k === "moderado" || k === "risco_medio") return "risco_moderado";
+  if (k === "risco_alto" || k === "alto_risco") return "risco_alto";
   return "desconhecido";
 }
 
@@ -97,7 +119,7 @@ export function normalizeMarker(raw: RawMarker): NormalizedMarker {
   const reference = pickStr(raw, "reference", "reference_value", "valor_referencia");
   const classification = pickStr(raw, "classification", "classificacao");
   const analysis = pickStr(raw, "analysis", "analise");
-  const category = pickStr(raw, "category", "categoria") || "outros";
+  const category = normalizeCategory(pickStr(raw, "category", "categoria"));
   return {
     name,
     value: valueStr,
