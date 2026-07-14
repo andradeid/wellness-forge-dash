@@ -15,6 +15,7 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
+import { stripBodyAssessmentJson } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { supabase } from "@/integrations/supabase/client";
