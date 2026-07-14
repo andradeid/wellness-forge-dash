@@ -48,6 +48,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         data={branding}
         documentTitle="Conversa com a Lumma"
+        fluid
       >
         {/* Patient */}
         <section className="mb-5 rounded-md border border-slate-200 bg-slate-50/60 p-4">
@@ -72,18 +73,25 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
           <p className="text-sm text-slate-500">Nenhuma mensagem nesta conversa.</p>
         ) : (
           <section className="space-y-3">
-            {visible.map((m) => {
+            {visible.map((m, idx) => {
               const isUser = m.role === "user";
               const text = isUser ? m.content : cleanText(m.content);
               const markers = m.structured_data?.markers ?? [];
               if (!text && markers.length === 0 && !(m.attachments && m.attachments.length)) {
                 return null;
               }
+              // Start a new page before each exam analysis (except the first one),
+              // so each set of markers + interpretation reads as its own section.
+              const breakBefore = idx > 0 && markers.length > 0;
               return (
                 <div
                   key={m.id}
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                  style={{ pageBreakInside: "avoid" }}
+                  style={{
+                    pageBreakInside: "avoid",
+                    breakInside: "avoid",
+                    ...(breakBefore ? { pageBreakBefore: "always", breakBefore: "page" } : {}),
+                  }}
                 >
                   <div
                     className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] leading-relaxed border ${
@@ -107,6 +115,42 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                     {m.attachments && m.attachments.length > 0 && (
                       <div className={`text-[10px] mb-1 ${isUser ? "text-white/80" : "text-slate-500"}`}>
                         📎 {m.attachments.map((a) => a.name).join(", ")}
+                      </div>
+                    )}
+                    {/* Markers first (mirrors chat bubble order) */}
+                    {markers.length > 0 && (
+                      <div className="mb-2 overflow-hidden rounded border border-slate-200 bg-white">
+                        <table className="w-full text-[10px] text-slate-800">
+                          <thead className="bg-slate-50 text-slate-600">
+                            <tr>
+                              <th className="text-left px-2 py-1 font-medium">Marcador</th>
+                              <th className="text-left px-2 py-1 font-medium">Valor</th>
+                              <th className="text-left px-2 py-1 font-medium">Ref.</th>
+                              <th className="text-left px-2 py-1 font-medium">Classif.</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {markers.map((mk, i) => (
+                              <tr key={i} className="border-t border-slate-100 align-top">
+                                <td className="px-2 py-1 font-medium">{mk.name}</td>
+                                <td className="px-2 py-1 tabular-nums">
+                                  {mk.value ?? "—"}
+                                  {mk.unit ? <span className="text-slate-500"> {mk.unit}</span> : null}
+                                </td>
+                                <td className="px-2 py-1 text-slate-600">{mk.reference ?? "—"}</td>
+                                <td className="px-2 py-1">
+                                  <span
+                                    className={`inline-block rounded border px-1 py-0.5 text-[9px] capitalize ${toneClass(
+                                      mk.classification,
+                                    )}`}
+                                  >
+                                    {mk.classification ?? "—"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                     {text && (
@@ -140,41 +184,6 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                           </ReactMarkdown>
                         </div>
                       )
-                    )}
-                    {markers.length > 0 && (
-                      <div className="mt-2 overflow-hidden rounded border border-slate-200 bg-white">
-                        <table className="w-full text-[10px] text-slate-800">
-                          <thead className="bg-slate-50 text-slate-600">
-                            <tr>
-                              <th className="text-left px-2 py-1 font-medium">Marcador</th>
-                              <th className="text-left px-2 py-1 font-medium">Valor</th>
-                              <th className="text-left px-2 py-1 font-medium">Ref.</th>
-                              <th className="text-left px-2 py-1 font-medium">Classif.</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {markers.map((mk, i) => (
-                              <tr key={i} className="border-t border-slate-100 align-top">
-                                <td className="px-2 py-1 font-medium">{mk.name}</td>
-                                <td className="px-2 py-1 tabular-nums">
-                                  {mk.value ?? "—"}
-                                  {mk.unit ? <span className="text-slate-500"> {mk.unit}</span> : null}
-                                </td>
-                                <td className="px-2 py-1 text-slate-600">{mk.reference ?? "—"}</td>
-                                <td className="px-2 py-1">
-                                  <span
-                                    className={`inline-block rounded border px-1 py-0.5 text-[9px] capitalize ${toneClass(
-                                      mk.classification,
-                                    )}`}
-                                  >
-                                    {mk.classification ?? "—"}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
                     )}
                   </div>
                 </div>

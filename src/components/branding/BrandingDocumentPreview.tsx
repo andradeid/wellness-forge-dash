@@ -16,6 +16,13 @@ interface Props {
   children?: ReactNode;
   /** Title shown in the body — e.g., "Análise clínica" */
   documentTitle?: string;
+  /**
+   * When true, removes fixed A4 min-height and the 170mm minimum body height.
+   * Used for multi-page exports (like full conversations) where forcing a single
+   * A4 sheet creates large empty gaps. Defaults to false to preserve the
+   * single-page look of receipts/reports.
+   */
+  fluid?: boolean;
 }
 
 /**
@@ -23,7 +30,7 @@ interface Props {
  * Settings → Branding and as the base layout for "Gerar PDF Profissional".
  */
 export const BrandingDocumentPreview = forwardRef<HTMLDivElement, Props>(
-  function BrandingDocumentPreview({ data, children, documentTitle }, ref) {
+  function BrandingDocumentPreview({ data, children, documentTitle, fluid }, ref) {
     const displayName = [data.pronoun, data.full_name].filter(Boolean).join(" ") || "Seu nome aqui";
     const today = new Date().toLocaleDateString("pt-BR");
 
@@ -33,7 +40,7 @@ export const BrandingDocumentPreview = forwardRef<HTMLDivElement, Props>(
         className="mx-auto bg-white text-slate-900 shadow-md print:shadow-none"
         style={{
           width: "210mm",
-          minHeight: "297mm",
+          ...(fluid ? {} : { minHeight: "297mm" }),
           padding: "20mm 18mm",
           boxSizing: "border-box",
         }}
@@ -69,7 +76,7 @@ export const BrandingDocumentPreview = forwardRef<HTMLDivElement, Props>(
         </header>
 
         {/* Body */}
-        <main className="py-8 min-h-[170mm]">
+        <main className={fluid ? "py-8" : "py-8 min-h-[170mm]"}>
           {documentTitle && (
             <h1
               className="text-2xl mb-4 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
