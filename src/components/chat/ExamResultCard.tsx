@@ -84,6 +84,7 @@ const stateStyles: Record<ClassificationVisualState, { badge: string; icon: Reac
 };
 
 const CATEGORY_NAMES: Record<string, string> = {
+  // Exame de sangue
   hemograma_anemias: "Hemograma e Anemias",
   hemograma: "Hemograma",
   perfil_lipidico: "Perfil Lipídico",
@@ -96,18 +97,34 @@ const CATEGORY_NAMES: Record<string, string> = {
   coagulacao: "Coagulação",
   urinalise: "Urinálise",
   inflamatorio: "Marcadores Inflamatórios",
-  // Bioimpedância
+  marcadores_inflamatorios: "Marcadores Inflamatórios",
+  metabolismo_osseo: "Metabolismo Ósseo",
+  sorologia_infecciosa: "Sorologia Infecciosa",
+  // Bioimpedância / Composição corporal
   composicao_corporal: "Composição Corporal",
   massa_gorda: "Massa Gorda",
   massa_magra: "Massa Magra",
   agua_corporal: "Água Corporal",
   risco_metabolico: "Risco Metabólico",
   angulo_de_fase: "Ângulo de Fase",
+  composicao_segmentada: "Composição Segmentada",
+  controle_musculo_gordura: "Controle Músculo/Gordura",
+  taxa_metabolica: "Taxa Metabólica",
+  quociente_respiratorio: "Quociente Respiratório",
+  metabolismo_oxidativo: "Metabolismo Oxidativo",
   // Genética
   metilacao: "Metilação",
   resposta_estimulos: "Resposta a Estímulos",
   eficacia_dietas: "Eficácia de Dietas",
   comportamento_alimentar: "Comportamento Alimentar",
+  metabolismo_minerais: "Metabolismo de Minerais",
+  intolerancias: "Intolerâncias",
+  // Microbioma
+  composicao_bacteriana: "Composição Bacteriana",
+  diversidade_ecologia: "Diversidade e Ecologia",
+  eixo_inflamatorio: "Eixo Inflamatório",
+  archaeoma_micobioma: "Archaeoma e Micobioma",
+  patogenos: "Patógenos",
   outros: "Outros",
 };
 
@@ -125,6 +142,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
 
   // Ordem clínica explícita (briefing curadoria)
   const CATEGORY_ORDER = [
+    // Exame de sangue (ordem clínica)
     "hemograma_anemias",
     "hemograma",
     "perfil_glicidico",
@@ -135,6 +153,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "funcao_renal",
     "vitaminas_minerais",
     "inflamatorio",
+    "marcadores_inflamatorios",
     "metabolismo_osseo",
     "sorologia_infecciosa",
     "coagulacao",
@@ -144,13 +163,26 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "massa_gorda",
     "massa_magra",
     "agua_corporal",
-    "risco_metabolico",
+    "composicao_segmentada",
+    "controle_musculo_gordura",
+    "taxa_metabolica",
+    "quociente_respiratorio",
+    "metabolismo_oxidativo",
     "angulo_de_fase",
+    "risco_metabolico",
     // Genética
     "metilacao",
     "resposta_estimulos",
     "eficacia_dietas",
     "comportamento_alimentar",
+    "metabolismo_minerais",
+    "intolerancias",
+    // Microbioma
+    "composicao_bacteriana",
+    "diversidade_ecologia",
+    "eixo_inflamatorio",
+    "archaeoma_micobioma",
+    "patogenos",
     "outros",
   ];
   const categories = Object.keys(groups).sort((a, b) => {

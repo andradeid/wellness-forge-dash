@@ -1094,10 +1094,8 @@ export function useDifyChat(
                   const labReportError = isExamLike ? tryExtractLabReportError(fullText) : null;
 
                   // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
-                  // pelos agentes de exame (handoff "Gerar receita").
-                  const formulacoes = isExamLike
-                    ? extractFormulacoes(fullText)
-                    : null;
+                  // por qualquer agente (exame handoff OU agente de produção).
+                  const formulacoes = extractFormulacoes(fullText);
 
                   // Estimativa de refeição por foto (Super Agente): bloco { "foods": [...] }
                   const mealEstimation = extractMealEstimation(fullText);
