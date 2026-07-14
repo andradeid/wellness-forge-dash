@@ -370,7 +370,13 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
 
 
             {/* Nova tarefa */}
-            <div className="rounded-md border border-dashed border-slate-200 p-3 grid gap-2 md:grid-cols-[1fr_1fr_2fr_auto] items-end">
+            <div className="rounded-md border border-dashed border-slate-200 p-3 grid gap-2 md:grid-cols-[auto_1fr_1fr_2fr_auto] items-end">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Ícone
+                </Label>
+                <IconPickerButton value={newTaskIcon} onChange={setNewTaskIcon} />
+              </div>
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   Rótulo
