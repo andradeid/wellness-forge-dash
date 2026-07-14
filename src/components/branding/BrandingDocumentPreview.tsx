@@ -16,6 +16,13 @@ interface Props {
   children?: ReactNode;
   /** Title shown in the body — e.g., "Análise clínica" */
   documentTitle?: string;
+  /**
+   * When true, removes fixed A4 min-height and the 170mm minimum body height.
+   * Used for multi-page exports (like full conversations) where forcing a single
+   * A4 sheet creates large empty gaps. Defaults to false to preserve the
+   * single-page look of receipts/reports.
+   */
+  fluid?: boolean;
 }
 
 /**
