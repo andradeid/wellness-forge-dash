@@ -437,11 +437,99 @@ function PrescriptionBlock({ title, body, patient }: { title: string; body: stri
           <Copy className="h-3.5 w-3.5 sm:mr-1.5" />
           <span className="hidden sm:inline">{copied ? "✓ Copiado!" : "Copiar receita"}</span>
         </Button>
-        <Button variant="outline" size="sm" onClick={handlePrint} disabled={isEditing}>
-          <Printer className="h-3.5 w-3.5 sm:mr-1.5" />
-          <span className="hidden sm:inline">Imprimir</span>
+        <Button
+          size="sm"
+          onClick={() => setPreviewOpen(true)}
+          disabled={isEditing}
+          className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-none hover:opacity-90"
+        >
+          <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
+          <span className="hidden sm:inline">Pré-visualizar &amp; finalizar</span>
         </Button>
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Eye className="h-4 w-4 text-[#e8a04c]" />
+              Pré-visualização da receita
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-6">
+            <div className="mx-auto max-w-2xl bg-white shadow-md border border-border rounded-md p-10 text-[13px] text-neutral-900 leading-relaxed" style={{ minHeight: "60vh" }}>
+              {profile && (
+                <div className="text-center mb-6 pb-4 border-b">
+                  {profile.clinic_logo_url && (
+                    <img
+                      src={profile.clinic_logo_url}
+                      alt={profile.clinic_name || "Logo"}
+                      className="max-h-20 mx-auto mb-3 object-contain"
+                    />
+                  )}
+                  <div className="font-semibold text-[15px] text-neutral-900">
+                    {profile.full_name}
+                  </div>
+                  <div className="text-neutral-600">
+                    {profile.pronoun || "Nutricionista"}
+                    {profile.professional_id ? ` · CRN ${profile.professional_id}` : ""}
+                  </div>
+                  {profile.clinic_name && <div className="text-neutral-600">{profile.clinic_name}</div>}
+                  {profile.phone && <div className="text-neutral-600">{profile.phone}</div>}
+                </div>
+              )}
+
+              <div className="mb-5 rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3">
+                {patient?.name ? (
+                  <div>
+                    <span className="font-semibold">Paciente:</span> {patient.name}
+                    {patientAge !== null && <span> · {patientAge} anos</span>}
+                  </div>
+                ) : null}
+                <div>
+                  <span className="font-semibold">Data:</span> {today}
+                </div>
+              </div>
+
+              <h2 className="text-center text-[15px] font-bold uppercase tracking-wide pb-2 mb-4 border-b-2 border-[#e8a04c] text-neutral-800">
+                {cleanedTitle}
+              </h2>
+
+              <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-neutral-900 m-0">
+                {editableBody}
+              </pre>
+
+              {profile && (
+                <div className="mt-12 pt-6 border-t text-center text-neutral-700">
+                  <div className="inline-block min-w-[220px] border-t border-neutral-400 pt-2">
+                    <div className="font-semibold">{profile.full_name}</div>
+                    {profile.professional_id && <div className="text-xs">CRN {profile.professional_id}</div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t bg-background">
+            <Button variant="outline" size="sm" onClick={() => setPreviewOpen(false)}>
+              Voltar e editar
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              <Copy className="h-3.5 w-3.5 mr-1.5" />
+              {copied ? "✓ Copiado!" : "Copiar"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handlePrint}
+              className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-none hover:opacity-90"
+            >
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
+              Finalizar &amp; imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
