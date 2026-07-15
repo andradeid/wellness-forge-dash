@@ -56,6 +56,11 @@ const MAP_TASK: Record<string, string> = {
   metabolism: "exames_laboratoriais",
   genetics: "exames_laboratoriais",
   exam: "exames_laboratoriais",
+  // Super Agentes — task_keys de exame por perfil (card "Análise Completa")
+  exam_masc: "exames_laboratoriais",
+  exam_fem: "exames_laboratoriais",
+  exam_gest_mono: "exames_laboratoriais",
+  exam_gest_gem: "exames_laboratoriais",
   reasoning: "conversa_geral",
   production: "plano_alimentar",
   research: "artigos_cientificos",
