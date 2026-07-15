@@ -57,7 +57,7 @@ function FaleComLummaPage() {
   const { module: searchModule } = Route.useSearch();
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const [message, setMessage] = useState("");
-  const { agents, cards: superAgentCards, tasks: superAgentTasks, getAgentForCard, requiresPatient, loading: loadingAgents } = useAgentConfig();
+  const { agents, cards: superAgentCards, tasks: superAgentTasks, getAgentForCard, resolveAnaliseCompleta, requiresPatient, loading: loadingAgents } = useAgentConfig();
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
@@ -193,16 +193,31 @@ function FaleComLummaPage() {
           : data.gender === 'female'
           ? 'adulto_feminino'
           : undefined;
-        const agentId = getAgentForCard(
-          pendingTrigger,
-          resolvedProfile,
-          data.pregnancy_type ?? undefined
-        )?.agent_id;
-        navigate({
-          to: "/app/chat/$patientId",
-          params: { patientId: data.id },
-          search: { module: pendingTrigger, agent: agentId },
-        });
+
+        if (pendingTrigger === 'analise_completa') {
+          const resolved = resolveAnaliseCompleta(resolvedProfile, data.pregnancy_type ?? undefined);
+          if (!resolved) {
+            toast.error("Perfil incompleto para roteamento da Análise Completa.");
+            return;
+          }
+          navigate({
+            to: "/app/chat/$patientId",
+            params: { patientId: data.id },
+            search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+          });
+          setPendingTrigger(undefined);
+        } else {
+          const agentId = getAgentForCard(
+            pendingTrigger,
+            resolvedProfile,
+            data.pregnancy_type ?? undefined
+          )?.agent_id;
+          navigate({
+            to: "/app/chat/$patientId",
+            params: { patientId: data.id },
+            search: { module: pendingTrigger, agent: agentId },
+          });
+        }
       } else {
         navigate({
           to: "/app/chat/$patientId",
@@ -787,7 +802,17 @@ function FaleComLummaPage() {
               {/* Super Agentes — quiescente enquanto não houver cards cadastrados */}
               {(() => {
                 const activeCards = superAgentCards.filter((c) => c.is_active);
-                if (activeCards.length === 0) return null;
+                // Dedupe por card_trigger: cards que compartilham trigger (ex: "analise_completa"
+                // vinculado aos 4 super agentes por perfil) aparecem como UM único card na Home.
+                // O agente correto é resolvido no clique via resolveAnaliseCompleta().
+                const seenTriggers = new Set<string>();
+                const dedupedCards = activeCards.filter((c) => {
+                  if (!c.card_trigger) return true;
+                  if (seenTriggers.has(c.card_trigger)) return false;
+                  seenTriggers.add(c.card_trigger);
+                  return true;
+                });
+                if (dedupedCards.length === 0) return null;
                 return (
                   <div className="space-y-4">
                     <motion.h3
@@ -800,39 +825,69 @@ function FaleComLummaPage() {
                       Super Agentes
                     </motion.h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-                      {activeCards.map((card, idx) => {
+                      {dedupedCards.map((card, idx) => {
                         const task = superAgentTasks.find((t) => t.id === card.task_id);
                         if (!task || !task.is_active) return null;
                         const agent = agents.find((a) => a.agent_id === task.agent_id && a.is_super_agent);
                         if (!agent || !agent.is_active) return null;
+
+                        // Card com roteamento por perfil (ex: "analise_completa"):
+                        // no clique, resolve o par (agent, task) certo conforme paciente.
+                        const isRoutedByProfile = card.card_trigger === 'analise_completa';
+
+                        const handleClick = () => {
+                          let target: { agentId: string; taskKey: string } = {
+                            agentId: agent.agent_id,
+                            taskKey: task.task_key,
+                          };
+
+                          if (isRoutedByProfile) {
+                            if (!selectedPatient) {
+                              // Precisa do perfil da paciente antes de rotear
+                              setPendingSuperAgent(null);
+                              setPendingTrigger(card.card_trigger ?? undefined);
+                              setIdentifyOpen(true);
+                              return;
+                            }
+                            const resolved = resolveAnaliseCompleta(
+                              selectedPatient.profile,
+                              selectedPatient.pregnancy_type ?? undefined,
+                            );
+                            if (!resolved) {
+                              toast.error(
+                                "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
+                              );
+                              return;
+                            }
+                            target = resolved;
+                          }
+
+                          setPendingSuperAgent(target);
+                          setPendingTrigger(undefined);
+                          if (requiresPatient(target.agentId) && !selectedPatient) {
+                            setIdentifyOpen(true);
+                          } else if (selectedPatient) {
+                            navigate({
+                              to: "/app/chat/$patientId",
+                              params: { patientId: selectedPatient.id },
+                              search: {
+                                agent: target.agentId,
+                                task: target.taskKey,
+                              } as any,
+                            });
+                            setPendingSuperAgent(null);
+                          } else {
+                            setIdentifyOpen(true);
+                          }
+                        };
+
                         return (
                           <motion.button
                             key={card.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: idx * 0.06, ease: "easeOut" }}
-                            onClick={() => {
-                              setPendingSuperAgent({
-                                agentId: agent.agent_id,
-                                taskKey: task.task_key,
-                              });
-                              setPendingTrigger(undefined);
-                              if (requiresPatient(agent.agent_id) && !selectedPatient) {
-                                setIdentifyOpen(true);
-                              } else if (selectedPatient) {
-                                navigate({
-                                  to: "/app/chat/$patientId",
-                                  params: { patientId: selectedPatient.id },
-                                  search: {
-                                    agent: agent.agent_id,
-                                    task: task.task_key,
-                                  } as any,
-                                });
-                                setPendingSuperAgent(null);
-                              } else {
-                                setIdentifyOpen(true);
-                              }
-                            }}
+                            onClick={handleClick}
                             className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
                           >
                             <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/60 group-hover:bg-white transition-colors shrink-0">
@@ -929,11 +984,33 @@ function FaleComLummaPage() {
                               return;
                             }
 
+                            const resolvedProfile = p.is_pregnant
+                              ? 'gestante'
+                              : p.gender === 'male'
+                              ? 'adulto_masculino'
+                              : p.gender === 'female'
+                              ? 'adulto_feminino'
+                              : undefined;
+
+                            if (pendingTrigger === 'analise_completa') {
+                              const resolved = resolveAnaliseCompleta(resolvedProfile, p.pregnancy_type ?? undefined);
+                              if (!resolved) {
+                                toast.error("Perfil incompleto para roteamento da Análise Completa.");
+                                setPendingTrigger(undefined);
+                                return;
+                              }
+                              navigate({
+                                to: "/app/chat/$patientId",
+                                params: { patientId: p.id },
+                                search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+                              });
+                              setPendingTrigger(undefined);
+                              return;
+                            }
+
                             const agentId = pendingTrigger ? getAgentForCard(
                               pendingTrigger,
-                              p.is_pregnant 
-                                ? 'gestante' 
-                                : p.gender === 'male' ? 'adulto_masculino' : p.gender === 'female' ? 'adulto_feminino' : undefined,
+                              resolvedProfile,
                               p.pregnancy_type ?? undefined
                             )?.agent_id : undefined;
 
