@@ -225,6 +225,7 @@ export function useAgentConfig() {
     getSuperAgentTasks,
     getSuperAgentCards,
     resolveCardToTask,
+    resolveAnaliseCompleta,
     checkCardTriggerAvailable,
     refresh: loadAgents,
   };
