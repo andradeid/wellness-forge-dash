@@ -193,16 +193,31 @@ function FaleComLummaPage() {
           : data.gender === 'female'
           ? 'adulto_feminino'
           : undefined;
-        const agentId = getAgentForCard(
-          pendingTrigger,
-          resolvedProfile,
-          data.pregnancy_type ?? undefined
-        )?.agent_id;
-        navigate({
-          to: "/app/chat/$patientId",
-          params: { patientId: data.id },
-          search: { module: pendingTrigger, agent: agentId },
-        });
+
+        if (pendingTrigger === 'analise_completa') {
+          const resolved = resolveAnaliseCompleta(resolvedProfile, data.pregnancy_type ?? undefined);
+          if (!resolved) {
+            toast.error("Perfil incompleto para roteamento da Análise Completa.");
+            return;
+          }
+          navigate({
+            to: "/app/chat/$patientId",
+            params: { patientId: data.id },
+            search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+          });
+          setPendingTrigger(undefined);
+        } else {
+          const agentId = getAgentForCard(
+            pendingTrigger,
+            resolvedProfile,
+            data.pregnancy_type ?? undefined
+          )?.agent_id;
+          navigate({
+            to: "/app/chat/$patientId",
+            params: { patientId: data.id },
+            search: { module: pendingTrigger, agent: agentId },
+          });
+        }
       } else {
         navigate({
           to: "/app/chat/$patientId",
