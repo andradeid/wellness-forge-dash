@@ -514,23 +514,41 @@ export function useDifyChat(
         const loadedMessages = (msgs as ChatMessage[]) ?? [];
         setMessages(loadedMessages);
         const lastMsgWithAgent = (msgs as any[])?.slice().reverse().find(m => m.agent_type);
-        // Prioridade: agent_type salvo em patient_chats > agente da última mensagem.
-        // Isso preserva a seleção do usuário mesmo em chats sem mensagens ainda.
+        // Prioridade: agent_type salvo em patient_chats > agente da última
+        // mensagem > initialAgentType (URL). Nunca zeramos um agente já
+        // definido em memória (ex: super_masculino vindo do card
+        // "Análise Completa") só porque o chat recém-criado ainda não tem
+        // agent_type persistido.
         const storedAgent = (chosenChat as any)?.agent_type as string | null | undefined;
-        const resolvedAgent = (storedAgent && storedAgent.trim()) || lastMsgWithAgent?.agent_type || "";
+        const initialAgent = options?.initialAgentType?.trim() || "";
+        const resolvedAgent =
+          (storedAgent && storedAgent.trim()) ||
+          lastMsgWithAgent?.agent_type ||
+          initialAgent;
         if (resolvedAgent) {
           setAgentType(resolvedAgent);
-          // Rehidrata o conversation_id do agente atual a partir do mapa.
           const mapped = conversationMapRef.current[resolvedAgent];
           if (mapped) conversationIdRef.current = mapped;
-        } else {
-          setAgentType(""); // Garante que comece vazio se não houver histórico de agente na conversa
         }
         // Rehidrata selected_task (Super Agentes).
         const storedTask = (chosenChat as any)?.selected_task as string | null | undefined;
         if (storedTask && storedTask.trim()) {
           selectedTaskRef.current = storedTask.trim();
           setSelectedTaskState(storedTask.trim());
+        }
+        // Chat recém-criado sem agent/task persistidos: salva o que veio
+        // do card "Análise Completa" (URL) para sobreviver a reload.
+        if (!chosenChat && id && !readOnly) {
+          const initTask = selectedTaskRef.current;
+          if (initialAgent || initTask) {
+            void (supabase as any)
+              .from("patient_chats")
+              .update({
+                ...(initialAgent ? { agent_type: initialAgent } : {}),
+                ...(initTask ? { selected_task: initTask } : {}),
+              })
+              .eq("id", id);
+          }
         }
         setActiveAgents(Object.keys(conversationMapRef.current));
 
