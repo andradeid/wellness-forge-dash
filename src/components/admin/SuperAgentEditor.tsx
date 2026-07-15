@@ -583,14 +583,9 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Ícone (lucide)
+                    Ícone
                   </Label>
-                  <Input
-                    value={newCardIcon}
-                    onChange={(e) => setNewCardIcon(e.target.value)}
-                    placeholder="Scale"
-                    className="rounded-md text-sm font-mono"
-                  />
+                  <IconPickerButton value={newCardIcon || null} onChange={setNewCardIcon} />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
