@@ -143,6 +143,44 @@ export function useAgentConfig() {
   }, [tasks, cards]);
 
   /**
+   * Roteia o card "Análise Completa" para o Super Agente correto (agent_id + task_key)
+   * conforme o perfil clínico da paciente.
+   *
+   * SEGURANÇA CLÍNICA: Sem perfil definido (ou gestante sem pregnancy_type),
+   * devolve `null` — o call site deve bloquear e pedir para completar o cadastro.
+   *
+   * Mapeamento:
+   *  - adulto_masculino  → super_masculino
+   *  - adulto_feminino   → super_feminino
+   *  - gestante+single   → super_gestante_mono
+   *  - gestante+multiple → super_gestante_gemelar
+   */
+  const resolveAnaliseCompleta = useCallback((
+    patientProfile?: string,
+    pregnancyType?: string,
+  ): { agentId: string; taskKey: string } | null => {
+    let targetAgent: string | null = null;
+    if (patientProfile === 'adulto_masculino') {
+      targetAgent = 'super_masculino';
+    } else if (patientProfile === 'adulto_feminino') {
+      targetAgent = 'super_feminino';
+    } else if (patientProfile === 'gestante') {
+      if (pregnancyType === 'multiple') targetAgent = 'super_gestante_gemelar';
+      else if (pregnancyType === 'single') targetAgent = 'super_gestante_mono';
+      else return null;
+    } else {
+      return null;
+    }
+    const agentTaskIds = new Set(tasks.filter(t => t.agent_id === targetAgent).map(t => t.id));
+    const card = cards.find(c => c.card_trigger === 'analise_completa' && agentTaskIds.has(c.task_id));
+    if (!card) return null;
+    const task = tasks.find(t => t.id === card.task_id);
+    if (!task) return null;
+    return { agentId: task.agent_id, taskKey: task.task_key };
+  }, [tasks, cards]);
+
+
+  /**
    * Verifica se um card_trigger já existe em dify_agents ou super_agent_cards.
    * Usado pelo painel admin para bloquear duplicatas antes de salvar.
    */
