@@ -475,17 +475,13 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                         ))}
                       </SelectContent>
                     </Select>
-                    <Input
-                      value={c.icon ?? ""}
-                      onChange={(e) =>
+                    <IconPickerButton
+                      value={c.icon}
+                      onChange={(icon) =>
                         setCards((all) =>
-                          all.map((x) =>
-                            x.id === c.id ? { ...x, icon: e.target.value || null } : x,
-                          ),
+                          all.map((x) => (x.id === c.id ? { ...x, icon } : x)),
                         )
                       }
-                      placeholder="Ícone (ex: Scale)"
-                      className="rounded-md text-xs font-mono"
                     />
                     <Input
                       value={c.card_trigger ?? ""}
@@ -587,14 +583,9 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Ícone (lucide)
+                    Ícone
                   </Label>
-                  <Input
-                    value={newCardIcon}
-                    onChange={(e) => setNewCardIcon(e.target.value)}
-                    placeholder="Scale"
-                    className="rounded-md text-sm font-mono"
-                  />
+                  <IconPickerButton value={newCardIcon || null} onChange={setNewCardIcon} />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
