@@ -984,11 +984,33 @@ function FaleComLummaPage() {
                               return;
                             }
 
+                            const resolvedProfile = p.is_pregnant
+                              ? 'gestante'
+                              : p.gender === 'male'
+                              ? 'adulto_masculino'
+                              : p.gender === 'female'
+                              ? 'adulto_feminino'
+                              : undefined;
+
+                            if (pendingTrigger === 'analise_completa') {
+                              const resolved = resolveAnaliseCompleta(resolvedProfile, p.pregnancy_type ?? undefined);
+                              if (!resolved) {
+                                toast.error("Perfil incompleto para roteamento da Análise Completa.");
+                                setPendingTrigger(undefined);
+                                return;
+                              }
+                              navigate({
+                                to: "/app/chat/$patientId",
+                                params: { patientId: p.id },
+                                search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+                              });
+                              setPendingTrigger(undefined);
+                              return;
+                            }
+
                             const agentId = pendingTrigger ? getAgentForCard(
                               pendingTrigger,
-                              p.is_pregnant 
-                                ? 'gestante' 
-                                : p.gender === 'male' ? 'adulto_masculino' : p.gender === 'female' ? 'adulto_feminino' : undefined,
+                              resolvedProfile,
                               p.pregnancy_type ?? undefined
                             )?.agent_id : undefined;
 
