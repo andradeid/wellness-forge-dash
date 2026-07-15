@@ -1053,7 +1053,10 @@ function ChatPage() {
                             onRemoveAttachment={removeUploadItem}
                             toolbarSlot={
                               <div className="flex items-center gap-2 flex-wrap min-w-0">
-                                {moduleSelector}
+                                {/* Super Agente já vinculado (via card "Análise Completa"):
+                                    esconde o seletor de módulo/agente. O usuário só troca
+                                    a TAREFA dentro do super agente, nunca o agente em si. */}
+                                {!isSuperActive && moduleSelector}
                                 {taskSelector}
                               </div>
                             }
