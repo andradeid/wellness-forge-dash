@@ -57,7 +57,7 @@ function FaleComLummaPage() {
   const { module: searchModule } = Route.useSearch();
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const [message, setMessage] = useState("");
-  const { agents, cards: superAgentCards, tasks: superAgentTasks, getAgentForCard, requiresPatient, loading: loadingAgents } = useAgentConfig();
+  const { agents, cards: superAgentCards, tasks: superAgentTasks, getAgentForCard, resolveAnaliseCompleta, requiresPatient, loading: loadingAgents } = useAgentConfig();
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
