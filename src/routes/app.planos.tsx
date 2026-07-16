@@ -108,15 +108,6 @@ type PackRow = {
   perks: string[];
 };
 
-type TransactionRow = {
-  id: string;
-  type: string;
-  amount: number;
-  balance_after: number;
-  agent_label: string | null;
-  message_preview: string | null;
-  created_at: string;
-};
 
 function PlanosCreditosPage() {
   const { user } = useAuth();
