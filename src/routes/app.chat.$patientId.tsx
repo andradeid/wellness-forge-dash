@@ -1084,14 +1084,29 @@ function ChatPage() {
                         </Popover>
                       ) : null;
 
+                      const needsTask = isSuperActive && !selectedTask;
+                      const needsAgent = !agentType;
+                      const blocked = needsAgent || needsTask;
+
                       return (
                         <>
                           {agentType !== "exam" && examContext && null}
 
+                          {blocked && (
+                            <div className="mb-2 flex items-center justify-center gap-2 rounded-full border border-amber-300/70 bg-amber-50/80 px-4 py-1.5 text-[11px] font-medium text-amber-900 shadow-sm">
+                              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                              <span>
+                                {needsAgent
+                                  ? "Selecione um agente abaixo para começar a conversa."
+                                  : "Escolha uma tarefa do Super Agente para liberar o envio."}
+                              </span>
+                            </div>
+                          )}
+
                           <ChatInput
                             onSubmit={wrappedSend}
-                            disabled={thinking || !chatId || !agentType}
-                            hasModule={!!agentType}
+                            disabled={thinking || !chatId || blocked}
+                            hasModule={!!agentType && !needsTask}
                             uploadProgress={uploadProgress}
                             onRemoveAttachment={removeUploadItem}
                             toolbarSlot={
