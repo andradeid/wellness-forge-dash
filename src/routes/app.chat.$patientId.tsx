@@ -276,18 +276,22 @@ function ChatPage() {
 
       const currentAgent = agents.find(a => a.agent_id === agentType);
       const trigger = currentAgent?.card_trigger;
-      const placeholderByTrigger: Record<string, string> = {
-        composicao_corporal_foto: "Analise a composição corporal a partir da foto anexada.",
-        estimativa_refeicao_foto: "Estime as calorias e macronutrientes da refeição na foto anexada.",
+      const placeholderByKey: Record<string, string> = {
+        composicao_corporal_foto: "Analise a composição corporal a partir da foto anexada do paciente.",
+        estimativa_refeicao_foto: "Analise a foto do prato de comida anexada e estime porções, calorias e macronutrientes (proteína, carboidrato, gordura) de cada alimento visível.",
         nutricao_visual: "Analise a imagem anexada e gere a orientação nutricional visual correspondente.",
       };
+      // Super Agente: a intenção real vem de selectedTask (task_key), não do card_trigger do agente.
       const fallback = "Analise o exame anexado.";
-      const filePlaceholder = (trigger && placeholderByTrigger[trigger]) || fallback;
+      const filePlaceholder =
+        (selectedTask && placeholderByKey[selectedTask]) ||
+        (trigger && placeholderByKey[trigger]) ||
+        fallback;
 
       const finalChatText = text?.trim() || (files.length > 0 ? filePlaceholder : "");
       await sendMessage(finalChatText, files);
     },
-    [sendMessage, agents, agentType],
+    [sendMessage, agents, agentType, selectedTask],
   );
 
   const handleGenerateRecipe = useCallback(
