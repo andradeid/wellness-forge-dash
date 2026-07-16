@@ -63,6 +63,7 @@ const planLabel = (p?: string | null) =>
 function SettingsPage() {
   const { user, profile, refresh } = useAuth();
   const [tab, setTab] = useState<string>("identity");
+  const navigate = useNavigate();
 
   // Identity
   const [fullName, setFullName] = useState("");
