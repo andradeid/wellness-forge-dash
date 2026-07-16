@@ -103,8 +103,17 @@ function AppLayout() {
   }, [session, loading, navigate]);
 
   // RBAC: redireciona para /unauthorized se a role atual não tiver permissão.
+  // Importante: se a rota é administrativa e o role AINDA não carregou,
+  // também bloqueamos — assim um usuário nutri nunca vê a UI admin
+  // durante a janela entre login e carregamento do role.
   useEffect(() => {
-    if (loading || !session || !sessionAllowed || !role) return;
+    if (loading || !session || !sessionAllowed) return;
+    const isAdminRoute = pathname.startsWith("/app/admin");
+    if (isAdminRoute && !role) {
+      // Ainda carregando role em rota admin: não deixa renderizar.
+      return;
+    }
+    if (!role) return;
     if (!isAllowed(pathname, role)) {
       void navigate({ to: "/unauthorized", replace: true }).catch((error) => {
         console.warn("[app] falha ao redirecionar para não autorizado", error);
