@@ -24,7 +24,6 @@ function NotFoundComponent() {
           className="text-8xl font-light bg-clip-text text-transparent"
           style={{
             backgroundImage: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-            fontFamily: "'Instrument Serif', serif",
           }}
         >
           404
