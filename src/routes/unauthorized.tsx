@@ -24,7 +24,7 @@ function UnauthorizedPage() {
         <div>
           <h1
             className="text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
+            
           >
             Acesso negado
           </h1>

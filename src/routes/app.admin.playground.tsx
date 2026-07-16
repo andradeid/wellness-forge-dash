@@ -257,7 +257,7 @@ function PlaygroundPage() {
         <div>
           <h1
             className="text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
+            
           >
             Playground · Sandbox do Super Admin
           </h1>

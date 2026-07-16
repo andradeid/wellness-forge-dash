@@ -270,7 +270,7 @@ function EvolutionPage() {
         <div className="px-6 pb-4">
           <h1
             className="text-2xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
+            
           >
             Evolução clínica
           </h1>

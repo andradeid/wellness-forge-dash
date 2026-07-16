@@ -708,7 +708,7 @@ function FaleComLummaPage() {
             />
             <h1 
               className="text-3xl sm:text-5xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent mb-3 sm:mb-4 min-h-[1.2em]"
-              style={{ fontFamily: "'Instrument Serif', serif" }}
+              
             >
               {displayText}
             </h1>

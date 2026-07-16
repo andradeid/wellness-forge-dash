@@ -567,7 +567,7 @@ function DashboardPage() {
         <div className="min-w-0">
           <h1
             className="text-2xl sm:text-3xl bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent break-words"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
+            
           >
             {greeting}
           </h1>
@@ -1267,7 +1267,7 @@ function TestEnvironmentNotice() {
             <h2
               id="test-env-title"
               className="text-2xl text-foreground leading-tight"
-              style={{ fontFamily: "'Instrument Serif', serif" }}
+              
             >
               ⚠️ Ambiente de Validação Técnica{" "}
               <span className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-transparent">

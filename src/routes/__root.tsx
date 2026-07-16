@@ -31,7 +31,7 @@ function NotFoundComponent() {
         </h1>
         <h2
           className="mt-4 text-3xl text-[#3d5a4a]"
-          style={{ fontFamily: "'Instrument Serif', serif" }}
+          
         >
           Página não encontrada
         </h2>
