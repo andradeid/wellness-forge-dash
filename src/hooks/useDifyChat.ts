@@ -1095,6 +1095,41 @@ export function useDifyChat(
               } else {
                 if (!assistantSavedRef.current) {
                   assistantSavedRef.current = true;
+
+                  // Dify fechou o workflow sem emitir nenhum chunk de `answer`.
+                  // Log + toast (mesma mensagem do caso "stream sem message_end")
+                  // e não persiste linha vazia. Mantém o conversation_id para
+                  // preservar continuidade da thread.
+                  if (!fullText.trim()) {
+                    console.warn("[dify] message_end sem answer", {
+                      event: data.event,
+                      agent_type: agentType,
+                      selected_task: selectedTask ?? null,
+                      conversation_id: data.conversation_id ?? null,
+                      chat_id: chatId,
+                    });
+                    if (data.conversation_id) {
+                      conversationIdRef.current = data.conversation_id;
+                      if (agentType) {
+                        conversationMapRef.current = { ...conversationMapRef.current, [agentType]: data.conversation_id };
+                        setActiveAgents(Object.keys(conversationMapRef.current));
+                      }
+                      await (supabase as any)
+                        .from("patient_chats")
+                        .update({
+                          dify_conversation_id: data.conversation_id,
+                          dify_conversations: conversationMapRef.current,
+                        })
+                        .eq("id", chatId);
+                    }
+                    setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+                    toast.error("A Lumma não conseguiu responder desta vez", {
+                      description: "O agente encerrou sem gerar resposta. Por favor, envie sua mensagem novamente.",
+                      duration: 8000,
+                    });
+                    continue;
+                  }
+
                   if (data.conversation_id) {
                     conversationIdRef.current = data.conversation_id;
                     if (agentType) {
@@ -1109,6 +1144,7 @@ export function useDifyChat(
                       })
                       .eq("id", chatId);
                   }
+
 
                   // Super Agentes também retornam análise de exames em formato
                   // estruturado; tratamos qualquer resposta com `agent_type` de
