@@ -636,58 +636,6 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* PREFERÊNCIAS DA IA */}
-        <TabsContent value="ai">
-          <Card className="rounded-2xl shadow-md border-0">
-            <CardHeader>
-              <CardTitle className="font-serif text-2xl font-normal">Preferências da Lumma</CardTitle>
-              <CardDescription>
-                Defina o tom dos laudos e respostas geradas pela Lumma.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={aiTone}
-                onValueChange={(v) => saveTone(v as any)}
-                className="grid sm:grid-cols-2 gap-4"
-              >
-                <label
-                  htmlFor="tone-technical"
-                  className={`cursor-pointer rounded-2xl border p-5 transition-all ${aiTone === "technical" ? "border-transparent ring-2 ring-offset-2 ring-[#e8a04c]" : "hover:bg-muted/40"}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium">Mais técnico</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Linguagem clínica, terminologia precisa e referências bioquímicas.
-                      </p>
-                    </div>
-                    <RadioGroupItem id="tone-technical" value="technical" />
-                  </div>
-                </label>
-                <label
-                  htmlFor="tone-educational"
-                  className={`cursor-pointer rounded-2xl border p-5 transition-all ${aiTone === "educational" ? "border-transparent ring-2 ring-offset-2 ring-[#e89bcf]" : "hover:bg-muted/40"}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium">Mais educativo / simples</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Explicações acessíveis, ideais para compartilhar com o paciente.
-                      </p>
-                    </div>
-                    <RadioGroupItem id="tone-educational" value="educational" />
-                  </div>
-                </label>
-              </RadioGroup>
-              {savingTone && (
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-2">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Salvando preferência...
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       <div className="mt-8 pt-6 border-t text-xs text-muted-foreground flex items-center justify-end">
