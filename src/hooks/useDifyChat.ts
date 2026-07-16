@@ -347,6 +347,15 @@ export function useDifyChat(
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
+  // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
+  // encerra sem answer. Limitado a UMA tentativa por envio original.
+  const lastRequestRef = useRef<{
+    text: string;
+    files: File[];
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string };
+  } | null>(null);
+  const retryUsedRef = useRef<boolean>(false);
+  const sendMessageRef = useRef<((text: string, files: File[], opts?: any) => Promise<void>) | null>(null);
   // Espelha o estado de `thinking` em ref para uso síncrono dentro do init().
   // Usado para impedir que uma re-execução do init (ex.: troca de role/readOnly
   // durante TOKEN_REFRESHED) sobrescreva o stream em andamento com um snapshot
@@ -593,9 +602,15 @@ export function useDifyChat(
   const sendMessage = useCallback(async (
     text: string,
     files: File[],
-    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string },
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string; _isRetry?: boolean },
   ) => {
     if (!chatId || readOnly) return;
+    // Guarda o pedido pra permitir "Tentar novamente" ao receber empty answer.
+    // Envio novo (não-retry) reseta o crédito de retentativa.
+    if (!opts?._isRetry) {
+      retryUsedRef.current = false;
+      lastRequestRef.current = { text, files, opts };
+    }
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
     const agentType = opts?.overrideAgent ?? agentTypeState;
@@ -1123,9 +1138,23 @@ export function useDifyChat(
                         .eq("id", chatId);
                     }
                     setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+                    const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
                     toast.error("A Lumma não conseguiu responder desta vez", {
-                      description: "O agente encerrou sem gerar resposta. Por favor, envie sua mensagem novamente.",
-                      duration: 8000,
+                      description: canRetry
+                        ? "O agente encerrou sem gerar resposta. Você pode tentar novamente."
+                        : "O agente encerrou sem gerar resposta. Por favor, envie sua mensagem novamente.",
+                      duration: 10000,
+                      action: canRetry
+                        ? {
+                            label: "Tentar novamente",
+                            onClick: () => {
+                              if (retryUsedRef.current || !lastRequestRef.current) return;
+                              retryUsedRef.current = true;
+                              const req = lastRequestRef.current;
+                              sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+                            },
+                          }
+                        : undefined,
                     });
                     continue;
                   }
@@ -1268,9 +1297,23 @@ export function useDifyChat(
         // Stream fechou sem NENHUM conteúdo — tipicamente workflow do Dify sem branch
         // para a task selecionada (ex.: super agente + tarefa não implementada).
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
+        const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
         toast.error("A Lumma não conseguiu responder desta vez", {
-          description: "Houve uma falha no processamento da tarefa. Por favor, envie sua mensagem novamente.",
-          duration: 8000,
+          description: canRetry
+            ? "Houve uma falha no processamento da tarefa. Você pode tentar novamente."
+            : "Houve uma falha no processamento da tarefa. Por favor, envie sua mensagem novamente.",
+          duration: 10000,
+          action: canRetry
+            ? {
+                label: "Tentar novamente",
+                onClick: () => {
+                  if (retryUsedRef.current || !lastRequestRef.current) return;
+                  retryUsedRef.current = true;
+                  const req = lastRequestRef.current;
+                  sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+                },
+              }
+            : undefined,
         });
       }
     } catch (e: any) {
@@ -1445,6 +1488,12 @@ export function useDifyChat(
       selectedTask: opts?.selectedTask,
     });
   }, [chatId, readOnly, sendMessage, agentType]);
+
+  // Mantém a ref sincronizada com o sendMessage atual para o botão "Tentar
+  // novamente" do toast disparar após o hook re-renderizar.
+  useEffect(() => {
+    sendMessageRef.current = sendMessage as any;
+  }, [sendMessage]);
 
   return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask };
 }
