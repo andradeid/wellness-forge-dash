@@ -795,8 +795,9 @@ export function useDifyChat(
 
     const saveAssistantToSupabase = async (rawContent: string, convId?: string) => {
       const content = stripAgentScaffolding(rawContent);
-      if (!content.trim() && !convId) return;
 
+      // Sempre persiste o conversation_id do Dify (mesmo que a resposta tenha
+      // vindo vazia) para preservar a continuidade da thread naquele agente.
       if (convId) {
         conversationIdRef.current = convId;
         if (agentType) {
@@ -810,6 +811,20 @@ export function useDifyChat(
             dify_conversations: conversationMapRef.current,
           })
           .eq("id", chatId);
+      }
+
+      // Guard: nunca gravar mensagem assistant vazia. O Dify pode fechar o
+      // workflow (message_end/workflow_finished) sem emitir `answer` — nesse
+      // caso o placeholder local é removido e o chamador exibe o toast.
+      if (!content.trim()) {
+        console.warn("[dify] skip empty assistant save", {
+          chatId,
+          agent_type: agentType,
+          selected_task: selectedTask ?? null,
+          conversation_id: convId ?? null,
+        });
+        setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+        return false;
       }
 
       const processingMs = Math.round(performance.now() - startedAt);
@@ -836,7 +851,9 @@ export function useDifyChat(
           )
         );
       }
+      return true;
     };
+
 
     setMessages((prev) => [...prev, { ...userMsg, agent_type: agentType }, { id: assistantId, role: "assistant", content: "", agent_type: agentType, created_at: new Date().toISOString() }]);
 
