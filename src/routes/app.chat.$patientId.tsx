@@ -117,7 +117,10 @@ function ChatPage() {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
+    initialSelectedTask: initialTask ?? null,
+    forceNewChat: !!initialAgent && !forceChatId,
   });
+
 
   // Super Agente: propaga o task_key vindo da URL para o hook. Consumido na
   // primeira mensagem que o usuário enviar. Só faz efeito quando a rota vem
@@ -125,19 +128,23 @@ function ChatPage() {
   useEffect(() => {
     if (initialTask) {
       setSelectedTask(initialTask);
-      // limpa o ?task da URL para não reaplicar em navegações internas
+    }
+    // Limpa ?agent e ?task da URL após aplicar — evita que um reload
+    // desse chat crie outra conversa nova toda vez.
+    if (initialTask || initialAgent) {
       navigate({
         search: {
           chatId: forceChatId,
           messageId: highlightId,
           module: initialModule,
-          agent: initialAgent,
+          agent: undefined,
           task: undefined,
         } as any,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTask]);
+  }, [initialTask, initialAgent]);
+
 
   const [showModuleSelector, setShowModuleSelector] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);

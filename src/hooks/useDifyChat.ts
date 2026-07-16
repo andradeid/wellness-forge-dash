@@ -318,10 +318,13 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
 
 export function useDifyChat(
   patientId: string,
-  options?: { readOnly?: boolean; forceChatId?: string | null; initialAgentType?: string },
+  options?: { readOnly?: boolean; forceChatId?: string | null; initialAgentType?: string; forceNewChat?: boolean; initialSelectedTask?: string | null },
 ) {
   const readOnly = options?.readOnly ?? false;
   const forceChatId = options?.forceChatId ?? null;
+  const forceNewChat = options?.forceNewChat ?? false;
+  const initialSelectedTask = options?.initialSelectedTask ?? null;
+
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
@@ -426,6 +429,11 @@ export function useDifyChat(
           .eq("id", forceChatId)
           .maybeSingle();
         if (data) chosenChat = { id: data.id, dify_conversation_id: data.dify_conversation_id, exam_context: data.exam_context, dify_conversations: data.dify_conversations, agent_type: data.agent_type, selected_task: data.selected_task };
+      } else if (forceNewChat && !readOnly) {
+        // Vindo da home com ?agent=&task=: sempre inicia uma nova conversa
+        // com o Super Agente já selecionado, mesmo que o paciente tenha
+        // conversas anteriores. Impede o "cai na última conversa".
+        chosenChat = null;
       } else {
         let listQuery = (supabase as any)
           .from("patient_chats")
@@ -446,6 +454,7 @@ export function useDifyChat(
           chosenChat = list.find((c) => c.id === lastChatId) ?? list[0];
         }
       }
+
 
       const [{ data: profile }, { data: patient }] = await Promise.all([
         (supabase as any)
@@ -494,14 +503,18 @@ export function useDifyChat(
           if (!cancelled) setChatId("");
           return;
         }
+        const insertPayload: Record<string, unknown> = { patient_id: patientId, created_by: user.id };
+        if (options?.initialAgentType) insertPayload.agent_type = options.initialAgentType;
+        if (initialSelectedTask) insertPayload.selected_task = initialSelectedTask;
         const { data: created, error: cErr } = await (supabase as any)
           .from("patient_chats")
-          .insert({ patient_id: patientId, created_by: user.id })
+          .insert(insertPayload)
           .select("id, dify_conversation_id, dify_conversations")
           .single();
         if (cErr) { setError(cErr.message); return; }
         id = created.id;
         conversationMapRef.current = {};
+
       } else {
         const rawMap = (chosenChat as any).dify_conversations;
         const map: Record<string, string> =
