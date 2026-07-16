@@ -1048,7 +1048,7 @@ function ChatPage() {
                           >
                             <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-foreground/40 flex items-center gap-1.5">
                               <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
-                              Tarefas · {currentAgent?.label}
+                              Tarefas · {currentAgent?.label?.replace(/^Super\s+/i, "")}
                             </div>
                             <div className="space-y-1">
                               {tasksForCurrentSuper.map(t => {
