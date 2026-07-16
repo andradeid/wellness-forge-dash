@@ -112,7 +112,7 @@ function ChatPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
-  const { agents, tasks: superAgentTasks, cards: superAgentCards, getAgentForCard, loading: loadingAgents } = useAgentConfig();
+  const { agents, tasks: superAgentTasks, cards: superAgentCards, getAgentForCard, resolveAnaliseCompleta, loading: loadingAgents } = useAgentConfig();
   const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
@@ -925,8 +925,12 @@ function ChatPage() {
                                 );
                               })}
 
-                              {/* Super Agentes — cards de tarefa vinculados a um super_agent */}
                               {(() => {
+                                // Dedupe por card_trigger: cards que compartilham trigger
+                                // (ex: "analise_completa" vinculado aos 4 super agentes por perfil)
+                                // aparecem como UM único card. O agente correto é resolvido no clique
+                                // via resolveAnaliseCompleta() a partir do perfil da paciente.
+                                const seenTriggers = new Set<string>();
                                 const activeSuperCards = superAgentCards
                                   .filter(c => c.is_active)
                                   .map(card => {
@@ -936,7 +940,13 @@ function ChatPage() {
                                     if (!agent) return null;
                                     return { card, task, agent };
                                   })
-                                  .filter((x): x is { card: typeof superAgentCards[number]; task: typeof superAgentTasks[number]; agent: typeof agents[number] } => x !== null);
+                                  .filter((x): x is { card: typeof superAgentCards[number]; task: typeof superAgentTasks[number]; agent: typeof agents[number] } => x !== null)
+                                  .filter(({ card }) => {
+                                    if (!card.card_trigger) return true;
+                                    if (seenTriggers.has(card.card_trigger)) return false;
+                                    seenTriggers.add(card.card_trigger);
+                                    return true;
+                                  });
 
                                 if (activeSuperCards.length === 0) return null;
 
@@ -948,13 +958,33 @@ function ChatPage() {
                                       Super Agentes
                                     </div>
                                     {activeSuperCards.map(({ card, task, agent }) => {
-                                      const isActive = agentType === agent.agent_id && selectedTask === task.task_key;
+                                      const isRoutedByProfile = card.card_trigger === 'analise_completa';
+                                      // Para cards roteados por perfil, resolve o agente real (por paciente)
+                                      // para ativar o highlight corretamente.
+                                      const resolved = isRoutedByProfile
+                                        ? resolveAnaliseCompleta(patientProfile, patient?.pregnancy_type)
+                                        : null;
+                                      const effectiveAgentId = resolved?.agentId ?? agent.agent_id;
+                                      const effectiveTaskKey = resolved?.taskKey ?? task.task_key;
+                                      const isActive = agentType === effectiveAgentId && selectedTask === effectiveTaskKey;
                                       return (
                                         <button
                                           key={card.id}
                                           onClick={() => {
-                                            setAgentType(agent.agent_id);
-                                            setSelectedTask(task.task_key);
+                                            if (isRoutedByProfile) {
+                                              const r = resolveAnaliseCompleta(patientProfile, patient?.pregnancy_type);
+                                              if (!r) {
+                                                toast.error(
+                                                  "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
+                                                );
+                                                return;
+                                              }
+                                              setAgentType(r.agentId);
+                                              setSelectedTask(r.taskKey);
+                                            } else {
+                                              setAgentType(agent.agent_id);
+                                              setSelectedTask(task.task_key);
+                                            }
                                             setModuleOpen(false);
                                           }}
                                           className={cn(
