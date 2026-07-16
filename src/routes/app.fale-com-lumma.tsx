@@ -734,176 +734,156 @@ function FaleComLummaPage() {
 
               {/* Análises Clínicas — títulos unificados (item 3 auditoria) */}
               <AnimatePresence>
-                {showCards && (
+                {showCards && (() => {
+                  // Super Agentes deduplicados por card_trigger — entram no mesmo grid,
+                  // antes dos cards clínicos, com identidade visual unificada.
+                  const activeSuperCards = superAgentCards.filter((c) => c.is_active);
+                  const seenTriggers = new Set<string>();
+                  const dedupedSuper = activeSuperCards.filter((c) => {
+                    if (!c.card_trigger) return true;
+                    if (seenTriggers.has(c.card_trigger)) return false;
+                    seenTriggers.add(c.card_trigger);
+                    return true;
+                  });
 
-                  <div className="space-y-4">
-                    <motion.h3
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
-                    >
-                      Análises Clínicas
-                    </motion.h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-                      {[
-                        { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
-                        { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
-                        { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" },
-                        { trigger: "estimativa_refeicao_foto", icon: Utensils, title: "Refeição por Foto", color: "#e8a04c" },
-                        { trigger: "composicao_corporal_foto", icon: Activity, title: "Composição por Foto", color: "#4ade80" },
-                        { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" },
-                        { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
-                        { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
-                        { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" },
-                        { trigger: "perguntas_clinicas", icon: MessageSquare, title: "Perguntas Clínicas", color: "#e8a04c" },
-                      ].map((card, idx) => {
-                        const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
-                        // Exames de sangue depende do perfil clínico do paciente — se ainda não há paciente
-                        // selecionado, mantemos o card visível e abrimos a identificação no clique.
-                        // "perguntas_clinicas" é dúvida geral do nutri (sem paciente) — reaproveita o
-                        // agente "reasoning" (mesmo de Casos Clínicos) mas sem trava de paciente.
-                        if (!agent && card.trigger !== "exames_de_sangue" && card.trigger !== "perguntas_clinicas") return null;
+                  const handleSuperClick = (card: typeof activeSuperCards[number]) => {
+                    const task = superAgentTasks.find((t) => t.id === card.task_id);
+                    if (!task || !task.is_active) return;
+                    const agent = agents.find((a) => a.agent_id === task.agent_id && a.is_super_agent);
+                    if (!agent || !agent.is_active) return;
 
-                        return (
-                          <motion.button
-                            key={card.trigger}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: idx * 0.08, ease: "easeOut" }}
-                            onClick={() => {
-                              if (card.trigger === "perguntas_clinicas") {
-                                startGeneralChat("reasoning");
-                                return;
-                              }
-                              if (!agent || requiresPatient(agent.agent_id)) {
-                                setPendingTrigger(card.trigger);
-                                setIdentifyOpen(true);
-                              } else {
-                                startGeneralChat(agent.agent_id);
-                              }
-                            }}
+                    const isRoutedByProfile = card.card_trigger === 'analise_completa';
+                    let target: { agentId: string; taskKey: string } = {
+                      agentId: agent.agent_id,
+                      taskKey: task.task_key,
+                    };
 
-                            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
-                          >
-                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
-                              <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
-                            </div>
-                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">{card.title}</span>
-                            <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
-                          </motion.button>
+                    if (isRoutedByProfile) {
+                      if (!selectedPatient) {
+                        setPendingSuperAgent(null);
+                        setPendingTrigger(card.card_trigger ?? undefined);
+                        setIdentifyOpen(true);
+                        return;
+                      }
+                      const resolved = resolveAnaliseCompleta(
+                        selectedPatient.profile,
+                        selectedPatient.pregnancy_type ?? undefined,
+                      );
+                      if (!resolved) {
+                        toast.error(
+                          "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
                         );
-                      })}
+                        return;
+                      }
+                      target = resolved;
+                    }
+
+                    setPendingSuperAgent(target);
+                    setPendingTrigger(undefined);
+                    if (requiresPatient(target.agentId) && !selectedPatient) {
+                      setIdentifyOpen(true);
+                    } else if (selectedPatient) {
+                      navigate({
+                        to: "/app/chat/$patientId",
+                        params: { patientId: selectedPatient.id },
+                        search: {
+                          agent: target.agentId,
+                          task: target.taskKey,
+                        } as any,
+                      });
+                      setPendingSuperAgent(null);
+                    } else {
+                      setIdentifyOpen(true);
+                    }
+                  };
+
+                  const clinicalCards = [
+                    { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
+                    { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
+                    { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" },
+                    { trigger: "estimativa_refeicao_foto", icon: Utensils, title: "Refeição por Foto", color: "#e8a04c" },
+                    { trigger: "composicao_corporal_foto", icon: Activity, title: "Composição por Foto", color: "#4ade80" },
+                    { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" },
+                    { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
+                    { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
+                    { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" },
+                    { trigger: "perguntas_clinicas", icon: MessageSquare, title: "Perguntas Clínicas", color: "#e8a04c" },
+                  ];
+
+                  return (
+                    <div className="space-y-4">
+                      <motion.h3
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                        className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2"
+                      >
+                        Análises Clínicas
+                      </motion.h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                        {dedupedSuper.map((card, idx) => {
+                          const task = superAgentTasks.find((t) => t.id === card.task_id);
+                          if (!task || !task.is_active) return null;
+                          const agent = agents.find((a) => a.agent_id === task.agent_id && a.is_super_agent);
+                          if (!agent || !agent.is_active) return null;
+                          const title = card.card_trigger === 'analise_completa'
+                            ? 'Análise e Consulta'
+                            : card.label;
+                          return (
+                            <motion.button
+                              key={card.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.5, delay: idx * 0.08, ease: "easeOut" }}
+                              onClick={() => handleSuperClick(card)}
+                              className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                            >
+                              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
+                                <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: "#e8a04c" }} />
+                              </div>
+                              <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">{title}</span>
+                              <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
+                            </motion.button>
+                          );
+                        })}
+                        {clinicalCards.map((card, idx) => {
+                          const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
+                          if (!agent && card.trigger !== "exames_de_sangue" && card.trigger !== "perguntas_clinicas") return null;
+
+                          return (
+                            <motion.button
+                              key={card.trigger}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.5, delay: (dedupedSuper.length + idx) * 0.08, ease: "easeOut" }}
+                              onClick={() => {
+                                if (card.trigger === "perguntas_clinicas") {
+                                  startGeneralChat("reasoning");
+                                  return;
+                                }
+                                if (!agent || requiresPatient(agent.agent_id)) {
+                                  setPendingTrigger(card.trigger);
+                                  setIdentifyOpen(true);
+                                } else {
+                                  startGeneralChat(agent.agent_id);
+                                }
+                              }}
+                              className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                            >
+                              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
+                                <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
+                              </div>
+                              <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">{card.title}</span>
+                              <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </AnimatePresence>
 
-              {/* Super Agentes — quiescente enquanto não houver cards cadastrados */}
-              {(() => {
-                const activeCards = superAgentCards.filter((c) => c.is_active);
-                // Dedupe por card_trigger: cards que compartilham trigger (ex: "analise_completa"
-                // vinculado aos 4 super agentes por perfil) aparecem como UM único card na Home.
-                // O agente correto é resolvido no clique via resolveAnaliseCompleta().
-                const seenTriggers = new Set<string>();
-                const dedupedCards = activeCards.filter((c) => {
-                  if (!c.card_trigger) return true;
-                  if (seenTriggers.has(c.card_trigger)) return false;
-                  seenTriggers.add(c.card_trigger);
-                  return true;
-                });
-                if (dedupedCards.length === 0) return null;
-                return (
-                  <div className="space-y-4">
-                    <motion.h3
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-xs font-semibold uppercase tracking-wider text-foreground/50 text-left px-2 flex items-center gap-2"
-                    >
-                      <Sparkles className="h-3 w-3 text-[#e8a04c]" />
-                      Super Agentes
-                    </motion.h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-                      {dedupedCards.map((card, idx) => {
-                        const task = superAgentTasks.find((t) => t.id === card.task_id);
-                        if (!task || !task.is_active) return null;
-                        const agent = agents.find((a) => a.agent_id === task.agent_id && a.is_super_agent);
-                        if (!agent || !agent.is_active) return null;
-
-                        // Card com roteamento por perfil (ex: "analise_completa"):
-                        // no clique, resolve o par (agent, task) certo conforme paciente.
-                        const isRoutedByProfile = card.card_trigger === 'analise_completa';
-
-                        const handleClick = () => {
-                          let target: { agentId: string; taskKey: string } = {
-                            agentId: agent.agent_id,
-                            taskKey: task.task_key,
-                          };
-
-                          if (isRoutedByProfile) {
-                            if (!selectedPatient) {
-                              // Precisa do perfil da paciente antes de rotear
-                              setPendingSuperAgent(null);
-                              setPendingTrigger(card.card_trigger ?? undefined);
-                              setIdentifyOpen(true);
-                              return;
-                            }
-                            const resolved = resolveAnaliseCompleta(
-                              selectedPatient.profile,
-                              selectedPatient.pregnancy_type ?? undefined,
-                            );
-                            if (!resolved) {
-                              toast.error(
-                                "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
-                              );
-                              return;
-                            }
-                            target = resolved;
-                          }
-
-                          setPendingSuperAgent(target);
-                          setPendingTrigger(undefined);
-                          if (requiresPatient(target.agentId) && !selectedPatient) {
-                            setIdentifyOpen(true);
-                          } else if (selectedPatient) {
-                            navigate({
-                              to: "/app/chat/$patientId",
-                              params: { patientId: selectedPatient.id },
-                              search: {
-                                agent: target.agentId,
-                                task: target.taskKey,
-                              } as any,
-                            });
-                            setPendingSuperAgent(null);
-                          } else {
-                            setIdentifyOpen(true);
-                          }
-                        };
-
-                        return (
-                          <motion.button
-                            key={card.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: idx * 0.06, ease: "easeOut" }}
-                            onClick={handleClick}
-                            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
-                          >
-                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/60 group-hover:bg-white transition-colors shrink-0">
-                              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-[#e8a04c]" />
-                            </div>
-                            <span className="text-sm font-medium text-foreground/80 flex-1 text-left sm:text-center">
-                              {card.label}
-                            </span>
-                            <ChevronDown className="h-4 w-4 text-foreground/30 sm:hidden -rotate-90" />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
 
 
