@@ -285,7 +285,7 @@ function SettingsPage() {
         </p>
       </header>
 
-      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+      <Tabs value={tab} onValueChange={(v) => { if (v === "subscription") { navigate({ to: "/app/planos" }); return; } setTab(v); }} className="space-y-6">
         <TabsList className="rounded-full p-1 bg-muted/60 flex-wrap h-auto">
           <TabsTrigger value="identity" className="rounded-full gap-2"><User className="h-4 w-4" />Identidade</TabsTrigger>
           <TabsTrigger value="branding" className="rounded-full gap-2"><Palette className="h-4 w-4" />Branding</TabsTrigger>
