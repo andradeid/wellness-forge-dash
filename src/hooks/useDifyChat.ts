@@ -503,14 +503,18 @@ export function useDifyChat(
           if (!cancelled) setChatId("");
           return;
         }
+        const insertPayload: Record<string, unknown> = { patient_id: patientId, created_by: user.id };
+        if (options?.initialAgentType) insertPayload.agent_type = options.initialAgentType;
+        if (initialSelectedTask) insertPayload.selected_task = initialSelectedTask;
         const { data: created, error: cErr } = await (supabase as any)
           .from("patient_chats")
-          .insert({ patient_id: patientId, created_by: user.id })
+          .insert(insertPayload)
           .select("id, dify_conversation_id, dify_conversations")
           .single();
         if (cErr) { setError(cErr.message); return; }
         id = created.id;
         conversationMapRef.current = {};
+
       } else {
         const rawMap = (chosenChat as any).dify_conversations;
         const map: Record<string, string> =
