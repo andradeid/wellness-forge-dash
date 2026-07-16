@@ -18,6 +18,10 @@ const MAP: Record<string, AgentLabel> = {
   estimativa_refeicao_foto: { label: "Refeição por Foto", icon: "🍽️", chip: "bg-amber-50 text-amber-700 border-amber-200" },
   composicao_corporal_foto: { label: "Composição por Foto", icon: "🧍", chip: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   nutricao_visual: { label: "Nutrição Visual", icon: "📷", chip: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+  super_masculino: { label: "Masculino", icon: "👨", chip: "bg-sky-50 text-sky-700 border-sky-200" },
+  super_feminino: { label: "Feminino", icon: "👩", chip: "bg-pink-50 text-pink-700 border-pink-200" },
+  super_gestante_mono: { label: "Gestante Única", icon: "🤰", chip: "bg-rose-50 text-rose-700 border-rose-200" },
+  super_gestante_gemelar: { label: "Gestante Gemelar", icon: "👶", chip: "bg-rose-50 text-rose-700 border-rose-200" },
 };
 
 export function getAgentLabel(agentId?: string | null): AgentLabel | null {
