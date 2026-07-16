@@ -129,9 +129,15 @@ export function PatientChatHistory({ patientId, currentChatId, readOnly }: Props
       if (cErr) throw cErr;
       toast.success("Conversa excluída.");
       const wasCurrent = pendingDelete.id === currentChatId;
+      const deletedId = pendingDelete.id;
       setConfirmStep(0);
       setPendingDelete(null);
       setReloadKey((k) => k + 1);
+      // Broadcast para que Home (fale-com-lumma) e Central de Conversas
+      // atualizem suas listas mesmo se já estiverem montadas.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("lumma:chat-deleted", { detail: { id: deletedId } }));
+      }
       if (wasCurrent) {
         navigate({ to: "/app/chat/$patientId", params: { patientId }, search: {} });
       }
