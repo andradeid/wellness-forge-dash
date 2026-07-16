@@ -291,7 +291,7 @@ function ChatPage() {
       const finalChatText = text?.trim() || (files.length > 0 ? filePlaceholder : "");
       await sendMessage(finalChatText, files);
     },
-    [sendMessage, agents, agentType],
+    [sendMessage, agents, agentType, selectedTask],
   );
 
   const handleGenerateRecipe = useCallback(
