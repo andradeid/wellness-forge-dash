@@ -7,10 +7,7 @@ import {
   Check,
   ExternalLink,
   Infinity as InfinityIcon,
-  TrendingUp,
-  TrendingDown,
   CalendarClock,
-  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,16 +35,6 @@ const formatBRL = (cents: number) =>
 const formatDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
 
-const formatDateTime = (iso?: string | null) =>
-  iso
-    ? new Date(iso).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "—";
 
 const planSlugLabel = (slug?: string | null) => {
   switch (slug) {
@@ -108,15 +95,6 @@ type PackRow = {
   perks: string[];
 };
 
-type TransactionRow = {
-  id: string;
-  type: string;
-  amount: number;
-  balance_after: number;
-  agent_label: string | null;
-  message_preview: string | null;
-  created_at: string;
-};
 
 function PlanosCreditosPage() {
   const { user } = useAuth();
@@ -170,22 +148,6 @@ function PlanosCreditosPage() {
     },
   });
 
-  const txQuery = useQuery({
-    queryKey: ["my-credit-transactions", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select(
-          "id, type, amount, balance_after, agent_label, message_preview, created_at",
-        )
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return (data ?? []) as TransactionRow[];
-    },
-  });
 
   const sub = subQuery.data;
   const balance = credits?.balance ?? 0;
@@ -524,91 +486,6 @@ function PlanosCreditosPage() {
             Nenhum pacote disponível no momento.
           </Card>
         )}
-      </section>
-
-      {/* Extrato recente */}
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Movimentações recentes
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Últimas 20 entradas e saídas de créditos.
-          </p>
-        </div>
-
-        <Card className="rounded-2xl border-0 shadow-md">
-          <CardContent className="p-0">
-            {txQuery.isLoading ? (
-              <div className="p-8 flex justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : txQuery.data && txQuery.data.length > 0 ? (
-              <ul className="divide-y">
-                {txQuery.data.map((tx) => {
-                  const isCredit =
-                    tx.type === "grant" ||
-                    tx.type === "purchase" ||
-                    tx.type === "refund" ||
-                    tx.amount > 0;
-                  return (
-                    <li
-                      key={tx.id}
-                      className="flex items-center justify-between gap-4 px-5 py-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={cn(
-                            "h-9 w-9 rounded-full flex items-center justify-center shrink-0",
-                            isCredit
-                              ? "bg-emerald-50 text-emerald-600"
-                              : "bg-rose-50 text-rose-600",
-                          )}
-                        >
-                          {isCredit ? (
-                            <TrendingUp className="h-4 w-4" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {tx.agent_label ??
-                              (isCredit ? "Crédito recebido" : "Uso de crédito")}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {formatDateTime(tx.created_at)}
-                            {tx.message_preview
-                              ? ` · ${tx.message_preview}`
-                              : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p
-                          className={cn(
-                            "text-sm font-semibold font-mono",
-                            isCredit ? "text-emerald-600" : "text-rose-600",
-                          )}
-                        >
-                          {isCredit ? "+" : "-"}
-                          {Math.abs(tx.amount)}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          saldo: {tx.balance_after}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Nenhuma movimentação registrada ainda.
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </section>
     </div>
   );
