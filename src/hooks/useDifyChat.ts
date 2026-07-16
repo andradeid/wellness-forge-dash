@@ -318,10 +318,13 @@ function getDifyAnswer(evt: Record<string, unknown>): string {
 
 export function useDifyChat(
   patientId: string,
-  options?: { readOnly?: boolean; forceChatId?: string | null; initialAgentType?: string },
+  options?: { readOnly?: boolean; forceChatId?: string | null; initialAgentType?: string; forceNewChat?: boolean; initialSelectedTask?: string | null },
 ) {
   const readOnly = options?.readOnly ?? false;
   const forceChatId = options?.forceChatId ?? null;
+  const forceNewChat = options?.forceNewChat ?? false;
+  const initialSelectedTask = options?.initialSelectedTask ?? null;
+
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
