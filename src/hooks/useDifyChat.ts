@@ -602,9 +602,15 @@ export function useDifyChat(
   const sendMessage = useCallback(async (
     text: string,
     files: File[],
-    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string },
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string; _isRetry?: boolean },
   ) => {
     if (!chatId || readOnly) return;
+    // Guarda o pedido pra permitir "Tentar novamente" ao receber empty answer.
+    // Envio novo (não-retry) reseta o crédito de retentativa.
+    if (!opts?._isRetry) {
+      retryUsedRef.current = false;
+      lastRequestRef.current = { text, files, opts };
+    }
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
     const agentType = opts?.overrideAgent ?? agentTypeState;
