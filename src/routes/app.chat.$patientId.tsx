@@ -751,8 +751,8 @@ function ChatPage() {
               return (
                 <div className="mb-2 flex items-center gap-2 rounded-2xl border border-[#e8a04c]/30 bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 px-3 py-2 text-xs text-foreground/80 animate-in fade-in slide-in-from-bottom-1">
                   <Sparkles className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
-                  <span className="font-semibold text-foreground">Super Agente ativo:</span>
-                  <span className="truncate">{currentAgent.label}</span>
+                  <span className="font-semibold text-foreground">Análise e Consulta:</span>
+                  <span className="truncate">{currentAgent.label.replace(/^Super\s+/i, "")}</span>
                   {taskLabel && (
                     <>
                       <span className="text-foreground/30">·</span>
@@ -851,8 +851,8 @@ function ChatPage() {
                                   ? superAgentTasks.find(t => t.agent_id === currentAgent!.agent_id && t.task_key === selectedTask)?.label
                                   : null;
                                 const label = isSuperActive
-                                  ? `${currentAgent?.label ?? "Super Agente"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
-                                  : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
+                                  ? `${(currentAgent?.label ?? "").replace(/^Super\s+/i, "") || "Análise e Consulta"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
+                                  : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label?.replace(/^Super\s+/i, "") : "Selecione uma tarefa");
                                 const Icon = isSuperActive ? Sparkles : ((cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles);
                                 if (loadingAgents) return <span>Carregando...</span>;
                                 return !agentType ? (
@@ -1048,7 +1048,7 @@ function ChatPage() {
                           >
                             <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-foreground/40 flex items-center gap-1.5">
                               <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
-                              Tarefas · {currentAgent?.label}
+                              Tarefas · {currentAgent?.label?.replace(/^Super\s+/i, "")}
                             </div>
                             <div className="space-y-1">
                               {tasksForCurrentSuper.map(t => {
