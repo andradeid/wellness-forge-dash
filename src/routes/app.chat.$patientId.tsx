@@ -1095,7 +1095,7 @@ function ChatPage() {
                               <span>
                                 {needsAgent
                                   ? "Selecione um agente abaixo para começar a conversa."
-                                  : "Escolha uma tarefa do Super Agente para liberar o envio."}
+                                  : "Escolha uma tarefa para liberar o envio."}
                               </span>
                             </div>
                           )}
