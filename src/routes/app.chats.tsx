@@ -64,6 +64,9 @@ function ChatsCentralPage() {
         if (error) throw error;
       }
       toast.success("Conversa excluída.");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("lumma:chat-deleted", { detail: { id: deleteTarget.id } }));
+      }
       setDeleteTarget(null);
       await refresh();
     } catch (err) {
