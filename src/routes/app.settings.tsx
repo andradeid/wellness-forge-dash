@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import {
@@ -63,6 +63,7 @@ const planLabel = (p?: string | null) =>
 function SettingsPage() {
   const { user, profile, refresh } = useAuth();
   const [tab, setTab] = useState<string>("identity");
+  const navigate = useNavigate();
 
   // Identity
   const [fullName, setFullName] = useState("");
@@ -285,7 +286,7 @@ function SettingsPage() {
         </p>
       </header>
 
-      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+      <Tabs value={tab} onValueChange={(v) => { if (v === "subscription") { navigate({ to: "/app/planos" }); return; } setTab(v); }} className="space-y-6">
         <TabsList className="rounded-full p-1 bg-muted/60 flex-wrap h-auto">
           <TabsTrigger value="identity" className="rounded-full gap-2"><User className="h-4 w-4" />Identidade</TabsTrigger>
           <TabsTrigger value="branding" className="rounded-full gap-2"><Palette className="h-4 w-4" />Branding</TabsTrigger>
