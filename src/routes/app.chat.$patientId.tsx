@@ -876,6 +876,87 @@ function ChatPage() {
                             className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
                           >
                             <div className="space-y-1">
+                              {(() => {
+                                // Dedupe por card_trigger: cards que compartilham trigger
+                                // (ex: "analise_completa" vinculado aos 4 super agentes por perfil)
+                                // aparecem como UM único card. O agente correto é resolvido no clique
+                                // via resolveAnaliseCompleta() a partir do perfil da paciente.
+                                const seenTriggers = new Set<string>();
+                                const activeSuperCards = superAgentCards
+                                  .filter(c => c.is_active)
+                                  .map(card => {
+                                    const task = superAgentTasks.find(t => t.id === card.task_id && t.is_active);
+                                    if (!task) return null;
+                                    const agent = agents.find(a => a.agent_id === task.agent_id && a.is_super_agent && a.is_active);
+                                    if (!agent) return null;
+                                    return { card, task, agent };
+                                  })
+                                  .filter((x): x is { card: typeof superAgentCards[number]; task: typeof superAgentTasks[number]; agent: typeof agents[number] } => x !== null)
+                                  .filter(({ card }) => {
+                                    if (!card.card_trigger) return true;
+                                    if (seenTriggers.has(card.card_trigger)) return false;
+                                    seenTriggers.add(card.card_trigger);
+                                    return true;
+                                  });
+
+                                if (activeSuperCards.length === 0) return null;
+
+                                return (
+                                  <>
+                                    {activeSuperCards.map(({ card, task, agent }) => {
+                                      const isRoutedByProfile = card.card_trigger === 'analise_completa';
+                                      const resolved = isRoutedByProfile
+                                        ? resolveAnaliseCompleta(patientProfile, patient?.pregnancy_type)
+                                        : null;
+                                      const effectiveAgentId = resolved?.agentId ?? agent.agent_id;
+                                      const effectiveTaskKey = resolved?.taskKey ?? task.task_key;
+                                      const isActive = agentType === effectiveAgentId && selectedTask === effectiveTaskKey;
+                                      const displayLabel = card.card_trigger === 'analise_completa'
+                                        ? 'Análise e Consulta'
+                                        : card.label;
+                                      return (
+                                        <button
+                                          key={card.id}
+                                          onClick={() => {
+                                            if (isRoutedByProfile) {
+                                              const r = resolveAnaliseCompleta(patientProfile, patient?.pregnancy_type);
+                                              if (!r) {
+                                                toast.error(
+                                                  "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
+                                                );
+                                                return;
+                                              }
+                                              setAgentType(r.agentId);
+                                              setSelectedTask(r.taskKey);
+                                            } else {
+                                              setAgentType(agent.agent_id);
+                                              setSelectedTask(task.task_key);
+                                            }
+                                            setModuleOpen(false);
+                                          }}
+                                          className={cn(
+                                            "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
+                                            isActive
+                                              ? "bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15 text-foreground border border-[#e8a04c]/30"
+                                              : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
+                                          )}
+                                        >
+                                          <div className={cn(
+                                            "p-1.5 rounded-lg transition-colors",
+                                            isActive ? "bg-white shadow-sm" : "bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 group-hover/opt:bg-white"
+                                          )}>
+                                            <Sparkles className="h-3.5 w-3.5 text-[#e8a04c]" />
+                                          </div>
+                                          <span className="flex-1 text-left truncate">{displayLabel}</span>
+                                          {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                                        </button>
+                                      );
+                                    })}
+                                    <div className="my-1.5 border-t border-slate-100" />
+                                  </>
+                                );
+                              })()}
+
                               {cardOptions.map((opt, idx) => {
                                 const Icon = opt.icon;
                                 const iconColor = opt.color;
@@ -924,90 +1005,6 @@ function ChatPage() {
                                   </div>
                                 );
                               })}
-
-                              {(() => {
-                                // Dedupe por card_trigger: cards que compartilham trigger
-                                // (ex: "analise_completa" vinculado aos 4 super agentes por perfil)
-                                // aparecem como UM único card. O agente correto é resolvido no clique
-                                // via resolveAnaliseCompleta() a partir do perfil da paciente.
-                                const seenTriggers = new Set<string>();
-                                const activeSuperCards = superAgentCards
-                                  .filter(c => c.is_active)
-                                  .map(card => {
-                                    const task = superAgentTasks.find(t => t.id === card.task_id && t.is_active);
-                                    if (!task) return null;
-                                    const agent = agents.find(a => a.agent_id === task.agent_id && a.is_super_agent && a.is_active);
-                                    if (!agent) return null;
-                                    return { card, task, agent };
-                                  })
-                                  .filter((x): x is { card: typeof superAgentCards[number]; task: typeof superAgentTasks[number]; agent: typeof agents[number] } => x !== null)
-                                  .filter(({ card }) => {
-                                    if (!card.card_trigger) return true;
-                                    if (seenTriggers.has(card.card_trigger)) return false;
-                                    seenTriggers.add(card.card_trigger);
-                                    return true;
-                                  });
-
-                                if (activeSuperCards.length === 0) return null;
-
-                                return (
-                                  <>
-                                    <div className="my-1.5 border-t border-slate-100" />
-                                    <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-foreground/40 flex items-center gap-1.5">
-                                      <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
-                                      Super Agentes
-                                    </div>
-                                    {activeSuperCards.map(({ card, task, agent }) => {
-                                      const isRoutedByProfile = card.card_trigger === 'analise_completa';
-                                      // Para cards roteados por perfil, resolve o agente real (por paciente)
-                                      // para ativar o highlight corretamente.
-                                      const resolved = isRoutedByProfile
-                                        ? resolveAnaliseCompleta(patientProfile, patient?.pregnancy_type)
-                                        : null;
-                                      const effectiveAgentId = resolved?.agentId ?? agent.agent_id;
-                                      const effectiveTaskKey = resolved?.taskKey ?? task.task_key;
-                                      const isActive = agentType === effectiveAgentId && selectedTask === effectiveTaskKey;
-                                      return (
-                                        <button
-                                          key={card.id}
-                                          onClick={() => {
-                                            if (isRoutedByProfile) {
-                                              const r = resolveAnaliseCompleta(patientProfile, patient?.pregnancy_type);
-                                              if (!r) {
-                                                toast.error(
-                                                  "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
-                                                );
-                                                return;
-                                              }
-                                              setAgentType(r.agentId);
-                                              setSelectedTask(r.taskKey);
-                                            } else {
-                                              setAgentType(agent.agent_id);
-                                              setSelectedTask(task.task_key);
-                                            }
-                                            setModuleOpen(false);
-                                          }}
-                                          className={cn(
-                                            "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
-                                            isActive
-                                              ? "bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15 text-foreground border border-[#e8a04c]/30"
-                                              : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
-                                          )}
-                                        >
-                                          <div className={cn(
-                                            "p-1.5 rounded-lg transition-colors",
-                                            isActive ? "bg-white shadow-sm" : "bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 group-hover/opt:bg-white"
-                                          )}>
-                                            <Sparkles className="h-3.5 w-3.5 text-[#e8a04c]" />
-                                          </div>
-                                          <span className="flex-1 text-left truncate">{card.label}</span>
-                                          {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
-                                        </button>
-                                      );
-                                    })}
-                                  </>
-                                );
-                              })()}
                             </div>
                           </PopoverContent>
                         </Popover>
