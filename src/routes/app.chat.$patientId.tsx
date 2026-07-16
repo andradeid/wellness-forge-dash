@@ -31,6 +31,7 @@ import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { PatientReportPDF } from "@/components/branding/PatientReportPDF";
 import { ChatConversationPDF } from "@/components/chat/ChatConversationPDF";
 import { PatientChatHistory } from "@/components/chat/PatientChatHistory";
+import { InactiveChatBanner } from "@/components/chat/InactiveChatBanner";
 import { NextStepsSuggestion } from "@/components/chat/NextStepsSuggestion";
 import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
