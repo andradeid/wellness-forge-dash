@@ -170,22 +170,6 @@ function PlanosCreditosPage() {
     },
   });
 
-  const txQuery = useQuery({
-    queryKey: ["my-credit-transactions", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select(
-          "id, type, amount, balance_after, agent_label, message_preview, created_at",
-        )
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return (data ?? []) as TransactionRow[];
-    },
-  });
 
   const sub = subQuery.data;
   const balance = credits?.balance ?? 0;
