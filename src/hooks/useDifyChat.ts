@@ -1389,7 +1389,7 @@ export function useDifyChat(
     setError(null);
     // Força o usuário a escolher explicitamente o agente/tarefa antes
     // de enviar a primeira mensagem da nova consulta.
-    setAgentType(null as any);
+    setAgentType("");
     setExamContext(null);
     setChatId(created.id as string);
   }, [patientId, readOnly]);
