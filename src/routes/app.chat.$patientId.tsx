@@ -713,6 +713,7 @@ function ChatPage() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+                <InactiveChatBanner chatId={chatId} onNewChat={handleNewChat} />
                 <ChatMessageList 
                   messages={messages} 
                   thinking={thinking} 
