@@ -1297,9 +1297,23 @@ export function useDifyChat(
         // Stream fechou sem NENHUM conteúdo — tipicamente workflow do Dify sem branch
         // para a task selecionada (ex.: super agente + tarefa não implementada).
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
+        const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
         toast.error("A Lumma não conseguiu responder desta vez", {
-          description: "Houve uma falha no processamento da tarefa. Por favor, envie sua mensagem novamente.",
-          duration: 8000,
+          description: canRetry
+            ? "Houve uma falha no processamento da tarefa. Você pode tentar novamente."
+            : "Houve uma falha no processamento da tarefa. Por favor, envie sua mensagem novamente.",
+          duration: 10000,
+          action: canRetry
+            ? {
+                label: "Tentar novamente",
+                onClick: () => {
+                  if (retryUsedRef.current || !lastRequestRef.current) return;
+                  retryUsedRef.current = true;
+                  const req = lastRequestRef.current;
+                  sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+                },
+              }
+            : undefined,
         });
       }
     } catch (e: any) {
