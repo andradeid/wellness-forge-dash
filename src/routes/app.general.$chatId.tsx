@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, ClipboardList } from "lucide-react";
+import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, ClipboardList, AlertCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
@@ -330,14 +330,27 @@ function GeneralChatPage() {
             </div>
 
             <ChatInput onSubmit={(text) => sendMessage(text)} disabled={thinking} />
-            <p className="mt-1 text-center text-[10px] text-muted-foreground/60">
-              Máximo de 10 arquivos de 20MB
-            </p>
-            {role === "nutri" && (
-              <p className="mt-1 text-center text-[10px] italic text-amber-700/80 px-2">
-                Nota: Processamento estrutural em modo de validação técnica.
-              </p>
-            )}
+            <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/60">
+              <span>Máximo de 10 arquivos de 20MB</span>
+              {role === "nutri" && (
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Aviso de validação técnica"
+                        className="inline-flex items-center justify-center text-amber-600/80 hover:text-amber-700 transition-colors cursor-help"
+                      >
+                        <AlertCircle className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[240px] text-xs">
+                      Processamento estrutural em modo de validação técnica.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             <TooltipProvider delayDuration={150}>
               <Tooltip>
                 <TooltipTrigger asChild>
