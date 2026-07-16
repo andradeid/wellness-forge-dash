@@ -238,7 +238,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {role === "nutri" && (
+        {role !== "super_admin" && role !== "admin" && (
           <div className={cn("px-1 pb-2", collapsed && "px-0")}>
             <Link to="/app/fale-com-lumma" title="Página Inicial">
               <span
@@ -253,7 +253,7 @@ export function AppSidebar() {
             </Link>
           </div>
         )}
-        {(role === "nutri" ? nutriGroups : adminGroups).map((g) => {
+        {(role === "super_admin" || role === "admin" ? adminGroups : nutriGroups).map((g) => {
           const visibleItems = g.items.filter(
             (item) => !item.superAdminOnly || role === "super_admin",
           );
