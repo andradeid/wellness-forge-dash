@@ -851,8 +851,8 @@ function ChatPage() {
                                   ? superAgentTasks.find(t => t.agent_id === currentAgent!.agent_id && t.task_key === selectedTask)?.label
                                   : null;
                                 const label = isSuperActive
-                                  ? `${currentAgent?.label ?? "Super Agente"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
-                                  : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label : "Selecione uma tarefa");
+                                  ? `${(currentAgent?.label ?? "").replace(/^Super\s+/i, "") || "Análise e Consulta"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
+                                  : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label?.replace(/^Super\s+/i, "") : "Selecione uma tarefa");
                                 const Icon = isSuperActive ? Sparkles : ((cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles);
                                 if (loadingAgents) return <span>Carregando...</span>;
                                 return !agentType ? (
