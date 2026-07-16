@@ -1138,9 +1138,23 @@ export function useDifyChat(
                         .eq("id", chatId);
                     }
                     setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+                    const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
                     toast.error("A Lumma não conseguiu responder desta vez", {
-                      description: "O agente encerrou sem gerar resposta. Por favor, envie sua mensagem novamente.",
-                      duration: 8000,
+                      description: canRetry
+                        ? "O agente encerrou sem gerar resposta. Você pode tentar novamente."
+                        : "O agente encerrou sem gerar resposta. Por favor, envie sua mensagem novamente.",
+                      duration: 10000,
+                      action: canRetry
+                        ? {
+                            label: "Tentar novamente",
+                            onClick: () => {
+                              if (retryUsedRef.current || !lastRequestRef.current) return;
+                              retryUsedRef.current = true;
+                              const req = lastRequestRef.current;
+                              sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+                            },
+                          }
+                        : undefined,
                     });
                     continue;
                   }
