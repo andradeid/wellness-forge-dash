@@ -240,7 +240,7 @@ function FaleComLummaPage() {
     if (!agent) return "Pergunta Clínica";
     if (agent.agent_id === "exam") return "Analisando Exame";
     if (agent.agent_id === "production") return "Elaborando Plano & Receitas";
-    return agent.label;
+    return agent.label.replace(/^Super\s+/i, "");
   };
 
   const startGeneralChat = async (agentType: string) => {
