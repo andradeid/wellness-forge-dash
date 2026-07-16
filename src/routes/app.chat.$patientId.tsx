@@ -117,7 +117,10 @@ function ChatPage() {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
+    initialSelectedTask: initialTask ?? null,
+    forceNewChat: !!initialAgent && !forceChatId,
   });
+
 
   // Super Agente: propaga o task_key vindo da URL para o hook. Consumido na
   // primeira mensagem que o usuário enviar. Só faz efeito quando a rota vem
