@@ -1094,7 +1094,7 @@ function ChatPage() {
                               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                               <span>
                                 {needsAgent
-                                  ? "Selecione um agente abaixo para começar a conversa."
+                                  ? "Selecione uma tarefa abaixo para começar a conversa."
                                   : "Escolha uma tarefa para liberar o envio."}
                               </span>
                             </div>
