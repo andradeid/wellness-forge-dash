@@ -39,7 +39,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
+
 import { SupportWidget } from "@/components/SupportWidget";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -618,10 +618,6 @@ function DashboardPage() {
               </Link>
             </Button>
           )}
-          <QuickAnalysisDialog 
-            onCreated={() => window.location.reload()} 
-            moduleContext="exames_de_sangue"
-          />
         </div>
       </div>
 
