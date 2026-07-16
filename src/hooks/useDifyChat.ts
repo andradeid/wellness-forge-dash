@@ -347,6 +347,15 @@ export function useDifyChat(
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
+  // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
+  // encerra sem answer. Limitado a UMA tentativa por envio original.
+  const lastRequestRef = useRef<{
+    text: string;
+    files: File[];
+    opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string };
+  } | null>(null);
+  const retryUsedRef = useRef<boolean>(false);
+  const sendMessageRef = useRef<((text: string, files: File[], opts?: any) => Promise<void>) | null>(null);
   // Espelha o estado de `thinking` em ref para uso síncrono dentro do init().
   // Usado para impedir que uma re-execução do init (ex.: troca de role/readOnly
   // durante TOKEN_REFRESHED) sobrescreva o stream em andamento com um snapshot
