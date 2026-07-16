@@ -38,16 +38,6 @@ const formatBRL = (cents: number) =>
 const formatDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
 
-const formatDateTime = (iso?: string | null) =>
-  iso
-    ? new Date(iso).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "—";
 
 const planSlugLabel = (slug?: string | null) => {
   switch (slug) {
