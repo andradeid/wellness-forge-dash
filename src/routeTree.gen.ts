@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
+import { Route as AppPlanosRouteImport } from './routes/app.planos'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
@@ -81,6 +82,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppPoliticasRoute = AppPoliticasRouteImport.update({
   id: '/politicas',
   path: '/politicas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlanosRoute = AppPlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPatientsRoute = AppPatientsRouteImport.update({
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/planos': typeof AppPlanosRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/planos': typeof AppPlanosRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/planos': typeof AppPlanosRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -327,6 +336,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
+    | '/app/planos'
     | '/app/politicas'
     | '/app/settings'
     | '/app/'
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
+    | '/app/planos'
     | '/app/politicas'
     | '/app/settings'
     | '/app'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
+    | '/app/planos'
     | '/app/politicas'
     | '/app/settings'
     | '/app/'
@@ -492,6 +504,13 @@ declare module '@tanstack/react-router' {
       path: '/politicas'
       fullPath: '/app/politicas'
       preLoaderRoute: typeof AppPoliticasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/planos': {
+      id: '/app/planos'
+      path: '/planos'
+      fullPath: '/app/planos'
+      preLoaderRoute: typeof AppPlanosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/patients': {
@@ -677,6 +696,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppFaleComLummaRoute: typeof AppFaleComLummaRoute
   AppPatientsRoute: typeof AppPatientsRoute
+  AppPlanosRoute: typeof AppPlanosRoute
   AppPoliticasRoute: typeof AppPoliticasRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -702,6 +722,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppFaleComLummaRoute: AppFaleComLummaRoute,
   AppPatientsRoute: AppPatientsRoute,
+  AppPlanosRoute: AppPlanosRoute,
   AppPoliticasRoute: AppPoliticasRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,

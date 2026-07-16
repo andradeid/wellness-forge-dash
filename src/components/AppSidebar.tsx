@@ -88,6 +88,7 @@ const nutriGroups: NavGroup[] = [
       { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
       { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
+      { title: "Planos & Créditos", url: "/app/planos", icon: CreditCard },
     ],
   },
   {
