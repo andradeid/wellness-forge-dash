@@ -751,8 +751,8 @@ function ChatPage() {
               return (
                 <div className="mb-2 flex items-center gap-2 rounded-2xl border border-[#e8a04c]/30 bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 px-3 py-2 text-xs text-foreground/80 animate-in fade-in slide-in-from-bottom-1">
                   <Sparkles className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
-                  <span className="font-semibold text-foreground">Super Agente ativo:</span>
-                  <span className="truncate">{currentAgent.label}</span>
+                  <span className="font-semibold text-foreground">Análise e Consulta:</span>
+                  <span className="truncate">{currentAgent.label.replace(/^Super\s+/i, "")}</span>
                   {taskLabel && (
                     <>
                       <span className="text-foreground/30">·</span>
