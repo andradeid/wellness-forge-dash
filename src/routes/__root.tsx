@@ -24,14 +24,13 @@ function NotFoundComponent() {
           className="text-8xl font-light bg-clip-text text-transparent"
           style={{
             backgroundImage: "linear-gradient(135deg, #e8a04c 0%, #e89bcf 100%)",
-            fontFamily: "'Instrument Serif', serif",
           }}
         >
           404
         </h1>
         <h2
           className="mt-4 text-3xl text-[#3d5a4a]"
-          style={{ fontFamily: "'Instrument Serif', serif" }}
+          
         >
           Página não encontrada
         </h2>
