@@ -1036,22 +1036,41 @@ export function useDifyChat(
       if (!res.ok) {
         setThinking(false);
         let friendly = `Erro na Lumma (${res.status})`;
+        let rawMessage = "";
         try {
           const errBody = await res.clone().json();
-          const raw = (errBody?.error || errBody?.message || "") as string;
-          if (/selected_task is required/i.test(raw)) {
+          rawMessage = (errBody?.error || errBody?.message || "") as string;
+          if (/selected_task is required/i.test(rawMessage)) {
             friendly = "Escolha uma tarefa do Super Agente antes de enviar.";
-          } else if (raw) {
-            // Mantém a mensagem original para debug, mas prefixa em PT-BR.
-            friendly = `Erro na Lumma: ${raw.slice(0, 180)}`;
+          } else if (rawMessage) {
+            friendly = `Erro na Lumma: ${rawMessage.slice(0, 180)}`;
           }
         } catch {
           // corpo não-JSON — mantém a mensagem genérica
         }
-        setError(friendly);
-        toast.error(friendly);
+
+        // 500/502/503/504 do Dify (upstream instável, workflow em processamento
+        // longo, timeout momentâneo): mostra aviso amigável pedindo para
+        // tentar de novo em alguns segundos — a mensagem geralmente processa
+        // na segunda tentativa.
+        const isUpstreamFlaky =
+          res.status === 500 || res.status === 502 || res.status === 503 || res.status === 504 ||
+          /internal server error/i.test(rawMessage);
+
+        if (isUpstreamFlaky) {
+          const retryMsg = "A Lumma está sobrecarregada no momento. Aguarde alguns segundos e envie a mensagem novamente.";
+          setError(retryMsg);
+          toast.error(retryMsg, {
+            description: "Se persistir, tente trocar de tarefa ou iniciar uma nova conversa.",
+            duration: 8000,
+          });
+        } else {
+          setError(friendly);
+          toast.error(friendly);
+        }
         return;
       }
+
 
 
       const reader = res.body?.getReader();
