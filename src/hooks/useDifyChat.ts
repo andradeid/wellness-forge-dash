@@ -1489,5 +1489,11 @@ export function useDifyChat(
     });
   }, [chatId, readOnly, sendMessage, agentType]);
 
+  // Mantém a ref sincronizada com o sendMessage atual para o botão "Tentar
+  // novamente" do toast disparar após o hook re-renderizar.
+  useEffect(() => {
+    sendMessageRef.current = sendMessage as any;
+  }, [sendMessage]);
+
   return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask };
 }
