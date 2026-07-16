@@ -155,5 +155,14 @@ export function useChatHistory(limit = 50) {
     fetchChats();
   }, [user, limit]);
 
+  // Refetch quando uma conversa é apagada em qualquer lugar do app.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => { fetchChats(); };
+    window.addEventListener("lumma:chat-deleted", handler);
+    return () => window.removeEventListener("lumma:chat-deleted", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, limit]);
+
   return { chats, loading, refresh: fetchChats };
 }
