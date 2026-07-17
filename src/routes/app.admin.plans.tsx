@@ -33,6 +33,7 @@ type Pack = {
   slug: string;
   name: string;
   description: string | null;
+  perks: string[] | null;
   credits: number;
   price_cents: number;
   is_highlighted: boolean;
