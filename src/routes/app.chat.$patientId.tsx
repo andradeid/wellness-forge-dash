@@ -819,19 +819,11 @@ function ChatPage() {
                       const currentAgent = agents.find(a => a.agent_id === agentType);
                       const cardTrigger = currentAgent?.card_trigger;
 
-                      // Agrupar agentes por card_trigger únicos
-                      const cardOptions = Array.from(
-                        new Map(
-                          agents
-                            .filter(a => a.is_active && a.card_trigger)
-                            .map(a => [a.card_trigger, {
-                              trigger: a.card_trigger as string,
-                              label: CARD_LABELS[a.card_trigger as string] || a.card_trigger,
-                              icon: CARD_ICONS[a.card_trigger as string] || Sparkles,
-                              color: CARD_COLORS[a.card_trigger as string] || "#e8a04c"
-                            }])
-                        ).values()
-                      );
+                      // No chat COM paciente, o menu mostra APENAS tarefas do super
+                      // agente resolvido pelo perfil da paciente. Agentes simples
+                      // (exam, metabolism, genetics, reasoning, production, research
+                      // isolados) NÃO aparecem aqui — eles seguem disponíveis somente
+                      // no espaço "sem paciente" (/app/fale-com-lumma), fora de perfil.
 
                       const moduleSelector = (
                         <Popover open={moduleOpen} onOpenChange={setModuleOpen}>
@@ -953,59 +945,9 @@ function ChatPage() {
                                         </button>
                                       );
                                     })}
-                                    <div className="my-1.5 border-t border-slate-100" />
                                   </>
                                 );
                               })()}
-
-                              {cardOptions.map((opt, idx) => {
-                                const Icon = opt.icon;
-                                const iconColor = opt.color;
-                                const isActive = cardTrigger === opt.trigger;
-                                const bestForCard = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
-                                const hasSession = !!(bestForCard && activeAgents?.includes(bestForCard.agent_id));
-                                return (
-                                  <div key={opt.trigger}>
-                                    {idx === 3 && <div className="my-1 border-t border-slate-100" />}
-                                    <button
-                                      onClick={() => {
-                                        const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
-                                        if (bestAgent) {
-                                          setAgentType(bestAgent.agent_id);
-                                          setSelectedTask(null);
-                                          setModuleOpen(false);
-                                        } else if (opt.trigger === "exames_de_sangue") {
-                                          setModuleOpen(false);
-                                          toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
-                                        }
-                                      }}
-                                      className={cn(
-                                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
-                                        isActive
-                                          ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20"
-                                          : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
-                                      )}
-                                    >
-                                      <div className={cn(
-                                        "p-1.5 rounded-lg transition-colors",
-                                        isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
-                                      )}>
-                                        <Icon className="h-3.5 w-3.5" style={{ color: iconColor }} />
-                                      </div>
-                                      <span className="flex-1 text-left flex items-center gap-2">
-                                        {opt.label}
-                                        {hasSession && !isActive && (
-                                          <span
-                                            className="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                            title="Sessão ativa — retomar de onde parou"
-                                          />
-                                        )}
-                                      </span>
-                                      {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
-                                    </button>
-                                  </div>
-                                );
-                              })}
                             </div>
                           </PopoverContent>
                         </Popover>
