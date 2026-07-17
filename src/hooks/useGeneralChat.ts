@@ -179,8 +179,18 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
       if (!res.ok) {
         const errorText = await res.text();
+        if (res.status === 429) {
+          let msg = "Aguarde a análise atual terminar antes de enviar outra.";
+          try {
+            const parsed = JSON.parse(errorText);
+            if (parsed?.error) msg = parsed.error;
+          } catch { /* corpo não-JSON */ }
+          toast.warning(msg, { duration: 6000 });
+          return;
+        }
         throw new Error(errorText || "Falha ao comunicar com agente");
       }
+
 
       if (!res.body) throw new Error("Resposta sem corpo");
 

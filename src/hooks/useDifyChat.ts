@@ -1049,6 +1049,15 @@ export function useDifyChat(
           // corpo não-JSON — mantém a mensagem genérica
         }
 
+        // 429: rate limit do proxy (1 stream simultâneo por usuário OU
+        // 10 envios/minuto). Mensagem específica em pt-BR, sem barulho.
+        if (res.status === 429) {
+          const msg = rawMessage || "Aguarde a análise atual terminar antes de enviar outra.";
+          setError(msg);
+          toast.warning(msg, { duration: 6000 });
+          return;
+        }
+
         // 500/502/503/504 do Dify (upstream instável, workflow em processamento
         // longo, timeout momentâneo): mostra aviso amigável pedindo para
         // tentar de novo em alguns segundos — a mensagem geralmente processa
@@ -1056,6 +1065,7 @@ export function useDifyChat(
         const isUpstreamFlaky =
           res.status === 500 || res.status === 502 || res.status === 503 || res.status === 504 ||
           /internal server error/i.test(rawMessage);
+
 
         if (isUpstreamFlaky) {
           const retryMsg = "A Lumma está sobrecarregada no momento. Aguarde alguns segundos e envie a mensagem novamente.";
