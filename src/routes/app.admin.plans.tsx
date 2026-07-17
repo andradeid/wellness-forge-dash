@@ -331,18 +331,32 @@ function PlansAdminPage() {
                       p.credits > 0 ? p.price_cents / 100 / p.credits : null;
                     return (
                       <TableRow key={p.id}>
-                        <TableCell>
+                        <TableCell className="min-w-[260px]">
                           <Input
                             value={p.name}
                             onChange={(e) => patchPack(p.id, { name: e.target.value })}
                             className="font-medium"
                           />
-                          <div className="text-xs text-muted-foreground mt-1">{p.slug}</div>
-                          {p.description && (
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {p.description}
-                            </div>
-                          )}
+                          <div className="text-[10px] text-muted-foreground mt-1">{p.slug}</div>
+                          <Textarea
+                            value={p.description ?? ""}
+                            onChange={(e) => patchPack(p.id, { description: e.target.value })}
+                            placeholder="Descrição curta (opcional)"
+                            className="mt-2 text-xs min-h-[44px]"
+                          />
+                          <Textarea
+                            value={(p.perks ?? []).join("\n")}
+                            onChange={(e) =>
+                              patchPack(p.id, {
+                                perks: e.target.value
+                                  .split("\n")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean),
+                              })
+                            }
+                            placeholder={"Bullets (um por linha)\nEx.: Cerca de 18 pacientes a mais\nCréditos não expiram"}
+                            className="mt-2 text-xs min-h-[72px]"
+                          />
                         </TableCell>
                         <TableCell>
                           <Input
