@@ -95,12 +95,19 @@ function NutritionistsPage() {
     // sub-filtro: status / plan
     let candidateIds: string[] | null = null;
     if (statusFilter !== "all" || planFilter !== "all") {
-      let sq = (supabase as any).from("subscriptions").select("user_id");
-      if (statusFilter !== "all") sq = sq.eq("status", statusFilter);
-      if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
-      const { data, error } = await sq.limit(10000);
-      if (error) { toast.error(error.message); setLoading(false); return; }
-      candidateIds = (data ?? []).map((r: any) => r.user_id);
+      const PAGE = 1000;
+      const collected: string[] = [];
+      for (let from = 0; ; from += PAGE) {
+        let sq = (supabase as any).from("subscriptions").select("user_id");
+        if (statusFilter !== "all") sq = sq.eq("status", statusFilter);
+        if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
+        const { data, error } = await sq.range(from, from + PAGE - 1);
+        if (error) { toast.error(error.message); setLoading(false); return; }
+        const rows = data ?? [];
+        collected.push(...rows.map((r: any) => r.user_id));
+        if (rows.length < PAGE) break;
+      }
+      candidateIds = collected;
     }
 
     const buildProfilesQuery = (withCount: boolean) => {

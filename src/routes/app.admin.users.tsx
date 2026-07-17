@@ -258,22 +258,36 @@ function UsersPage() {
 
     const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
     if (subStatusActive || planFilter !== "all") {
-      let sq = (supabase as any).from("subscriptions").select("user_id");
-      if (subStatusActive) sq = sq.eq("status", statusFilter);
-      if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
-      const { data, error } = await sq.limit(10000);
-      if (error) { toast.error(error.message); setLoading(false); return; }
-      intersect((data ?? []).map((r: any) => r.user_id));
+      const PAGE = 1000;
+      const collected: string[] = [];
+      for (let from = 0; ; from += PAGE) {
+        let sq = (supabase as any).from("subscriptions").select("user_id");
+        if (subStatusActive) sq = sq.eq("status", statusFilter);
+        if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
+        const { data, error } = await sq.range(from, from + PAGE - 1);
+        if (error) { toast.error(error.message); setLoading(false); return; }
+        const rows = data ?? [];
+        collected.push(...rows.map((r: any) => r.user_id));
+        if (rows.length < PAGE) break;
+      }
+      intersect(collected);
     }
 
     if (tagFilter !== "all") {
-      const { data, error } = await (supabase as any)
-        .from("profile_tags")
-        .select("profile_id")
-        .eq("tag_id", tagFilter)
-        .limit(10000);
-      if (error) { toast.error(error.message); setLoading(false); return; }
-      intersect((data ?? []).map((r: any) => r.profile_id));
+      const PAGE = 1000;
+      const collected: string[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await (supabase as any)
+          .from("profile_tags")
+          .select("profile_id")
+          .eq("tag_id", tagFilter)
+          .range(from, from + PAGE - 1);
+        if (error) { toast.error(error.message); setLoading(false); return; }
+        const rows = data ?? [];
+        collected.push(...rows.map((r: any) => r.profile_id));
+        if (rows.length < PAGE) break;
+      }
+      intersect(collected);
     }
 
     // Helper para montar a query base de profiles com filtros estáveis (search/blocked/scope)
