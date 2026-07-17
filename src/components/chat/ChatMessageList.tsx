@@ -877,7 +877,18 @@ export function ChatMessageList({
                       <AlertTriangle className="h-3 w-3" /> Erro na estrutura de dados recebida
                     </div>
                   )}
-                  {m.role === "assistant" && <MessageFeedback messageId={m.id} />}
+                  {m.role === "assistant" ? (
+                    <div className="mt-3 pt-2 border-t border-black/5 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex-1 min-w-0">
+                        <MessageFeedback messageId={m.id} />
+                      </div>
+                      <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex justify-end">
+                      <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                    </div>
+                  )}
                   <div
                     className={`mt-2 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] ${
                       isUser ? "text-white/70 justify-end" : "text-muted-foreground/70 justify-start"
