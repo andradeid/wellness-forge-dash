@@ -48,7 +48,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { QuickAnalysisDialog } from "@/components/QuickAnalysisDialog";
+
 
 export const Route = createFileRoute("/app/patients")({
   component: PatientsPage,
