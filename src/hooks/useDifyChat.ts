@@ -529,7 +529,7 @@ export function useDifyChat(
 
       const { data: msgs } = await (supabase as any)
         .from("chat_messages")
-        .select("id, role, content, agent_type, structured_data, attachments, created_at")
+        .select("id, role, content, agent_type, selected_task, structured_data, attachments, created_at")
         .eq("chat_id", id)
         .order("created_at", { ascending: true });
       if (!cancelled) {
