@@ -732,6 +732,7 @@ function ChatPage() {
                   highlightId={highlightId} 
                   isStreaming={thinking}
                   agentType={agentType}
+                  taskType={selectedTask}
                   patient={patient}
                 />
 
