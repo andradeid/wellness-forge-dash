@@ -931,7 +931,7 @@ export function ChatMessageList({
           {thinking && (
             <div className="flex justify-start">
               <div className="rounded-2xl bg-white/60 backdrop-blur-md border border-white/60 shadow-sm px-2">
-                <ChatThinking mode={thinkingMode} agentType={agentType} />
+                <ChatThinking mode={thinkingMode} agentType={agentType} taskType={taskType} />
               </div>
             </div>
           )}
