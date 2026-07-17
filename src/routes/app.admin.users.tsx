@@ -478,6 +478,20 @@ function UsersPage() {
     });
   };
 
+  const saveSeatsOverride = async (userId: string, value: number | null) => {
+    const { error } = await (supabase as any)
+      .from("subscriptions")
+      .upsert(
+        { user_id: userId, seats_override: value, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) { toast.error("Erro ao salvar assentos: " + error.message); return; }
+    setDetailExtra((prev) => (prev ? { ...prev, seatsOverride: value } : prev));
+    toast.success("Assentos atualizados com sucesso.");
+  };
+
+
+
   const openPlan = (u: UserRow) => {
     setPlanUser(u);
     setPlanForm({
