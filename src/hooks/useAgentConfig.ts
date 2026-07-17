@@ -290,6 +290,7 @@ export function useAgentConfig() {
     getSuperAgentCards,
     resolveCardToTask,
     resolveAnaliseCompleta,
+    resolveSuperByProfile,
     checkCardTriggerAvailable,
     refresh: loadAgents,
   };
