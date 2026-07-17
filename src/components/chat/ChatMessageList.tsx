@@ -878,12 +878,12 @@ export function ChatMessageList({
                     </div>
                   )}
                   {m.role === "assistant" ? (
-                    <div className="mt-3 pt-2 border-t border-black/5 flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <MessageFeedback messageId={m.id} />
-                      </div>
-                      <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
-                    </div>
+                    <MessageFeedback
+                      messageId={m.id}
+                      rightSlot={
+                        <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                      }
+                    />
                   ) : (
                     <div className="mt-2 flex justify-end">
                       <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
