@@ -140,7 +140,11 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
           <span className="hidden sm:inline">{suggestionId ? "Editar sugestão" : "Sugestão"}</span>
         </button>
         {saving && <Loader2 className="h-3 w-3 animate-spin opacity-60" />}
+        </div>
+        {rightSlot}
       </div>
+
+
 
       {showSuggestion && (
         <div className="mt-2 space-y-2">
