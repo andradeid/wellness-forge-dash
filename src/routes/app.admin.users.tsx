@@ -1167,3 +1167,41 @@ function UsersPage() {
     </div>
   );
 }
+
+function SeatsInlineEditor({ value, onSave }: { value: number | null; onSave: (v: number | null) => void | Promise<void> }) {
+  const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setDraft(value != null ? String(value) : ""); }, [value]);
+  const dirty = draft !== (value != null ? String(value) : "");
+
+  async function commit() {
+    const trimmed = draft.trim();
+    let next: number | null = null;
+    if (trimmed !== "") {
+      const n = Number(trimmed);
+      if (!Number.isInteger(n) || n <= 0) {
+        toast.error("Informe um número inteiro positivo (ou vazio para usar o plano).");
+        return;
+      }
+      next = n;
+    }
+    setSaving(true);
+    try { await onSave(next); } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number" min={1} step={1} value={draft} placeholder="—"
+        onChange={(e) => setDraft(e.target.value)}
+        style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 8px", fontFamily: "var(--font-mono)", width: "72px", textAlign: "center", background: "transparent", outline: "none" }}
+      />
+      <button type="button" disabled={!dirty || saving} onClick={commit} aria-label="Salvar assentos"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted disabled:opacity-30"
+        style={{ color: "oklch(0.54 0.13 160)" }}>
+        <Check className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
