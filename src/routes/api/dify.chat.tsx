@@ -6,6 +6,98 @@ import {
   invalidateDifyConfigCache,
 } from "@/lib/dify-config.server";
 
+// ============================================================
+// Rate limiting (server-side, funciona com múltiplas réplicas)
+// - 1 stream simultâneo por usuário (PK em active_streams)
+// - N envios/minuto por usuário (contagem em rate_limit_hits)
+// Estado no Postgres → consistente entre todas as réplicas.
+// ============================================================
+const MAX_STREAMS_PER_MINUTE = 10;
+
+function adminClient() {
+  return createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false }, realtime: disabledRealtimeOptions },
+  );
+}
+
+async function acquireStreamSlot(userId: string, agentType: string): Promise<
+  { ok: true } | { ok: false; reason: "concurrent" | "rate"; retryAfter: number | null }
+> {
+  try {
+    const admin = adminClient();
+    const { data, error } = await admin.rpc("try_acquire_stream_slot" as any, {
+      p_user_id: userId,
+      p_agent_type: agentType,
+      p_max_per_minute: MAX_STREAMS_PER_MINUTE,
+    });
+    if (error) {
+      // Falha na infra de rate limit não deve bloquear o usuário — log e libera.
+      console.error("[rate-limit] acquire failed, allowing:", error);
+      return { ok: true };
+    }
+    const d = data as any;
+    if (d?.ok === true) return { ok: true };
+    return {
+      ok: false,
+      reason: d?.reason === "rate" ? "rate" : "concurrent",
+      retryAfter: typeof d?.retry_after_s === "number" ? d.retry_after_s : null,
+    };
+  } catch (e) {
+    console.error("[rate-limit] acquire threw, allowing:", e);
+    return { ok: true };
+  }
+}
+
+async function releaseStreamSlot(userId: string) {
+  try {
+    const admin = adminClient();
+    await admin.rpc("release_stream_slot" as any, { p_user_id: userId });
+  } catch (e) {
+    // Slot órfão será limpo por cleanup >10min. Não é fatal.
+    console.warn("[rate-limit] release failed:", e);
+  }
+}
+
+/**
+ * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
+ * seja sucesso, erro ou desconexão do cliente.
+ */
+function wrapStreamWithRelease(
+  upstreamBody: ReadableStream<Uint8Array>,
+  onDone: () => void,
+): ReadableStream<Uint8Array> {
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    onDone();
+  };
+  const reader = upstreamBody.getReader();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+          release();
+          return;
+        }
+        controller.enqueue(value);
+      } catch (e) {
+        controller.error(e);
+        release();
+      }
+    },
+    cancel() {
+      // Cliente desconectou (fechou aba, cancelou fetch).
+      reader.cancel().catch(() => {});
+      release();
+    },
+  });
+}
+
 async function authUser(request: Request): Promise<{ userId: string; token: string } | null> {
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return null;
@@ -40,6 +132,33 @@ export const Route = createFileRoute("/api/dify/chat")({
         const body = await request.json();
         const agentType = resolveAgentType(body);
 
+        // ============================================================
+        // Rate limit: acquire ANTES de gastar recurso com Dify config
+        // ou fetch upstream. Bloqueio server-side → aba nova não contorna.
+        // ============================================================
+        const slot = await acquireStreamSlot(userId, agentType);
+        if (!slot.ok) {
+          const isConcurrent = slot.reason === "concurrent";
+          const message = isConcurrent
+            ? "Aguarde a análise atual terminar antes de enviar outra."
+            : "Muitos envios em pouco tempo. Aguarde alguns segundos e tente novamente.";
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (slot.retryAfter && slot.retryAfter > 0) {
+            headers["Retry-After"] = String(slot.retryAfter);
+          }
+          return new Response(
+            JSON.stringify({ error: message, reason: slot.reason }),
+            { status: 429, headers },
+          );
+        }
+
+        // A partir daqui, TODA saída precisa liberar o slot.
+        // Helper que envolve returns de erro.
+        const releaseAnd = <T,>(v: T): T => {
+          releaseStreamSlot(userId).catch(() => {});
+          return v;
+        };
+
         let baseUrl: string;
         let apiKey: string;
         try {
@@ -47,14 +166,14 @@ export const Route = createFileRoute("/api/dify/chat")({
         } catch (e: unknown) {
           const message = e instanceof Error ? e.message : String(e);
           const status = message.includes("não encontrado") || message.includes("desativado") ? 404 : 500;
-          return new Response(JSON.stringify({ error: message }), { 
+          return releaseAnd(new Response(JSON.stringify({ error: message }), {
             status,
             headers: { "Content-Type": "application/json" }
-          });
+          }));
         }
 
         const { query, conversation_id, inputs, files, meta } = body ?? {};
-        
+
         const sanitize = (s: unknown) =>
           String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
 
@@ -67,21 +186,10 @@ export const Route = createFileRoute("/api/dify/chat")({
         const patientName = sanitize(meta?.patient_name);
         const safeQuery = sanitizeQuery(query || "");
 
-        // Identificador estável para o Dify (chave de memória da conversa).
-        // NÃO usar nomes — eles variam entre sessões e quebram o vínculo
-        // (conversation_id, user) → Dify devolve resposta "fria".
-        // Formato: <userId>:<patient_id|no-patient>. Único por par nutri+paciente.
         const patientIdSafe = sanitize(meta?.patient_id) || "no-patient";
-        // Particionamos por agente também: o gateway compartilha namespace
-        // de conversation_id entre apps, então sem incluir o agentType
-        // a memória de um agente "contamina" a do outro.
         const composedUser = `${userId}:${patientIdSafe}:${agentType}`;
         const displayUser = composedUser.length > 64 ? composedUser.slice(-64) : composedUser;
 
-
-        // Super Agentes: `selected_task` roteia a esteira interna do app Dify.
-        // Só injeta se o cliente enviou (ou seja, veio de um super agente).
-        // Para agentes comuns fica ausente e nada muda no comportamento.
         const selectedTask = sanitize(body?.selected_task || meta?.selected_task);
 
         const mergedInputs = {
@@ -105,8 +213,6 @@ export const Route = createFileRoute("/api/dify/chat")({
         };
 
         const controller = new AbortController();
-        // Teto alto (6min) para suportar workflows longos de análise de exame no Dify.
-        // Não removemos o timeout para não deixar conexões penduradas em caso de hang real.
         const timeout = setTimeout(() => controller.abort(), 360000);
 
         const sendToDify = () =>
@@ -127,23 +233,22 @@ export const Route = createFileRoute("/api/dify/chat")({
             }),
           });
 
-
         let upstream;
         try {
           upstream = await sendToDify();
         } catch (e: any) {
           clearTimeout(timeout);
           console.error('[PROXY FETCH ERROR]', e);
-          return new Response(JSON.stringify({ error: e.message || "Timeout or connection error" }), { 
+          return releaseAnd(new Response(JSON.stringify({ error: e.message || "Timeout or connection error" }), {
             status: 504,
             headers: { "Content-Type": "application/json" }
-          });
+          }));
         }
         clearTimeout(timeout);
 
         if (!upstream.ok) {
           const text = await upstream.text().catch(() => "");
-          
+
           console.error('[DIFY ERROR]', {
             status: upstream.status,
             agent: agentType,
@@ -159,12 +264,12 @@ export const Route = createFileRoute("/api/dify/chat")({
               ({ baseUrl, apiKey } = await getDifyAgentConfig(agentType, token, true));
             } catch (e: unknown) {
               const message = e instanceof Error ? e.message : String(e);
-              return new Response(message, { status: 500 });
+              return releaseAnd(new Response(message, { status: 500 }));
             }
-            
+
             const retryController = new AbortController();
             const retryTimeout = setTimeout(() => retryController.abort(), 360000);
-            
+
             try {
               upstream = await fetch(`${baseUrl}/chat-messages`, {
                 method: "POST",
@@ -184,12 +289,16 @@ export const Route = createFileRoute("/api/dify/chat")({
               });
             } catch (retryErr: any) {
               clearTimeout(retryTimeout);
-              return new Response(retryErr.message || "Retry timeout", { status: 504 });
+              return releaseAnd(new Response(retryErr.message || "Retry timeout", { status: 504 }));
             }
             clearTimeout(retryTimeout);
 
             if (upstream.ok && upstream.body) {
-              return new Response(upstream.body, {
+              // Sucesso no retry: envolve stream com release.
+              const wrapped = wrapStreamWithRelease(upstream.body, () => {
+                releaseStreamSlot(userId).catch(() => {});
+              });
+              return new Response(wrapped, {
                 status: 200,
                 headers: {
                   "Content-Type": "text/event-stream; charset=utf-8",
@@ -199,33 +308,37 @@ export const Route = createFileRoute("/api/dify/chat")({
               });
             }
             const retryText = await upstream.text().catch(() => "");
-            return new Response(
+            return releaseAnd(new Response(
               retryText ||
                 "Workspace do Dify arquivado. Atualize a API Key da conta ativa em Integrações & APIs.",
               { status: upstream.status },
-            );
+            ));
           }
-          
-          return new Response(
-            JSON.stringify({ 
+
+          return releaseAnd(new Response(
+            JSON.stringify({
               error: text,
               status: upstream.status,
               agent: agentType
             }),
-            { 
+            {
               status: upstream.status,
               headers: { "Content-Type": "application/json" }
             }
-          );
+          ));
         }
-
 
         if (!upstream.ok || !upstream.body) {
           const text = await upstream.text().catch(() => "");
-          return new Response(text || "Dify error", { status: upstream.status });
+          return releaseAnd(new Response(text || "Dify error", { status: upstream.status }));
         }
 
-        return new Response(upstream.body, {
+        // Sucesso: envolve o stream pra liberar o slot no fim ou no cancel.
+        const wrapped = wrapStreamWithRelease(upstream.body, () => {
+          releaseStreamSlot(userId).catch(() => {});
+        });
+
+        return new Response(wrapped, {
           status: 200,
           headers: {
             "Content-Type": "text/event-stream; charset=utf-8",
