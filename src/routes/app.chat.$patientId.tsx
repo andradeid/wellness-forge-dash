@@ -206,6 +206,35 @@ function ChatPage() {
     });
   }, [pendingModuleFromUrl, patientProfile, patient, loadingAgents, getAgentForCard, setAgentType, navigate]);
 
+  // Auto-seleciona o super agente do perfil da paciente assim que ela carrega,
+  // pra nutri não precisar clicar em "Análise e Consulta" antes de escolher a
+  // tarefa. Só roda quando: (1) não há agentType ainda, (2) paciente e agentes
+  // carregaram, (3) não veio ?agent/?module/?task da URL, (4) não é chat legado
+  // sendo aberto por forceChatId, (5) não há mensagens (chat novo).
+  useEffect(() => {
+    if (agentType) return;
+    if (loadingAgents) return;
+    if (!patient) return;
+    if (initialAgent || pendingModuleFromUrl || initialTask) return;
+    if (forceChatId) return;
+    if (messages.length > 0) return;
+
+    let superAgentId: string | null = null;
+    if (patientProfile === "adulto_masculino") superAgentId = "super_masculino";
+    else if (patientProfile === "adulto_feminino") superAgentId = "super_feminino";
+    else if (patientProfile === "gestante") {
+      if (patient.pregnancy_type === "multiple") superAgentId = "super_gestante_gemelar";
+      else if (patient.pregnancy_type === "single") superAgentId = "super_gestante_mono";
+    }
+    if (!superAgentId) return;
+
+    const exists = agents.some(a => a.agent_id === superAgentId && a.is_super_agent && a.is_active);
+    if (!exists) return;
+
+    setAgentType(superAgentId);
+  }, [agentType, loadingAgents, patient, patientProfile, agents, initialAgent, pendingModuleFromUrl, initialTask, forceChatId, messages.length, setAgentType]);
+
+
   useEffect(() => {
     const patientProfile =
       filters.publico === "gestante"
