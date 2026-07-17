@@ -76,6 +76,7 @@ type NavGroup = {
   subtitle: string;
   icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
+  bottom?: boolean;
 };
 
 const nutriGroups: NavGroup[] = [
@@ -88,7 +89,6 @@ const nutriGroups: NavGroup[] = [
       { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
       { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
-      { title: "Planos & Créditos", url: "/app/planos", icon: CreditCard },
     ],
   },
   {
@@ -96,7 +96,9 @@ const nutriGroups: NavGroup[] = [
     label: "",
     subtitle: "",
     icon: LifeBuoy,
+    bottom: true,
     items: [
+      { title: "Planos & Créditos", url: "/app/planos", icon: CreditCard },
       { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
     ],
   },
@@ -150,10 +152,12 @@ const adminGroups: NavGroup[] = [
     label: "AJUDA & SUPORTE",
     subtitle: "Documentação e termos",
     icon: LifeBuoy,
+    bottom: true,
     items: [
       { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
     ],
   },
+
 ];
 
 export function AppSidebar() {
@@ -260,7 +264,7 @@ export function AppSidebar() {
           );
           if (visibleItems.length === 0) return null;
           return (
-            <div key={g.key} className="py-2">
+            <div key={g.key} className={cn("py-2", g.bottom && "mt-auto")}>
               {g.label && (
                 <div
                   className={cn(
