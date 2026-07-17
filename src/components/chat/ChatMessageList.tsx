@@ -861,6 +861,7 @@ export function ChatMessageList({
                         </div>
                       );
                     })}
+                  </div>
                   {m.role === "assistant" && isAdmin && m.structured_data?.indexed && (
                     <div
                       className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-600/80"
