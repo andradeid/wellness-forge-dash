@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
+import { MessageCopyButton } from "./MessageCopyButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
@@ -743,6 +744,7 @@ export function ChatMessageList({
                       </div>
                     </div>
                   )}
+                  <div id={`msg-content-${m.id}`}>
                   {parts
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
@@ -800,7 +802,8 @@ export function ChatMessageList({
                                 "prose-li:my-0",
                                 "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
                                 "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
-                                "[&_hr]:my-4 [&_hr]:border-border"
+                                "[&_hr]:my-4 [&_hr]:border-border",
+                                !isUser && "[&_p]:text-justify [&_li]:text-justify"
                               )}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                                   {normalizePrescription(before)}
@@ -830,6 +833,7 @@ export function ChatMessageList({
                             "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
                             "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
                             "[&_hr]:my-4 [&_hr]:border-border",
+                            !isUser && "[&_p]:text-justify [&_li]:text-justify",
                             isResearch && [
                               "[&_table]:overflow-x-auto",
                               "[&_table]:block",
@@ -859,6 +863,7 @@ export function ChatMessageList({
                         </div>
                       );
                     })}
+                  </div>
                   {m.role === "assistant" && isAdmin && m.structured_data?.indexed && (
                     <div
                       className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-600/80"
@@ -872,7 +877,18 @@ export function ChatMessageList({
                       <AlertTriangle className="h-3 w-3" /> Erro na estrutura de dados recebida
                     </div>
                   )}
-                  {m.role === "assistant" && <MessageFeedback messageId={m.id} />}
+                  {m.role === "assistant" ? (
+                    <MessageFeedback
+                      messageId={m.id}
+                      rightSlot={
+                        <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                      }
+                    />
+                  ) : (
+                    <div className="mt-2 flex justify-end">
+                      <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                    </div>
+                  )}
                   <div
                     className={`mt-2 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] ${
                       isUser ? "text-white/70 justify-end" : "text-muted-foreground/70 justify-start"

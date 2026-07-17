@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ThumbsUp, ThumbsDown, MessageSquare, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 type RatingValue = "positive" | "negative";
 
-export function MessageFeedback({ messageId }: { messageId: string }) {
+export function MessageFeedback({ messageId, rightSlot }: { messageId: string; rightSlot?: ReactNode }) {
   const [rating, setRating] = useState<RatingValue | null>(null);
   const [ratingId, setRatingId] = useState<string | null>(null);
 
@@ -108,6 +108,7 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
   return (
     <div className="mt-3 pt-2 border-t border-black/5">
       <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex items-center gap-1 flex-1 min-w-0">
         <button
           type="button"
           disabled={saving}
@@ -139,7 +140,11 @@ export function MessageFeedback({ messageId }: { messageId: string }) {
           <span className="hidden sm:inline">{suggestionId ? "Editar sugestão" : "Sugestão"}</span>
         </button>
         {saving && <Loader2 className="h-3 w-3 animate-spin opacity-60" />}
+        </div>
+        {rightSlot}
       </div>
+
+
 
       {showSuggestion && (
         <div className="mt-2 space-y-2">
