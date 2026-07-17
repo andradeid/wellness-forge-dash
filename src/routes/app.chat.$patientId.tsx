@@ -945,59 +945,9 @@ function ChatPage() {
                                         </button>
                                       );
                                     })}
-                                    <div className="my-1.5 border-t border-slate-100" />
                                   </>
                                 );
                               })()}
-
-                              {cardOptions.map((opt, idx) => {
-                                const Icon = opt.icon;
-                                const iconColor = opt.color;
-                                const isActive = cardTrigger === opt.trigger;
-                                const bestForCard = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
-                                const hasSession = !!(bestForCard && activeAgents?.includes(bestForCard.agent_id));
-                                return (
-                                  <div key={opt.trigger}>
-                                    {idx === 3 && <div className="my-1 border-t border-slate-100" />}
-                                    <button
-                                      onClick={() => {
-                                        const bestAgent = getAgentForCard(opt.trigger, patientProfile, patient?.pregnancy_type);
-                                        if (bestAgent) {
-                                          setAgentType(bestAgent.agent_id);
-                                          setSelectedTask(null);
-                                          setModuleOpen(false);
-                                        } else if (opt.trigger === "exames_de_sangue") {
-                                          setModuleOpen(false);
-                                          toast.error("Perfil do paciente não definido. Confirme sexo/gestação antes de analisar o exame.");
-                                        }
-                                      }}
-                                      className={cn(
-                                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
-                                        isActive
-                                          ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20"
-                                          : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
-                                      )}
-                                    >
-                                      <div className={cn(
-                                        "p-1.5 rounded-lg transition-colors",
-                                        isActive ? "bg-white shadow-sm" : "bg-slate-100 group-hover/opt:bg-white"
-                                      )}>
-                                        <Icon className="h-3.5 w-3.5" style={{ color: iconColor }} />
-                                      </div>
-                                      <span className="flex-1 text-left flex items-center gap-2">
-                                        {opt.label}
-                                        {hasSession && !isActive && (
-                                          <span
-                                            className="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                            title="Sessão ativa — retomar de onde parou"
-                                          />
-                                        )}
-                                      </span>
-                                      {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
-                                    </button>
-                                  </div>
-                                );
-                              })}
                             </div>
                           </PopoverContent>
                         </Popover>
