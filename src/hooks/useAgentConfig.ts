@@ -179,6 +179,70 @@ export function useAgentConfig() {
     return { agentId: task.agent_id, taskKey: task.task_key };
   }, [tasks, cards]);
 
+  /**
+   * Roteamento genérico: card_trigger → super agente por perfil + task_key.
+   * Espelha `resolveAnaliseCompleta` mas para os demais cards clínicos que
+   * também devem rodar via super agente com a task específica do card.
+   *
+   * Mapeamento card_trigger → task_key (task global do super agente):
+   *  - exames_de_sangue      → exam_masc | exam_fem | exam_gest_mono | exam_gest_gem (por perfil)
+   *  - composicao_metabolismo → composition
+   *  - genetica_microbioma   → genetics
+   *  - estimativa_refeicao_foto → estimativa_refeicao_foto
+   *  - composicao_corporal_foto → composicao_corporal_foto
+   *  - casos_clinicos        → reasoning
+   *  - plano_alimentar       → production
+   *
+   * Retorna `null` quando perfil/pregnancy_type estão incompletos — o call
+   * site deve pedir para completar o cadastro (SEGURANÇA CLÍNICA).
+   */
+  const resolveSuperByProfile = useCallback((
+    cardTrigger: string,
+    patientProfile?: string,
+    pregnancyType?: string,
+  ): { agentId: string; taskKey: string } | null => {
+    // 1) super agente por perfil
+    let agentId: string | null = null;
+    if (patientProfile === 'adulto_masculino') agentId = 'super_masculino';
+    else if (patientProfile === 'adulto_feminino') agentId = 'super_feminino';
+    else if (patientProfile === 'gestante') {
+      if (pregnancyType === 'multiple') agentId = 'super_gestante_gemelar';
+      else if (pregnancyType === 'single') agentId = 'super_gestante_mono';
+      else return null;
+    } else {
+      return null;
+    }
+
+    // 2) task_key por card_trigger
+    let taskKey: string | null = null;
+    switch (cardTrigger) {
+      case 'exames_de_sangue':
+        taskKey = agentId === 'super_masculino' ? 'exam_masc'
+          : agentId === 'super_feminino' ? 'exam_fem'
+          : agentId === 'super_gestante_mono' ? 'exam_gest_mono'
+          : agentId === 'super_gestante_gemelar' ? 'exam_gest_gem'
+          : null;
+        break;
+      case 'composicao_metabolismo': taskKey = 'composition'; break;
+      case 'genetica_microbioma': taskKey = 'genetics'; break;
+      case 'estimativa_refeicao_foto': taskKey = 'estimativa_refeicao_foto'; break;
+      case 'composicao_corporal_foto': taskKey = 'composicao_corporal_foto'; break;
+      case 'casos_clinicos': taskKey = 'reasoning'; break;
+      case 'plano_alimentar': taskKey = 'production'; break;
+      default: return null;
+    }
+    if (!taskKey) return null;
+
+    // 3) valida que a task existe e o super agente está ativo
+    const agentActive = agents.some(a => a.agent_id === agentId && a.is_super_agent && a.is_active);
+    const taskActive = tasks.some(t => t.agent_id === agentId && t.task_key === taskKey && t.is_active);
+    if (!agentActive || !taskActive) return null;
+
+    return { agentId, taskKey };
+  }, [agents, tasks]);
+
+
+
 
   /**
    * Verifica se um card_trigger já existe em dify_agents ou super_agent_cards.
