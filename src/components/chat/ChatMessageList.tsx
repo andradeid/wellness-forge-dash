@@ -47,6 +47,7 @@ export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   agent_type?: string;
+  selected_task?: string | null;
   structured_data?: {
     markers?: Marker[];
     indexed?: boolean;
