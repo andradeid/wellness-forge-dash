@@ -17,6 +17,7 @@ import {
   Tag as TagIcon,
   Plus,
   X,
+  Check,
 } from "lucide-react";
 
 
@@ -477,6 +478,20 @@ function UsersPage() {
     });
   };
 
+  const saveSeatsOverride = async (userId: string, value: number | null) => {
+    const { error } = await (supabase as any)
+      .from("subscriptions")
+      .upsert(
+        { user_id: userId, seats_override: value, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) { toast.error("Erro ao salvar assentos: " + error.message); return; }
+    setDetailExtra((prev) => (prev ? { ...prev, seatsOverride: value } : prev));
+    toast.success("Assentos atualizados com sucesso.");
+  };
+
+
+
   const openPlan = (u: UserRow) => {
     setPlanUser(u);
     setPlanForm({
@@ -889,10 +904,17 @@ function UsersPage() {
                     label="Validade"
                     value={detailExtra?.currentPeriodEnd ? new Date(detailExtra.currentPeriodEnd).toLocaleDateString("pt-BR") : "—"}
                   />
-                  <DetailCell
-                    label="Assentos (override)"
-                    value={detailExtra?.seatsOverride != null ? String(detailExtra.seatsOverride) : "—"}
-                  />
+                  <div className="rounded-lg border p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Assentos (override)</p>
+                    <div className="mt-1">
+                      <SeatsInlineEditor
+                        value={detailExtra?.seatsOverride ?? null}
+                        onSave={(v) => saveSeatsOverride(detailUser.id, v)}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">Vazio = usar o padrão do plano.</p>
+                  </div>
+
                   {detailExtra?.cancelledAt && (
                     <DetailCell
                       label="Cancelada em"
@@ -1145,3 +1167,41 @@ function UsersPage() {
     </div>
   );
 }
+
+function SeatsInlineEditor({ value, onSave }: { value: number | null; onSave: (v: number | null) => void | Promise<void> }) {
+  const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setDraft(value != null ? String(value) : ""); }, [value]);
+  const dirty = draft !== (value != null ? String(value) : "");
+
+  async function commit() {
+    const trimmed = draft.trim();
+    let next: number | null = null;
+    if (trimmed !== "") {
+      const n = Number(trimmed);
+      if (!Number.isInteger(n) || n <= 0) {
+        toast.error("Informe um número inteiro positivo (ou vazio para usar o plano).");
+        return;
+      }
+      next = n;
+    }
+    setSaving(true);
+    try { await onSave(next); } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number" min={1} step={1} value={draft} placeholder="—"
+        onChange={(e) => setDraft(e.target.value)}
+        style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 8px", fontFamily: "var(--font-mono)", width: "72px", textAlign: "center", background: "transparent", outline: "none" }}
+      />
+      <button type="button" disabled={!dirty || saving} onClick={commit} aria-label="Salvar assentos"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted disabled:opacity-30"
+        style={{ color: "oklch(0.54 0.13 160)" }}>
+        <Check className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
