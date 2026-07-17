@@ -819,19 +819,11 @@ function ChatPage() {
                       const currentAgent = agents.find(a => a.agent_id === agentType);
                       const cardTrigger = currentAgent?.card_trigger;
 
-                      // Agrupar agentes por card_trigger únicos
-                      const cardOptions = Array.from(
-                        new Map(
-                          agents
-                            .filter(a => a.is_active && a.card_trigger)
-                            .map(a => [a.card_trigger, {
-                              trigger: a.card_trigger as string,
-                              label: CARD_LABELS[a.card_trigger as string] || a.card_trigger,
-                              icon: CARD_ICONS[a.card_trigger as string] || Sparkles,
-                              color: CARD_COLORS[a.card_trigger as string] || "#e8a04c"
-                            }])
-                        ).values()
-                      );
+                      // No chat COM paciente, o menu mostra APENAS tarefas do super
+                      // agente resolvido pelo perfil da paciente. Agentes simples
+                      // (exam, metabolism, genetics, reasoning, production, research
+                      // isolados) NÃO aparecem aqui — eles seguem disponíveis somente
+                      // no espaço "sem paciente" (/app/fale-com-lumma), fora de perfil.
 
                       const moduleSelector = (
                         <Popover open={moduleOpen} onOpenChange={setModuleOpen}>
