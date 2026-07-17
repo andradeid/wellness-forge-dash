@@ -796,16 +796,15 @@ export function ChatMessageList({
                           <div key={i} className="space-y-4">
                             {before.trim() && (
                               <div className={cn(
-                                "prose prose-sm max-w-none",
-                                "prose-p:my-2",
+                                "prose prose-sm max-w-none leading-relaxed",
+                                "prose-p:my-3 prose-p:leading-relaxed",
                                 "prose-strong:text-foreground prose-strong:font-semibold",
-                                "prose-ul:my-2 prose-ul:space-y-1",
-                                "prose-ol:my-2 prose-ol:space-y-1",
-                                "prose-li:my-0",
-                                "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
-                                "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
-                                "[&_hr]:my-4 [&_hr]:border-border",
-                                !isUser && "[&_p]:text-justify [&_li]:text-justify"
+                                "prose-ul:my-3 prose-ul:space-y-1.5",
+                                "prose-ol:my-3 prose-ol:space-y-1.5",
+                                "prose-li:my-0 prose-li:leading-relaxed",
+                                "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
+                                "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-foreground",
+                                "[&_hr]:my-5 [&_hr]:border-border"
                               )}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                                   {normalizePrescription(before)}
@@ -826,16 +825,15 @@ export function ChatMessageList({
                         <div
                           key={i}
                           className={cn(
-                            "prose prose-sm max-w-none",
-                            "prose-p:my-2",
+                            "prose prose-sm max-w-none leading-relaxed",
+                            "prose-p:my-3 prose-p:leading-relaxed",
                             "prose-strong:text-foreground prose-strong:font-semibold",
-                            "prose-ul:my-2 prose-ul:space-y-1",
-                            "prose-ol:my-2 prose-ol:space-y-1",
-                            "prose-li:my-0",
-                            "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
-                            "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-foreground",
-                            "[&_hr]:my-4 [&_hr]:border-border",
-                            !isUser && "[&_p]:text-justify [&_li]:text-justify",
+                            "prose-ul:my-3 prose-ul:space-y-1.5",
+                            "prose-ol:my-3 prose-ol:space-y-1.5",
+                            "prose-li:my-0 prose-li:leading-relaxed",
+                            "[&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:text-foreground", "[&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1 [&_h2]:text-foreground",
+                            "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-foreground",
+                            "[&_hr]:my-5 [&_hr]:border-border",
                             isResearch && [
                               "[&_table]:overflow-x-auto",
                               "[&_table]:block",
