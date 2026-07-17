@@ -313,6 +313,7 @@ function PlansAdminPage() {
                     <TableHead>Pacote</TableHead>
                     <TableHead className="w-[140px]">Créditos</TableHead>
                     <TableHead className="w-[160px]">Preço (R$)</TableHead>
+                    <TableHead className="w-[130px]">Custo / crédito</TableHead>
                     <TableHead className="w-[100px]">Destaque</TableHead>
                     <TableHead className="w-[90px]">Ativo</TableHead>
                     <TableHead className="w-[110px]" />
@@ -321,11 +322,17 @@ function PlansAdminPage() {
                 <TableBody>
                   {packs.map((p) => {
                     const isDirty = Boolean(packDirty[p.id]);
+                    const costPerCredit =
+                      p.credits > 0 ? p.price_cents / 100 / p.credits : null;
                     return (
                       <TableRow key={p.id}>
                         <TableCell>
-                          <div className="font-medium">{p.name}</div>
-                          <div className="text-xs text-muted-foreground">{p.slug}</div>
+                          <Input
+                            value={p.name}
+                            onChange={(e) => patchPack(p.id, { name: e.target.value })}
+                            className="font-medium"
+                          />
+                          <div className="text-xs text-muted-foreground mt-1">{p.slug}</div>
                           {p.description && (
                             <div className="text-xs text-muted-foreground mt-0.5">
                               {p.description}
@@ -357,6 +364,13 @@ function PlansAdminPage() {
                           />
                         </TableCell>
                         <TableCell>
+                          <div className="text-sm font-medium">
+                            {costPerCredit != null
+                              ? `R$ ${costPerCredit.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 4 })}`
+                              : "—"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <Switch
                             checked={p.is_highlighted}
                             onCheckedChange={(v) => patchPack(p.id, { is_highlighted: v })}
@@ -384,6 +398,7 @@ function PlansAdminPage() {
                           </Button>
                         </TableCell>
                       </TableRow>
+
                     );
                   })}
                 </TableBody>
