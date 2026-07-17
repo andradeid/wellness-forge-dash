@@ -904,10 +904,17 @@ function UsersPage() {
                     label="Validade"
                     value={detailExtra?.currentPeriodEnd ? new Date(detailExtra.currentPeriodEnd).toLocaleDateString("pt-BR") : "—"}
                   />
-                  <DetailCell
-                    label="Assentos (override)"
-                    value={detailExtra?.seatsOverride != null ? String(detailExtra.seatsOverride) : "—"}
-                  />
+                  <div className="rounded-lg border p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Assentos (override)</p>
+                    <div className="mt-1">
+                      <SeatsInlineEditor
+                        value={detailExtra?.seatsOverride ?? null}
+                        onSave={(v) => saveSeatsOverride(detailUser.id, v)}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">Vazio = usar o padrão do plano.</p>
+                  </div>
+
                   {detailExtra?.cancelledAt && (
                     <DetailCell
                       label="Cancelada em"
