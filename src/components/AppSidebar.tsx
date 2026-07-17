@@ -152,10 +152,12 @@ const adminGroups: NavGroup[] = [
     label: "AJUDA & SUPORTE",
     subtitle: "Documentação e termos",
     icon: LifeBuoy,
+    bottom: true,
     items: [
       { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
     ],
   },
+
 ];
 
 export function AppSidebar() {
