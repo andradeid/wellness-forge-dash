@@ -744,6 +744,7 @@ export function ChatMessageList({
                       </div>
                     </div>
                   )}
+                  <div id={`msg-content-${m.id}`}>
                   {parts
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
