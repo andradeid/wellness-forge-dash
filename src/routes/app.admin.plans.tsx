@@ -188,16 +188,19 @@ function PlansAdminPage() {
                         : null;
                     return (
                       <TableRow key={p.id}>
-                        <TableCell>
+                        <TableCell className="min-w-[240px]">
                           <Input
                             value={p.name}
                             onChange={(e) => patch(p.id, { name: e.target.value })}
                             className="font-medium"
                           />
-                          <div className="text-xs text-muted-foreground mt-1">{p.slug}</div>
-                          {p.description && (
-                            <div className="text-xs text-muted-foreground mt-0.5">{p.description}</div>
-                          )}
+                          <div className="text-[10px] text-muted-foreground mt-1">{p.slug}</div>
+                          <Textarea
+                            value={p.description ?? ""}
+                            onChange={(e) => patch(p.id, { description: e.target.value })}
+                            placeholder="Subtítulo exibido no card (ex.: Para quem atende até 90 pacientes por mês)"
+                            className="mt-2 text-xs min-h-[56px]"
+                          />
                         </TableCell>
                         <TableCell>
                           <Input
