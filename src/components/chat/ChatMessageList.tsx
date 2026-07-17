@@ -653,6 +653,7 @@ export function ChatMessageList({
               !!prevAssistant?.agent_type &&
               prevAssistant.agent_type !== m.agent_type;
             const agentLabel = !isUser ? getAgentLabel(m.agent_type) : null;
+            const taskLabel = !isUser ? getTaskLabel(m.selected_task) : null;
 
             return (
               <div key={m.id} className="space-y-3">
