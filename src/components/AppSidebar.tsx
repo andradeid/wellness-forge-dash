@@ -262,7 +262,7 @@ export function AppSidebar() {
           );
           if (visibleItems.length === 0) return null;
           return (
-            <div key={g.key} className="py-2">
+            <div key={g.key} className={cn("py-2", g.bottom && "mt-auto")}>
               {g.label && (
                 <div
                   className={cn(
