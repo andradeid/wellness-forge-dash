@@ -108,6 +108,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
   return (
     <div className="mt-3 pt-2 border-t border-black/5">
       <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex items-center gap-1 flex-1 min-w-0">
         <button
           type="button"
           disabled={saving}
