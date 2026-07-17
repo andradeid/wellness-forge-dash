@@ -28,3 +28,27 @@ export function getAgentLabel(agentId?: string | null): AgentLabel | null {
   if (!agentId) return null;
   return MAP[agentId] ?? { label: agentId, icon: "🤖", chip: "bg-slate-50 text-slate-700 border-slate-200" };
 }
+
+/** Task key (Super Agentes) → rótulo curto exibido junto do chip do agente. */
+const TASK_MAP: Record<string, { label: string; icon: string }> = {
+  composition: { label: "Composição & Metabolismo", icon: "⚗️" },
+  metabolism: { label: "Composição & Metabolismo", icon: "⚗️" },
+  genetics: { label: "Genética & Microbioma", icon: "🧬" },
+  exam: { label: "Exames de Sangue", icon: "🧪" },
+  exam_masc: { label: "Exames de Sangue", icon: "🧪" },
+  exam_fem: { label: "Exames de Sangue", icon: "🧪" },
+  exam_gest_mono: { label: "Exames de Sangue", icon: "🧪" },
+  exam_gest_gem: { label: "Exames de Sangue", icon: "🧪" },
+  reasoning: { label: "Casos Clínicos", icon: "🧠" },
+  production: { label: "Plano Alimentar", icon: "🥗" },
+  research: { label: "Pesquisa Científica", icon: "📚" },
+  suplementacao: { label: "Suplementação", icon: "💊" },
+  formulacao_magistral: { label: "Formulação Magistral", icon: "⚗️" },
+  estimativa_refeicao_foto: { label: "Refeição por Foto", icon: "🍽️" },
+  composicao_corporal_foto: { label: "Composição por Foto", icon: "🧍" },
+};
+
+export function getTaskLabel(taskKey?: string | null): { label: string; icon: string } | null {
+  if (!taskKey) return null;
+  return TASK_MAP[taskKey] ?? { label: taskKey, icon: "✨" };
+}
