@@ -132,7 +132,13 @@ export function useChatHistory(limit = 50) {
         };
       });
 
-      const combined = [...mappedPChats, ...mappedGChats].sort((a, b) => {
+      // Filtro: esconde chats sem mensagens da listagem (não deleta nada no banco).
+      // Seguro porque a mensagem do usuário é inserida ANTES do stream do Dify,
+      // então message_count === 0 significa realmente "chat aberto e nunca usado".
+      const nonEmpty = [...mappedPChats, ...mappedGChats].filter(
+        (c) => (c.message_count ?? 0) > 0,
+      );
+      const combined = nonEmpty.sort((a, b) => {
         // Ordenação prioritária: pinned_at DESC, depois updated_at DESC
         if (a.pinned_at && !b.pinned_at) return -1;
         if (!a.pinned_at && b.pinned_at) return 1;
