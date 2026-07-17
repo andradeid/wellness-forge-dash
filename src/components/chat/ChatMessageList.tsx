@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
-import { getAgentLabel } from "@/lib/agent-labels";
+import { getAgentLabel, getTaskLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
 import { stripBodyAssessmentJson } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
@@ -47,6 +47,7 @@ export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   agent_type?: string;
+  selected_task?: string | null;
   structured_data?: {
     markers?: Marker[];
     indexed?: boolean;
@@ -652,6 +653,7 @@ export function ChatMessageList({
               !!prevAssistant?.agent_type &&
               prevAssistant.agent_type !== m.agent_type;
             const agentLabel = !isUser ? getAgentLabel(m.agent_type) : null;
+            const taskLabel = !isUser ? getTaskLabel(m.selected_task) : null;
 
             return (
               <div key={m.id} className="space-y-3">
@@ -901,6 +903,15 @@ export function ChatMessageList({
                       >
                         <span>{agentLabel.icon}</span>
                         <span>{agentLabel.label}</span>
+                      </span>
+                    )}
+                    {!isUser && taskLabel && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 px-1.5 py-0.5"
+                        title={`Tarefa: ${taskLabel.label}`}
+                      >
+                        <span>{taskLabel.icon}</span>
+                        <span>{taskLabel.label}</span>
                       </span>
                     )}
                     {m.created_at && (

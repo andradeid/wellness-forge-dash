@@ -529,7 +529,7 @@ export function useDifyChat(
 
       const { data: msgs } = await (supabase as any)
         .from("chat_messages")
-        .select("id, role, content, agent_type, structured_data, attachments, created_at")
+        .select("id, role, content, agent_type, selected_task, structured_data, attachments, created_at")
         .eq("chat_id", id)
         .order("created_at", { ascending: true });
       if (!cancelled) {
@@ -883,7 +883,7 @@ export function useDifyChat(
     };
 
 
-    setMessages((prev) => [...prev, { ...userMsg, agent_type: agentType }, { id: assistantId, role: "assistant", content: "", agent_type: agentType, created_at: new Date().toISOString() }]);
+    setMessages((prev) => [...prev, { ...userMsg, agent_type: agentType, selected_task: selectedTask ?? null }, { id: assistantId, role: "assistant", content: "", agent_type: agentType, selected_task: selectedTask ?? null, created_at: new Date().toISOString() }]);
 
     // 4) Stream from Dify proxy
     let assistantText = "";
