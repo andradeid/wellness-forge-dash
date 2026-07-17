@@ -57,7 +57,7 @@ function FaleComLummaPage() {
   const { module: searchModule } = Route.useSearch();
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const [message, setMessage] = useState("");
-  const { agents, cards: superAgentCards, tasks: superAgentTasks, getAgentForCard, resolveAnaliseCompleta, requiresPatient, loading: loadingAgents } = useAgentConfig();
+  const { agents, cards: superAgentCards, tasks: superAgentTasks, getAgentForCard, resolveAnaliseCompleta, resolveSuperByProfile, requiresPatient, loading: loadingAgents } = useAgentConfig();
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
@@ -206,6 +206,26 @@ function FaleComLummaPage() {
             search: { agent: resolved.agentId, task: resolved.taskKey } as any,
           });
           setPendingTrigger(undefined);
+        } else if (new Set([
+          "exames_de_sangue",
+          "composicao_metabolismo",
+          "genetica_microbioma",
+          "estimativa_refeicao_foto",
+          "composicao_corporal_foto",
+          "casos_clinicos",
+          "plano_alimentar",
+        ]).has(pendingTrigger)) {
+          const resolved = resolveSuperByProfile(pendingTrigger, resolvedProfile, data.pregnancy_type ?? undefined);
+          if (!resolved) {
+            toast.error("Perfil incompleto para roteamento por super agente.");
+            return;
+          }
+          navigate({
+            to: "/app/chat/$patientId",
+            params: { patientId: data.id },
+            search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+          });
+          setPendingTrigger(undefined);
         } else {
           const agentId = getAgentForCard(
             pendingTrigger,
@@ -218,6 +238,7 @@ function FaleComLummaPage() {
             search: { module: pendingTrigger, agent: agentId },
           });
         }
+
       } else {
         navigate({
           to: "/app/chat/$patientId",
@@ -847,8 +868,22 @@ function FaleComLummaPage() {
                           );
                         })}
                         {clinicalCards.map((card, idx) => {
+                          // Triggers que devem rodar via SUPER AGENTE + task por perfil,
+                          // mesma regra do card "Análise e Consulta" (analise_completa).
+                          const SUPER_ROUTED = new Set([
+                            "exames_de_sangue",
+                            "composicao_metabolismo",
+                            "genetica_microbioma",
+                            "estimativa_refeicao_foto",
+                            "composicao_corporal_foto",
+                            "casos_clinicos",
+                            "plano_alimentar",
+                          ]);
+                          const isSuperRouted = SUPER_ROUTED.has(card.trigger);
+
                           const agent = getAgentForCard(card.trigger, selectedPatient?.profile, selectedPatient?.pregnancy_type);
-                          if (!agent && card.trigger !== "exames_de_sangue" && card.trigger !== "perguntas_clinicas") return null;
+                          // Para cards super-roteados NÃO exigimos agente Dify legado.
+                          if (!isSuperRouted && !agent && card.trigger !== "exames_de_sangue" && card.trigger !== "perguntas_clinicas") return null;
 
                           return (
                             <motion.button
@@ -861,6 +896,32 @@ function FaleComLummaPage() {
                                   startGeneralChat("reasoning");
                                   return;
                                 }
+                                if (isSuperRouted) {
+                                  // Precisa de paciente para resolver perfil
+                                  if (!selectedPatient) {
+                                    setPendingSuperAgent(null);
+                                    setPendingTrigger(card.trigger);
+                                    setIdentifyOpen(true);
+                                    return;
+                                  }
+                                  const resolved = resolveSuperByProfile(
+                                    card.trigger,
+                                    selectedPatient.profile,
+                                    selectedPatient.pregnancy_type ?? undefined,
+                                  );
+                                  if (!resolved) {
+                                    toast.error(
+                                      "Perfil da paciente incompleto. Edite o cadastro (sexo e, se gestante, tipo de gestação) para usar este card.",
+                                    );
+                                    return;
+                                  }
+                                  navigate({
+                                    to: "/app/chat/$patientId",
+                                    params: { patientId: selectedPatient.id },
+                                    search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+                                  });
+                                  return;
+                                }
                                 if (!agent || requiresPatient(agent.agent_id)) {
                                   setPendingTrigger(card.trigger);
                                   setIdentifyOpen(true);
@@ -868,7 +929,11 @@ function FaleComLummaPage() {
                                   startGeneralChat(agent.agent_id);
                                 }
                               }}
-                              className="flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative"
+                              className={cn(
+                                "flex flex-row sm:flex-col items-center justify-start sm:justify-center gap-3 p-3 sm:p-6 min-h-[52px] sm:min-h-[120px] rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-md shadow-sm hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative",
+                                // DEBUG: borda vermelha para validar roteamento super-agente por perfil
+                                isSuperRouted ? "border-2 border-red-500" : "border border-white/60",
+                              )}
                             >
                               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:bg-white transition-colors shrink-0">
                                 <card.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: card.color }} />
@@ -878,6 +943,7 @@ function FaleComLummaPage() {
                             </motion.button>
                           );
                         })}
+
                       </div>
                     </div>
                   );
@@ -988,6 +1054,32 @@ function FaleComLummaPage() {
                               return;
                             }
 
+                            // Cards super-roteados: resolvem super agente + task por perfil
+                            const SUPER_ROUTED_TRIGGERS = new Set([
+                              "exames_de_sangue",
+                              "composicao_metabolismo",
+                              "genetica_microbioma",
+                              "estimativa_refeicao_foto",
+                              "composicao_corporal_foto",
+                              "casos_clinicos",
+                              "plano_alimentar",
+                            ]);
+                            if (pendingTrigger && SUPER_ROUTED_TRIGGERS.has(pendingTrigger)) {
+                              const resolved = resolveSuperByProfile(pendingTrigger, resolvedProfile, p.pregnancy_type ?? undefined);
+                              if (!resolved) {
+                                toast.error("Perfil incompleto para roteamento por super agente.");
+                                setPendingTrigger(undefined);
+                                return;
+                              }
+                              navigate({
+                                to: "/app/chat/$patientId",
+                                params: { patientId: p.id },
+                                search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+                              });
+                              setPendingTrigger(undefined);
+                              return;
+                            }
+
                             const agentId = pendingTrigger ? getAgentForCard(
                               pendingTrigger,
                               resolvedProfile,
@@ -999,6 +1091,7 @@ function FaleComLummaPage() {
                               params: { patientId: p.id },
                               search: pendingTrigger ? { module: pendingTrigger, agent: agentId } : undefined,
                             });
+
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
                         >
