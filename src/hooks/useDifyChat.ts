@@ -883,7 +883,7 @@ export function useDifyChat(
     };
 
 
-    setMessages((prev) => [...prev, { ...userMsg, agent_type: agentType }, { id: assistantId, role: "assistant", content: "", agent_type: agentType, created_at: new Date().toISOString() }]);
+    setMessages((prev) => [...prev, { ...userMsg, agent_type: agentType, selected_task: selectedTask ?? null }, { id: assistantId, role: "assistant", content: "", agent_type: agentType, selected_task: selectedTask ?? null, created_at: new Date().toISOString() }]);
 
     // 4) Stream from Dify proxy
     let assistantText = "";
