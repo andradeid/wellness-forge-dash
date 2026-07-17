@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { stripFormulacoesMarker, type FormulacoesPayload } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
-import { getAgentLabel } from "@/lib/agent-labels";
+import { getAgentLabel, getTaskLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
 import { stripBodyAssessmentJson } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
