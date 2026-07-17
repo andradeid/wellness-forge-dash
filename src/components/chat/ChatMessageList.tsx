@@ -542,6 +542,7 @@ export function ChatMessageList({
   highlightId,
   isStreaming,
   agentType,
+  taskType,
   onGenerateRecipe,
   patient,
 }: {
@@ -551,6 +552,7 @@ export function ChatMessageList({
   highlightId?: string;
   isStreaming?: boolean;
   agentType?: string;
+  taskType?: string | null;
   onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
   patient?: PrescriptionPatient | null;
 }) {
