@@ -206,6 +206,26 @@ function FaleComLummaPage() {
             search: { agent: resolved.agentId, task: resolved.taskKey } as any,
           });
           setPendingTrigger(undefined);
+        } else if (new Set([
+          "exames_de_sangue",
+          "composicao_metabolismo",
+          "genetica_microbioma",
+          "estimativa_refeicao_foto",
+          "composicao_corporal_foto",
+          "casos_clinicos",
+          "plano_alimentar",
+        ]).has(pendingTrigger)) {
+          const resolved = resolveSuperByProfile(pendingTrigger, resolvedProfile, data.pregnancy_type ?? undefined);
+          if (!resolved) {
+            toast.error("Perfil incompleto para roteamento por super agente.");
+            return;
+          }
+          navigate({
+            to: "/app/chat/$patientId",
+            params: { patientId: data.id },
+            search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+          });
+          setPendingTrigger(undefined);
         } else {
           const agentId = getAgentForCard(
             pendingTrigger,
@@ -218,6 +238,7 @@ function FaleComLummaPage() {
             search: { module: pendingTrigger, agent: agentId },
           });
         }
+
       } else {
         navigate({
           to: "/app/chat/$patientId",
