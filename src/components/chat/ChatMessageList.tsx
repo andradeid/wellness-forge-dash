@@ -905,6 +905,15 @@ export function ChatMessageList({
                         <span>{agentLabel.label}</span>
                       </span>
                     )}
+                    {!isUser && taskLabel && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 px-1.5 py-0.5"
+                        title={`Tarefa: ${taskLabel.label}`}
+                      >
+                        <span>{taskLabel.icon}</span>
+                        <span>{taskLabel.label}</span>
+                      </span>
+                    )}
                     {m.created_at && (
                       <span title={new Date(m.created_at).toLocaleString("pt-BR")}>
                         {new Date(m.created_at).toLocaleString("pt-BR", {
