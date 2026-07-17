@@ -1033,6 +1033,32 @@ function FaleComLummaPage() {
                               return;
                             }
 
+                            // Cards super-roteados: resolvem super agente + task por perfil
+                            const SUPER_ROUTED_TRIGGERS = new Set([
+                              "exames_de_sangue",
+                              "composicao_metabolismo",
+                              "genetica_microbioma",
+                              "estimativa_refeicao_foto",
+                              "composicao_corporal_foto",
+                              "casos_clinicos",
+                              "plano_alimentar",
+                            ]);
+                            if (pendingTrigger && SUPER_ROUTED_TRIGGERS.has(pendingTrigger)) {
+                              const resolved = resolveSuperByProfile(pendingTrigger, resolvedProfile, p.pregnancy_type ?? undefined);
+                              if (!resolved) {
+                                toast.error("Perfil incompleto para roteamento por super agente.");
+                                setPendingTrigger(undefined);
+                                return;
+                              }
+                              navigate({
+                                to: "/app/chat/$patientId",
+                                params: { patientId: p.id },
+                                search: { agent: resolved.agentId, task: resolved.taskKey } as any,
+                              });
+                              setPendingTrigger(undefined);
+                              return;
+                            }
+
                             const agentId = pendingTrigger ? getAgentForCard(
                               pendingTrigger,
                               resolvedProfile,
@@ -1044,6 +1070,7 @@ function FaleComLummaPage() {
                               params: { patientId: p.id },
                               search: pendingTrigger ? { module: pendingTrigger, agent: agentId } : undefined,
                             });
+
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
                         >
