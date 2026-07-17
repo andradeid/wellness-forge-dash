@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 type RatingValue = "positive" | "negative";
 
-export function MessageFeedback({ messageId, rightSlot }: { messageId: string; rightSlot?: React.ReactNode }) {
+export function MessageFeedback({ messageId, rightSlot }: { messageId: string; rightSlot?: ReactNode }) {
   const [rating, setRating] = useState<RatingValue | null>(null);
   const [ratingId, setRatingId] = useState<string | null>(null);
 
