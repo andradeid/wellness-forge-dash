@@ -308,10 +308,6 @@ function PatientsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <QuickAnalysisDialog 
-            onCreated={load} 
-            moduleContext="exames_de_sangue"
-          />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
