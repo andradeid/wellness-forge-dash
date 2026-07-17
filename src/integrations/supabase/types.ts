@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_streams: {
+        Row: {
+          agent_type: string | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agent_costs: {
         Row: {
           agent_key: string
@@ -800,6 +818,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_hits: {
+        Row: {
+          hit_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          hit_at?: string
+          id?: number
+          user_id: string
+        }
+        Update: {
+          hit_at?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string
@@ -1163,6 +1199,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      release_stream_slot: { Args: { p_user_id: string }; Returns: undefined }
       toggle_unlimited_credits: {
         Args: {
           p_admin_id: string
@@ -1171,6 +1208,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      try_acquire_stream_slot: {
+        Args: {
+          p_agent_type: string
+          p_max_per_minute?: number
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
