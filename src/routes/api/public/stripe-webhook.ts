@@ -363,6 +363,25 @@ async function handleInvoicePaid(
     hostedInvoiceUrl: (invoice as any).hosted_invoice_url ?? null,
     metadata: { plan_slug: (plan as any).slug, billing_cycle: cycle, stripe_subscription_id: sub.id },
   });
+
+  // Email de ativação — apenas na primeira fatura da assinatura (não em renovações)
+  const billingReason = (invoice as any).billing_reason as string | undefined;
+  if (billingReason === "subscription_create") {
+    try {
+      const { sendSubscriptionActivatedEmail } = await import("@/lib/emails.server");
+      await sendSubscriptionActivatedEmail({
+        userId: targetUserId,
+        planName: ((plan as any).name ?? (plan as any).slug ?? "Lumma") as string,
+        credits: monthlyCredits,
+        amountCents: invoice.amount_paid ?? 0,
+        currency: invoice.currency ?? "brl",
+        billingCycle: cycle,
+        nextRenewalIso: periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null,
+      });
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao enviar email de assinatura:", err?.message);
+    }
+  }
 }
 
 async function recordInvoiceFailure(
