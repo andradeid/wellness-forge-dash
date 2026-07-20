@@ -194,6 +194,8 @@ export type Database = {
           price_cents: number
           slug: string
           sort_order: number
+          stripe_price_id: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -208,6 +210,8 @@ export type Database = {
           price_cents?: number
           slug: string
           sort_order?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -222,6 +226,8 @@ export type Database = {
           price_cents?: number
           slug?: string
           sort_order?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -849,6 +855,9 @@ export type Database = {
           price_yearly_cents: number | null
           slug: string
           sort_order: number
+          stripe_price_monthly_id: string | null
+          stripe_price_yearly_id: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -863,6 +872,9 @@ export type Database = {
           price_yearly_cents?: number | null
           slug: string
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -877,6 +889,9 @@ export type Database = {
           price_yearly_cents?: number | null
           slug?: string
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: []
