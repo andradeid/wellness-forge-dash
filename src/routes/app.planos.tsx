@@ -425,11 +425,23 @@ function PlanosCreditosPage() {
                       {!isFree &&
                       cycle === "yearly" &&
                       p.price_yearly_cents ? (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          equivalente a{" "}
-                          {formatBRL(Math.round(p.price_yearly_cents / 12))}/mês
-                        </p>
+                        <div className="mt-0.5 space-y-0.5">
+                          <p className="text-xs text-muted-foreground">
+                            equivalente a{" "}
+                            {formatBRL(Math.round(p.price_yearly_cents / 12))}/mês
+                          </p>
+                          {p.price_monthly_cents * 12 > p.price_yearly_cents && (
+                            <p className="text-xs font-medium text-[#e89bcf]">
+                              economize{" "}
+                              {formatBRL(
+                                p.price_monthly_cents * 12 - p.price_yearly_cents,
+                              )}{" "}
+                              no ano
+                            </p>
+                          )}
+                        </div>
                       ) : null}
+
                     </div>
 
                     <ul className="space-y-2 text-sm">
