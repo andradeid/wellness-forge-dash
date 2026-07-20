@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type Stripe from "stripe";
+import Stripe from "stripe";
 
 /**
  * Webhook público do Stripe.
@@ -35,8 +35,15 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
         let event: Stripe.Event;
         try {
-          // constructEventAsync usa WebCrypto (compatível com Cloudflare Workers)
-          event = await stripe.webhooks.constructEventAsync(rawBody, signature, secret);
+          // Cloudflare Workers exige SubtleCryptoProvider explícito
+          const cryptoProvider = Stripe.createSubtleCryptoProvider();
+          event = await stripe.webhooks.constructEventAsync(
+            rawBody,
+            signature,
+            secret,
+            undefined,
+            cryptoProvider,
+          );
         } catch (err: any) {
           console.error("[stripe-webhook] signature error:", err?.message);
           return new Response(`Signature verification failed: ${err?.message}`, { status: 400 });
@@ -338,7 +345,7 @@ async function addCreditsToUser(
   await supabaseAdmin.from("credit_audit_log" as any).insert({
     user_id: userId,
     admin_id: userId, // sem admin humano — usa o próprio user_id (satisfaz NOT NULL)
-    action: "credit_add",
+    action: "adjust_balance",
     delta: credits,
     balance_before: balanceBefore,
     balance_after: balanceAfter,
