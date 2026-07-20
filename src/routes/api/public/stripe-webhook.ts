@@ -99,7 +99,7 @@ async function handleStripeWebhook(request: Request) {
           switch (event.type) {
             case "checkout.session.completed": {
               const session = event.data.object as Stripe.Checkout.Session;
-              await handleCheckoutCompleted(supabaseAdmin, stripe, session);
+              await handleCheckoutCompleted(supabaseAdmin, stripe, session, event.id);
               break;
             }
             case "customer.subscription.created":
@@ -111,13 +111,19 @@ async function handleStripeWebhook(request: Request) {
             }
             case "invoice.paid": {
               const invoice = event.data.object as Stripe.Invoice;
-              await handleInvoicePaid(supabaseAdmin, stripe, invoice);
+              await handleInvoicePaid(supabaseAdmin, stripe, invoice, event.id);
+              break;
+            }
+            case "invoice.payment_failed": {
+              const invoice = event.data.object as Stripe.Invoice;
+              await recordInvoiceFailure(supabaseAdmin, invoice, event.id);
               break;
             }
             default:
               // Evento não tratado — ok, ficou registrado
               break;
           }
+
         } catch (err: any) {
           console.error(`[stripe-webhook] handler error (${event.type}):`, err?.message, err);
           // Remove marcação de idempotência pra permitir retry do Stripe
