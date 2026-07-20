@@ -254,7 +254,9 @@ export function AppSidebar() {
             </Link>
           </div>
         )}
-        {(role === "super_admin" || role === "admin" ? adminGroups : nutriGroups).map((g) => {
+        {(role === "super_admin" || role === "admin" ? adminGroups : nutriGroups)
+          .filter((g) => !(role === "super_admin" && g.key === "ajuda"))
+          .map((g) => {
           const visibleItems = g.items.filter(
             (item) => !item.superAdminOnly || role === "super_admin",
           );
