@@ -432,6 +432,43 @@ function LoginPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={forgotOpen} onOpenChange={(v) => !forgotSending && setForgotOpen(v)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir sua senha</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o email da sua conta. Enviaremos um link para você criar uma nova senha.
+              Se este é seu primeiro acesso na LUMMA, use esta opção para definir sua senha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="forgot-email">Email</Label>
+            <Input
+              id="forgot-email"
+              type="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              placeholder="seu@email.com"
+              autoFocus
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={forgotSending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={forgotSending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleForgotPassword();
+              }}
+              className="text-white border-0"
+              style={{ backgroundImage: "var(--gradient-brand)" }}
+            >
+              {forgotSending ? "Enviando..." : "Enviar link"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
