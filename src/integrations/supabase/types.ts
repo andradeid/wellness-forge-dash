@@ -731,6 +731,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_history: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          credits_added: number | null
+          currency: string
+          description: string
+          hosted_invoice_url: string | null
+          id: string
+          kind: string
+          metadata: Json | null
+          receipt_url: string | null
+          status: string
+          stripe_event_id: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          credits_added?: number | null
+          currency?: string
+          description: string
+          hosted_invoice_url?: string | null
+          id?: string
+          kind: string
+          metadata?: Json | null
+          receipt_url?: string | null
+          status: string
+          stripe_event_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          credits_added?: number | null
+          currency?: string
+          description?: string
+          hosted_invoice_url?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json | null
+          receipt_url?: string | null
+          status?: string
+          stripe_event_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_tags: {
         Row: {
           created_at: string
