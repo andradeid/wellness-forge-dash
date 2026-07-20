@@ -18,6 +18,18 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        try {
+          return await handleStripeWebhook(request);
+        } catch (err: any) {
+          console.error("[stripe-webhook] fatal error:", err?.message, err);
+          return new Response(`Webhook fatal error: ${err?.message ?? "erro desconhecido"}`, { status: 500 });
+        }
+      },
+    },
+  },
+});
+
+async function handleStripeWebhook(request: Request) {
         const secret = process.env.STRIPE_WEBHOOK_SECRET;
         if (!secret) {
           return new Response("Webhook secret não configurada", { status: 500 });
@@ -52,6 +64,21 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // ---------- Idempotência ----------
+        const { data: existingEvent, error: existingErr } = await supabaseAdmin
+          .from("stripe_webhook_events" as any)
+          .select("id")
+          .eq("id", event.id)
+          .maybeSingle();
+
+        if (existingErr) {
+          console.error("[stripe-webhook] idem lookup error:", existingErr);
+          return new Response("Erro ao verificar evento", { status: 500 });
+        }
+
+        if (existingEvent) {
+          return new Response("duplicate", { status: 200 });
+        }
+
         const { error: idemErr } = await supabaseAdmin
           .from("stripe_webhook_events" as any)
           .insert({ id: event.id, type: event.type, payload: event as any });
@@ -59,7 +86,9 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         if (idemErr) {
           // 23505 = unique_violation → já processado; retorna 200 pro Stripe não reenviar
           const code = (idemErr as any)?.code;
-          if (code === "23505") {
+          const message = String((idemErr as any)?.message ?? "").toLowerCase();
+          const details = String((idemErr as any)?.details ?? "").toLowerCase();
+          if (code === "23505" || message.includes("duplicate") || details.includes("already exists")) {
             return new Response("duplicate", { status: 200 });
           }
           console.error("[stripe-webhook] idem insert error:", idemErr);
@@ -100,10 +129,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         }
 
         return new Response("ok", { status: 200 });
-      },
-    },
-  },
-});
+}
 
 // ------------------------------------------------------------------
 // Helpers
