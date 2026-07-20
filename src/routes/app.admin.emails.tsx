@@ -51,7 +51,7 @@ function EmailsAdminPage() {
     enabled: isSuperAdmin,
   });
 
-  const templates = (query.data ?? []) as Template[];
+  const templates = ((query.data ?? []) as unknown) as Template[];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
   const [html, setHtml] = useState("");
