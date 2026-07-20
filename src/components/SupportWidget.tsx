@@ -1,102 +1,36 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { MessageSquareText, X, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+const WHATSAPP_NUMBER = "5519997285302";
+const WHATSAPP_MESSAGE = "Oi! Você pode me ajudar com com a LUMMA 2.0?";
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
 export function SupportWidget() {
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [message, setMessage] = useState("");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
   return createPortal(
-    <>
-      {isSupportOpen && (
-        <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[450px] bg-background border rounded-2xl shadow-2xl flex flex-col z-50 animate-in fade-in slide-in-from-bottom-4 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center">
-                <MessageSquareText className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold leading-tight">Suporte LUMMA</p>
-                <p className="text-[11px] flex items-center gap-1 opacity-90">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 inline-block" />
-                  Online agora
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsSupportOpen(false)}
-              className="p-1 rounded-full hover:bg-white/20 transition-colors"
-              aria-label="Fechar"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-muted/30">
-            <div className="flex gap-2">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] shrink-0" />
-              <div className="bg-background border rounded-2xl rounded-tl-sm px-3 py-2 max-w-[80%]">
-                <p className="text-sm">Olá, Dr(a). Como posso te ajudar com a plataforma hoje?</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Atendente LUMMA · agora</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] shrink-0" />
-              <div className="bg-background border rounded-2xl rounded-tl-sm px-3 py-2 max-w-[80%]">
-                <p className="text-sm">
-                  Estou aqui para tirar dúvidas sobre análises, pacientes ou integrações. Tempo médio de resposta: 2 min.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="border-t bg-background">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setMessage("");
-              }}
-              className="flex items-center gap-2 px-3 py-2"
-            >
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Digite sua mensagem..."
-                className="border-0 focus-visible:ring-0 shadow-none"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] hover:opacity-90"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-            <p className="text-[10px] text-center text-muted-foreground pb-2">
-              Suporte Integrado LUMMA
-            </p>
-          </div>
-        </div>
-      )}
-
-      <button
-        onClick={() => setIsSupportOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-[#e8a04c] to-[#e89bcf] text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform group"
-        aria-label="Abrir suporte"
+    <a
+      href={WHATSAPP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-[#25D366] text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform group"
+      aria-label="Falar no WhatsApp com o suporte LUMMA"
+      title="Falar no WhatsApp"
+    >
+      <span className="absolute inset-0 rounded-full bg-[#25D366]/40 animate-ping opacity-60 group-hover:opacity-0" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 32 32"
+        fill="currentColor"
+        className="h-7 w-7 relative"
+        aria-hidden="true"
       >
-        <span className="absolute inset-0 rounded-full bg-[#e89bcf]/40 animate-ping opacity-60 group-hover:opacity-0" />
-        {isSupportOpen ? <X className="h-6 w-6 relative" /> : <MessageSquareText className="h-6 w-6 relative" />}
-      </button>
-    </>,
+        <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.888 2.722.888.817 0 2.335-.516 2.664-1.32.13-.315.13-.573.13-.888 0-.216-.058-.303-.244-.416-.187-.115-1.16-.573-1.532-.688M16.15 27.85c-1.677 0-3.32-.446-4.76-1.263l-.34-.2-3.526.926.94-3.44-.216-.357c-.9-1.418-1.376-3.076-1.376-4.786a8.86 8.86 0 0 1 8.98-8.94 8.94 8.94 0 0 1 8.982 8.94 8.94 8.94 0 0 1-8.686 9.12m0-19.708c-5.79 0-10.55 4.71-10.55 10.508 0 1.792.53 3.53 1.376 5.084L5.5 30.375l6.85-1.734c1.492.827 3.176 1.283 4.9 1.283a10.55 10.55 0 0 0 10.549-10.55A10.55 10.55 0 0 0 16.15 8.142" />
+      </svg>
+    </a>,
     document.body,
   );
 }
