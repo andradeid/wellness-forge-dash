@@ -356,9 +356,26 @@ function LoginPage() {
                   <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Senha</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Senha</Label>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotEmail(email); setForgotOpen(true); }}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
                   <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
+                {signInError && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  >
+                    {signInError}
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full text-white border-0 shadow-md hover:opacity-90 transition-opacity"
