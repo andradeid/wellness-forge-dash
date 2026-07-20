@@ -111,11 +111,13 @@ async function handleStripeWebhook(request: Request) {
               await syncSubscription(supabaseAdmin, sub);
               break;
             }
-            case "invoice.paid": {
+            case "invoice.paid":
+            case "invoice.payment_succeeded": {
               const invoice = event.data.object as Stripe.Invoice;
               await handleInvoicePaid(supabaseAdmin, stripe, invoice, event.id);
               break;
             }
+
             case "invoice.payment_failed": {
               const invoice = event.data.object as Stripe.Invoice;
               await recordInvoiceFailure(supabaseAdmin, invoice, event.id);
@@ -224,19 +226,91 @@ async function handleCheckoutCompleted(
       console.error("[stripe-webhook] falha ao enviar email de pack:", err?.message);
     }
   }
+
+
+
+  // Payment Link de assinatura: session.mode = "subscription".
+  // Antes do invoice.payment_succeeded chegar, provisiona o usuário e sincroniza
+  // a subscription pra garantir que o vínculo customer→user_id esteja pronto.
+  if (session.mode === "subscription" && session.subscription) {
+    try {
+      const subId = typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription.id;
+      const sub = await _stripe.subscriptions.retrieve(subId);
+      await syncSubscription(supabaseAdmin, sub);
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao sincronizar sub do checkout:", err?.message);
+    }
+  }
 }
+
 
 
 /**
  * Sincroniza status/ciclo/período/cancelamento da assinatura na tabela subscriptions.
  * Não credita — a recarga mensal roda em invoice.paid.
  */
+async function resolveOrInviteUserByCustomer(
+  supabaseAdmin: Admin,
+  stripe: Stripe,
+  customerId: string,
+): Promise<string | null> {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ((customer as any).deleted) return null;
+    const email = ((customer as Stripe.Customer).email ?? "").trim().toLowerCase();
+    if (!email) return null;
+
+    // 1) já existe em profiles?
+    const { data: prof } = await supabaseAdmin
+      .from("profiles" as any)
+      .select("id")
+      .ilike("email", email)
+      .maybeSingle();
+    if ((prof as any)?.id) return (prof as any).id as string;
+
+    // 2) já existe em auth.users?
+    try {
+      const { data: list } = await (supabaseAdmin.auth.admin as any).listUsers({
+        page: 1,
+        perPage: 200,
+      });
+      const found = list?.users?.find(
+        (u: any) => (u.email ?? "").toLowerCase() === email,
+      );
+      if (found?.id) return found.id as string;
+    } catch (e: any) {
+      console.warn("[stripe-webhook] listUsers falhou:", e?.message);
+    }
+
+    // 3) convida (trigger handle_new_user cria profile/role/subscription)
+    const fullName = (customer as Stripe.Customer).name ?? "";
+    const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      email,
+      {
+        redirectTo: "https://lumma.ia.br/reset-password",
+        data: fullName ? { full_name: fullName, name: fullName } : undefined,
+      },
+    );
+    if (inviteErr) {
+      console.error("[stripe-webhook] inviteUserByEmail falhou:", inviteErr.message);
+      return null;
+    }
+    return invited?.user?.id ?? null;
+  } catch (err: any) {
+    console.error("[stripe-webhook] resolveOrInviteUserByCustomer erro:", err?.message);
+    return null;
+  }
+}
+
 async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) {
   const userId = sub.metadata?.user_id ?? null;
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
-  // Localiza usuário: metadata → fallback via stripe_customer_id
-  let targetUserId = userId;
+  // Localiza usuário: metadata → stripe_customer_id → email do customer (auto-provisiona)
+  let targetUserId: string | null = userId;
+
   if (!targetUserId) {
     const { data } = await supabaseAdmin
       .from("subscriptions" as any)
@@ -246,9 +320,14 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) 
     targetUserId = (data as any)?.user_id ?? null;
   }
   if (!targetUserId) {
+    const { getStripe } = await import("@/lib/stripe.server");
+    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, getStripe(), customerId);
+  }
+  if (!targetUserId) {
     console.warn("[stripe-webhook] subscription sem user_id resolvível", { sub_id: sub.id, customer: customerId });
     return;
   }
+
 
   const priceId = sub.items.data[0]?.price.id ?? null;
   const planSlug = (sub.metadata?.plan_slug ?? null) as
@@ -313,9 +392,9 @@ async function handleInvoicePaid(
   if (!monthlyCredits || monthlyCredits <= 0) return;
 
   const userId = sub.metadata?.user_id ?? null;
-  let targetUserId = userId;
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+  let targetUserId: string | null = userId;
   if (!targetUserId) {
-    const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
     const { data } = await supabaseAdmin
       .from("subscriptions" as any)
       .select("user_id")
@@ -323,7 +402,11 @@ async function handleInvoicePaid(
       .maybeSingle();
     targetUserId = (data as any)?.user_id ?? null;
   }
+  if (!targetUserId) {
+    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
+  }
   if (!targetUserId) return;
+
 
   await addCreditsToUser(supabaseAdmin, {
     userId: targetUserId,
