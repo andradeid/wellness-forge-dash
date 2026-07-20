@@ -232,23 +232,61 @@ function HistoricoPage() {
         {/* CRÉDITOS */}
         <TabsContent value="credits" className="mt-4">
           <Card className="rounded-2xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Movimentação de créditos</CardTitle>
-              <div className="flex gap-1">
-                {(["all", "in", "out"] as const).map((f) => (
+            <CardHeader className="space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <CardTitle className="text-base">Movimentação de créditos</CardTitle>
+                <div className="flex gap-1">
+                  {(["all", "in", "out"] as const).map((f) => (
+                    <Button
+                      key={f}
+                      size="sm"
+                      variant={txFilter === f ? "default" : "ghost"}
+                      className={cn(
+                        "rounded-full text-xs h-8",
+                        txFilter === f && "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0",
+                      )}
+                      onClick={() => setTxFilter(f)}
+                    >
+                      {f === "all" ? "Todos" : f === "in" ? "Entradas" : "Saídas"}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-2 md:items-center">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por agente ou descrição…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 rounded-full h-9 text-sm"
+                  />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="rounded-full h-9 text-sm w-[150px]"
+                  />
+                  <span className="text-xs text-muted-foreground">até</span>
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="rounded-full h-9 text-sm w-[150px]"
+                  />
+                </div>
+                {(search || dateFrom || dateTo || txFilter !== "all") && (
                   <Button
-                    key={f}
+                    variant="ghost"
                     size="sm"
-                    variant={txFilter === f ? "default" : "ghost"}
-                    className={cn(
-                      "rounded-full text-xs h-8",
-                      txFilter === f && "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0",
-                    )}
-                    onClick={() => setTxFilter(f)}
+                    className="rounded-full text-xs h-9"
+                    onClick={clearFilters}
                   >
-                    {f === "all" ? "Todos" : f === "in" ? "Entradas" : "Saídas"}
+                    Limpar
                   </Button>
-                ))}
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -260,64 +298,117 @@ function HistoricoPage() {
                 </div>
               ) : filteredTx.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">
-                  Nenhuma movimentação registrada.
+                  Nenhuma movimentação encontrada com os filtros atuais.
                 </p>
               ) : (
-                <div className="divide-y">
-                  {filteredTx.map((t) => {
-                    const isOut = t.type === "debit";
-                    return (
-                      <div
-                        key={t.id}
-                        className="flex items-center gap-3 py-3"
-                      >
+                <>
+                  <div className="divide-y">
+                    {pagedTx.map((t) => {
+                      const isOut = t.type === "debit";
+                      return (
                         <div
-                          className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                            isOut ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600",
-                          )}
+                          key={t.id}
+                          className="flex items-center gap-3 py-3"
                         >
-                          {isOut ? (
-                            <TrendingDown className="h-4 w-4" />
-                          ) : (
-                            <TrendingUp className="h-4 w-4" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {t.agent_label ?? (isOut ? "Uso de agente" : "Crédito recebido")}
-                          </p>
-                          {t.message_preview && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {t.message_preview}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            {formatDateTime(t.created_at)}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p
+                          <div
                             className={cn(
-                              "text-sm font-semibold",
-                              isOut ? "text-red-600" : "text-green-600",
+                              "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                              isOut ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600",
                             )}
                           >
-                            {isOut ? "−" : "+"}
-                            {t.amount}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            saldo: {t.balance_after}
-                          </p>
+                            {isOut ? (
+                              <TrendingDown className="h-4 w-4" />
+                            ) : (
+                              <TrendingUp className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {t.agent_label ?? (isOut ? "Uso de agente" : "Crédito recebido")}
+                            </p>
+                            {t.message_preview && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {t.message_preview}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {formatDateTime(t.created_at)}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p
+                              className={cn(
+                                "text-sm font-semibold",
+                                isOut ? "text-red-600" : "text-green-600",
+                              )}
+                            >
+                              {isOut ? "−" : "+"}
+                              {t.amount}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              saldo: {t.balance_after}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Paginação */}
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-4 mt-2 border-t">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>Mostrar</span>
+                      <Select
+                        value={String(pageSize)}
+                        onValueChange={(v) => setPageSize(Number(v))}
+                      >
+                        <SelectTrigger className="h-8 w-[72px] rounded-full text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[10, 20, 30, 50].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span>
+                        de {filteredTx.length} {filteredTx.length === 1 ? "item" : "itens"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full h-8"
+                        disabled={currentPage <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        Página {currentPage} de {totalPages}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full h-8"
+                        disabled={currentPage >= totalPages}
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Próxima
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
         </TabsContent>
+
       </Tabs>
     </div>
   );
