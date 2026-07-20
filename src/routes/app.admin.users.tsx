@@ -973,13 +973,6 @@ function UsersPage() {
                 </div>
               </section>
 
-              {/* Pagamentos */}
-              <section className="rounded-xl border p-4 space-y-2">
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Pagamentos</p>
-                <p className="text-sm text-muted-foreground">
-                  Integração de cobrança ainda não conectada. Recargas e mensalidades estão sendo geridas manualmente.
-                </p>
-              </section>
             </div>
           )}
           <DialogFooter>
