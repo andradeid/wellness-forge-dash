@@ -111,11 +111,13 @@ async function handleStripeWebhook(request: Request) {
               await syncSubscription(supabaseAdmin, sub);
               break;
             }
-            case "invoice.paid": {
+            case "invoice.paid":
+            case "invoice.payment_succeeded": {
               const invoice = event.data.object as Stripe.Invoice;
               await handleInvoicePaid(supabaseAdmin, stripe, invoice, event.id);
               break;
             }
+
             case "invoice.payment_failed": {
               const invoice = event.data.object as Stripe.Invoice;
               await recordInvoiceFailure(supabaseAdmin, invoice, event.id);
