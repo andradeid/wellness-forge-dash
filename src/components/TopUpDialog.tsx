@@ -348,12 +348,20 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                     )}
 
                     <Button
-                      disabled
-                      className="mt-4 rounded-full"
+                      onClick={() => handlePackCheckout(pack.slug)}
+                      disabled={loadingId !== null || pack.price_cents <= 0}
+                      className={cn(
+                        "mt-4 rounded-full",
+                        pack.is_highlighted &&
+                          "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] hover:opacity-90 text-white border-0",
+                      )}
                       variant={pack.is_highlighted ? "default" : "outline"}
-                      title="Pagamento online em breve"
                     >
-                      Em breve
+                      {loadingId === `pack:${pack.slug}` ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redirecionando…</>
+                      ) : (
+                        <>Comprar agora</>
+                      )}
                     </Button>
 
                   </div>
