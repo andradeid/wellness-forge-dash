@@ -224,7 +224,10 @@ async function handleCheckoutCompleted(
       });
     } catch (err: any) {
       console.error("[stripe-webhook] falha ao enviar email de pack:", err?.message);
+    }
   }
+
+
 
   // Payment Link de assinatura: session.mode = "subscription".
   // Antes do invoice.payment_succeeded chegar, provisiona o usuário e sincroniza
