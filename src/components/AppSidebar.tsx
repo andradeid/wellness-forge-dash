@@ -31,6 +31,7 @@ import {
   User as UserIcon,
   Sparkles,
   MessageCircle,
+  Mail,
 } from "lucide-react";
 
 const WHATSAPP_SUPPORT_URL = `https://wa.me/5519997285302?text=${encodeURIComponent("Oi! Você pode me ajudar com com a LUMMA 2.0?")}`;
@@ -137,6 +138,7 @@ const adminGroups: NavGroup[] = [
       { title: "Base de Conhecimento", url: "#kb", icon: BookOpen },
       { title: "Categorias", url: "#categorias", icon: Tag, badge: "NOVO" },
       { title: "Integrações & APIs", url: "/app/admin/integrations", icon: Plug, badge: "NOVO" },
+      { title: "E-mails", url: "/app/admin/emails", icon: Mail, superAdminOnly: true, badge: "NOVO" },
       { title: "Playground (Sandbox)", url: "/app/admin/playground", icon: FlaskRound, badge: "BETA", superAdminOnly: true },
     ],
   },

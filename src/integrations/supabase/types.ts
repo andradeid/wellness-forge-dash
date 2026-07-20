@@ -319,6 +319,51 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          html: string
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          subject: string
+          updated_at: string
+          updated_by: string | null
+          variables: Json
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          html: string
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          subject: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          html?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Relationships: []
+      }
       general_chat_messages: {
         Row: {
           agent_type: string | null
