@@ -450,8 +450,11 @@ async function handleInvoicePaid(
     })
     .eq("user_id", targetUserId);
 
-  // Histórico de pagamento
-  const cycle = (sub.metadata?.billing_cycle ?? "monthly") as "monthly" | "yearly";
+  // Histórico de pagamento — resolve ciclo por metadata OU price_id
+  let cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;
+  if (!cycle) {
+    cycle = (plan as any).stripe_price_yearly_id === priceId ? "yearly" : "monthly";
+  }
   await recordPaymentHistory(supabaseAdmin, {
     userId: targetUserId,
     kind: "subscription",
