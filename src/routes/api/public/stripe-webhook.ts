@@ -345,7 +345,7 @@ async function addCreditsToUser(
   await supabaseAdmin.from("credit_audit_log" as any).insert({
     user_id: userId,
     admin_id: userId, // sem admin humano — usa o próprio user_id (satisfaz NOT NULL)
-    action: "credit_add",
+    action: "adjust_balance",
     delta: credits,
     balance_before: balanceBefore,
     balance_after: balanceAfter,
