@@ -219,6 +219,7 @@ function LoginPage() {
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setSignInError(null);
     conflictConfirmedRef.current = false;
     try {
       await signIn(email, password);
