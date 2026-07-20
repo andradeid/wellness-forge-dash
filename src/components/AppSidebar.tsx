@@ -31,6 +31,7 @@ import {
   User as UserIcon,
   Sparkles,
   MessageCircle,
+  Mail,
 } from "lucide-react";
 
 const WHATSAPP_SUPPORT_URL = `https://wa.me/5519997285302?text=${encodeURIComponent("Oi! Você pode me ajudar com com a LUMMA 2.0?")}`;
