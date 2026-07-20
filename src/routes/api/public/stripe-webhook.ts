@@ -123,10 +123,16 @@ async function handleStripeWebhook(request: Request) {
               await recordInvoiceFailure(supabaseAdmin, invoice, event.id);
               break;
             }
+            case "charge.refunded": {
+              const charge = event.data.object as Stripe.Charge;
+              await handleChargeRefunded(supabaseAdmin, stripe, charge, event.id);
+              break;
+            }
             default:
               // Evento não tratado — ok, ficou registrado
               break;
           }
+
 
         } catch (err: any) {
           console.error(`[stripe-webhook] handler error (${event.type}):`, err?.message, err);
