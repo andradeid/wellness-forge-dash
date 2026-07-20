@@ -22,6 +22,7 @@ import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppChatsRouteImport } from './routes/app.chats'
+import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
@@ -109,6 +110,11 @@ const AppChatsRoute = AppChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
   getParentRoute: () => AppRoute,
+} as any)
+const AppPlanosHistoricoRoute = AppPlanosHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AppPlanosRoute,
 } as any)
 const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
   id: '/general/$chatId',
@@ -232,7 +238,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
-  '/app/planos': typeof AppPlanosRoute
+  '/app/planos': typeof AppPlanosRouteWithChildren
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
+  '/app/planos/historico': typeof AppPlanosHistoricoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -268,7 +275,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
-  '/app/planos': typeof AppPlanosRoute
+  '/app/planos': typeof AppPlanosRouteWithChildren
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
+  '/app/planos/historico': typeof AppPlanosHistoricoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -306,7 +314,7 @@ export interface FileRoutesById {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
-  '/app/planos': typeof AppPlanosRoute
+  '/app/planos': typeof AppPlanosRouteWithChildren
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
+  '/app/planos/historico': typeof AppPlanosHistoricoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -371,6 +380,7 @@ export interface FileRouteTypes {
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
+    | '/app/planos/historico'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
+    | '/app/planos/historico'
   id:
     | '__root__'
     | '/'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/app/chat/$patientId'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
+    | '/app/planos/historico'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -553,6 +565,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/chats'
       preLoaderRoute: typeof AppChatsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/planos/historico': {
+      id: '/app/planos/historico'
+      path: '/historico'
+      fullPath: '/app/planos/historico'
+      preLoaderRoute: typeof AppPlanosHistoricoRouteImport
+      parentRoute: typeof AppPlanosRoute
     }
     '/app/general/$chatId': {
       id: '/app/general/$chatId'
@@ -711,12 +730,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppPlanosRouteChildren {
+  AppPlanosHistoricoRoute: typeof AppPlanosHistoricoRoute
+}
+
+const AppPlanosRouteChildren: AppPlanosRouteChildren = {
+  AppPlanosHistoricoRoute: AppPlanosHistoricoRoute,
+}
+
+const AppPlanosRouteWithChildren = AppPlanosRoute._addFileChildren(
+  AppPlanosRouteChildren,
+)
+
 interface AppRouteChildren {
   AppChatsRoute: typeof AppChatsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppFaleComLummaRoute: typeof AppFaleComLummaRoute
   AppPatientsRoute: typeof AppPatientsRoute
-  AppPlanosRoute: typeof AppPlanosRoute
+  AppPlanosRoute: typeof AppPlanosRouteWithChildren
   AppPoliticasRoute: typeof AppPoliticasRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -742,7 +773,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppFaleComLummaRoute: AppFaleComLummaRoute,
   AppPatientsRoute: AppPatientsRoute,
-  AppPlanosRoute: AppPlanosRoute,
+  AppPlanosRoute: AppPlanosRouteWithChildren,
   AppPoliticasRoute: AppPoliticasRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
@@ -782,13 +813,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

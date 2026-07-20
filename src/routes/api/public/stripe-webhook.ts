@@ -99,7 +99,7 @@ async function handleStripeWebhook(request: Request) {
           switch (event.type) {
             case "checkout.session.completed": {
               const session = event.data.object as Stripe.Checkout.Session;
-              await handleCheckoutCompleted(supabaseAdmin, stripe, session);
+              await handleCheckoutCompleted(supabaseAdmin, stripe, session, event.id);
               break;
             }
             case "customer.subscription.created":
@@ -111,13 +111,19 @@ async function handleStripeWebhook(request: Request) {
             }
             case "invoice.paid": {
               const invoice = event.data.object as Stripe.Invoice;
-              await handleInvoicePaid(supabaseAdmin, stripe, invoice);
+              await handleInvoicePaid(supabaseAdmin, stripe, invoice, event.id);
+              break;
+            }
+            case "invoice.payment_failed": {
+              const invoice = event.data.object as Stripe.Invoice;
+              await recordInvoiceFailure(supabaseAdmin, invoice, event.id);
               break;
             }
             default:
               // Evento não tratado — ok, ficou registrado
               break;
           }
+
         } catch (err: any) {
           console.error(`[stripe-webhook] handler error (${event.type}):`, err?.message, err);
           // Remove marcação de idempotência pra permitir retry do Stripe
@@ -150,6 +156,7 @@ async function handleCheckoutCompleted(
   supabaseAdmin: Admin,
   _stripe: Stripe,
   session: Stripe.Checkout.Session,
+  eventId: string,
 ) {
   const meta = session.metadata ?? {};
   const kind = meta.kind;
@@ -180,8 +187,24 @@ async function handleCheckoutCompleted(
         source: "stripe_pack",
       },
     });
+
+    // Registro no histórico de pagamentos
+    await recordPaymentHistory(supabaseAdmin, {
+      userId,
+      kind: "pack",
+      description: `Pacote avulso — ${credits} créditos${packSlug ? ` (${packSlug})` : ""}`,
+      amountCents: session.amount_total ?? 0,
+      currency: session.currency ?? "brl",
+      status: "paid",
+      creditsAdded: credits,
+      eventId,
+      sessionId: session.id,
+      paymentIntentId: (session.payment_intent as string | null) ?? null,
+      metadata: { pack_slug: packSlug },
+    });
   }
 }
+
 
 /**
  * Sincroniza status/ciclo/período/cancelamento da assinatura na tabela subscriptions.
@@ -242,6 +265,7 @@ async function handleInvoicePaid(
   supabaseAdmin: Admin,
   stripe: Stripe,
   invoice: Stripe.Invoice,
+  eventId: string,
 ) {
   const subId = (invoice as any).subscription as string | null;
   if (!subId) return; // fatura avulsa/one-off — nada a fazer aqui
@@ -255,7 +279,7 @@ async function handleInvoicePaid(
   // Descobre plano + créditos mensais pelo price_id
   const { data: plan } = await supabaseAdmin
     .from("subscription_plans" as any)
-    .select("slug, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
+    .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
     .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
     .maybeSingle();
 
@@ -302,7 +326,93 @@ async function handleInvoicePaid(
       quota_reset_at: periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null,
     })
     .eq("user_id", targetUserId);
+
+  // Histórico de pagamento
+  const cycle = (sub.metadata?.billing_cycle ?? "monthly") as "monthly" | "yearly";
+  await recordPaymentHistory(supabaseAdmin, {
+    userId: targetUserId,
+    kind: "subscription",
+    description: `Assinatura ${(plan as any).name ?? (plan as any).slug} — ${cycle === "yearly" ? "anual" : "mensal"}`,
+    amountCents: invoice.amount_paid ?? 0,
+    currency: invoice.currency ?? "brl",
+    status: "paid",
+    creditsAdded: monthlyCredits,
+    eventId,
+    invoiceId: invoice.id ?? null,
+    hostedInvoiceUrl: (invoice as any).hosted_invoice_url ?? null,
+    metadata: { plan_slug: (plan as any).slug, billing_cycle: cycle, stripe_subscription_id: sub.id },
+  });
 }
+
+async function recordInvoiceFailure(
+  supabaseAdmin: Admin,
+  invoice: Stripe.Invoice,
+  eventId: string,
+) {
+  const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  if (!customerId) return;
+  const { data } = await supabaseAdmin
+    .from("subscriptions" as any)
+    .select("user_id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  const userId = (data as any)?.user_id;
+  if (!userId) return;
+
+  await recordPaymentHistory(supabaseAdmin, {
+    userId,
+    kind: "subscription",
+    description: "Falha no pagamento da assinatura",
+    amountCents: invoice.amount_due ?? 0,
+    currency: invoice.currency ?? "brl",
+    status: "failed",
+    creditsAdded: null,
+    eventId,
+    invoiceId: invoice.id ?? null,
+    hostedInvoiceUrl: (invoice as any).hosted_invoice_url ?? null,
+    metadata: {},
+  });
+}
+
+async function recordPaymentHistory(
+  supabaseAdmin: Admin,
+  args: {
+    userId: string;
+    kind: "subscription" | "pack";
+    description: string;
+    amountCents: number;
+    currency: string;
+    status: "paid" | "failed" | "refunded" | "pending";
+    creditsAdded: number | null;
+    eventId: string;
+    invoiceId?: string | null;
+    sessionId?: string | null;
+    paymentIntentId?: string | null;
+    hostedInvoiceUrl?: string | null;
+    metadata: Record<string, any>;
+  },
+) {
+  const { error } = await supabaseAdmin.from("payment_history" as any).insert({
+    user_id: args.userId,
+    kind: args.kind,
+    description: args.description,
+    amount_cents: args.amountCents,
+    currency: args.currency,
+    status: args.status,
+    credits_added: args.creditsAdded,
+    stripe_event_id: args.eventId,
+    stripe_invoice_id: args.invoiceId ?? null,
+    stripe_session_id: args.sessionId ?? null,
+    stripe_payment_intent_id: args.paymentIntentId ?? null,
+    hosted_invoice_url: args.hostedInvoiceUrl ?? null,
+    metadata: args.metadata,
+  });
+  // Ignora conflito por stripe_event_id (idempotência)
+  if (error && (error as any).code !== "23505") {
+    console.error("[stripe-webhook] payment_history insert error:", error);
+  }
+}
+
 
 // ------------------------------------------------------------------
 

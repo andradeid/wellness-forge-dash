@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -252,18 +252,31 @@ function PlanosCreditosPage() {
               Sua assinatura é gerenciada pelo Stripe. Acesse o portal para
               trocar de plano, atualizar forma de pagamento ou baixar faturas.
             </p>
-            <Button
-              onClick={handleManageSubscription}
-              disabled={loadingAction === "portal"}
-              className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0"
-            >
-              {loadingAction === "portal" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ExternalLink className="h-4 w-4" />
-              )}
-              Gerenciar assinatura
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={handleManageSubscription}
+                disabled={loadingAction === "portal"}
+                className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0"
+              >
+                {loadingAction === "portal" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ExternalLink className="h-4 w-4" />
+                )}
+                Gerenciar assinatura
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full"
+              >
+                <Link to="/app/planos/historico">
+                  <Coins className="h-4 w-4" />
+                  Histórico
+                </Link>
+              </Button>
+            </div>
+
           </CardContent>
         </Card>
 
