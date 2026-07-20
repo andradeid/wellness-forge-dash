@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -102,9 +102,14 @@ type PackRow = {
 type BillingCycle = "monthly" | "yearly";
 
 function PlanosCreditosPage() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { user } = useAuth();
   const creditsQuery = useMyCredits();
   const credits = creditsQuery.data;
+
+  if (pathname === "/app/planos/historico") {
+    return <Outlet />;
+  }
 
   const [cycle, setCycle] = useState<BillingCycle>("yearly");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
