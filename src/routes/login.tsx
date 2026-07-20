@@ -258,7 +258,9 @@ function LoginPage() {
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
-      toast.error(err.message ?? "Erro ao entrar");
+      const friendly = translateAuthError(err?.message ?? "");
+      setSignInError(friendly);
+      toast.error(friendly);
       setSubmitting(false);
     }
   };
