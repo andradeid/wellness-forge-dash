@@ -108,7 +108,7 @@ async function handleStripeWebhook(request: Request) {
             case "customer.subscription.updated":
             case "customer.subscription.deleted": {
               const sub = event.data.object as Stripe.Subscription;
-              await syncSubscription(supabaseAdmin, sub);
+              await syncSubscription(supabaseAdmin, sub, stripe);
               break;
             }
             case "invoice.paid":
