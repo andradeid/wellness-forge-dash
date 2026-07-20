@@ -371,9 +371,9 @@ async function handleInvoicePaid(
   if (!monthlyCredits || monthlyCredits <= 0) return;
 
   const userId = sub.metadata?.user_id ?? null;
-  let targetUserId = userId;
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+  let targetUserId: string | null = userId;
   if (!targetUserId) {
-    const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
     const { data } = await supabaseAdmin
       .from("subscriptions" as any)
       .select("user_id")
@@ -381,7 +381,11 @@ async function handleInvoicePaid(
       .maybeSingle();
     targetUserId = (data as any)?.user_id ?? null;
   }
+  if (!targetUserId) {
+    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
+  }
   if (!targetUserId) return;
+
 
   await addCreditsToUser(supabaseAdmin, {
     userId: targetUserId,
