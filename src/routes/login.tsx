@@ -363,7 +363,7 @@ function LoginPage() {
                       onClick={() => { setForgotEmail(email); setForgotOpen(true); }}
                       className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
                     >
-                      Esqueci minha senha
+                      Esqueceu a senha ou é seu primeiro acesso?
                     </button>
                   </div>
                   <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
