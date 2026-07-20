@@ -106,7 +106,7 @@ function PlanosCreditosPage() {
   const creditsQuery = useMyCredits();
   const credits = creditsQuery.data;
 
-  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [cycle, setCycle] = useState<BillingCycle>("yearly");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const startSubscriptionCheckout = useServerFn(createSubscriptionCheckout);
