@@ -237,8 +237,8 @@ async function handleCheckoutCompleted(
       const subId = typeof session.subscription === "string"
         ? session.subscription
         : session.subscription.id;
-      const sub = await _stripe.subscriptions.retrieve(subId);
-      await syncSubscription(supabaseAdmin, sub);
+      const sub = await stripe.subscriptions.retrieve(subId);
+      await syncSubscription(supabaseAdmin, sub, stripe);
     } catch (err: any) {
       console.error("[stripe-webhook] falha ao sincronizar sub do checkout:", err?.message);
     }
