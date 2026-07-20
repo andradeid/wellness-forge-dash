@@ -158,7 +158,7 @@ async function getAdmin() {
  */
 async function handleCheckoutCompleted(
   supabaseAdmin: Admin,
-  _stripe: Stripe,
+  stripe: Stripe,
   session: Stripe.Checkout.Session,
   eventId: string,
 ) {
