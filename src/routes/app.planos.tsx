@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Sparkles,
   Coins,
@@ -8,7 +8,10 @@ import {
   ExternalLink,
   Infinity as InfinityIcon,
   CalendarClock,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,14 +19,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyCredits } from "@/hooks/useCredits";
-import { topUpStore } from "@/lib/topup-store";
+import {
+  createSubscriptionCheckout,
+  createPackCheckout,
+  createBillingPortalSession,
+} from "@/lib/stripe-checkout.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/planos")({
   component: PlanosCreditosPage,
 });
-
-const HUBLA_PORTAL_URL = "https://app.hub.la/customer/subscriptions";
 
 const formatBRL = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", {
@@ -34,7 +39,6 @@ const formatBRL = (cents: number) =>
 
 const formatDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
-
 
 const planSlugLabel = (slug?: string | null) => {
   switch (slug) {
@@ -95,11 +99,19 @@ type PackRow = {
   perks: string[];
 };
 
+type BillingCycle = "monthly" | "yearly";
 
 function PlanosCreditosPage() {
   const { user } = useAuth();
   const creditsQuery = useMyCredits();
   const credits = creditsQuery.data;
+
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const startSubscriptionCheckout = useServerFn(createSubscriptionCheckout);
+  const startPackCheckout = useServerFn(createPackCheckout);
+  const openBillingPortal = useServerFn(createBillingPortalSession);
 
   const subQuery = useQuery({
     queryKey: ["my-subscription", user?.id],
@@ -148,7 +160,6 @@ function PlanosCreditosPage() {
     },
   });
 
-
   const sub = subQuery.data;
   const balance = credits?.balance ?? 0;
   const monthlyQuota = credits?.monthly_quota ?? 0;
@@ -161,6 +172,53 @@ function PlanosCreditosPage() {
       ) ?? null,
     [plansQuery.data, sub?.plan_type],
   );
+
+  async function handleManageSubscription() {
+    setLoadingAction("portal");
+    try {
+      const { url } = await openBillingPortal();
+      if (url) window.location.href = url;
+    } catch (err: any) {
+      const msg =
+        err instanceof Response
+          ? await err.text().catch(() => "Erro ao abrir portal")
+          : err?.message ?? "Erro ao abrir portal";
+      toast.error(msg);
+      setLoadingAction(null);
+    }
+  }
+
+  async function handleChoosePlan(planSlug: "starter" | "pro") {
+    setLoadingAction(`plan:${planSlug}`);
+    try {
+      const { url } = await startSubscriptionCheckout({
+        data: { planSlug, cycle },
+      });
+      if (url) window.location.href = url;
+    } catch (err: any) {
+      const msg =
+        err instanceof Response
+          ? await err.text().catch(() => "Erro ao iniciar checkout")
+          : err?.message ?? "Erro ao iniciar checkout";
+      toast.error(msg);
+      setLoadingAction(null);
+    }
+  }
+
+  async function handleBuyPack(packSlug: string) {
+    setLoadingAction(`pack:${packSlug}`);
+    try {
+      const { url } = await startPackCheckout({ data: { packSlug } });
+      if (url) window.location.href = url;
+    } catch (err: any) {
+      const msg =
+        err instanceof Response
+          ? await err.text().catch(() => "Erro ao iniciar checkout")
+          : err?.message ?? "Erro ao iniciar checkout";
+      toast.error(msg);
+      setLoadingAction(null);
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -203,21 +261,20 @@ function PlanosCreditosPage() {
           </div>
           <CardContent className="p-6 space-y-3">
             <p className="text-sm text-muted-foreground">
-              Sua assinatura é gerenciada pela Hubla. Acesse o portal para
+              Sua assinatura é gerenciada pelo Stripe. Acesse o portal para
               trocar de plano, atualizar forma de pagamento ou baixar faturas.
             </p>
             <Button
-              asChild
+              onClick={handleManageSubscription}
+              disabled={loadingAction === "portal"}
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0"
             >
-              <a
-                href={HUBLA_PORTAL_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              {loadingAction === "portal" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
                 <ExternalLink className="h-4 w-4" />
-                Gerenciar assinatura
-              </a>
+              )}
+              Gerenciar assinatura
             </Button>
           </CardContent>
         </Card>
@@ -266,29 +323,52 @@ function PlanosCreditosPage() {
                 )}
               </div>
             )}
-
-            {!unlimited && (
-              <Button
-                onClick={() => topUpStore.open()}
-                className="w-full rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0"
-              >
-                <Sparkles className="h-4 w-4" />
-                Comprar créditos
-              </Button>
-            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Planos disponíveis */}
       <section className="space-y-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Planos disponíveis
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Compare as opções de assinatura e créditos mensais incluídos.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              Planos disponíveis
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Compare as opções de assinatura e créditos mensais incluídos.
+            </p>
+          </div>
+
+          {/* Toggle mensal/anual */}
+          <div className="inline-flex items-center bg-muted rounded-full p-1 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setCycle("monthly")}
+              className={cn(
+                "px-4 py-1.5 text-sm rounded-full transition-all",
+                cycle === "monthly"
+                  ? "bg-white text-foreground shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Mensal
+            </button>
+            <button
+              type="button"
+              onClick={() => setCycle("yearly")}
+              className={cn(
+                "px-4 py-1.5 text-sm rounded-full transition-all inline-flex items-center gap-1.5",
+                cycle === "yearly"
+                  ? "bg-white text-foreground shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Anual
+              <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 text-[10px] px-1.5 py-0 rounded-full">
+                economize
+              </Badge>
+            </button>
+          </div>
         </div>
 
         {plansQuery.isLoading ? (
@@ -301,6 +381,17 @@ function PlanosCreditosPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {plansQuery.data.map((p) => {
               const isCurrent = currentPlan?.id === p.id;
+              const isFree = p.price_monthly_cents === 0;
+              const displayCents =
+                cycle === "yearly" && p.price_yearly_cents
+                  ? p.price_yearly_cents
+                  : p.price_monthly_cents;
+              const cycleLabel = cycle === "yearly" ? "/ano" : "/mês";
+              const isCheckoutable =
+                p.slug === "starter" || p.slug === "pro";
+              const actionKey = `plan:${p.slug}`;
+              const isLoading = loadingAction === actionKey;
+
               return (
                 <Card
                   key={p.id}
@@ -330,19 +421,25 @@ function PlanosCreditosPage() {
                     <div>
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-semibold text-foreground">
-                          {p.price_monthly_cents > 0
-                            ? formatBRL(p.price_monthly_cents)
-                            : "Grátis"}
+                          {isFree ? "Grátis" : formatBRL(displayCents)}
                         </span>
-                        {p.price_monthly_cents > 0 && (
+                        {!isFree && (
                           <span className="text-sm text-muted-foreground">
-                            /mês
+                            {cycleLabel}
                           </span>
                         )}
                       </div>
-                      {p.price_yearly_cents ? (
+                      {!isFree && cycle === "monthly" && p.price_yearly_cents ? (
                         <p className="text-xs text-muted-foreground mt-0.5">
                           ou {formatBRL(p.price_yearly_cents)}/ano
+                        </p>
+                      ) : null}
+                      {!isFree &&
+                      cycle === "yearly" &&
+                      p.price_yearly_cents ? (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          equivalente a{" "}
+                          {formatBRL(Math.round(p.price_yearly_cents / 12))}/mês
                         </p>
                       ) : null}
                     </div>
@@ -365,26 +462,35 @@ function PlanosCreditosPage() {
                     </ul>
 
                     <Button
-                      asChild
+                      onClick={() =>
+                        isCheckoutable &&
+                        handleChoosePlan(p.slug as "starter" | "pro")
+                      }
                       variant={isCurrent ? "outline" : "default"}
-                      disabled={isCurrent}
+                      disabled={
+                        isCurrent || !isCheckoutable || isLoading
+                      }
                       className={cn(
                         "rounded-full mt-2",
                         !isCurrent &&
+                          isCheckoutable &&
                           "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0",
                       )}
                     >
                       {isCurrent ? (
-                        <span>Plano atual</span>
+                        "Plano atual"
+                      ) : !isCheckoutable ? (
+                        "Fale com o time"
+                      ) : isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Redirecionando...
+                        </>
                       ) : (
-                        <a
-                          href={HUBLA_PORTAL_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                        <>
                           <ExternalLink className="h-4 w-4" />
                           Escolher plano
-                        </a>
+                        </>
                       )}
                     </Button>
                   </CardContent>
@@ -418,68 +524,84 @@ function PlanosCreditosPage() {
           </div>
         ) : packsQuery.data && packsQuery.data.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {packsQuery.data.map((pack) => (
-              <Card
-                key={pack.id}
-                className={cn(
-                  "rounded-2xl border shadow-sm transition-all hover:shadow-md flex flex-col",
-                  pack.is_highlighted &&
-                    "ring-2 ring-[#e89bcf] border-transparent",
-                )}
-              >
-                <CardHeader className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold">
-                      {pack.name}
-                    </CardTitle>
-                    {pack.is_highlighted && (
-                      <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 rounded-full">
-                        Popular
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-semibold text-foreground">
-                      {pack.credits}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      créditos
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <p className="text-xl font-semibold text-foreground">
-                      {pack.price_cents > 0 ? formatBRL(pack.price_cents) : "—"}
-                    </p>
-                    {pack.description && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {pack.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {pack.perks.length > 0 && (
-                    <ul className="space-y-1.5 text-sm">
-                      {pack.perks.map((perk, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-[#e89bcf] mt-0.5 shrink-0" />
-                          <span className="text-muted-foreground">{perk}</span>
-                        </li>
-                      ))}
-                    </ul>
+            {packsQuery.data.map((pack) => {
+              const actionKey = `pack:${pack.slug}`;
+              const isLoading = loadingAction === actionKey;
+              return (
+                <Card
+                  key={pack.id}
+                  className={cn(
+                    "rounded-2xl border shadow-sm transition-all hover:shadow-md flex flex-col",
+                    pack.is_highlighted &&
+                      "ring-2 ring-[#e89bcf] border-transparent",
                   )}
+                >
+                  <CardHeader className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg font-semibold">
+                        {pack.name}
+                      </CardTitle>
+                      {pack.is_highlighted && (
+                        <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 rounded-full">
+                          Popular
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-semibold text-foreground">
+                        {pack.credits}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        créditos
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <p className="text-xl font-semibold text-foreground">
+                        {pack.price_cents > 0 ? formatBRL(pack.price_cents) : "—"}
+                      </p>
+                      {pack.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {pack.description}
+                        </p>
+                      )}
+                    </div>
 
-                  <Button
-                    onClick={() => topUpStore.open()}
-                    className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0 mt-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Comprar pacote
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    {pack.perks.length > 0 && (
+                      <ul className="space-y-1.5 text-sm">
+                        {pack.perks.map((perk, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-[#e89bcf] mt-0.5 shrink-0" />
+                            <span className="text-muted-foreground">
+                              {perk}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <Button
+                      onClick={() => handleBuyPack(pack.slug)}
+                      disabled={isLoading}
+                      className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0 mt-2"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Redirecionando...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          Comprar pacote
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <Card className="rounded-2xl p-8 text-center text-sm text-muted-foreground">
