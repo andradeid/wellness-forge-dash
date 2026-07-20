@@ -56,6 +56,37 @@ interface Props {
 export function TopUpDialog({ open, onOpenChange }: Props) {
   const { user } = useAuth();
   const identifier = user?.email ?? user?.id ?? "não identificado";
+  const packCheckout = useServerFn(createPackCheckout);
+  const subCheckout = useServerFn(createSubscriptionCheckout);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const handlePackCheckout = async (slug: string) => {
+    setLoadingId(`pack:${slug}`);
+    try {
+      const { url } = await packCheckout({ data: { packSlug: slug } });
+      if (url) window.location.href = url;
+      else throw new Error("URL de checkout ausente");
+    } catch (e: any) {
+      toast.error("Não foi possível abrir o checkout", {
+        description: e?.message ?? "Tente novamente em instantes.",
+      });
+      setLoadingId(null);
+    }
+  };
+
+  const handleSubscriptionCheckout = async (planSlug: "starter" | "pro", cycle: "monthly" | "yearly") => {
+    setLoadingId(`plan:${planSlug}:${cycle}`);
+    try {
+      const { url } = await subCheckout({ data: { planSlug, cycle } });
+      if (url) window.location.href = url;
+      else throw new Error("URL de checkout ausente");
+    } catch (e: any) {
+      toast.error("Não foi possível abrir o checkout", {
+        description: e?.message ?? "Tente novamente em instantes.",
+      });
+      setLoadingId(null);
+    }
+  };
 
   const { data: packs = [] } = useQuery({
     queryKey: ["credit_packs"],
