@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ManutencaoRouteImport } from './routes/manutencao'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
@@ -49,6 +50,11 @@ import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.struc
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManutencaoRoute = ManutencaoRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/manutencao'
+    | '/reset-password'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/manutencao'
+    | '/reset-password'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/manutencao'
+    | '/reset-password'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -463,6 +475,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   ManutencaoRoute: typeof ManutencaoRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manutencao': {
@@ -801,6 +821,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   ManutencaoRoute: ManutencaoRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,
@@ -813,13 +834,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
