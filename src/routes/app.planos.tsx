@@ -179,11 +179,7 @@ function PlanosCreditosPage() {
       const { url } = await openBillingPortal();
       if (url) window.location.href = url;
     } catch (err: any) {
-      const msg =
-        err instanceof Response
-          ? await err.text().catch(() => "Erro ao abrir portal")
-          : err?.message ?? "Erro ao abrir portal";
-      toast.error(msg);
+      toast.error(err?.message ?? "Erro ao abrir portal");
       setLoadingAction(null);
     }
   }
@@ -196,11 +192,7 @@ function PlanosCreditosPage() {
       });
       if (url) window.location.href = url;
     } catch (err: any) {
-      const msg =
-        err instanceof Response
-          ? await err.text().catch(() => "Erro ao iniciar checkout")
-          : err?.message ?? "Erro ao iniciar checkout";
-      toast.error(msg);
+      toast.error(err?.message ?? "Erro ao iniciar checkout");
       setLoadingAction(null);
     }
   }
@@ -211,11 +203,7 @@ function PlanosCreditosPage() {
       const { url } = await startPackCheckout({ data: { packSlug } });
       if (url) window.location.href = url;
     } catch (err: any) {
-      const msg =
-        err instanceof Response
-          ? await err.text().catch(() => "Erro ao iniciar checkout")
-          : err?.message ?? "Erro ao iniciar checkout";
-      toast.error(msg);
+      toast.error(err?.message ?? "Erro ao iniciar checkout");
       setLoadingAction(null);
     }
   }
