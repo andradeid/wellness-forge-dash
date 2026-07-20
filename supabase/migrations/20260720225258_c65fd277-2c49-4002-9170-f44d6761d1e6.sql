@@ -1,0 +1,1 @@
+UPDATE public.profiles SET phone = '+5511950542504' WHERE lower(email) = 'jfmancuso1@gmail.com' AND (phone IS NULL OR phone = '');
