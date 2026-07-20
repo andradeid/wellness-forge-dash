@@ -35,8 +35,15 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
         let event: Stripe.Event;
         try {
-          // constructEventAsync usa WebCrypto (compatível com Cloudflare Workers)
-          event = await stripe.webhooks.constructEventAsync(rawBody, signature, secret);
+          // Cloudflare Workers exige SubtleCryptoProvider explícito
+          const cryptoProvider = Stripe.createSubtleCryptoProvider();
+          event = await stripe.webhooks.constructEventAsync(
+            rawBody,
+            signature,
+            secret,
+            undefined,
+            cryptoProvider,
+          );
         } catch (err: any) {
           console.error("[stripe-webhook] signature error:", err?.message);
           return new Response(`Signature verification failed: ${err?.message}`, { status: 400 });
