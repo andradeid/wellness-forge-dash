@@ -27,7 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/planos")({
-  component: PlanosCreditosPage,
+  component: PlanosRoute,
 });
 
 const formatBRL = (cents: number) =>
@@ -101,15 +101,20 @@ type PackRow = {
 
 type BillingCycle = "monthly" | "yearly";
 
-function PlanosCreditosPage() {
+function PlanosRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { user } = useAuth();
-  const creditsQuery = useMyCredits();
-  const credits = creditsQuery.data;
 
   if (pathname === "/app/planos/historico") {
     return <Outlet />;
   }
+
+  return <PlanosCreditosPage />;
+}
+
+function PlanosCreditosPage() {
+  const { user } = useAuth();
+  const creditsQuery = useMyCredits();
+  const credits = creditsQuery.data;
 
   const [cycle, setCycle] = useState<BillingCycle>("yearly");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
