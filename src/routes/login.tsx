@@ -106,6 +106,43 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSending, setForgotSending] = useState(false);
+
+  const translateAuthError = (raw: string): string => {
+    const msg = (raw || "").toLowerCase();
+    if (msg.includes("invalid login") || msg.includes("invalid credentials") || msg.includes("invalid_credentials")) {
+      return "Email ou senha incorretos. Se este é seu primeiro acesso, clique em \"Esqueci minha senha\" para definir uma nova senha.";
+    }
+    if (msg.includes("email not confirmed")) return "Email ainda não confirmado. Verifique sua caixa de entrada.";
+    if (msg.includes("too many") || msg.includes("rate limit")) return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
+    if (msg.includes("user not found")) return "Usuário não encontrado. Verifique o email digitado.";
+    return raw || "Não foi possível entrar. Tente novamente.";
+  };
+
+  const handleForgotPassword = async () => {
+    const target = (forgotEmail || email).trim();
+    if (!target) {
+      toast.error("Digite seu email para receber o link de redefinição.");
+      return;
+    }
+    setForgotSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para redefinir sua senha. Verifique seu email.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Não foi possível enviar o email de redefinição.");
+    } finally {
+      setForgotSending(false);
+    }
+  };
 
   // Estado da interceptação de sessão concorrente
   const [conflictOpen, setConflictOpen] = useState(false);
@@ -182,6 +219,7 @@ function LoginPage() {
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setSignInError(null);
     conflictConfirmedRef.current = false;
     try {
       await signIn(email, password);
@@ -220,7 +258,9 @@ function LoginPage() {
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
-      toast.error(err.message ?? "Erro ao entrar");
+      const friendly = translateAuthError(err?.message ?? "");
+      setSignInError(friendly);
+      toast.error(friendly);
       setSubmitting(false);
     }
   };
@@ -316,9 +356,26 @@ function LoginPage() {
                   <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Senha</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Senha</Label>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotEmail(email); setForgotOpen(true); }}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
                   <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
+                {signInError && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  >
+                    {signInError}
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full text-white border-0 shadow-md hover:opacity-90 transition-opacity"
@@ -371,6 +428,43 @@ function LoginPage() {
               style={{ backgroundImage: "var(--gradient-brand)" }}
             >
               {resolving ? "Encerrando..." : "Sim, encerrar acesso antigo e entrar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={forgotOpen} onOpenChange={(v) => !forgotSending && setForgotOpen(v)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir sua senha</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o email da sua conta. Enviaremos um link para você criar uma nova senha.
+              Se este é seu primeiro acesso na LUMMA, use esta opção para definir sua senha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="forgot-email">Email</Label>
+            <Input
+              id="forgot-email"
+              type="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              placeholder="seu@email.com"
+              autoFocus
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={forgotSending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={forgotSending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleForgotPassword();
+              }}
+              className="text-white border-0"
+              style={{ backgroundImage: "var(--gradient-brand)" }}
+            >
+              {forgotSending ? "Enviando..." : "Enviar link"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
