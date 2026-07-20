@@ -220,3 +220,67 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
     });
     return { url: portal.url };
   });
+
+/**
+ * Confirma o status de uma Checkout Session no Stripe e retorna o resumo
+ * pra página /checkout/sucesso. Também devolve o plano ativo / saldo atual
+ * do usuário (já refletindo o efeito do webhook).
+ */
+export const getCheckoutSessionStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ sessionId: z.string().min(3).max(200) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { getStripe } = await import("./stripe.server");
+    const stripe = getStripe();
+
+    const session = await stripe.checkout.sessions.retrieve(data.sessionId, {
+      expand: ["line_items", "subscription"],
+    });
+
+    // Segurança: só retorna sessão que pertence ao próprio usuário
+    const sessionUserId = (session.metadata as any)?.user_id
+      ?? (session.subscription && typeof session.subscription !== "string"
+        ? ((session.subscription as any).metadata?.user_id as string | undefined)
+        : undefined);
+    if (sessionUserId && sessionUserId !== context.userId) {
+      throw new Error("Sessão não pertence ao usuário autenticado");
+    }
+
+    const kind = (session.metadata as any)?.kind as "subscription" | "pack" | undefined;
+    const planSlug = (session.metadata as any)?.plan_slug as string | undefined;
+    const packSlug = (session.metadata as any)?.pack_slug as string | undefined;
+    const credits = (session.metadata as any)?.credits
+      ? Number((session.metadata as any).credits)
+      : undefined;
+
+    // Estado atual no banco (o webhook já deve ter processado)
+    const [{ data: sub }, { data: credRow }] = await Promise.all([
+      context.supabase
+        .from("subscriptions" as any)
+        .select("status, plan_type, current_period_end, unlimited_credits")
+        .eq("user_id", context.userId)
+        .maybeSingle(),
+      context.supabase
+        .from("user_credits" as any)
+        .select("balance")
+        .eq("user_id", context.userId)
+        .maybeSingle(),
+    ]);
+
+    return {
+      sessionId: session.id,
+      paymentStatus: session.payment_status, // 'paid' | 'unpaid' | 'no_payment_required'
+      status: session.status, // 'complete' | 'open' | 'expired'
+      amountTotal: session.amount_total,
+      currency: session.currency,
+      customerEmail: session.customer_details?.email ?? null,
+      kind: kind ?? (session.mode === "subscription" ? "subscription" : "pack"),
+      planSlug: planSlug ?? null,
+      packSlug: packSlug ?? null,
+      credits: credits ?? null,
+      subscription: sub ?? null,
+      balance: (credRow as any)?.balance ?? null,
+    };
+  });
