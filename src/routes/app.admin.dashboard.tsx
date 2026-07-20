@@ -8,6 +8,25 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <UITooltip>
+        <TooltipTrigger asChild>
+          <button type="button" className="inline-flex text-muted-foreground hover:text-foreground transition-colors" aria-label="Informações">
+            <Info className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="max-w-xs text-xs leading-relaxed">
+          {text}
+        </TooltipContent>
+      </UITooltip>
+    </TooltipProvider>
+  );
+}
 
 export const Route = createFileRoute("/app/admin/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Admin — Lumma" }] }),
@@ -312,12 +331,23 @@ function AdminDashboardPage() {
         </Card>
 
         <Card className="p-6 rounded-2xl">
-          <h3 className="font-semibold text-sm">Créditos</h3>
-          <p className="text-xs text-muted-foreground mt-1">Consumo do mês</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">Créditos</h3>
+              <p className="text-xs text-muted-foreground mt-1">Consumo do mês</p>
+            </div>
+            <InfoTip text="Panorama de créditos do mês corrente para toda a plataforma (todos os nutricionistas somados). Serve para acompanhar o consumo agregado da operação, não o saldo de um usuário específico." />
+          </div>
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">
-              <span className="font-mono font-bold text-2xl">{m.creditsConsumedMonth.toLocaleString("pt-BR")}</span>
-              <span className="text-xs text-muted-foreground">de {m.creditsAvailable.toLocaleString("pt-BR")}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-2xl">{m.creditsConsumedMonth.toLocaleString("pt-BR")}</span>
+                <InfoTip text="Total de créditos gastos neste mês, somando todas as tarefas de IA (análises, consultas, formulações, etc.) de todos os nutricionistas. Fonte: tabela analyses_tasks, campo amount, filtrado a partir do dia 1 do mês atual." />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">de {m.creditsAvailable.toLocaleString("pt-BR")}</span>
+                <InfoTip text="Capacidade total disponível: soma do saldo atual (balance) + cota mensal do plano (monthly_quota) de todos os usuários. Representa o teto de créditos que a base pode consumir antes de comprar pacotes extras." />
+              </div>
             </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
@@ -325,9 +355,12 @@ function AdminDashboardPage() {
                 style={{ width: `${Math.min(100, m.creditsRatio * 100).toFixed(1)}%`, background: barColor }}
               />
             </div>
-            <p className="mt-2 text-xs font-mono" style={{ color: barColor }}>
-              {(m.creditsRatio * 100).toFixed(1)}% utilizados
-            </p>
+            <div className="mt-2 flex items-center gap-1.5">
+              <p className="text-xs font-mono" style={{ color: barColor }}>
+                {(m.creditsRatio * 100).toFixed(1)}% utilizados
+              </p>
+              <InfoTip text="Percentual = consumidos ÷ disponíveis. Verde até 60%, âmbar de 60% a 85%, vermelho acima de 85% — ajuda a antecipar quando a base vai precisar de recarga ou upgrade de plano." />
+            </div>
           </div>
         </Card>
       </div>
