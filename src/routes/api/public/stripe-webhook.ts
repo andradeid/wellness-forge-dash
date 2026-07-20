@@ -123,10 +123,16 @@ async function handleStripeWebhook(request: Request) {
               await recordInvoiceFailure(supabaseAdmin, invoice, event.id);
               break;
             }
+            case "charge.refunded": {
+              const charge = event.data.object as Stripe.Charge;
+              await handleChargeRefunded(supabaseAdmin, stripe, charge, event.id);
+              break;
+            }
             default:
               // Evento não tratado — ok, ficou registrado
               break;
           }
+
 
         } catch (err: any) {
           console.error(`[stripe-webhook] handler error (${event.type}):`, err?.message, err);
@@ -575,8 +581,121 @@ async function recordInvoiceFailure(
   });
 }
 
+/**
+ * charge.refunded: trata reembolso total ou parcial.
+ * - Localiza o pagamento original em payment_history via payment_intent
+ * - Marca como refunded (ou mantém paid se parcial e ainda restou valor)
+ * - Se for pack: debita créditos correspondentes (piso em 0) e registra transação refund
+ * - Se for assinatura: apenas marca o histórico (o Stripe emite subscription.deleted se cancelar)
+ */
+async function handleChargeRefunded(
+  supabaseAdmin: Admin,
+  _stripe: Stripe,
+  charge: Stripe.Charge,
+  eventId: string,
+) {
+  const paymentIntentId = typeof charge.payment_intent === "string"
+    ? charge.payment_intent
+    : charge.payment_intent?.id ?? null;
+  if (!paymentIntentId) {
+    console.warn("[stripe-webhook] charge.refunded sem payment_intent", { charge_id: charge.id });
+    return;
+  }
+
+  const amountRefunded = charge.amount_refunded ?? 0;
+  const fullyRefunded = charge.refunded === true || amountRefunded >= (charge.amount ?? 0);
+
+  // Localiza pagamento original em payment_history
+  const { data: original } = await supabaseAdmin
+    .from("payment_history" as any)
+    .select("id, user_id, kind, amount_cents, credits_added, metadata, status")
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .maybeSingle();
+
+  if (!original) {
+    console.warn("[stripe-webhook] charge.refunded sem payment_history correspondente", { pi: paymentIntentId });
+    return;
+  }
+
+  const userId = (original as any).user_id as string;
+  const kind = (original as any).kind as "pack" | "subscription";
+  const originalCredits = ((original as any).credits_added ?? 0) as number;
+
+  // Atualiza status do pagamento original
+  await supabaseAdmin
+    .from("payment_history" as any)
+    .update({
+      status: fullyRefunded ? "refunded" : "paid",
+      metadata: {
+        ...((original as any).metadata ?? {}),
+        refunded_amount_cents: amountRefunded,
+        refunded_at: new Date().toISOString(),
+        refund_event_id: eventId,
+      },
+    })
+    .eq("id", (original as any).id);
+
+  // Registra linha separada de reembolso no histórico (visível pro usuário)
+  await recordPaymentHistory(supabaseAdmin, {
+    userId,
+    kind,
+    description: fullyRefunded
+      ? `Reembolso total — ${(original as any).kind === "pack" ? "pacote de créditos" : "assinatura"}`
+      : `Reembolso parcial — ${(original as any).kind === "pack" ? "pacote de créditos" : "assinatura"}`,
+    amountCents: -amountRefunded,
+    currency: charge.currency ?? "brl",
+    status: "refunded",
+    creditsAdded: null,
+    eventId,
+    paymentIntentId,
+    metadata: { original_payment_id: (original as any).id, fully_refunded: fullyRefunded },
+  });
+
+  // Se for pack e for reembolso total, debita os créditos concedidos (piso em 0)
+  if (kind === "pack" && fullyRefunded && originalCredits > 0) {
+    const { data: current } = await supabaseAdmin
+      .from("user_credits" as any)
+      .select("balance")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const balanceBefore = ((current as any)?.balance ?? 0) as number;
+    const debit = Math.min(balanceBefore, originalCredits);
+    const balanceAfter = balanceBefore - debit;
+
+    if (debit > 0) {
+      await supabaseAdmin
+        .from("user_credits" as any)
+        .update({ balance: balanceAfter })
+        .eq("user_id", userId);
+
+      await supabaseAdmin.from("credit_transactions" as any).insert({
+        user_id: userId,
+        type: "refund",
+        amount: debit,
+        balance_after: balanceAfter,
+        agent_key: null,
+        agent_label: "refund:pack",
+        message_preview: `Estorno de ${originalCredits} créditos (reembolso Stripe)`,
+        metadata: { payment_intent: paymentIntentId, original_credits: originalCredits, debited: debit, event_id: eventId },
+      });
+
+      await supabaseAdmin.from("credit_audit_log" as any).insert({
+        user_id: userId,
+        admin_id: userId,
+        action: "refund_debit",
+        delta: -debit,
+        balance_before: balanceBefore,
+        balance_after: balanceAfter,
+        reason: "stripe_refund",
+        metadata: { payment_intent: paymentIntentId, original_credits: originalCredits, event_id: eventId },
+      });
+    }
+  }
+}
+
 async function recordPaymentHistory(
   supabaseAdmin: Admin,
+
   args: {
     userId: string;
     kind: "subscription" | "pack";
