@@ -156,6 +156,7 @@ async function handleCheckoutCompleted(
   supabaseAdmin: Admin,
   _stripe: Stripe,
   session: Stripe.Checkout.Session,
+  eventId: string,
 ) {
   const meta = session.metadata ?? {};
   const kind = meta.kind;
@@ -186,8 +187,24 @@ async function handleCheckoutCompleted(
         source: "stripe_pack",
       },
     });
+
+    // Registro no histórico de pagamentos
+    await recordPaymentHistory(supabaseAdmin, {
+      userId,
+      kind: "pack",
+      description: `Pacote avulso — ${credits} créditos${packSlug ? ` (${packSlug})` : ""}`,
+      amountCents: session.amount_total ?? 0,
+      currency: session.currency ?? "brl",
+      status: "paid",
+      creditsAdded: credits,
+      eventId,
+      sessionId: session.id,
+      paymentIntentId: (session.payment_intent as string | null) ?? null,
+      metadata: { pack_slug: packSlug },
+    });
   }
 }
+
 
 /**
  * Sincroniza status/ciclo/período/cancelamento da assinatura na tabela subscriptions.
