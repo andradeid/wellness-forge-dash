@@ -46,9 +46,8 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
         ? (plan as any).stripe_price_monthly_id
         : (plan as any).stripe_price_yearly_id;
     if (!priceId) {
-      throw new Response(
+      throw new Error(
         `Plano ${data.planSlug} não tem price_id Stripe para ciclo ${data.cycle}`,
-        { status: 400 },
       );
     }
 
