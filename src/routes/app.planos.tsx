@@ -106,7 +106,7 @@ function PlanosCreditosPage() {
   const creditsQuery = useMyCredits();
   const credits = creditsQuery.data;
 
-  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [cycle, setCycle] = useState<BillingCycle>("yearly");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const startSubscriptionCheckout = useServerFn(createSubscriptionCheckout);
@@ -315,20 +315,19 @@ function PlanosCreditosPage() {
         </Card>
       </div>
 
-      {/* Planos disponíveis */}
-      <section className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              Planos disponíveis
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Compare as opções de assinatura e créditos mensais incluídos.
-            </p>
-          </div>
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Planos disponíveis
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Compare as opções de assinatura e créditos mensais incluídos.
+          </p>
+        </div>
 
-          {/* Toggle mensal/anual */}
-          <div className="inline-flex items-center bg-muted rounded-full p-1 self-start sm:self-auto">
+        {/* Toggle mensal/anual centralizado */}
+        <div className="flex justify-center">
+          <div className="inline-flex items-center bg-muted rounded-full p-1">
             <button
               type="button"
               onClick={() => setCycle("monthly")}
@@ -358,6 +357,7 @@ function PlanosCreditosPage() {
             </button>
           </div>
         </div>
+
 
         {plansQuery.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -425,11 +425,23 @@ function PlanosCreditosPage() {
                       {!isFree &&
                       cycle === "yearly" &&
                       p.price_yearly_cents ? (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          equivalente a{" "}
-                          {formatBRL(Math.round(p.price_yearly_cents / 12))}/mês
-                        </p>
+                        <div className="mt-0.5 space-y-0.5">
+                          <p className="text-xs text-muted-foreground">
+                            equivalente a{" "}
+                            {formatBRL(Math.round(p.price_yearly_cents / 12))}/mês
+                          </p>
+                          {p.price_monthly_cents * 12 > p.price_yearly_cents && (
+                            <p className="text-xs font-medium text-[#e89bcf]">
+                              economize{" "}
+                              {formatBRL(
+                                p.price_monthly_cents * 12 - p.price_yearly_cents,
+                              )}{" "}
+                              no ano
+                            </p>
+                          )}
+                        </div>
                       ) : null}
+
                     </div>
 
                     <ul className="space-y-2 text-sm">
