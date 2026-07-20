@@ -106,6 +106,43 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSending, setForgotSending] = useState(false);
+
+  const translateAuthError = (raw: string): string => {
+    const msg = (raw || "").toLowerCase();
+    if (msg.includes("invalid login") || msg.includes("invalid credentials") || msg.includes("invalid_credentials")) {
+      return "Email ou senha incorretos. Se este é seu primeiro acesso, clique em \"Esqueci minha senha\" para definir uma nova senha.";
+    }
+    if (msg.includes("email not confirmed")) return "Email ainda não confirmado. Verifique sua caixa de entrada.";
+    if (msg.includes("too many") || msg.includes("rate limit")) return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
+    if (msg.includes("user not found")) return "Usuário não encontrado. Verifique o email digitado.";
+    return raw || "Não foi possível entrar. Tente novamente.";
+  };
+
+  const handleForgotPassword = async () => {
+    const target = (forgotEmail || email).trim();
+    if (!target) {
+      toast.error("Digite seu email para receber o link de redefinição.");
+      return;
+    }
+    setForgotSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para redefinir sua senha. Verifique seu email.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Não foi possível enviar o email de redefinição.");
+    } finally {
+      setForgotSending(false);
+    }
+  };
 
   // Estado da interceptação de sessão concorrente
   const [conflictOpen, setConflictOpen] = useState(false);
