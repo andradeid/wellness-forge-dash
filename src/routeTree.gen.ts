@@ -26,6 +26,7 @@ import { Route as AppChatsRouteImport } from './routes/app.chats'
 import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
+import { Route as AppCheckoutSucessoRouteImport } from './routes/app.checkout.sucesso'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
 import { Route as AppAdminSystemRouteImport } from './routes/app.admin.system'
@@ -130,6 +131,11 @@ const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
 const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
   id: '/evolution/$patientId',
   path: '/evolution/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCheckoutSucessoRoute = AppCheckoutSucessoRouteImport.update({
+  id: '/checkout/sucesso',
+  path: '/checkout/sucesso',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/system': typeof AppAdminSystemRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
+  '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
@@ -307,6 +314,7 @@ export interface FileRoutesByTo {
   '/app/admin/system': typeof AppAdminSystemRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
+  '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/app/admin/system': typeof AppAdminSystemRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
+  '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/app/admin/system'
     | '/app/admin/users'
     | '/app/chat/$patientId'
+    | '/app/checkout/sucesso'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
@@ -426,6 +436,7 @@ export interface FileRouteTypes {
     | '/app/admin/system'
     | '/app/admin/users'
     | '/app/chat/$patientId'
+    | '/app/checkout/sucesso'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
@@ -465,6 +476,7 @@ export interface FileRouteTypes {
     | '/app/admin/system'
     | '/app/admin/users'
     | '/app/chat/$patientId'
+    | '/app/checkout/sucesso'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
@@ -605,6 +617,13 @@ declare module '@tanstack/react-router' {
       path: '/evolution/$patientId'
       fullPath: '/app/evolution/$patientId'
       preLoaderRoute: typeof AppEvolutionPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/checkout/sucesso': {
+      id: '/app/checkout/sucesso'
+      path: '/checkout/sucesso'
+      fullPath: '/app/checkout/sucesso'
+      preLoaderRoute: typeof AppCheckoutSucessoRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/chat/$patientId': {
@@ -784,6 +803,7 @@ interface AppRouteChildren {
   AppAdminSystemRoute: typeof AppAdminSystemRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
+  AppCheckoutSucessoRoute: typeof AppCheckoutSucessoRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
   AppGeneralChatIdRoute: typeof AppGeneralChatIdRoute
 }
@@ -810,6 +830,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminSystemRoute: AppAdminSystemRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
+  AppCheckoutSucessoRoute: AppCheckoutSucessoRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
   AppGeneralChatIdRoute: AppGeneralChatIdRoute,
 }
