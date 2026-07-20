@@ -38,8 +38,8 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       .eq("slug", data.planSlug)
       .eq("is_active", true)
       .maybeSingle();
-    if (planErr) throw new Response(planErr.message, { status: 500 });
-    if (!plan) throw new Response("Plano não encontrado", { status: 404 });
+    if (planErr) throw new Error(planErr.message);
+    if (!plan) throw new Error("Plano não encontrado");
 
     const priceId =
       data.cycle === "monthly"
@@ -130,8 +130,8 @@ export const createPackCheckout = createServerFn({ method: "POST" })
       .eq("slug", data.packSlug)
       .eq("is_active", true)
       .maybeSingle();
-    if (packErr) throw new Response(packErr.message, { status: 500 });
-    if (!pack) throw new Response("Pacote não encontrado", { status: 404 });
+    if (packErr) throw new Error(packErr.message);
+    if (!pack) throw new Error("Pacote não encontrado");
 
     const priceId = (pack as any).stripe_price_id as string | null;
     if (!priceId) {
@@ -212,7 +212,7 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
 
     const customerId = (sub as any)?.stripe_customer_id as string | null;
     if (!customerId) {
-      throw new Response("Sem cliente Stripe associado", { status: 400 });
+      throw new Error("Sem cliente Stripe associado. Assine um plano ou compre um pacote primeiro.");
     }
 
     const origin = getOrigin();
