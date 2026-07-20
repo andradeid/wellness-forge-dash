@@ -38,6 +38,7 @@ import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashbo
 import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
+import { Route as ApiPublicStripeWebhookBetaRouteImport } from './routes/api/public/stripe-webhook-beta'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
@@ -191,6 +192,12 @@ const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
   path: '/admin/administrators',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicStripeWebhookBetaRoute =
+  ApiPublicStripeWebhookBetaRouteImport.update({
+    id: '/api/public/stripe-webhook-beta',
+    path: '/api/public/stripe-webhook-beta',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   id: '/api/public/stripe-webhook',
   path: '/api/public/stripe-webhook',
@@ -249,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/stripe-webhook-beta': typeof ApiPublicStripeWebhookBetaRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
@@ -286,6 +294,7 @@ export interface FileRoutesByTo {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/stripe-webhook-beta': typeof ApiPublicStripeWebhookBetaRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
@@ -325,6 +334,7 @@ export interface FileRoutesById {
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/stripe-webhook-beta': typeof ApiPublicStripeWebhookBetaRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/api/public/stripe-webhook'
+    | '/api/public/stripe-webhook-beta'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/credits-audit'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/api/public/stripe-webhook'
+    | '/api/public/stripe-webhook-beta'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/credits-audit'
@@ -440,6 +452,7 @@ export interface FileRouteTypes {
     | '/api/dify/test'
     | '/api/dify/upload'
     | '/api/public/stripe-webhook'
+    | '/api/public/stripe-webhook-beta'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/credits-audit'
@@ -471,6 +484,7 @@ export interface RootRouteChildren {
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
+  ApiPublicStripeWebhookBetaRoute: typeof ApiPublicStripeWebhookBetaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -678,6 +692,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdministratorsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/stripe-webhook-beta': {
+      id: '/api/public/stripe-webhook-beta'
+      path: '/api/public/stripe-webhook-beta'
+      fullPath: '/api/public/stripe-webhook-beta'
+      preLoaderRoute: typeof ApiPublicStripeWebhookBetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/stripe-webhook': {
       id: '/api/public/stripe-webhook'
       path: '/api/public/stripe-webhook'
@@ -809,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
+  ApiPublicStripeWebhookBetaRoute: ApiPublicStripeWebhookBetaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
