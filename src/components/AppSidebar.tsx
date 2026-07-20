@@ -30,7 +30,10 @@ import {
   Settings as SettingsIcon,
   User as UserIcon,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
+
+const WHATSAPP_SUPPORT_URL = `https://wa.me/5519997285302?text=${encodeURIComponent("Oi! Você pode me ajudar com com a LUMMA 2.0?")}`;
 import { useEffect, useState } from "react";
 import {
   Sidebar,
@@ -100,6 +103,7 @@ const nutriGroups: NavGroup[] = [
     items: [
       { title: "Planos & Créditos", url: "/app/planos", icon: CreditCard },
       { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
     ],
   },
 ];
@@ -155,6 +159,7 @@ const adminGroups: NavGroup[] = [
     bottom: true,
     items: [
       { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
     ],
   },
 
@@ -316,10 +321,15 @@ export function AppSidebar() {
                       </span>
                     );
 
+                    const isExternal = /^https?:\/\//.test(item.url);
                     return (
                       <li key={`${item.title}-${item.url}`}>
                         {item.url.startsWith("#") ? (
                           <a href={item.url} aria-disabled className="block opacity-70 cursor-not-allowed">
+                            {content}
+                          </a>
+                        ) : isExternal ? (
+                          <a href={item.url} target="_blank" rel="noopener noreferrer">
                             {content}
                           </a>
                         ) : (
