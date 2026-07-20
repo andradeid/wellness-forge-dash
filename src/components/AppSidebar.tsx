@@ -5,7 +5,7 @@ import {
   KeyRound,
   LayoutGrid,
   MessageSquare,
-  AlertCircle,
+  
   Lightbulb,
   Trophy,
   CreditCard,
