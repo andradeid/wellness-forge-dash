@@ -1,0 +1,1 @@
+DELETE FROM public.stripe_webhook_events WHERE id IN ('evt_1TvPG9IjJyqfQCaT7OKHoy0H','evt_1TvPG9IjJyqfQCaTbn9xkqC5');
