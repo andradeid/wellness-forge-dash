@@ -204,6 +204,25 @@ async function handleCheckoutCompleted(
       paymentIntentId: (session.payment_intent as string | null) ?? null,
       metadata: { pack_slug: packSlug },
     });
+
+    // Email de agradecimento (não bloqueia se falhar)
+    try {
+      const { data: bal } = await supabaseAdmin
+        .from("user_credits" as any)
+        .select("balance")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const { sendPackPurchaseEmail } = await import("@/lib/emails.server");
+      await sendPackPurchaseEmail({
+        userId,
+        credits,
+        amountCents: session.amount_total ?? 0,
+        currency: session.currency ?? "brl",
+        balanceAfter: (bal as any)?.balance ?? credits,
+      });
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao enviar email de pack:", err?.message);
+    }
   }
 }
 
