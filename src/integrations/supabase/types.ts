@@ -898,6 +898,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_cycle: string | null
           cancelled_at: string | null
           created_at: string
           current_period_end: string
@@ -906,11 +907,16 @@ export type Database = {
           plan_type: Database["public"]["Enums"]["plan_type"]
           seats_override: number | null
           status: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
           unlimited_credits: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          billing_cycle?: string | null
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string
@@ -919,11 +925,16 @@ export type Database = {
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
           unlimited_credits?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          billing_cycle?: string | null
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string
@@ -932,6 +943,10 @@ export type Database = {
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
           unlimited_credits?: boolean
           updated_at?: string
           user_id?: string
