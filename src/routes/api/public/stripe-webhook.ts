@@ -367,7 +367,11 @@ async function handleInvoicePaid(
   invoice: Stripe.Invoice,
   eventId: string,
 ) {
-  const subId = (invoice as any).subscription as string | null;
+  // Stripe 2026-06 (dahlia) moveu `subscription` para parent.subscription_details.subscription
+  const parentSubId = (invoice as any).parent?.subscription_details?.subscription as string | null | undefined;
+  const legacySubId = (invoice as any).subscription as string | null | undefined;
+  const lineSubId = ((invoice as any).lines?.data?.[0]?.parent?.subscription_item_details?.subscription ?? null) as string | null;
+  const subId = parentSubId ?? legacySubId ?? lineSubId ?? null;
   if (!subId) return; // fatura avulsa/one-off — nada a fazer aqui
   if (invoice.status !== "paid") return;
   if ((invoice.amount_paid ?? 0) <= 0) return; // trial invoice / R$ 0 → não credita
