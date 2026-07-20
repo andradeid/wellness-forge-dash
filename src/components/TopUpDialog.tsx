@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Coins, Info, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, Coins, Info, Sparkles, TrendingUp, HelpCircle, Loader2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -13,6 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { createPackCheckout, createSubscriptionCheckout } from "@/lib/stripe-checkout.functions";
+import { toast } from "sonner";
 
 interface Pack {
   id: string;
@@ -53,6 +56,37 @@ interface Props {
 export function TopUpDialog({ open, onOpenChange }: Props) {
   const { user } = useAuth();
   const identifier = user?.email ?? user?.id ?? "não identificado";
+  const packCheckout = useServerFn(createPackCheckout);
+  const subCheckout = useServerFn(createSubscriptionCheckout);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const handlePackCheckout = async (slug: string) => {
+    setLoadingId(`pack:${slug}`);
+    try {
+      const { url } = await packCheckout({ data: { packSlug: slug } });
+      if (url) window.location.href = url;
+      else throw new Error("URL de checkout ausente");
+    } catch (e: any) {
+      toast.error("Não foi possível abrir o checkout", {
+        description: e?.message ?? "Tente novamente em instantes.",
+      });
+      setLoadingId(null);
+    }
+  };
+
+  const handleSubscriptionCheckout = async (planSlug: "starter" | "pro", cycle: "monthly" | "yearly") => {
+    setLoadingId(`plan:${planSlug}:${cycle}`);
+    try {
+      const { url } = await subCheckout({ data: { planSlug, cycle } });
+      if (url) window.location.href = url;
+      else throw new Error("URL de checkout ausente");
+    } catch (e: any) {
+      toast.error("Não foi possível abrir o checkout", {
+        description: e?.message ?? "Tente novamente em instantes.",
+      });
+      setLoadingId(null);
+    }
+  };
 
   const { data: packs = [] } = useQuery({
     queryKey: ["credit_packs"],
@@ -232,12 +266,15 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                   </ul>
 
                   <Button
-                    disabled
-                    className="mt-5 rounded-full"
-                    variant="outline"
-                    title="Pagamento online em breve"
+                    onClick={() => handleSubscriptionCheckout("pro", "monthly")}
+                    disabled={loadingId !== null}
+                    className="mt-5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] hover:opacity-90 text-white border-0"
                   >
-                    Em breve
+                    {loadingId === "plan:pro:monthly" ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redirecionando…</>
+                    ) : (
+                      <>Assinar {proPlan.name}</>
+                    )}
                   </Button>
 
                 </div>
@@ -311,12 +348,20 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                     )}
 
                     <Button
-                      disabled
-                      className="mt-4 rounded-full"
+                      onClick={() => handlePackCheckout(pack.slug)}
+                      disabled={loadingId !== null || pack.price_cents <= 0}
+                      className={cn(
+                        "mt-4 rounded-full",
+                        pack.is_highlighted &&
+                          "bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] hover:opacity-90 text-white border-0",
+                      )}
                       variant={pack.is_highlighted ? "default" : "outline"}
-                      title="Pagamento online em breve"
                     >
-                      Em breve
+                      {loadingId === `pack:${pack.slug}` ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redirecionando…</>
+                      ) : (
+                        <>Comprar agora</>
+                      )}
                     </Button>
 
                   </div>
