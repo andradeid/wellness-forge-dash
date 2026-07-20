@@ -330,9 +330,24 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) 
 
 
   const priceId = sub.items.data[0]?.price.id ?? null;
-  const planSlug = (sub.metadata?.plan_slug ?? null) as
+  let planSlug = (sub.metadata?.plan_slug ?? null) as
     | "starter" | "pro" | "clinica" | null;
-  const cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;
+  let cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;
+
+  // Payment Links não carregam metadata → resolve plano/ciclo pelo price_id
+  if (priceId && (!planSlug || !cycle)) {
+    const { data: planRow } = await supabaseAdmin
+      .from("subscription_plans" as any)
+      .select("slug, stripe_price_monthly_id, stripe_price_yearly_id")
+      .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
+      .maybeSingle();
+    if (planRow) {
+      if (!planSlug) planSlug = (planRow as any).slug as any;
+      if (!cycle) {
+        cycle = (planRow as any).stripe_price_yearly_id === priceId ? "yearly" : "monthly";
+      }
+    }
+  }
 
   const status = mapSubscriptionStatus(sub.status);
   const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
