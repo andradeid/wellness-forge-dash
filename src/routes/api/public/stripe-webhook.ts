@@ -335,7 +335,7 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) 
   const cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;
 
   const status = mapSubscriptionStatus(sub.status);
-  const periodEndTs = (sub as any).current_period_end as number | null;
+  const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
   const trialEndTs = sub.trial_end as number | null;
 
   const patch: Record<string, any> = {
