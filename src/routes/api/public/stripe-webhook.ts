@@ -472,6 +472,14 @@ async function handleInvoicePaid(
 
   await syncCustomerContactToProfile(supabaseAdmin, stripe, customerId, targetUserId);
 
+  // Garante plan_type/billing_cycle/status/period_end corretos mesmo quando o
+  // checkout.session.completed processou antes do user existir.
+  try {
+    await syncSubscription(supabaseAdmin, sub, stripe);
+  } catch (err: any) {
+    console.error("[stripe-webhook] syncSubscription no invoice falhou:", err?.message);
+  }
+
 
 
 
