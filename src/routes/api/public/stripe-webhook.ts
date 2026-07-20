@@ -693,8 +693,9 @@ async function handleChargeRefunded(
   }
 }
 
-
+async function recordPaymentHistory(
   supabaseAdmin: Admin,
+
   args: {
     userId: string;
     kind: "subscription" | "pack";
