@@ -266,12 +266,15 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
                   </ul>
 
                   <Button
-                    disabled
-                    className="mt-5 rounded-full"
-                    variant="outline"
-                    title="Pagamento online em breve"
+                    onClick={() => handleSubscriptionCheckout("pro", "monthly")}
+                    disabled={loadingId !== null}
+                    className="mt-5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] hover:opacity-90 text-white border-0"
                   >
-                    Em breve
+                    {loadingId === "plan:pro:monthly" ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redirecionando…</>
+                    ) : (
+                      <>Assinar {proPlan.name}</>
+                    )}
                   </Button>
 
                 </div>
