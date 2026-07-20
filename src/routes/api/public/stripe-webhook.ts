@@ -224,9 +224,24 @@ async function handleCheckoutCompleted(
       });
     } catch (err: any) {
       console.error("[stripe-webhook] falha ao enviar email de pack:", err?.message);
+  }
+
+  // Payment Link de assinatura: session.mode = "subscription".
+  // Antes do invoice.payment_succeeded chegar, provisiona o usuário e sincroniza
+  // a subscription pra garantir que o vínculo customer→user_id esteja pronto.
+  if (session.mode === "subscription" && session.subscription) {
+    try {
+      const subId = typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription.id;
+      const sub = await _stripe.subscriptions.retrieve(subId);
+      await syncSubscription(supabaseAdmin, sub);
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao sincronizar sub do checkout:", err?.message);
     }
   }
 }
+
 
 
 /**
