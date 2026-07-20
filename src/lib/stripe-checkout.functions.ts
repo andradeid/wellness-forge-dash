@@ -134,9 +134,8 @@ export const createPackCheckout = createServerFn({ method: "POST" })
 
     const priceId = (pack as any).stripe_price_id as string | null;
     if (!priceId) {
-      throw new Response(
+      throw new Error(
         `Pacote ${data.packSlug} não tem price_id Stripe configurado`,
-        { status: 400 },
       );
     }
 
