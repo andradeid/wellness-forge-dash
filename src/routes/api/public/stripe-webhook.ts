@@ -289,7 +289,8 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) 
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
   // Localiza usuário: metadata → stripe_customer_id → email do customer (auto-provisiona)
-  let targetUserId = userId;
+  let targetUserId: string | null = userId;
+
   if (!targetUserId) {
     const { data } = await supabaseAdmin
       .from("subscriptions" as any)
