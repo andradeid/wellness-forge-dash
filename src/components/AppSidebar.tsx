@@ -113,8 +113,6 @@ const adminGroups: NavGroup[] = [
     icon: Activity,
     items: [
       { title: "Dashboard", url: "/app/admin/dashboard", icon: LayoutGrid },
-      { title: "Conversas", url: "#conversas", icon: MessageSquare },
-      { title: "Erros", url: "#erros", icon: AlertCircle },
       { title: "Feedbacks", url: "/app/admin/feedbacks", icon: Lightbulb, superAdminOnly: true },
       { title: "Ranking de uso", url: "/app/admin/ranking", icon: Trophy, superAdminOnly: true },
     ],
