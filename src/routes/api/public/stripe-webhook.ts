@@ -470,6 +470,10 @@ async function handleInvoicePaid(
   }
   if (!targetUserId) return;
 
+  await syncCustomerContactToProfile(supabaseAdmin, stripe, customerId, targetUserId);
+
+
+
 
   await addCreditsToUser(supabaseAdmin, {
     userId: targetUserId,
