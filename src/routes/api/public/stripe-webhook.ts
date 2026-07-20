@@ -108,7 +108,7 @@ async function handleStripeWebhook(request: Request) {
             case "customer.subscription.updated":
             case "customer.subscription.deleted": {
               const sub = event.data.object as Stripe.Subscription;
-              await syncSubscription(supabaseAdmin, sub);
+              await syncSubscription(supabaseAdmin, sub, stripe);
               break;
             }
             case "invoice.paid":
@@ -158,7 +158,7 @@ async function getAdmin() {
  */
 async function handleCheckoutCompleted(
   supabaseAdmin: Admin,
-  _stripe: Stripe,
+  stripe: Stripe,
   session: Stripe.Checkout.Session,
   eventId: string,
 ) {
@@ -237,8 +237,8 @@ async function handleCheckoutCompleted(
       const subId = typeof session.subscription === "string"
         ? session.subscription
         : session.subscription.id;
-      const sub = await _stripe.subscriptions.retrieve(subId);
-      await syncSubscription(supabaseAdmin, sub);
+      const sub = await stripe.subscriptions.retrieve(subId);
+      await syncSubscription(supabaseAdmin, sub, stripe);
     } catch (err: any) {
       console.error("[stripe-webhook] falha ao sincronizar sub do checkout:", err?.message);
     }
@@ -304,9 +304,51 @@ async function resolveOrInviteUserByCustomer(
   }
 }
 
-async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) {
+/**
+ * Copia phone/name do customer do Stripe para o profile do usuário,
+ * preenchendo apenas campos vazios (não sobrescreve dados editados pelo user).
+ */
+async function syncCustomerContactToProfile(
+  supabaseAdmin: Admin,
+  stripe: Stripe,
+  customerId: string,
+  userId: string,
+) {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ((customer as any).deleted) return;
+    const c = customer as Stripe.Customer;
+    const phone = (c.phone ?? "").trim() || null;
+    const fullName = (c.name ?? "").trim() || null;
+    if (!phone && !fullName) return;
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles" as any)
+      .select("phone, full_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const patch: Record<string, any> = {};
+    if (phone && !(prof as any)?.phone) patch.phone = phone;
+    if (fullName && !(prof as any)?.full_name) patch.full_name = fullName;
+    if (Object.keys(patch).length === 0) return;
+
+    await supabaseAdmin.from("profiles" as any).update(patch).eq("id", userId);
+  } catch (err: any) {
+    console.warn("[stripe-webhook] syncCustomerContactToProfile falhou:", err?.message);
+  }
+}
+
+async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, stripeArg?: Stripe) {
   const userId = sub.metadata?.user_id ?? null;
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+
+  const getStripeLazy = async (): Promise<Stripe> => {
+    if (stripeArg) return stripeArg;
+    const { getStripe } = await import("@/lib/stripe.server");
+    stripeArg = getStripe();
+    return stripeArg;
+  };
 
   // Localiza usuário: metadata → stripe_customer_id → email do customer (auto-provisiona)
   let targetUserId: string | null = userId;
@@ -320,13 +362,15 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription) 
     targetUserId = (data as any)?.user_id ?? null;
   }
   if (!targetUserId) {
-    const { getStripe } = await import("@/lib/stripe.server");
-    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, getStripe(), customerId);
+    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, await getStripeLazy(), customerId);
   }
   if (!targetUserId) {
     console.warn("[stripe-webhook] subscription sem user_id resolvível", { sub_id: sub.id, customer: customerId });
     return;
   }
+
+  // Preenche phone/full_name a partir do customer do Stripe (só campos vazios)
+  await syncCustomerContactToProfile(supabaseAdmin, await getStripeLazy(), customerId, targetUserId);
 
 
   const priceId = sub.items.data[0]?.price.id ?? null;
@@ -425,6 +469,10 @@ async function handleInvoicePaid(
     targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
   }
   if (!targetUserId) return;
+
+  await syncCustomerContactToProfile(supabaseAdmin, stripe, customerId, targetUserId);
+
+
 
 
   await addCreditsToUser(supabaseAdmin, {
