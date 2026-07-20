@@ -70,6 +70,11 @@ function HistoricoPage() {
   const { user } = useAuth();
   const userId = user?.id;
   const [txFilter, setTxFilter] = useState<"all" | "in" | "out">("all");
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [page, setPage] = useState(1);
 
   const paymentsQ = useQuery({
     queryKey: ["payment-history", userId],
@@ -95,17 +100,44 @@ function HistoricoPage() {
         .select("id,type,amount,balance_after,agent_label,message_preview,created_at")
         .eq("user_id", userId!)
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(1000);
       if (error) throw error;
       return (data ?? []) as unknown as TxRow[];
     },
   });
 
-  const filteredTx = (txQ.data ?? []).filter((t) => {
-    if (txFilter === "all") return true;
-    if (txFilter === "in") return t.type !== "debit";
-    return t.type === "debit";
-  });
+  const filteredTx = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const from = dateFrom ? new Date(dateFrom + "T00:00:00").getTime() : null;
+    const to = dateTo ? new Date(dateTo + "T23:59:59").getTime() : null;
+    return (txQ.data ?? []).filter((t) => {
+      if (txFilter === "in" && t.type === "debit") return false;
+      if (txFilter === "out" && t.type !== "debit") return false;
+      if (q) {
+        const hay = `${t.agent_label ?? ""} ${t.message_preview ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const ts = new Date(t.created_at).getTime();
+      if (from && ts < from) return false;
+      if (to && ts > to) return false;
+      return true;
+    });
+  }, [txQ.data, txFilter, search, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [txFilter, search, dateFrom, dateTo, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTx.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedTx = filteredTx.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const clearFilters = () => {
+    setSearch("");
+    setDateFrom("");
+    setDateTo("");
+    setTxFilter("all");
+  };
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
