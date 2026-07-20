@@ -426,7 +426,7 @@ async function handleInvoicePaid(
   });
 
   // Atualiza monthly_quota + quota_reset_at
-  const periodEndTs = (sub as any).current_period_end as number | null;
+  const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
   await supabaseAdmin
     .from("user_credits" as any)
     .update({
