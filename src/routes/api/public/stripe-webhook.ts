@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
     handlers: {
       POST: async ({ request }) => {
         try {
-          return await handleStripeWebhook(request);
+          return await handleStripeWebhook(request, process.env.STRIPE_WEBHOOK_SECRET);
         } catch (err: any) {
           console.error("[stripe-webhook] fatal error:", err?.message, err);
           return new Response(`Webhook fatal error: ${err?.message ?? "erro desconhecido"}`, { status: 500 });
@@ -29,11 +29,11 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
   },
 });
 
-async function handleStripeWebhook(request: Request) {
-        const secret = process.env.STRIPE_WEBHOOK_SECRET;
+export async function handleStripeWebhook(request: Request, secret: string | undefined) {
         if (!secret) {
           return new Response("Webhook secret não configurada", { status: 500 });
         }
+
 
         const signature = request.headers.get("stripe-signature");
         if (!signature) {
