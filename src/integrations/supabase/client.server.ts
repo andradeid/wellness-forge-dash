@@ -7,10 +7,14 @@ import type { Database } from './types';
 import { disabledRealtimeOptions } from './disabled-realtime';
 
 function resolveSupabaseSecretKey() {
-  const directKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  const directKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.LUMMA_SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY;
   if (directKey) return directKey;
 
-  const secretKeys = process.env.SUPABASE_SECRET_KEYS;
+  const secretKeys = process.env.SUPABASE_SECRET_KEYS ?? process.env.LUMMA_SUPABASE_SECRET_KEYS;
   if (!secretKeys) return undefined;
 
   try {
@@ -23,7 +27,10 @@ function resolveSupabaseSecretKey() {
 }
 
 export function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const SUPABASE_URL =
+    process.env.SUPABASE_URL ??
+    process.env.VITE_SUPABASE_URL ??
+    'https://bidarktpgytizdgmmqrg.supabase.co';
   const SUPABASE_SERVICE_ROLE_KEY = resolveSupabaseSecretKey();
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -31,7 +38,7 @@ export function createSupabaseAdminClient() {
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
     ];
-    const message = `Variável(is) de ambiente do Supabase ausente(s): ${missing.join(', ')}. A chave precisa estar disponível como secret de runtime do projeto para as server functions acessarem o Supabase externo.`;
+    const message = `Variável(is) de ambiente do Supabase ausente(s): ${missing.join(', ')}. Salve a chave service_role como LUMMA_SUPABASE_SERVICE_ROLE_KEY nos secrets de runtime para as server functions acessarem o Supabase externo.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
