@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Coins, Info, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, Coins, Info, Sparkles, TrendingUp, HelpCircle, Loader2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -13,6 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { createPackCheckout, createSubscriptionCheckout } from "@/lib/stripe-checkout.functions";
+import { toast } from "sonner";
 
 interface Pack {
   id: string;
