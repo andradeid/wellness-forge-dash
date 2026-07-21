@@ -102,7 +102,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
       }
 
       // subscription
-      const planType = (row.plan_type ?? "free") as "clinica" | "free" | "pro" | "starter";
+      const planType = (row.plan_type ?? "starter") as "clinica" | "free" | "pro" | "starter";
       const { error: subErr } = await supabaseAdmin
         .from("subscriptions")
         .upsert(
