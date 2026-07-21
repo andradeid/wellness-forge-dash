@@ -144,7 +144,6 @@ function UsersPage() {
     email: "",
     phone: "",
     professional_id: "",
-    password: "",
     plan_slug: "" as "" | "starter" | "pro",
     cycle: "" as "" | "monthly" | "yearly",
     payment_method: "",
@@ -578,7 +577,6 @@ function UsersPage() {
     const f = createForm;
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
-    if (f.password.length < 8) { toast.error("A senha precisa ter ao menos 8 caracteres"); return; }
     if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
     if (f.plan_slug && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
@@ -647,7 +645,7 @@ function UsersPage() {
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
               <Button
-                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", password: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "" }); setCreateOpen(true); }}
+                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
               >
                 <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
@@ -1111,7 +1109,7 @@ function UsersPage() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label>CRN / CPF (opcional)</Label>
                 <Input
                   value={createForm.professional_id}
@@ -1120,17 +1118,10 @@ function UsersPage() {
                   maxLength={50}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Senha inicial</Label>
-                <Input
-                  type="text"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                  placeholder="Mínimo 8 caracteres"
-                  maxLength={72}
-                />
-              </div>
             </div>
+            <p className="text-xs text-muted-foreground -mt-1">
+              A nutricionista receberá um email de boas-vindas com link para definir a própria senha (mesmo fluxo do Stripe).
+            </p>
 
             <div className="pt-3 border-t space-y-3">
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
