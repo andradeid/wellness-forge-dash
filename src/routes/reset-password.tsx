@@ -29,12 +29,31 @@ function ResetPasswordPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Supabase envia o link com #access_token=...&type=recovery e o
-    // detectSessionInUrl do client cria a sessão automaticamente.
+    // Supabase pode entregar o link em dois formatos:
+    //  - implicit: #access_token=...&type=recovery (detectSessionInUrl trata)
+    //  - PKCE:     ?code=... (precisa de exchangeCodeForSession)
     // Também escutamos PASSWORD_RECOVERY como fallback.
     let cancelled = false;
 
     const check = async () => {
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error) {
+            // limpa a query para evitar reuso do code
+            url.searchParams.delete("code");
+            window.history.replaceState({}, "", url.pathname + url.hash);
+          }
+        }
+      } catch (err) {
+        console.error("[reset-password] exchangeCodeForSession", err);
+      }
+
+      // Pequeno delay para o detectSessionInUrl processar o hash em iframes/SSR
+      await new Promise((r) => setTimeout(r, 150));
+
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
       setHasSession(!!data.session);
@@ -42,7 +61,7 @@ function ResetPasswordPage() {
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         setHasSession(!!session);
         setReady(true);
       }
@@ -55,6 +74,7 @@ function ResetPasswordPage() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
