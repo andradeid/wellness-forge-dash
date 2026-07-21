@@ -40,6 +40,7 @@ import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedba
 import { Route as AppAdminEmailsRouteImport } from './routes/app.admin.emails'
 import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashboard'
 import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
+import { Route as AppAdminAnalyticsRouteImport } from './routes/app.admin.analytics'
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
@@ -206,6 +207,11 @@ const AppAdminCreditsAuditRoute = AppAdminCreditsAuditRouteImport.update({
   path: '/admin/credits-audit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminAnalyticsRoute = AppAdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminAgentCostsRoute = AppAdminAgentCostsRouteImport.update({
   id: '/admin/agent-costs',
   path: '/admin/agent-costs',
@@ -283,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
+  '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/emails': typeof AppAdminEmailsRoute
@@ -325,6 +332,7 @@ export interface FileRoutesByTo {
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
+  '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/emails': typeof AppAdminEmailsRoute
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
+  '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/emails': typeof AppAdminEmailsRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
     | '/api/public/stripe-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
+    | '/app/admin/analytics'
     | '/app/admin/credits-audit'
     | '/app/admin/dashboard'
     | '/app/admin/emails'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/api/public/stripe-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
+    | '/app/admin/analytics'
     | '/app/admin/credits-audit'
     | '/app/admin/dashboard'
     | '/app/admin/emails'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/api/public/stripe-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
+    | '/app/admin/analytics'
     | '/app/admin/credits-audit'
     | '/app/admin/dashboard'
     | '/app/admin/emails'
@@ -754,6 +766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminCreditsAuditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/analytics': {
+      id: '/app/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/app/admin/analytics'
+      preLoaderRoute: typeof AppAdminAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/agent-costs': {
       id: '/app/admin/agent-costs'
       path: '/admin/agent-costs'
@@ -850,6 +869,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminAgentCostsRoute: typeof AppAdminAgentCostsRoute
+  AppAdminAnalyticsRoute: typeof AppAdminAnalyticsRoute
   AppAdminCreditsAuditRoute: typeof AppAdminCreditsAuditRoute
   AppAdminDashboardRoute: typeof AppAdminDashboardRoute
   AppAdminEmailsRoute: typeof AppAdminEmailsRoute
@@ -879,6 +899,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminAgentCostsRoute: AppAdminAgentCostsRoute,
+  AppAdminAnalyticsRoute: AppAdminAnalyticsRoute,
   AppAdminCreditsAuditRoute: AppAdminCreditsAuditRoute,
   AppAdminDashboardRoute: AppAdminDashboardRoute,
   AppAdminEmailsRoute: AppAdminEmailsRoute,
