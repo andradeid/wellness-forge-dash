@@ -1231,6 +1231,33 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_hourly_stats: {
+        Row: {
+          active_users: number
+          credits_consumed: number
+          exams_processed: number
+          hour_bucket: string
+          messages_sent: number
+          updated_at: string
+        }
+        Insert: {
+          active_users?: number
+          credits_consumed?: number
+          exams_processed?: number
+          hour_bucket: string
+          messages_sent?: number
+          updated_at?: string
+        }
+        Update: {
+          active_users?: number
+          credits_consumed?: number
+          exams_processed?: number
+          hour_bucket?: string
+          messages_sent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           balance: number
@@ -1394,6 +1421,7 @@ export type Database = {
         }
         Returns: number
       }
+      aggregate_usage_hour: { Args: { p_hour: string }; Returns: undefined }
       consume_credits: {
         Args: {
           p_agent_key: string
@@ -1409,6 +1437,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_recent_usage_stats: { Args: never; Returns: undefined }
       release_stream_slot: { Args: { p_user_id: string }; Returns: undefined }
       toggle_unlimited_credits: {
         Args: {
