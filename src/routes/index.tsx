@@ -22,6 +22,17 @@ export const Route = createFileRoute("/")({
         content:
           "O motor de raciocínio nutricional mais potente do mercado está sendo calibrado. Prepare-se para uma experiência de precisão absoluta.",
       },
+      { property: "og:title", content: "LUMMA 2.0 — A Nova Era da Inteligência Clínica" },
+      {
+        property: "og:description",
+        content:
+          "O motor de raciocínio nutricional mais potente do mercado está sendo calibrado.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://beta.lumma.ia.br/og-image.jpg" },
+      { property: "og:url", content: "https://beta.lumma.ia.br/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://beta.lumma.ia.br/og-image.jpg" },
     ],
   }),
   component: Teaser,
