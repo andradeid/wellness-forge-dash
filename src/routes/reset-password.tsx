@@ -87,6 +87,16 @@ function ResetPasswordPage() {
       return;
     }
     setSaving(true);
+    // Revalida a sessão antes de tentar atualizar — o link de recovery é
+    // consumido uma única vez, e sem sessão o updateUser lança
+    // "Auth session missing".
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      setSaving(false);
+      setHasSession(false);
+      toast.error("Sua sessão de redefinição expirou. Solicite um novo e-mail.");
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password });
     setSaving(false);
     if (error) {
@@ -97,6 +107,7 @@ function ResetPasswordPage() {
     await supabase.auth.signOut();
     setTimeout(() => navigate({ to: "/login" }), 500);
   };
+
 
   return (
     <div
