@@ -97,7 +97,19 @@ async function handleKiwifyWebhook(request: Request) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // 3) Idempotência — reusa stripe_webhook_events
-  const eventKey = `kiwify:${orderId || "no-order"}:${normalizedEvent}:${payload?.updated_at ?? payload?.approved_date ?? Date.now()}`;
+  //    Chave estável: prioriza webhook_event_id da Kiwify; senão order_id + evento + timestamp do payload.
+  //    NUNCA usa Date.now() (quebraria dedup em retries do próprio Kiwify).
+  const kiwifyEventId: string | null =
+    payload?.webhook_event_id ?? payload?.event_id ?? null;
+  const eventTimestamp: string =
+    payload?.updated_at ??
+    payload?.approved_date ??
+    payload?.created_at ??
+    "no-ts";
+  const eventKey = kiwifyEventId
+    ? `kiwify:evt:${kiwifyEventId}`
+    : `kiwify:${orderId || "no-order"}:${normalizedEvent}:${eventTimestamp}`;
+
   const { data: existingEvent } = await supabaseAdmin
     .from("stripe_webhook_events" as any)
     .select("id")
@@ -105,6 +117,7 @@ async function handleKiwifyWebhook(request: Request) {
     .maybeSingle();
 
   if (existingEvent) {
+    console.log(`[kiwify-webhook] evento duplicado ignorado: ${eventKey}`);
     return new Response("duplicate", { status: 200 });
   }
 
