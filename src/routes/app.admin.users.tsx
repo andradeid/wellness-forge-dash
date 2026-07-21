@@ -1111,7 +1111,7 @@ function UsersPage() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label>CRN / CPF (opcional)</Label>
                 <Input
                   value={createForm.professional_id}
@@ -1120,17 +1120,10 @@ function UsersPage() {
                   maxLength={50}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Senha inicial</Label>
-                <Input
-                  type="text"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                  placeholder="Mínimo 8 caracteres"
-                  maxLength={72}
-                />
-              </div>
             </div>
+            <p className="text-xs text-muted-foreground -mt-1">
+              A nutricionista receberá um email de boas-vindas com link para definir a própria senha (mesmo fluxo do Stripe).
+            </p>
 
             <div className="pt-3 border-t space-y-3">
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
