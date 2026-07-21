@@ -25,8 +25,9 @@ async function acquireStreamSlot(userId: string, agentType: string): Promise<
   { ok: true } | { ok: false; reason: "concurrent" | "rate"; retryAfter: number | null }
 > {
   try {
-    const admin = adminClient();
+    const admin = await adminClient();
     const { data, error } = await admin.rpc("try_acquire_stream_slot" as any, {
+
       p_user_id: userId,
       p_agent_type: agentType,
       p_max_per_minute: MAX_STREAMS_PER_MINUTE,
