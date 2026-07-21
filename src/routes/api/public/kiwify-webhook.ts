@@ -265,7 +265,6 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
         plan_type: mapped.slug,
         billing_cycle: mapped.cycle,
         current_period_end: periodEnd.toISOString(),
-        provider: "kiwify",
       },
       { onConflict: "user_id" },
     );
