@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
+import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -16,6 +18,7 @@ async function adminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
 }
+
 
 
 async function acquireStreamSlot(userId: string, agentType: string): Promise<
