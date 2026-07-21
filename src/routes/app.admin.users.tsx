@@ -579,7 +579,6 @@ function UsersPage() {
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
     if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
-    if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
     if (f.plan_slug && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
     const { data, error } = await supabase.functions.invoke("admin-users", {
