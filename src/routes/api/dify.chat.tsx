@@ -63,18 +63,35 @@ async function releaseStreamSlot(userId: string) {
 
 /**
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
- * seja sucesso, erro ou desconexão do cliente.
+ * seja sucesso, erro, desconexão do cliente ou timeout de segurança.
  */
 function wrapStreamWithRelease(
   upstreamBody: ReadableStream<Uint8Array>,
   onDone: () => void,
+  maxDurationMs = 360000,
 ): ReadableStream<Uint8Array> {
   let released = false;
+  let safetyTimer: ReturnType<typeof setTimeout> | null = null;
   const release = () => {
     if (released) return;
     released = true;
-    onDone();
+    if (safetyTimer) {
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+    }
+    try {
+      onDone();
+    } catch (e) {
+      console.warn("[rate-limit] onDone threw:", e);
+    }
   };
+  // Rede/proxy pode segurar a conexão sem entregar `done` nem `cancel`.
+  // Garantimos liberação após maxDurationMs mesmo se nada acontecer.
+  safetyTimer = setTimeout(() => {
+    console.warn("[rate-limit] safety release timer fired");
+    release();
+  }, maxDurationMs);
+
   const reader = upstreamBody.getReader();
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
