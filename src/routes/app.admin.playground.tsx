@@ -321,10 +321,11 @@ function PlaygroundPage() {
               <SelectItem
                 key={a.agent_id}
                 value={a.agent_id}
-                disabled={!a.api_key}
+                disabled={!a.has_api_key}
               >
                 {a.label} · {a.agent_id}
-                {!a.api_key ? " (pendente)" : ""}
+                {!a.has_api_key ? " (pendente)" : ""}
+
               </SelectItem>
             ))}
           </SelectContent>
