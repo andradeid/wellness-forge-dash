@@ -92,6 +92,23 @@ function wrapStreamWithRelease(
     release();
   }, maxDurationMs);
 
+  // Scanner leve para detectar o evento lógico final do Dify (`message_end`)
+  // e liberar o slot imediatamente, sem esperar o TCP/proxy fechar.
+  const decoder = new TextDecoder("utf-8", { fatal: false });
+  let sniffBuf = "";
+  const FINAL_EVENTS = /"event"\s*:\s*"(message_end|error|tts_message_end|workflow_finished)"/;
+  const scanForFinal = (chunk: Uint8Array) => {
+    if (released) return;
+    sniffBuf += decoder.decode(chunk, { stream: true });
+    if (FINAL_EVENTS.test(sniffBuf)) {
+      release();
+      sniffBuf = "";
+      return;
+    }
+    // Evita crescimento ilimitado do buffer: mantém apenas a cauda.
+    if (sniffBuf.length > 8192) sniffBuf = sniffBuf.slice(-2048);
+  };
+
   const reader = upstreamBody.getReader();
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
@@ -102,6 +119,7 @@ function wrapStreamWithRelease(
           release();
           return;
         }
+        scanForFinal(value);
         controller.enqueue(value);
       } catch (e) {
         controller.error(e);
@@ -115,6 +133,7 @@ function wrapStreamWithRelease(
     },
   });
 }
+
 
 async function authUser(request: Request): Promise<{ userId: string; token: string } | null> {
   const auth = request.headers.get("authorization");
