@@ -645,7 +645,7 @@ function UsersPage() {
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
               <Button
-                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", password: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "" }); setCreateOpen(true); }}
+                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
               >
                 <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
