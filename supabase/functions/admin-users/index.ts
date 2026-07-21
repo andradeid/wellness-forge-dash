@@ -53,7 +53,6 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const full_name = String(body.full_name ?? "").trim();
       const email = String(body.email ?? "").trim().toLowerCase();
-      const password = String(body.password ?? "");
       const professional_id = body.professional_id ? String(body.professional_id).trim() : null;
       const phone = body.phone ? String(body.phone).trim() : null;
       const plan_slug = body.plan_slug ? String(body.plan_slug).trim().toLowerCase() : null;
@@ -64,8 +63,6 @@ Deno.serve(async (req) => {
       if (!full_name || full_name.length > 120) return json({ ok: false, error: "Nome inválido" }, 400);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255)
         return json({ ok: false, error: "E-mail inválido" }, 400);
-      if (password.length < 8 || password.length > 72)
-        return json({ ok: false, error: "Senha deve ter entre 8 e 72 caracteres" }, 400);
       if (plan_slug && !["starter", "pro"].includes(plan_slug))
         return json({ ok: false, error: "Plano inválido" }, 400);
       if (cycle && !["monthly", "yearly"].includes(cycle))
@@ -73,17 +70,19 @@ Deno.serve(async (req) => {
       if (plan_slug && !cycle)
         return json({ ok: false, error: "Informe o ciclo (mensal/anual) do plano" }, 400);
 
-      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      // Mesmo fluxo do webhook Stripe: convite via email → user define a própria senha
+      const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(
         email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name },
-      });
-      if (createErr || !created?.user) {
-        return json({ ok: false, error: createErr?.message ?? "Falha ao criar usuário" }, 400);
+        {
+          redirectTo: "https://lumma.ia.br/reset-password",
+          data: { full_name, name: full_name },
+        },
+      );
+      if (inviteErr || !invited?.user) {
+        return json({ ok: false, error: inviteErr?.message ?? "Falha ao convidar usuário" }, 400);
       }
 
-      const newUserId = created.user.id;
+      const newUserId = invited.user.id;
 
       const profilePatch: Record<string, unknown> = {};
       if (professional_id) profilePatch.professional_id = professional_id;
