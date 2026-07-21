@@ -578,7 +578,7 @@ function UsersPage() {
     const f = createForm;
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
-    if (f.password.length < 8) { toast.error("A senha precisa ter ao menos 8 caracteres"); return; }
+    if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
     if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
     if (f.plan_slug && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
