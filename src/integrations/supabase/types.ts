@@ -468,6 +468,7 @@ export type Database = {
       import_nutri_staging: {
         Row: {
           email: string
+          expires_at: string | null
           full_name: string | null
           phone: string | null
           plan_type: string | null
@@ -475,6 +476,7 @@ export type Database = {
         }
         Insert: {
           email: string
+          expires_at?: string | null
           full_name?: string | null
           phone?: string | null
           plan_type?: string | null
@@ -482,6 +484,7 @@ export type Database = {
         }
         Update: {
           email?: string
+          expires_at?: string | null
           full_name?: string | null
           phone?: string | null
           plan_type?: string | null
