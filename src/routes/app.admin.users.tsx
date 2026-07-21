@@ -139,7 +139,17 @@ function UsersPage() {
   const [deleting, setDeleting] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
+  const [createForm, setCreateForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    professional_id: "",
+    password: "",
+    plan_slug: "" as "" | "starter" | "pro",
+    cycle: "" as "" | "monthly" | "yearly",
+    payment_method: "",
+    payment_note: "",
+  });
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
     patientsCount: number;
@@ -569,6 +579,8 @@ function UsersPage() {
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
     if (f.password.length < 8) { toast.error("A senha precisa ter ao menos 8 caracteres"); return; }
+    if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
+    if (f.plan_slug && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
     const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "POST",
@@ -635,7 +647,7 @@ function UsersPage() {
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
               <Button
-                onClick={() => { setCreateForm({ full_name: "", email: "", professional_id: "", password: "" }); setCreateOpen(true); }}
+                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", password: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
               >
                 <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
@@ -1059,12 +1071,12 @@ function UsersPage() {
 
       {/* Modal: Novo Nutricionista */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl font-normal">Nova nutricionista</DialogTitle>
             <DialogDescription>
-              A conta será criada já confirmada. Use uma senha inicial e oriente
-              a redefinir no primeiro acesso.
+              Conta criada já confirmada. Opcionalmente, registre o plano contratado
+              e a forma de pagamento externa (Pix, boleto, cartão parcelado, etc.).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
@@ -1077,34 +1089,112 @@ function UsersPage() {
                 maxLength={120}
               />
             </div>
-            <div className="space-y-2">
-              <Label>E-mail</Label>
-              <Input
-                type="email"
-                value={createForm.email}
-                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
-                placeholder="maria@exemplo.com"
-                maxLength={255}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>E-mail</Label>
+                <Input
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="maria@exemplo.com"
+                  maxLength={255}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone (opcional)</Label>
+                <Input
+                  value={createForm.phone}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="(11) 90000-0000"
+                  maxLength={30}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>CPF / Registro profissional (CRN)</Label>
-              <Input
-                value={createForm.professional_id}
-                onChange={(e) => setCreateForm((f) => ({ ...f, professional_id: e.target.value }))}
-                placeholder="Opcional"
-                maxLength={50}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>CRN / CPF (opcional)</Label>
+                <Input
+                  value={createForm.professional_id}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, professional_id: e.target.value }))}
+                  placeholder="Opcional"
+                  maxLength={50}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Senha inicial</Label>
+                <Input
+                  type="text"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                  placeholder="Mínimo 8 caracteres"
+                  maxLength={72}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Senha inicial</Label>
-              <Input
-                type="text"
-                value={createForm.password}
-                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                placeholder="Mínimo de 8 caracteres"
-                maxLength={72}
-              />
+
+            <div className="pt-3 border-t space-y-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Plano contratado (opcional — para pagamentos fora do Stripe)
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Plano</Label>
+                  <Select
+                    value={createForm.plan_slug}
+                    onValueChange={(v) => setCreateForm((f) => ({ ...f, plan_slug: v as "" | "starter" | "pro" }))}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Ciclo</Label>
+                  <Select
+                    value={createForm.cycle}
+                    onValueChange={(v) => setCreateForm((f) => ({ ...f, cycle: v as "" | "monthly" | "yearly" }))}
+                    disabled={!createForm.plan_slug}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Mensal / Anual" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Mensal (30 dias)</SelectItem>
+                      <SelectItem value="yearly">Anual (365 dias)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Forma de pagamento</Label>
+                  <Select
+                    value={createForm.payment_method}
+                    onValueChange={(v) => setCreateForm((f) => ({ ...f, payment_method: v }))}
+                    disabled={!createForm.plan_slug}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">Pix</SelectItem>
+                      <SelectItem value="boleto">Boleto</SelectItem>
+                      <SelectItem value="cartao_parcelado">Cartão parcelado</SelectItem>
+                      <SelectItem value="transferencia">Transferência</SelectItem>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Observação (opcional)</Label>
+                  <Input
+                    value={createForm.payment_note}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, payment_note: e.target.value }))}
+                    placeholder="Ex: 3x no cartão"
+                    maxLength={200}
+                    disabled={!createForm.plan_slug}
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>
