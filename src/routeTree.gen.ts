@@ -43,6 +43,7 @@ import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.cre
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
+import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
@@ -220,6 +221,11 @@ const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   path: '/api/public/stripe-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKiwifyWebhookRoute = ApiPublicKiwifyWebhookRouteImport.update({
+  id: '/api/public/kiwify-webhook',
+  path: '/api/public/kiwify-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
   id: '/api/dify/upload',
   path: '/api/dify/upload',
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
@@ -357,6 +365,7 @@ export interface FileRoutesById {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
@@ -401,6 +410,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
@@ -484,6 +495,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
@@ -519,6 +531,7 @@ export interface RootRouteChildren {
   ApiDifyResetConversationsRoute: typeof ApiDifyResetConversationsRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
+  ApiPublicKiwifyWebhookRoute: typeof ApiPublicKiwifyWebhookRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
@@ -762,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kiwify-webhook': {
+      id: '/api/public/kiwify-webhook'
+      path: '/api/public/kiwify-webhook'
+      fullPath: '/api/public/kiwify-webhook'
+      preLoaderRoute: typeof ApiPublicKiwifyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dify/upload': {
       id: '/api/dify/upload'
       path: '/api/dify/upload'
@@ -892,8 +912,19 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDifyResetConversationsRoute: ApiDifyResetConversationsRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
+  ApiPublicKiwifyWebhookRoute: ApiPublicKiwifyWebhookRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
