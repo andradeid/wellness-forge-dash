@@ -139,7 +139,17 @@ function UsersPage() {
   const [deleting, setDeleting] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState({ full_name: "", email: "", professional_id: "", password: "" });
+  const [createForm, setCreateForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    professional_id: "",
+    password: "",
+    plan_slug: "" as "" | "starter" | "pro",
+    cycle: "" as "" | "monthly" | "yearly",
+    payment_method: "",
+    payment_note: "",
+  });
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
     patientsCount: number;
