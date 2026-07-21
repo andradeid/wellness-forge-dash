@@ -200,22 +200,24 @@ export function DifyAgentsPanel() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("dify_agents")
-      .select("*")
-      .order("sort_order", { ascending: true });
-    if (error) {
-      toast.error("Falha ao carregar agentes.", { description: error.message });
+    try {
+      const { listDifyAgentsAdmin } = await import("@/lib/dify-agents-admin.functions");
+      const data = await listDifyAgentsAdmin();
+      const rows = (data ?? []) as DifyAgent[];
+      rows.sort((a, b) => a.sort_order - b.sort_order);
+      setAgents(rows);
+      const d: Record<string, string> = {};
+      rows.forEach((a) => (d[a.id] = a.api_key ?? ""));
+      setDrafts(d);
+    } catch (e: any) {
+      toast.error("Falha ao carregar agentes.", {
+        description: e?.message ?? String(e),
+      });
+    } finally {
       setLoading(false);
-      return;
     }
-    const rows = (data ?? []) as DifyAgent[];
-    setAgents(rows);
-    const d: Record<string, string> = {};
-    rows.forEach((a) => (d[a.id] = a.api_key ?? ""));
-    setDrafts(d);
-    setLoading(false);
   };
+
 
   useEffect(() => {
     load();
