@@ -1165,6 +1165,13 @@ export type Database = {
             referencedRelation: "dify_agents"
             referencedColumns: ["agent_id"]
           },
+          {
+            foreignKeyName: "super_agent_tasks_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "dify_agents_public"
+            referencedColumns: ["agent_id"]
+          },
         ]
       }
       system_settings: {
@@ -1325,7 +1332,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dify_agents_public: {
+        Row: {
+          agent_id: string | null
+          card_trigger: string | null
+          created_at: string | null
+          description: string | null
+          endpoint: string | null
+          id: string | null
+          is_active: boolean | null
+          is_super_agent: boolean | null
+          label: string | null
+          patient_required: boolean | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          card_trigger?: string | null
+          created_at?: string | null
+          description?: string | null
+          endpoint?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_super_agent?: boolean | null
+          label?: string | null
+          patient_required?: boolean | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          card_trigger?: string | null
+          created_at?: string | null
+          description?: string | null
+          endpoint?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_super_agent?: boolean | null
+          label?: string | null
+          patient_required?: boolean | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       adjust_user_balance: {
