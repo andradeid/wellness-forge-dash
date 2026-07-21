@@ -1339,6 +1339,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           endpoint: string | null
+          has_api_key: boolean | null
           id: string | null
           is_active: boolean | null
           is_super_agent: boolean | null
@@ -1353,6 +1354,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           endpoint?: string | null
+          has_api_key?: never
           id?: string | null
           is_active?: boolean | null
           is_super_agent?: boolean | null
@@ -1367,6 +1369,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           endpoint?: string | null
+          has_api_key?: never
           id?: string | null
           is_active?: boolean | null
           is_super_agent?: boolean | null
