@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export interface DifyConfig {
   baseUrl: string;
@@ -36,15 +37,14 @@ function makeUserClient(token: string): SupabaseClient {
 }
 
 function makeServiceClient(): SupabaseClient | null {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    realtime: disabledRealtimeOptions,
-  });
+  try {
+    return supabaseAdmin as unknown as SupabaseClient;
+  } catch (e) {
+    console.error("[dify-config] service client unavailable:", e);
+    return null;
+  }
 }
+
 
 async function applyIntegrationRows(client: SupabaseClient, current: DifyConfig) {
   const { data, error } = await client

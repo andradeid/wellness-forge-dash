@@ -14,20 +14,20 @@ import {
 // ============================================================
 const MAX_STREAMS_PER_MINUTE = 10;
 
-function adminClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false }, realtime: disabledRealtimeOptions },
-  );
+async function adminClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
+
+
 
 async function acquireStreamSlot(userId: string, agentType: string): Promise<
   { ok: true } | { ok: false; reason: "concurrent" | "rate"; retryAfter: number | null }
 > {
   try {
-    const admin = adminClient();
+    const admin = await adminClient();
     const { data, error } = await admin.rpc("try_acquire_stream_slot" as any, {
+
       p_user_id: userId,
       p_agent_type: agentType,
       p_max_per_minute: MAX_STREAMS_PER_MINUTE,
@@ -52,8 +52,9 @@ async function acquireStreamSlot(userId: string, agentType: string): Promise<
 
 async function releaseStreamSlot(userId: string) {
   try {
-    const admin = adminClient();
+    const admin = await adminClient();
     await admin.rpc("release_stream_slot" as any, { p_user_id: userId });
+
   } catch (e) {
     // Slot órfão será limpo por cleanup >10min. Não é fatal.
     console.warn("[rate-limit] release failed:", e);
