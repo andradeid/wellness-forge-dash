@@ -1,6 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
-import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -14,13 +12,11 @@ import {
 // ============================================================
 const MAX_STREAMS_PER_MINUTE = 10;
 
-function adminClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false }, realtime: disabledRealtimeOptions },
-  );
+async function adminClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
+
 
 async function acquireStreamSlot(userId: string, agentType: string): Promise<
   { ok: true } | { ok: false; reason: "concurrent" | "rate"; retryAfter: number | null }
