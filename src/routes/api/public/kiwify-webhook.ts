@@ -409,9 +409,15 @@ async function resolveOrInviteUserByEmail(
     .select("id")
     .ilike("email", email)
     .maybeSingle();
-  if ((prof as any)?.id) return (prof as any).id as string;
+  if ((prof as any)?.id) {
+    console.log(`[kiwify-webhook] usuário já existe em profiles (${email}) — pulando invite`);
+    return (prof as any).id as string;
+  }
 
-  // 2) Já existe em auth.users?
+  // 2) Já existe em auth.users? Aplica anti-reenvio:
+  //    - Se JÁ tem senha configurada (last_sign_in_at OU encrypted_password) → NÃO reenvia invite
+  //    - Se foi convidado nos últimos 15 min → NÃO reenvia (link anterior ainda válido)
+  //    - Senão → reenvia
   try {
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
@@ -420,7 +426,30 @@ async function resolveOrInviteUserByEmail(
     const found = list?.users?.find(
       (u: any) => (u.email ?? "").toLowerCase() === email,
     );
-    if (found?.id) return found.id as string;
+    if (found?.id) {
+      const hasPassword =
+        Boolean(found.last_sign_in_at) ||
+        Boolean(found.encrypted_password) ||
+        Boolean(found.user_metadata?.password_set);
+
+      if (hasPassword) {
+        console.log(`[kiwify-webhook] ${email} já tem senha definida — pulando invite`);
+        return found.id as string;
+      }
+
+      const invitedAt = found.invited_at ?? found.confirmation_sent_at ?? null;
+      if (invitedAt) {
+        const ageMinutes = (Date.now() - new Date(invitedAt).getTime()) / 60000;
+        if (ageMinutes < 15) {
+          console.log(
+            `[kiwify-webhook] ${email} convidado há ${ageMinutes.toFixed(1)}min — pulando reenvio`,
+          );
+          return found.id as string;
+        }
+      }
+      // Usuário existe, sem senha, e invite antigo → segue para reenvio abaixo.
+      console.log(`[kiwify-webhook] ${email} existe mas invite antigo — reenviando`);
+    }
   } catch (e: any) {
     console.warn("[kiwify-webhook] listUsers falhou:", e?.message);
   }
