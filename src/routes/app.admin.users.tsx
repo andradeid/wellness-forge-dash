@@ -144,7 +144,6 @@ function UsersPage() {
     email: "",
     phone: "",
     professional_id: "",
-    password: "",
     plan_slug: "" as "" | "starter" | "pro",
     cycle: "" as "" | "monthly" | "yearly",
     payment_method: "",
