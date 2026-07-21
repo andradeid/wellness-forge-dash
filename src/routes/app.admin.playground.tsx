@@ -39,7 +39,7 @@ interface RawEvent {
 interface DifyAgentRow {
   agent_id: string;
   label: string;
-  api_key: string | null;
+  has_api_key: boolean;
   sort_order: number;
   is_active: boolean;
 }
@@ -63,21 +63,22 @@ function PlaygroundPage() {
   useEffect(() => {
     if (role !== "super_admin") return;
     (async () => {
-      const { data, error } = await supabase
-        .from("dify_agents")
-        .select("agent_id,label,api_key,sort_order,is_active")
+      const { data, error } = await (supabase as any)
+        .from("dify_agents_public")
+        .select("agent_id,label,has_api_key,sort_order,is_active")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (error) return;
       const rows = (data ?? []) as DifyAgentRow[];
       setAgents(rows);
-      const hasExam = rows.some((r) => r.agent_id === "exam" && r.api_key);
+      const hasExam = rows.some((r) => r.agent_id === "exam" && r.has_api_key);
       if (!hasExam) {
-        const firstEnabled = rows.find((r) => r.api_key);
+        const firstEnabled = rows.find((r) => r.has_api_key);
         if (firstEnabled) setAgentType(firstEnabled.agent_id);
       }
     })();
   }, [role]);
+
 
   const selectedAgent = useMemo(
     () => agents.find((a) => a.agent_id === agentType),
