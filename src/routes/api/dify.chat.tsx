@@ -52,8 +52,9 @@ async function acquireStreamSlot(userId: string, agentType: string): Promise<
 
 async function releaseStreamSlot(userId: string) {
   try {
-    const admin = adminClient();
+    const admin = await adminClient();
     await admin.rpc("release_stream_slot" as any, { p_user_id: userId });
+
   } catch (e) {
     // Slot órfão será limpo por cleanup >10min. Não é fatal.
     console.warn("[rate-limit] release failed:", e);
