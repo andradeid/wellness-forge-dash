@@ -89,7 +89,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
       if (!userId) continue;
 
       // profile
-      const profilePatch: Record<string, unknown> = {};
+      const profilePatch: { full_name?: string; phone?: string } = {};
       if (row.full_name) profilePatch.full_name = row.full_name;
       if (row.phone) profilePatch.phone = row.phone;
       if (Object.keys(profilePatch).length > 0) {
@@ -102,15 +102,16 @@ export const runNutriImport = createServerFn({ method: "POST" })
       }
 
       // subscription
+      const planType = (row.plan_type ?? "free") as "clinica" | "free" | "pro" | "starter";
       const { error: subErr } = await supabaseAdmin
         .from("subscriptions")
         .upsert(
           {
             user_id: userId,
             status: "active",
-            plan_type: row.plan_type ?? "free",
+            plan_type: planType,
             unlimited_credits: true,
-            current_period_end: row.expires_at,
+            current_period_end: row.expires_at ?? undefined,
           },
           { onConflict: "user_id" },
         );
