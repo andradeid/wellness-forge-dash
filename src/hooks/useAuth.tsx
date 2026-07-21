@@ -146,6 +146,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Em /reset-password a sessão é de recuperação e não pode ser invalidada
+    // (senão o updateUser falha com "Auth session missing"). Não busca
+    // profile/role aqui — a página cuida do fluxo sozinha.
+    const isRecoveryRoute =
+      typeof window !== "undefined" && window.location.pathname.startsWith("/reset-password");
+    if (isRecoveryRoute) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { profile, role } = await fetchProfileAndRole(nextSession.user.id);
       if (requestId !== authRequestRef.current) return;
@@ -190,7 +200,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // SIGNED_IN, SIGNED_OUT, USER_UPDATED, PASSWORD_RECOVERY → aplica sessão completa.
+        // PASSWORD_RECOVERY: a sessão é temporária, exclusiva para redefinir a
+        // senha em /reset-password. NUNCA rodar applySession aqui — ela busca
+        // profile/role e, se o profile.is_blocked=true (ou o fetch falhar),
+        // dispara supabase.auth.signOut() e invalida o link de recuperação
+        // antes da pessoa conseguir salvar a nova senha.
+        if (event === "PASSWORD_RECOVERY") {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          setLoading(false);
+          return;
+        }
+
+        // SIGNED_IN, SIGNED_OUT, USER_UPDATED → aplica sessão completa.
         setTimeout(() => {
           void applySession(newSession);
         }, 0);
