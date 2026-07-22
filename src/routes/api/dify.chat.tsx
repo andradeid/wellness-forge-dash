@@ -100,6 +100,10 @@ function wrapStreamWithRelease(
   const scanForFinal = (chunk: Uint8Array) => {
     if (released) return;
     sniffBuf += decoder.decode(chunk, { stream: true });
+    // Log observabilidade: sinaliza quando o Dify emite `error` no meio do stream.
+    if (/"event"\s*:\s*"error"/.test(sniffBuf)) {
+      console.warn("[dify-proxy] upstream event:error detected in stream");
+    }
     if (FINAL_EVENTS.test(sniffBuf)) {
       release();
       sniffBuf = "";
