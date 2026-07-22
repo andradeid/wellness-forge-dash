@@ -52,7 +52,7 @@ export function renderTemplate(source: string, vars: Record<string, string>) {
 export async function fetchProfilesByIds(ids: string[]) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const out: any[] = [];
-  const CHUNK = 500;
+  const CHUNK = 100;
   for (let i = 0; i < ids.length; i += CHUNK) {
     const slice = ids.slice(i, i + CHUNK);
     const { data, error } = await supabaseAdmin
