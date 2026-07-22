@@ -11,6 +11,7 @@ import {
   SegmentSchema,
   renderTemplate,
   resolveRecipients,
+  previewRecipients,
   generateRecoveryLink,
 } from "./email-campaigns.server";
 
@@ -36,8 +37,7 @@ export const previewCampaignSegment = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ segment: SegmentSchema }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const rec = await resolveRecipients(data.segment);
-    return { total: rec.length, sample: rec.slice(0, 20) };
+    return previewRecipients(data.segment);
   });
 
 // ---------- LIST CAMPAIGNS ----------
