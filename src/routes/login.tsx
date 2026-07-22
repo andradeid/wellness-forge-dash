@@ -30,6 +30,7 @@ import {
   type SeatInfo,
 } from "@/lib/session-guard";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import loginBg from "@/assets/login-bg.png";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import lummaLockup from "@/assets/lumma-lockup-dark.svg";
