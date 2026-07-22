@@ -319,6 +319,116 @@ export type Database = {
         }
         Relationships: []
       }
+      email_campaign_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          name: string | null
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          name?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          name?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string
+          failed: number
+          finished_at: string | null
+          from_email: string
+          from_name: string
+          html: string
+          id: string
+          include_recovery_link: boolean
+          name: string
+          segment: Json
+          sent: number
+          skipped: number
+          started_at: string | null
+          status: string
+          subject: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          failed?: number
+          finished_at?: string | null
+          from_email?: string
+          from_name?: string
+          html: string
+          id?: string
+          include_recovery_link?: boolean
+          name: string
+          segment?: Json
+          sent?: number
+          skipped?: number
+          started_at?: string | null
+          status?: string
+          subject: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          failed?: number
+          finished_at?: string | null
+          from_email?: string
+          from_name?: string
+          html?: string
+          id?: string
+          include_recovery_link?: boolean
+          name?: string
+          segment?: Json
+          sent?: number
+          skipped?: number
+          started_at?: string | null
+          status?: string
+          subject?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           category: string
