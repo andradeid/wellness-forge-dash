@@ -539,7 +539,11 @@ function CampaignDetailDialog(props: { id: string; onClose: () => void }) {
   const setStatus = useServerFn(setCampaignStatus);
   const process = useServerFn(processCampaignBatch);
   const del = useServerFn(deleteCampaign);
+  const sendTest = useServerFn(sendTestCampaignEmail);
   const qc = useQueryClient();
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+
 
   const q = useQuery({
     queryKey: ["campaign", props.id],
