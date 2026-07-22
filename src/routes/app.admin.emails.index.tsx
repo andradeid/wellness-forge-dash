@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/app/admin/emails")({
+export const Route = createFileRoute("/app/admin/emails/")({
   component: EmailsAdminPage,
 });
 

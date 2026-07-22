@@ -37,7 +37,6 @@ import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nu
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
 import { Route as AppAdminImportNutriRouteImport } from './routes/app.admin.import-nutri'
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
-import { Route as AppAdminEmailsRouteImport } from './routes/app.admin.emails'
 import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashboard'
 import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
 import { Route as AppAdminAnalyticsRouteImport } from './routes/app.admin.analytics'
@@ -51,6 +50,7 @@ import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
 import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
+import { Route as AppAdminEmailsIndexRouteImport } from './routes/app.admin.emails.index'
 import { Route as AppAdminEmailsCampanhasRouteImport } from './routes/app.admin.emails.campanhas'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
@@ -193,11 +193,6 @@ const AppAdminFeedbacksRoute = AppAdminFeedbacksRouteImport.update({
   path: '/admin/feedbacks',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminEmailsRoute = AppAdminEmailsRouteImport.update({
-  id: '/admin/emails',
-  path: '/admin/emails',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
@@ -264,10 +259,15 @@ const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
   path: '/api/audit/structured',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAdminEmailsIndexRoute = AppAdminEmailsIndexRouteImport.update({
+  id: '/admin/emails/',
+  path: '/admin/emails/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminEmailsCampanhasRoute = AppAdminEmailsCampanhasRouteImport.update({
-  id: '/campanhas',
-  path: '/campanhas',
-  getParentRoute: () => AppAdminEmailsRoute,
+  id: '/admin/emails/campanhas',
+  path: '/admin/emails/campanhas',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -298,7 +298,6 @@ export interface FileRoutesByFullPath {
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
-  '/app/admin/emails': typeof AppAdminEmailsRouteWithChildren
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
@@ -314,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
   '/app/admin/emails/campanhas': typeof AppAdminEmailsCampanhasRoute
+  '/app/admin/emails/': typeof AppAdminEmailsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -342,7 +342,6 @@ export interface FileRoutesByTo {
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
-  '/app/admin/emails': typeof AppAdminEmailsRouteWithChildren
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
@@ -358,6 +357,7 @@ export interface FileRoutesByTo {
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
   '/app/admin/emails/campanhas': typeof AppAdminEmailsCampanhasRoute
+  '/app/admin/emails': typeof AppAdminEmailsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -388,7 +388,6 @@ export interface FileRoutesById {
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
-  '/app/admin/emails': typeof AppAdminEmailsRouteWithChildren
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
@@ -404,6 +403,7 @@ export interface FileRoutesById {
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
   '/app/admin/emails/campanhas': typeof AppAdminEmailsCampanhasRoute
+  '/app/admin/emails/': typeof AppAdminEmailsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -435,7 +435,6 @@ export interface FileRouteTypes {
     | '/app/admin/analytics'
     | '/app/admin/credits-audit'
     | '/app/admin/dashboard'
-    | '/app/admin/emails'
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
     | '/app/admin/integrations'
@@ -451,6 +450,7 @@ export interface FileRouteTypes {
     | '/app/general/$chatId'
     | '/app/planos/historico'
     | '/app/admin/emails/campanhas'
+    | '/app/admin/emails/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -479,7 +479,6 @@ export interface FileRouteTypes {
     | '/app/admin/analytics'
     | '/app/admin/credits-audit'
     | '/app/admin/dashboard'
-    | '/app/admin/emails'
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
     | '/app/admin/integrations'
@@ -495,6 +494,7 @@ export interface FileRouteTypes {
     | '/app/general/$chatId'
     | '/app/planos/historico'
     | '/app/admin/emails/campanhas'
+    | '/app/admin/emails'
   id:
     | '__root__'
     | '/'
@@ -524,7 +524,6 @@ export interface FileRouteTypes {
     | '/app/admin/analytics'
     | '/app/admin/credits-audit'
     | '/app/admin/dashboard'
-    | '/app/admin/emails'
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
     | '/app/admin/integrations'
@@ -540,6 +539,7 @@ export interface FileRouteTypes {
     | '/app/general/$chatId'
     | '/app/planos/historico'
     | '/app/admin/emails/campanhas'
+    | '/app/admin/emails/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -757,13 +757,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminFeedbacksRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/admin/emails': {
-      id: '/app/admin/emails'
-      path: '/admin/emails'
-      fullPath: '/app/admin/emails'
-      preLoaderRoute: typeof AppAdminEmailsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/admin/dashboard': {
       id: '/app/admin/dashboard'
       path: '/admin/dashboard'
@@ -855,12 +848,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuditStructuredRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/admin/emails/': {
+      id: '/app/admin/emails/'
+      path: '/admin/emails'
+      fullPath: '/app/admin/emails/'
+      preLoaderRoute: typeof AppAdminEmailsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/emails/campanhas': {
       id: '/app/admin/emails/campanhas'
-      path: '/campanhas'
+      path: '/admin/emails/campanhas'
       fullPath: '/app/admin/emails/campanhas'
       preLoaderRoute: typeof AppAdminEmailsCampanhasRouteImport
-      parentRoute: typeof AppAdminEmailsRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
@@ -877,18 +877,6 @@ const AppPlanosRouteWithChildren = AppPlanosRoute._addFileChildren(
   AppPlanosRouteChildren,
 )
 
-interface AppAdminEmailsRouteChildren {
-  AppAdminEmailsCampanhasRoute: typeof AppAdminEmailsCampanhasRoute
-}
-
-const AppAdminEmailsRouteChildren: AppAdminEmailsRouteChildren = {
-  AppAdminEmailsCampanhasRoute: AppAdminEmailsCampanhasRoute,
-}
-
-const AppAdminEmailsRouteWithChildren = AppAdminEmailsRoute._addFileChildren(
-  AppAdminEmailsRouteChildren,
-)
-
 interface AppRouteChildren {
   AppChatsRoute: typeof AppChatsRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -903,7 +891,6 @@ interface AppRouteChildren {
   AppAdminAnalyticsRoute: typeof AppAdminAnalyticsRoute
   AppAdminCreditsAuditRoute: typeof AppAdminCreditsAuditRoute
   AppAdminDashboardRoute: typeof AppAdminDashboardRoute
-  AppAdminEmailsRoute: typeof AppAdminEmailsRouteWithChildren
   AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminImportNutriRoute: typeof AppAdminImportNutriRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
@@ -917,6 +904,8 @@ interface AppRouteChildren {
   AppCheckoutSucessoRoute: typeof AppCheckoutSucessoRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
   AppGeneralChatIdRoute: typeof AppGeneralChatIdRoute
+  AppAdminEmailsCampanhasRoute: typeof AppAdminEmailsCampanhasRoute
+  AppAdminEmailsIndexRoute: typeof AppAdminEmailsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -933,7 +922,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAnalyticsRoute: AppAdminAnalyticsRoute,
   AppAdminCreditsAuditRoute: AppAdminCreditsAuditRoute,
   AppAdminDashboardRoute: AppAdminDashboardRoute,
-  AppAdminEmailsRoute: AppAdminEmailsRouteWithChildren,
   AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminImportNutriRoute: AppAdminImportNutriRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
@@ -947,6 +935,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppCheckoutSucessoRoute: AppCheckoutSucessoRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
   AppGeneralChatIdRoute: AppGeneralChatIdRoute,
+  AppAdminEmailsCampanhasRoute: AppAdminEmailsCampanhasRoute,
+  AppAdminEmailsIndexRoute: AppAdminEmailsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -970,13 +960,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
