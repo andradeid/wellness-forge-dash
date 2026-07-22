@@ -6,6 +6,18 @@ export const RESET_REDIRECT = "https://lumma.ia.br/reset-password";
 export const BATCH_SIZE = 40;
 export const THROTTLE_MS = 130;
 
+type Recipient = { user_id: string | null; email: string; name: string | null };
+
+function fail(message: string): never {
+  throw new Error(message);
+}
+
+function mapProfileToRecipient(profile: any): Recipient | null {
+  const email = String(profile?.email ?? "").toLowerCase().trim();
+  if (!email) return null;
+  return { user_id: profile.id ?? null, email, name: profile.full_name ?? null };
+}
+
 export async function assertSuperAdmin(supabase: any, userId: string) {
   const { data } = await supabase
     .from("user_roles")
@@ -13,7 +25,7 @@ export async function assertSuperAdmin(supabase: any, userId: string) {
     .eq("user_id", userId)
     .eq("role", "super_admin");
   if (!data || data.length === 0) {
-    throw new Response("Forbidden: super_admin only", { status: 403 });
+    fail("Acesso restrito a super administradores.");
   }
 }
 
@@ -50,7 +62,7 @@ export async function fetchProfilesByIds(ids: string[]) {
       .is("deleted_at", null)
       .eq("is_blocked", false)
       .not("email", "is", null);
-    if (error) throw new Response(error.message, { status: 500 });
+    if (error) fail(error.message);
     out.push(...(data ?? []));
   }
   return out;
@@ -69,7 +81,7 @@ export async function fetchAllProfiles() {
       .eq("is_blocked", false)
       .not("email", "is", null)
       .range(from, from + PAGE - 1);
-    if (error) throw new Response(error.message, { status: 500 });
+    if (error) fail(error.message);
     const rows = data ?? [];
     out.push(...rows);
     if (rows.length < PAGE) break;
@@ -80,7 +92,7 @@ export async function fetchAllProfiles() {
 
 export async function resolveRecipients(
   segment: Segment,
-): Promise<Array<{ user_id: string | null; email: string; name: string | null }>> {
+): Promise<Recipient[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   if (segment.type === "emails") {
@@ -99,7 +111,7 @@ export async function resolveRecipients(
         .select("profile_id")
         .in("tag_id", segment.tag_ids)
         .range(from, from + PAGE - 1);
-      if (error) throw new Response(error.message, { status: 500 });
+      if (error) fail(error.message);
       const rows = data ?? [];
       ids.push(...rows.map((r: any) => r.profile_id));
       if (rows.length < PAGE) break;
@@ -116,7 +128,7 @@ export async function resolveRecipients(
         .select("user_id, unlimited_credits")
         .eq("unlimited_credits", true)
         .range(from, from + PAGE - 1);
-      if (error) throw new Response(error.message, { status: 500 });
+      if (error) fail(error.message);
       const rows = data ?? [];
       subIds.push(...rows.map((s: any) => s.user_id));
       if (rows.length < PAGE) break;
@@ -128,7 +140,7 @@ export async function resolveRecipients(
   }
 
   const seen = new Set<string>();
-  const out: Array<{ user_id: string | null; email: string; name: string | null }> = [];
+  const out: Recipient[] = [];
   for (const p of list as any[]) {
     const em = String(p.email ?? "").toLowerCase().trim();
     if (!em || seen.has(em)) continue;
@@ -136,6 +148,73 @@ export async function resolveRecipients(
     out.push({ user_id: p.id, email: em, name: p.full_name ?? null });
   }
   return out;
+}
+
+export async function previewRecipients(segment: Segment): Promise<{ total: number; sample: Recipient[] }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  if (segment.type === "emails") {
+    const seen = new Set<string>();
+    const recipients: Recipient[] = [];
+    for (const rawEmail of segment.emails) {
+      const email = rawEmail.toLowerCase().trim();
+      if (!email || seen.has(email)) continue;
+      seen.add(email);
+      recipients.push({ user_id: null, email, name: null });
+    }
+    return { total: recipients.length, sample: recipients.slice(0, 20) };
+  }
+
+  if (segment.type === "all_active") {
+    const base = supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("is_blocked", false)
+      .not("email", "is", null);
+    const { count, error: countError } = await base;
+    if (countError) fail(countError.message);
+
+    const { data: sampleRows, error: sampleError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email")
+      .is("deleted_at", null)
+      .eq("is_blocked", false)
+      .not("email", "is", null)
+      .order("full_name", { ascending: true, nullsFirst: false })
+      .limit(20);
+    if (sampleError) fail(sampleError.message);
+
+    return {
+      total: count ?? 0,
+      sample: (sampleRows ?? []).map(mapProfileToRecipient).filter((r): r is Recipient => Boolean(r)),
+    };
+  }
+
+  if (segment.type === "unlimited") {
+    const subIds: string[] = [];
+    let from = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from("subscriptions")
+        .select("user_id")
+        .eq("unlimited_credits", true)
+        .range(from, from + PAGE - 1);
+      if (error) fail(error.message);
+      const rows = data ?? [];
+      subIds.push(...rows.map((s: any) => s.user_id).filter(Boolean));
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+    const uniqueIds = Array.from(new Set(subIds));
+    if (uniqueIds.length === 0) return { total: 0, sample: [] };
+    const recipients = await fetchProfilesByIds(uniqueIds);
+    return { total: recipients.length, sample: recipients.slice(0, 20).map(mapProfileToRecipient).filter((r): r is Recipient => Boolean(r)) };
+  }
+
+  const recipients = await resolveRecipients(segment);
+  return { total: recipients.length, sample: recipients.slice(0, 20) };
 }
 
 export async function generateRecoveryLink(email: string): Promise<string> {
