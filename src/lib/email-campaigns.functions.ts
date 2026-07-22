@@ -438,3 +438,57 @@ export const processCampaignBatch = createServerFn({ method: "POST" })
       status: remaining === 0 ? "done" : "sending",
     };
   });
+
+// ---------- ENVIAR E-MAIL DE TESTE ----------
+export const sendTestCampaignEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        to: z.string().email(),
+        subject: z.string().min(1).max(300),
+        html: z.string().min(1).max(500_000),
+        from_name: z.string().min(1).max(80).default("Lumma"),
+        include_recovery_link: z.boolean().default(false),
+        sample_name: z.string().max(120).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) throw new Response("RESEND_API_KEY ausente", { status: 500 });
+
+    const firstName = (data.sample_name ?? "").split(" ")[0] ?? "";
+    const vars: Record<string, string> = {
+      first_name_comma: firstName ? `, ${firstName}` : "",
+      dashboard_url: DASHBOARD_URL,
+      reset_password_url: "",
+    };
+    if (data.include_recovery_link) {
+      try {
+        vars.reset_password_url = await generateRecoveryLink(data.to);
+      } catch {
+        vars.reset_password_url = RESET_REDIRECT;
+      }
+    }
+
+    const subject = `[TESTE] ${renderTemplate(data.subject, vars)}`;
+    const html = renderTemplate(data.html, vars);
+    const from = `${data.from_name} <no-reply@lumma.ia.br>`;
+
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ from, to: data.to, subject, html }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Response(`resend ${res.status}: ${text.slice(0, 400)}`, { status: 500 });
+    }
+    const body = await res.json().catch(() => ({}));
+    return { ok: true, id: body?.id ?? null };
+  });
