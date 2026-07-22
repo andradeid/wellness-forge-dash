@@ -30,6 +30,7 @@ import {
   type SeatInfo,
 } from "@/lib/session-guard";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import loginBg from "@/assets/login-bg.png";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import lummaLockup from "@/assets/lumma-lockup-dark.svg";
@@ -104,6 +105,7 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
@@ -367,7 +369,25 @@ function LoginPage() {
                       Esqueceu a senha ou é seu primeiro acesso?
                     </button>
                   </div>
-                  <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 {signInError && (
                   <div
