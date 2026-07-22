@@ -375,7 +375,13 @@ export const Route = createFileRoute("/api/dify/chat")({
         }
 
         // Sucesso: envolve o stream pra liberar o slot no fim ou no cancel.
+        console.info("[dify-proxy] stream_start", {
+          agent: agentType,
+          conversation_id: conversation_id ?? null,
+          files: Array.isArray(files) ? files.length : 0,
+        });
         const wrapped = wrapStreamWithRelease(upstream.body, () => {
+          console.info("[dify-proxy] stream_end", { agent: agentType });
           releaseStreamSlot(userId).catch(() => {});
         });
 
