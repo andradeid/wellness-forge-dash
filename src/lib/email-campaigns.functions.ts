@@ -39,6 +39,48 @@ function renderTemplate(source: string, vars: Record<string, string>) {
   return out;
 }
 
+async function fetchProfilesByIds(ids: string[]) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const out: any[] = [];
+  const CHUNK = 500;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const slice = ids.slice(i, i + CHUNK);
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, is_blocked, deleted_at")
+      .in("id", slice)
+      .is("deleted_at", null)
+      .eq("is_blocked", false)
+      .not("email", "is", null);
+    if (error) throw new Response(error.message, { status: 500 });
+    out.push(...(data ?? []));
+  }
+  return out;
+}
+
+async function fetchAllProfiles() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const out: any[] = [];
+  const PAGE = 1000;
+  let from = 0;
+  // paginação para escapar do teto de 1000 do PostgREST
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, is_blocked, deleted_at")
+      .is("deleted_at", null)
+      .eq("is_blocked", false)
+      .not("email", "is", null)
+      .range(from, from + PAGE - 1);
+    if (error) throw new Response(error.message, { status: 500 });
+    const rows = data ?? [];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
+}
+
 async function resolveRecipients(
   segment: Segment,
 ): Promise<Array<{ user_id: string | null; email: string; name: string | null }>> {
@@ -48,48 +90,61 @@ async function resolveRecipients(
     return segment.emails.map((e) => ({ user_id: null, email: e.toLowerCase(), name: null }));
   }
 
-  // Base: profiles não bloqueados / não deletados
-  let q = supabaseAdmin
-    .from("profiles")
-    .select("id, full_name, email, is_blocked, deleted_at")
-    .is("deleted_at", null)
-    .eq("is_blocked", false)
-    .not("email", "is", null);
+  let list: any[] = [];
 
-  const { data: profiles, error } = await q;
-  if (error) throw new Response(error.message, { status: 500 });
-  let list = (profiles ?? []).filter((p: any) => p.email);
-
-  if (segment.type === "unlimited") {
-    const ids = list.map((p: any) => p.id);
-    const { data: subs } = await supabaseAdmin
-      .from("subscriptions")
-      .select("user_id, unlimited_credits")
-      .in("user_id", ids);
-    const unlimitedSet = new Set(
-      (subs ?? []).filter((s: any) => s.unlimited_credits).map((s: any) => s.user_id),
-    );
-    list = list.filter((p: any) => unlimitedSet.has(p.id));
-  } else if (segment.type === "tags") {
-    const { data: links } = await supabaseAdmin
-      .from("profile_tags")
-      .select("profile_id, tag_id")
-      .in("tag_id", segment.tag_ids);
-    const tagged = new Set((links ?? []).map((l: any) => l.profile_id));
-    list = list.filter((p: any) => tagged.has(p.id));
+  if (segment.type === "tags") {
+    // paginar profile_tags também (pode passar 1000)
+    const ids: string[] = [];
+    let from = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from("profile_tags")
+        .select("profile_id")
+        .in("tag_id", segment.tag_ids)
+        .range(from, from + PAGE - 1);
+      if (error) throw new Response(error.message, { status: 500 });
+      const rows = data ?? [];
+      ids.push(...rows.map((r: any) => r.profile_id));
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+    const uniq = Array.from(new Set(ids));
+    list = await fetchProfilesByIds(uniq);
+  } else if (segment.type === "unlimited") {
+    const subIds: string[] = [];
+    let from = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from("subscriptions")
+        .select("user_id, unlimited_credits")
+        .eq("unlimited_credits", true)
+        .range(from, from + PAGE - 1);
+      if (error) throw new Response(error.message, { status: 500 });
+      const rows = data ?? [];
+      subIds.push(...rows.map((s: any) => s.user_id));
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+    list = await fetchProfilesByIds(Array.from(new Set(subIds)));
+  } else {
+    // all_active
+    list = await fetchAllProfiles();
   }
 
   // dedupe por email
   const seen = new Set<string>();
   const out: Array<{ user_id: string | null; email: string; name: string | null }> = [];
   for (const p of list as any[]) {
-    const em = String(p.email).toLowerCase().trim();
+    const em = String(p.email ?? "").toLowerCase().trim();
     if (!em || seen.has(em)) continue;
     seen.add(em);
     out.push({ user_id: p.id, email: em, name: p.full_name ?? null });
   }
   return out;
 }
+
 
 // ---------- LIST TAGS (para o form de segmentação) ----------
 export const listUserTags = createServerFn({ method: "GET" })
