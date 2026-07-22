@@ -714,24 +714,55 @@ export function useDifyChat(
     if (!token || !user) { setThinking(false); setUploadProgress([]); return; }
 
 
-    // 1) Upload files DIRECT to Supabase Storage and pass signed URLs to Dify
-    //    via `transfer_method: "remote_url"`. Isso elimina o proxy /api/dify/upload
-    //    (que está sob limite de payload do Cloudflare Worker ~10MB) e o limite
-    //    efetivo passa a ser o do próprio Dify, suportando PDFs grandes de exame.
+    // 1) Upload files.
+    //    PRIMÁRIO: /api/dify/upload → local_file. Dify guarda o arquivo no
+    //    storage dele e nunca depende da signed URL do Supabase em follow-ups
+    //    — elimina o bug de InvalidJWT/"exp claim failed" que abortava o
+    //    workflow horas/dias depois.
+    //    FALLBACK: se o proxy /api/dify/upload falhar (ex.: payload > limite
+    //    do Cloudflare Worker em beta), cai para signed URL com TTL de 7 dias
+    //    (máx.) enviada como remote_url fresh — SÓ nessa mensagem.
+    //    Persistimos `dify_file_id` em patient_exams para o bloco de
+    //    follow-up (abaixo) saber quais exames ainda precisam de regeneração.
+    const FALLBACK_SIGNED_URL_TTL_SECONDS = 7 * 24 * 3600; // 7 dias, máx.
     const difyFiles: DifyFileRef[] = [];
     const attachments: Array<{ name: string; path?: string; mime_type?: string }> = [];
     let lastExamId: string | null = null;
     const resetUploadUI = () => setUploadProgress([]);
 
+    const uploadToDify = async (file: File): Promise<string | null> => {
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("agent_type", agentType);
+        const res = await fetch("/api/dify/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (!res.ok) {
+          console.warn("[dify.upload] falhou, cairá em fallback remote_url", {
+            status: res.status,
+            agent_type: agentType,
+            name: file.name,
+            size: file.size,
+          });
+          return null;
+        }
+        const json = (await res.json()) as { id?: string };
+        return json.id ?? null;
+      } catch (e) {
+        console.warn("[dify.upload] threw, cairá em fallback remote_url", e);
+        return null;
+      }
+    };
+
     for (const file of files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
-      updateFileProgress(file, "enviando", 20, "Salvando exame no histórico");
+      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
 
-      // Storage (upload direto do browser → Supabase, sem passar pelo Worker).
-      // Supabase Storage rejeita caracteres fora de [A-Za-z0-9._-] na key
-      // (colchetes, acentos, etc. → "Invalid key"). Sanitizamos o filename
-      // preservando extensão; o nome original vai em `attachments[].name`.
+      // 1a) Storage (upload direto do browser → Supabase, sem passar pelo Worker).
       const safeName = sanitizeFilename(file.name);
       const path = `${user.id}/${patientId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("exams").upload(path, file, {
@@ -747,21 +778,39 @@ export function useDifyChat(
         return;
       }
 
-      updateFileProgress(file, "processando", 60, "Gerando link seguro para a Lumma");
+      // 1b) Primário: local_file via /api/dify/upload.
+      updateFileProgress(file, "processando", 45, "Enviando exame para a Lumma");
+      const difyFileId = await uploadToDify(file);
 
-      // Signed URL (1h) — Dify baixa o arquivo direto do Supabase Storage
-      const { data: signed, error: signErr } = await supabase.storage
-        .from("exams")
-        .createSignedUrl(path, 3600);
-      if (signErr || !signed?.signedUrl) {
-        updateFileProgress(file, "erro", 100, "Falha ao gerar link de acesso");
-        toast.error(`Falha ao preparar ${file.name}`, { id: toastId });
-        setError(signErr?.message ?? "Falha ao gerar URL assinada");
-        setThinking(false);
-        resetUploadUI();
-        return;
+      let fileRef: DifyFileRef;
+      if (difyFileId) {
+        fileRef = {
+          type: file.type.startsWith("image/") ? "image" : "document",
+          transfer_method: "local_file",
+          upload_file_id: difyFileId,
+        };
+      } else {
+        // 1c) Fallback: signed URL 7 dias como remote_url fresh.
+        updateFileProgress(file, "processando", 65, "Gerando link seguro para a Lumma");
+        const { data: signed, error: signErr } = await supabase.storage
+          .from("exams")
+          .createSignedUrl(path, FALLBACK_SIGNED_URL_TTL_SECONDS);
+        if (signErr || !signed?.signedUrl) {
+          updateFileProgress(file, "erro", 100, "Falha ao preparar exame");
+          toast.error(`Falha ao preparar ${file.name}`, { id: toastId });
+          setError(signErr?.message ?? "Falha ao gerar URL assinada");
+          setThinking(false);
+          resetUploadUI();
+          return;
+        }
+        fileRef = {
+          type: file.type.startsWith("image/") ? "image" : "document",
+          transfer_method: "remote_url",
+          url: signed.signedUrl,
+        };
       }
 
+      // 1d) Persist patient_exams com dify_file_id quando disponível.
       const { data: examIns } = await (supabase as any).from("patient_exams").insert({
         patient_id: patientId,
         chat_id: chatId,
@@ -770,18 +819,51 @@ export function useDifyChat(
         file_name: file.name,
         mime_type: file.type,
         size_bytes: file.size,
-        dify_file_id: null,
+        dify_file_id: difyFileId,
       }).select("id").single();
       if (examIns?.id) lastExamId = examIns.id as string;
 
-      difyFiles.push({
-        type: file.type.startsWith("image/") ? "image" : "document",
-        transfer_method: "remote_url",
-        url: signed.signedUrl,
-      });
+      difyFiles.push(fileRef);
       attachments.push({ name: file.name, path, mime_type: file.type });
       updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
+    }
+
+    // 1e) Follow-ups: regenera signed URL FRESH (7 dias) para exames LEGACY
+    //     deste chat que estão sem dify_file_id. Não inspecionamos o histórico
+    //     interno do Dify — usamos patient_exams como fonte de verdade.
+    //     Sem essa regeneração, uma URL antiga que o Dify guardou no histórico
+    //     expira em ~1h e o workflow aborta com InvalidJWT em qualquer
+    //     follow-up horas/dias depois.
+    if (files.length === 0 && chatId) {
+      try {
+        const { data: legacyExams } = await (supabase as any)
+          .from("patient_exams")
+          .select("id, file_path, file_name, mime_type")
+          .eq("chat_id", chatId)
+          .is("dify_file_id", null)
+          .not("file_path", "is", null)
+          .order("created_at", { ascending: true });
+        if (Array.isArray(legacyExams) && legacyExams.length > 0) {
+          for (const ex of legacyExams as Array<{ id: string; file_path: string; file_name?: string | null; mime_type?: string | null }>) {
+            const { data: signed, error: signErr } = await supabase.storage
+              .from("exams")
+              .createSignedUrl(ex.file_path, FALLBACK_SIGNED_URL_TTL_SECONDS);
+            if (signErr || !signed?.signedUrl) {
+              console.warn("[dify.followup] não gerou signed URL fresh", { exam_id: ex.id, err: signErr?.message });
+              continue;
+            }
+            const mime = ex.mime_type || "";
+            difyFiles.push({
+              type: mime.startsWith("image/") ? "image" : "document",
+              transfer_method: "remote_url",
+              url: signed.signedUrl,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("[dify.followup] regeneração legacy falhou (segue sem):", e);
+      }
     }
 
     // 2) Persist user message — usa displayText (texto amigável) quando o
@@ -1179,7 +1261,32 @@ export function useDifyChat(
                         })
                         .eq("id", chatId);
                     }
-                    setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+                    // Persiste mensagem assistant amigável para não deixar a
+                    // pergunta do usuário órfã no histórico. NÃO debita crédito
+                    // (o débito só acontece no branch de sucesso abaixo).
+                    const errorText = "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+                    const processingMs = Math.round(performance.now() - startedAt);
+                    const errorStructured = { processing_ms: processingMs, error: true, error_reason: "empty_answer" };
+                    const { data: errIns } = await (supabase as any)
+                      .from("chat_messages")
+                      .insert({
+                        chat_id: chatId,
+                        created_by: user.id,
+                        role: "assistant",
+                        content: errorText,
+                        agent_type: agentType,
+                        selected_task: selectedTask ?? null,
+                        structured_data: errorStructured,
+                      })
+                      .select("id")
+                      .single();
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantId
+                          ? { ...m, id: errIns?.id ?? m.id, content: errorText, structured_data: errorStructured }
+                          : m,
+                      ),
+                    );
                     const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
                     toast.error("A Lumma não conseguiu responder desta vez", {
                       description: canRetry
@@ -1337,8 +1444,38 @@ export function useDifyChat(
         await saveAssistantToSupabase(fullText + partialNote, conversationIdRef.current || undefined);
       } else if (!assistantSavedRef.current && !fullText.trim() && agentType !== 'research') {
         // Stream fechou sem NENHUM conteúdo — tipicamente workflow do Dify sem branch
-        // para a task selecionada (ex.: super agente + tarefa não implementada).
+        // para a task selecionada, ou aborto silencioso upstream. Persiste linha
+        // assistant com mensagem amigável para não deixar pergunta órfã e NÃO
+        // debita crédito (débito só acontece no branch de sucesso).
+        assistantSavedRef.current = true;
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
+        const errorText = "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+        const processingMs = Math.round(performance.now() - startedAt);
+        const errorStructured = { processing_ms: processingMs, error: true, error_reason: "stream_closed_no_answer" };
+        try {
+          const { data: errIns } = await (supabase as any)
+            .from("chat_messages")
+            .insert({
+              chat_id: chatId,
+              created_by: user.id,
+              role: "assistant",
+              content: errorText,
+              agent_type: agentType,
+              selected_task: selectedTask ?? null,
+              structured_data: errorStructured,
+            })
+            .select("id")
+            .single();
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? { ...m, id: errIns?.id ?? m.id, content: errorText, structured_data: errorStructured }
+                : m,
+            ),
+          );
+        } catch (persistErr) {
+          console.warn("[dify] falha ao persistir assistant de erro:", persistErr);
+        }
         const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
         toast.error("A Lumma não conseguiu responder desta vez", {
           description: canRetry

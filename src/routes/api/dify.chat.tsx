@@ -100,6 +100,10 @@ function wrapStreamWithRelease(
   const scanForFinal = (chunk: Uint8Array) => {
     if (released) return;
     sniffBuf += decoder.decode(chunk, { stream: true });
+    // Log observabilidade: sinaliza quando o Dify emite `error` no meio do stream.
+    if (/"event"\s*:\s*"error"/.test(sniffBuf)) {
+      console.warn("[dify-proxy] upstream event:error detected in stream");
+    }
     if (FINAL_EVENTS.test(sniffBuf)) {
       release();
       sniffBuf = "";
@@ -371,7 +375,13 @@ export const Route = createFileRoute("/api/dify/chat")({
         }
 
         // Sucesso: envolve o stream pra liberar o slot no fim ou no cancel.
+        console.info("[dify-proxy] stream_start", {
+          agent: agentType,
+          conversation_id: conversation_id ?? null,
+          files: Array.isArray(files) ? files.length : 0,
+        });
         const wrapped = wrapStreamWithRelease(upstream.body, () => {
+          console.info("[dify-proxy] stream_end", { agent: agentType });
           releaseStreamSlot(userId).catch(() => {});
         });
 
