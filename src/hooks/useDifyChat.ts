@@ -1444,8 +1444,38 @@ export function useDifyChat(
         await saveAssistantToSupabase(fullText + partialNote, conversationIdRef.current || undefined);
       } else if (!assistantSavedRef.current && !fullText.trim() && agentType !== 'research') {
         // Stream fechou sem NENHUM conteúdo — tipicamente workflow do Dify sem branch
-        // para a task selecionada (ex.: super agente + tarefa não implementada).
+        // para a task selecionada, ou aborto silencioso upstream. Persiste linha
+        // assistant com mensagem amigável para não deixar pergunta órfã e NÃO
+        // debita crédito (débito só acontece no branch de sucesso).
+        assistantSavedRef.current = true;
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
+        const errorText = "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+        const processingMs = Math.round(performance.now() - startedAt);
+        const errorStructured = { processing_ms: processingMs, error: true, error_reason: "stream_closed_no_answer" };
+        try {
+          const { data: errIns } = await (supabase as any)
+            .from("chat_messages")
+            .insert({
+              chat_id: chatId,
+              created_by: user.id,
+              role: "assistant",
+              content: errorText,
+              agent_type: agentType,
+              selected_task: selectedTask ?? null,
+              structured_data: errorStructured,
+            })
+            .select("id")
+            .single();
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? { ...m, id: errIns?.id ?? m.id, content: errorText, structured_data: errorStructured }
+                : m,
+            ),
+          );
+        } catch (persistErr) {
+          console.warn("[dify] falha ao persistir assistant de erro:", persistErr);
+        }
         const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
         toast.error("A Lumma não conseguiu responder desta vez", {
           description: canRetry
