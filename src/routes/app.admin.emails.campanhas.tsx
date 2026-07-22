@@ -231,6 +231,8 @@ function CreateCampaignDialog(props: { onClose: () => void; onCreated: (id: stri
   const listTags = useServerFn(listUserTags);
   const preview = useServerFn(previewCampaignSegment);
   const create = useServerFn(createCampaign);
+  const sendTest = useServerFn(sendTestCampaignEmail);
+
 
   const tpls = useQuery({ queryKey: ["email-templates"], queryFn: () => listTpl() });
   const tags = useQuery({ queryKey: ["user-tags"], queryFn: () => listTags() });
