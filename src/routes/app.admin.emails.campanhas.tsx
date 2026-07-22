@@ -249,6 +249,9 @@ function CreateCampaignDialog(props: { onClose: () => void; onCreated: (id: stri
   const [emailsText, setEmailsText] = useState("");
   const [previewInfo, setPreviewInfo] = useState<{ total: number; sample: any[] } | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+
 
   const templates = ((tpls.data ?? []) as any[]).filter((t: any) => t.category === "transactional");
   const tagList = ((tags.data ?? []) as any[]) as Array<{ id: string; label: string; color: string | null }>;
