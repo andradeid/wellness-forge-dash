@@ -119,6 +119,7 @@ function LoginPage() {
     if (msg.includes("email not confirmed")) return "Email ainda não confirmado. Verifique sua caixa de entrada.";
     if (msg.includes("too many") || msg.includes("rate limit")) return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
     if (msg.includes("user not found")) return "Usuário não encontrado. Verifique o email digitado.";
+    if (msg.includes("banned") || msg.includes("user is banned")) return "Sua conta está temporariamente bloqueada. Entre em contato com o suporte pelo WhatsApp para regularizar.";
     return raw || "Não foi possível entrar. Tente novamente.";
   };
 
