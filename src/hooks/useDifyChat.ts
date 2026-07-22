@@ -1261,7 +1261,32 @@ export function useDifyChat(
                         })
                         .eq("id", chatId);
                     }
-                    setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+                    // Persiste mensagem assistant amigável para não deixar a
+                    // pergunta do usuário órfã no histórico. NÃO debita crédito
+                    // (o débito só acontece no branch de sucesso abaixo).
+                    const errorText = "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+                    const processingMs = Math.round(performance.now() - startedAt);
+                    const errorStructured = { processing_ms: processingMs, error: true, error_reason: "empty_answer" };
+                    const { data: errIns } = await (supabase as any)
+                      .from("chat_messages")
+                      .insert({
+                        chat_id: chatId,
+                        created_by: user.id,
+                        role: "assistant",
+                        content: errorText,
+                        agent_type: agentType,
+                        selected_task: selectedTask ?? null,
+                        structured_data: errorStructured,
+                      })
+                      .select("id")
+                      .single();
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantId
+                          ? { ...m, id: errIns?.id ?? m.id, content: errorText, structured_data: errorStructured }
+                          : m,
+                      ),
+                    );
                     const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
                     toast.error("A Lumma não conseguiu responder desta vez", {
                       description: canRetry
