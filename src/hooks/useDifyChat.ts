@@ -735,6 +735,13 @@ export function useDifyChat(
         const fd = new FormData();
         fd.append("file", file);
         fd.append("agent_type", agentType);
+        // CRÍTICO: enviar patient_id + os mesmos meta que /api/dify/chat usa,
+        // para que o displayUser do upload seja IDÊNTICO ao do chat-messages.
+        // O Dify exige o mesmo `user` no /files/upload e no /chat-messages,
+        // senão o workflow rejeita com "Invalid upload file".
+        fd.append("patient_id", patientId);
+        fd.append("nutritionist_name", metaRef.current.nutritionist_name || "");
+        fd.append("patient_name", metaRef.current.patient_name || "");
         const res = await fetch("/api/dify/upload", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
