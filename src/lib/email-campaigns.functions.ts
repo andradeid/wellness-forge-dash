@@ -287,7 +287,7 @@ export const processCampaignBatch = createServerFn({ method: "POST" })
       .eq("status", "pending")
       .limit(BATCH_SIZE);
 
-    const list = (pending ?? []) as Array<{ id: string; email: string; name: string | null }>;
+    const list = ((pending ?? []) as unknown) as Array<{ id: string; email: string; name: string | null }>;
     let sent = 0;
     let failed = 0;
 

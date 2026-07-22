@@ -129,6 +129,7 @@ const adminGroups: NavGroup[] = [
       { title: "Auditoria", url: "/app/admin/credits-audit", icon: CreditCard, badge: "NOVO" },
       { title: "Integrações & APIs", url: "/app/admin/integrations", icon: Plug, badge: "NOVO" },
       { title: "E-mails", url: "/app/admin/emails", icon: Mail, superAdminOnly: true, badge: "NOVO" },
+      { title: "Campanhas de e-mail", url: "/app/admin/emails/campanhas", icon: Mail, superAdminOnly: true, badge: "NOVO" },
       { title: "Playground (Sandbox)", url: "/app/admin/playground", icon: FlaskRound, badge: "BETA", superAdminOnly: true },
     ],
   },
