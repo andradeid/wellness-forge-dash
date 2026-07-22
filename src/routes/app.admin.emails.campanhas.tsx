@@ -687,6 +687,80 @@ function CampaignDetailDialog(props: { id: string; onClose: () => void }) {
             </div>
           )}
 
+          <div className="space-y-2 border-t pt-3">
+            <Label className="text-xs font-semibold">Corpo do e-mail</Label>
+            <Tabs defaultValue="preview">
+              <TabsList>
+                <TabsTrigger value="preview">Prévia renderizada</TabsTrigger>
+                <TabsTrigger value="code">Código HTML</TabsTrigger>
+              </TabsList>
+              <TabsContent value="preview">
+                <div className="border rounded-md overflow-hidden bg-white">
+                  <iframe
+                    title="Prévia do e-mail"
+                    srcDoc={String(c.html)
+                      .replace(/\{\{\s*first_name_comma\s*\}\}/g, ", Ana")
+                      .replace(/\{\{\s*dashboard_url\s*\}\}/g, "https://lumma.ia.br/app")
+                      .replace(/\{\{\s*reset_password_url\s*\}\}/g, "https://lumma.ia.br/reset-password")}
+                    className="w-full h-[420px] bg-white"
+                    sandbox=""
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="code">
+                <Textarea
+                  value={c.html}
+                  readOnly
+                  className="font-mono text-xs min-h-[220px]"
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="rounded-lg border p-3 space-y-2 bg-muted/30">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <Send className="h-4 w-4" /> Enviar e-mail de teste
+            </Label>
+            <p className="text-[11px] text-muted-foreground">
+              Dispara 1 e-mail via Resend com o assunto prefixado "[TESTE]".
+            </p>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="voce@exemplo.com"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+              />
+              <Button
+                variant="outline"
+                disabled={!testEmail || sendingTest}
+                onClick={async () => {
+                  try {
+                    setSendingTest(true);
+                    await sendTest({
+                      data: {
+                        to: testEmail,
+                        subject: c.subject,
+                        html: c.html,
+                        from_name: c.from_name,
+                        include_recovery_link: c.include_recovery_link,
+                      },
+                    });
+                    toast.success(`E-mail de teste enviado para ${testEmail}`);
+                  } catch (e: any) {
+                    toast.error(e?.message ?? "Falha ao enviar teste");
+                  } finally {
+                    setSendingTest(false);
+                  }
+                }}
+              >
+                {sendingTest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                Enviar teste
+              </Button>
+            </div>
+          </div>
+
+
           {data?.samples && data.samples.length > 0 && (
             <div className="border rounded-lg divide-y max-h-60 overflow-y-auto text-xs">
               {data.samples.map((s: any, i: number) => (
