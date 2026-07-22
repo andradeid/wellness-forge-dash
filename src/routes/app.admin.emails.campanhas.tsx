@@ -361,17 +361,82 @@ function CreateCampaignDialog(props: { onClose: () => void; onCreated: (id: stri
         </div>
 
         <div className="space-y-2">
-          <Label className="text-xs">HTML</Label>
-          <Textarea
-            value={html}
-            onChange={(e) => setHtml(e.target.value)}
-            className="font-mono text-xs min-h-[180px]"
-          />
+          <Label className="text-xs">Corpo do e-mail</Label>
+          <Tabs defaultValue="code">
+            <TabsList>
+              <TabsTrigger value="code">Código HTML</TabsTrigger>
+              <TabsTrigger value="preview">Prévia renderizada</TabsTrigger>
+            </TabsList>
+            <TabsContent value="code">
+              <Textarea
+                value={html}
+                onChange={(e) => setHtml(e.target.value)}
+                className="font-mono text-xs min-h-[220px]"
+              />
+            </TabsContent>
+            <TabsContent value="preview">
+              <div className="border rounded-md overflow-hidden bg-white">
+                <iframe
+                  title="Prévia do e-mail"
+                  srcDoc={html
+                    .replace(/\{\{\s*first_name_comma\s*\}\}/g, ", Ana")
+                    .replace(/\{\{\s*dashboard_url\s*\}\}/g, "https://lumma.ia.br/app")
+                    .replace(/\{\{\s*reset_password_url\s*\}\}/g, "https://lumma.ia.br/reset-password")}
+                  className="w-full h-[420px] bg-white"
+                  sandbox=""
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
           <p className="text-[11px] text-muted-foreground">
             Variáveis: <code>{"{{first_name_comma}}"}</code>, <code>{"{{reset_password_url}}"}</code>,{" "}
             <code>{"{{dashboard_url}}"}</code>
           </p>
         </div>
+
+        <div className="rounded-lg border p-3 space-y-2 bg-muted/30">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Send className="h-4 w-4" /> Enviar e-mail de teste
+          </Label>
+          <p className="text-[11px] text-muted-foreground">
+            Dispara 1 e-mail agora via Resend com o assunto prefixado "[TESTE]" para você validar a renderização.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="voce@exemplo.com"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              disabled={!testEmail || !subject || !html || sendingTest}
+              onClick={async () => {
+                try {
+                  setSendingTest(true);
+                  await sendTest({
+                    data: {
+                      to: testEmail,
+                      subject,
+                      html,
+                      from_name: fromName,
+                      include_recovery_link: includeRecoveryLink,
+                    },
+                  });
+                  toast.success(`E-mail de teste enviado para ${testEmail}`);
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Falha ao enviar teste");
+                } finally {
+                  setSendingTest(false);
+                }
+              }}
+            >
+              {sendingTest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Enviar teste
+            </Button>
+          </div>
+        </div>
+
 
         <div className="flex items-center gap-3 rounded-lg border p-3">
           <Switch checked={includeRecoveryLink} onCheckedChange={setIncludeRecoveryLink} />
