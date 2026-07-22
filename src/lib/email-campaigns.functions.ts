@@ -172,19 +172,8 @@ export const deleteCampaign = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------- PROCESSA UM LOTE ----------
-async function generateRecoveryLink(email: string): Promise<string> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await (supabaseAdmin as any).auth.admin.generateLink({
-    type: "recovery",
-    email,
-    options: { redirectTo: RESET_REDIRECT },
-  });
-  if (error || !data?.properties?.action_link) {
-    throw new Error(error?.message ?? "generateLink falhou");
-  }
-  return data.properties.action_link;
-}
+
+
 
 export const processCampaignBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
