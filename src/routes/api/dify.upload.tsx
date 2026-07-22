@@ -59,15 +59,15 @@ export const Route = createFileRoute("/api/dify/upload")({
 
         const sanitize = (s: unknown) =>
           String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
-        const nutriName = sanitize(inForm.get("nutritionist_name"));
-        const patientName = sanitize(inForm.get("patient_name"));
-        const buildDisplayUser = () => {
-          if (!nutriName && !patientName) return userId;
-          const label = [nutriName, patientName].filter(Boolean).join(" · ");
-          const composed = `${label} [${userId.slice(0, 8)}]`;
-          return composed.length > 64 ? composed.slice(0, 64) : composed;
-        };
-        const displayUser = buildDisplayUser();
+
+        // CRÍTICO: o Dify exige o MESMO `user` no /files/upload e no
+        // /chat-messages. Precisamos compor exatamente igual ao dify.chat.tsx:
+        //   `${userId}:${patientIdSafe}:${agentType}` (últimos 64 chars)
+        // Se divergir, o workflow aborta com "Invalid upload file".
+        const patientIdSafe = sanitize(inForm.get("patient_id")) || "no-patient";
+        const composedUser = `${userId}:${patientIdSafe}:${agentType}`;
+        const displayUser = composedUser.length > 64 ? composedUser.slice(-64) : composedUser;
+
 
         const outForm = new FormData();
         outForm.append("file", file, file.name);
