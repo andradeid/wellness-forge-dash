@@ -365,6 +365,10 @@ export function useDifyChat(
   // vazio do banco antes do message_end propagar no PostgREST.
   const thinkingRef = useRef<boolean>(false);
   useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
+  // Lock síncrono contra clique/Enter duplicado: o `disabled={thinking}` do
+  // input só re-renderiza depois dos awaits (auth/crédito), e nesse intervalo
+  // o usuário consegue disparar 2× o mesmo envio → 429 "Aguarde a análise…".
+  const sendingRef = useRef(false);
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -618,6 +622,21 @@ export function useDifyChat(
     opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string; _isRetry?: boolean },
   ) => {
     if (!chatId || readOnly) return;
+    // Trava síncrona ANTES de qualquer await — evita envio duplicado.
+    if (sendingRef.current || thinkingRef.current) return;
+    sendingRef.current = true;
+    thinkingRef.current = true;
+    setError(null);
+    setThinking(true);
+    setThinkingMode(files.length > 0 ? "analysis" : "simple");
+
+    const abortSend = () => {
+      thinkingRef.current = false;
+      setThinking(false);
+      setUploadProgress([]);
+    };
+
+    try {
     // Guarda o pedido pra permitir "Tentar novamente" ao receber empty answer.
     // Envio novo (não-retry) reseta o crédito de retentativa.
     if (!opts?._isRetry) {
@@ -637,9 +656,9 @@ export function useDifyChat(
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (!currentUser) return;
+    if (!currentUser) { abortSend(); return; }
     const sessionOk = await enforceSessionGuard(currentUser.id);
-    if (!sessionOk) return;
+    if (!sessionOk) { abortSend(); return; }
 
     // Super Agentes exigem `selected_task` obrigatoriamente. O Dify retorna
     // 400 "selected_task is required in input form" se faltar → o assistente
@@ -652,6 +671,7 @@ export function useDifyChat(
         .maybeSingle();
       if (agentRow?.is_super_agent === true) {
         toast.error("Escolha uma tarefa do Super Agente antes de enviar (ex: Exames de Sangue).");
+        abortSend();
         return;
       }
     }
@@ -668,6 +688,7 @@ export function useDifyChat(
           const unlimited = (fresh.data as any)?.unlimited === true;
           if (!unlimited && balance < cost) {
             paywallStore.open(cost, balance, label);
+            abortSend();
             return;
           }
         }
@@ -678,9 +699,6 @@ export function useDifyChat(
     }
 
 
-    setError(null);
-    setThinking(true);
-    setThinkingMode(files.length > 0 ? "analysis" : "simple");
     researchSavedRef.current = false;
     assistantSavedRef.current = false;
     currentFullTextRef.current = "";
@@ -1519,8 +1537,12 @@ export function useDifyChat(
         researchSavedRef.current = true;
         saveAssistantToSupabase(textToSave);
       }
+      thinkingRef.current = false;
       setThinking(false);
       setUploadProgress([]);
+    }
+    } finally {
+      sendingRef.current = false;
     }
   }, [chatId, patientId, readOnly, agentType, examContext, messages, getCost, consume, refetchCredits]);
 

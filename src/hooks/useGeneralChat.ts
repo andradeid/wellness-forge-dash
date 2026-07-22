@@ -17,6 +17,9 @@ export function useGeneralChat(chatId: string, agentType: string) {
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
+  const sendingRef = useRef(false);
+  const thinkingRef = useRef(false);
+  useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
   const { getCost, consume } = useCreditsActions();
   const { refetch: refetchCredits } = useMyCredits();
 
@@ -54,10 +57,20 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!chatId || !user) return;
+    if (sendingRef.current || thinkingRef.current) return;
+    sendingRef.current = true;
+    thinkingRef.current = true;
+    setThinking(true);
 
+    const abortSend = () => {
+      thinkingRef.current = false;
+      setThinking(false);
+    };
+
+    try {
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const sessionOk = await enforceSessionGuard(user.id);
-    if (!sessionOk) return;
+    if (!sessionOk) { abortSend(); return; }
 
 
     // Gate de créditos
@@ -71,6 +84,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
           const unlimited = (fresh.data as any)?.unlimited === true;
           if (!unlimited && balance < cost) {
             paywallStore.open(cost, balance, label);
+            abortSend();
             return;
           }
         }
@@ -80,7 +94,6 @@ export function useGeneralChat(chatId: string, agentType: string) {
       }
     }
 
-    setThinking(true);
     setStreamingContent("");
     researchSavedRef.current = false;
     currentFullTextRef.current = "";
@@ -309,7 +322,11 @@ export function useGeneralChat(chatId: string, agentType: string) {
         researchSavedRef.current = true;
         saveAssistantToSupabase(currentFullTextRef.current);
       }
+      thinkingRef.current = false;
       setThinking(false);
+    }
+    } finally {
+      sendingRef.current = false;
     }
   }, [chatId, user, agentType, getCost, consume, refetchCredits]);
 

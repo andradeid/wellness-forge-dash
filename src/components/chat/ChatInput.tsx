@@ -117,13 +117,20 @@ export function ChatInput({
     e.target.value = "";
   };
 
+  const submittingRef = useRef(false);
+
   const send = async () => {
-    if (disabled) return;
+    if (disabled || submittingRef.current) return;
     const t = text.trim();
     if (!t && files.length === 0) return;
-    await onSubmit(t, files.map((f) => f.file));
-    setText("");
-    setFiles([]);
+    submittingRef.current = true;
+    try {
+      await onSubmit(t, files.map((f) => f.file));
+      setText("");
+      setFiles([]);
+    } finally {
+      submittingRef.current = false;
+    }
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
