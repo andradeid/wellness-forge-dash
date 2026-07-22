@@ -37,7 +37,7 @@ export const previewCampaignSegment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
     const rec = await resolveRecipients(data.segment);
-    return { total: rec.length, sample: rec.slice(0, 10) };
+    return { total: rec.length, sample: rec.slice(0, 20) };
   });
 
 // ---------- LIST CAMPAIGNS ----------
