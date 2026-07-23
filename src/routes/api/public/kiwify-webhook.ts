@@ -12,7 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
  *   - 59a89e30-851b-11f1-be44-db22545a0013 → Pro Anual
  *
  * Eventos tratados:
- *   - order_approved / compra_aprovada  → invite user + assinatura ativa + créditos + histórico
+ *   - order_approved / compra_aprovada  → cria user c/ senha temporária + assinatura ativa + créditos + histórico
  *   - order_refunded / refunded         → cancela assinatura + registra refund
  *   - chargeback                        → cancela assinatura + registra chargeback
  *   - subscription_canceled / subscription_late → status atualizado
@@ -235,7 +235,12 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
     return;
   }
 
-  const userId = await resolveOrInviteUserByEmail(supabaseAdmin, customer.email, customer.name);
+  const { createUserWithTempPassword } = await import("@/lib/user-provisioning.server");
+  const provision = await createUserWithTempPassword(supabaseAdmin, {
+    email: customer.email,
+    fullName: customer.name,
+  });
+  const userId = provision.userId;
   if (!userId) {
     console.error(`[kiwify-webhook] não conseguiu criar usuário para ${customer.email}`);
     return;
@@ -325,6 +330,23 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
       payment_method: payload?.payment_method ?? null,
     },
   });
+
+  // Boas-vindas com senha temporária — só quando acabamos de criar/resetar a conta.
+  if (provision.welcomeNeeded) {
+    try {
+      const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
+      await sendWelcomeNewPurchaseEmail({
+        userId,
+        email: customer.email,
+        fullName: customer.name,
+        tempPassword: provision.tempPassword,
+        planName: (plan as any)?.name ?? mapped.slug,
+        credits: monthlyCredits,
+      });
+    } catch (err: any) {
+      console.error("[kiwify-webhook] falha ao enviar welcome:", err?.message);
+    }
+  }
 }
 
 async function handleRefundOrChargeback(
@@ -394,80 +416,6 @@ async function handleSubscriptionStatus(
     .eq("user_id", userId);
 }
 
-// --------------------------------------------------------------------
-// User resolution (invite silencioso via email)
-// --------------------------------------------------------------------
-
-async function resolveOrInviteUserByEmail(
-  supabaseAdmin: any,
-  email: string,
-  fullName: string | null,
-): Promise<string | null> {
-  // 1) Já existe em profiles?
-  const { data: prof } = await supabaseAdmin
-    .from("profiles" as any)
-    .select("id")
-    .ilike("email", email)
-    .maybeSingle();
-  if ((prof as any)?.id) {
-    console.log(`[kiwify-webhook] usuário já existe em profiles (${email}) — pulando invite`);
-    return (prof as any).id as string;
-  }
-
-  // 2) Já existe em auth.users? Aplica anti-reenvio:
-  //    - Se JÁ tem senha configurada (last_sign_in_at OU encrypted_password) → NÃO reenvia invite
-  //    - Se foi convidado nos últimos 15 min → NÃO reenvia (link anterior ainda válido)
-  //    - Senão → reenvia
-  try {
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 200,
-    });
-    const found = list?.users?.find(
-      (u: any) => (u.email ?? "").toLowerCase() === email,
-    );
-    if (found?.id) {
-      const hasPassword =
-        Boolean(found.last_sign_in_at) ||
-        Boolean(found.encrypted_password) ||
-        Boolean(found.user_metadata?.password_set);
-
-      if (hasPassword) {
-        console.log(`[kiwify-webhook] ${email} já tem senha definida — pulando invite`);
-        return found.id as string;
-      }
-
-      const invitedAt = found.invited_at ?? found.confirmation_sent_at ?? null;
-      if (invitedAt) {
-        const ageMinutes = (Date.now() - new Date(invitedAt).getTime()) / 60000;
-        if (ageMinutes < 15) {
-          console.log(
-            `[kiwify-webhook] ${email} convidado há ${ageMinutes.toFixed(1)}min — pulando reenvio`,
-          );
-          return found.id as string;
-        }
-      }
-      // Usuário existe, sem senha, e invite antigo → segue para reenvio abaixo.
-      console.log(`[kiwify-webhook] ${email} existe mas invite antigo — reenviando`);
-    }
-  } catch (e: any) {
-    console.warn("[kiwify-webhook] listUsers falhou:", e?.message);
-  }
-
-  // 3) Convida (dispara email de definir senha — mesmo template do Stripe)
-  const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-    email,
-    {
-      redirectTo: "https://lumma.ia.br/reset-password",
-      data: fullName ? { full_name: fullName, name: fullName } : undefined,
-    },
-  );
-  if (inviteErr) {
-    console.error("[kiwify-webhook] inviteUserByEmail falhou:", inviteErr.message);
-    return null;
-  }
-  return invited?.user?.id ?? null;
-}
 
 // --------------------------------------------------------------------
 // Créditos (mesma lógica do Stripe)

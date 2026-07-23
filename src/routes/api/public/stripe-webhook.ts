@@ -261,52 +261,30 @@ async function resolveOrInviteUserByCustomer(
   supabaseAdmin: Admin,
   stripe: Stripe,
   customerId: string,
-): Promise<string | null> {
+): Promise<{ userId: string | null; welcomeNeeded: boolean; tempPassword: string; email: string | null; fullName: string | null }> {
   try {
     const customer = await stripe.customers.retrieve(customerId);
-    if ((customer as any).deleted) return null;
+    if ((customer as any).deleted) {
+      return { userId: null, welcomeNeeded: false, tempPassword: "", email: null, fullName: null };
+    }
     const email = ((customer as Stripe.Customer).email ?? "").trim().toLowerCase();
-    if (!email) return null;
-
-    // 1) já existe em profiles?
-    const { data: prof } = await supabaseAdmin
-      .from("profiles" as any)
-      .select("id")
-      .ilike("email", email)
-      .maybeSingle();
-    if ((prof as any)?.id) return (prof as any).id as string;
-
-    // 2) já existe em auth.users?
-    try {
-      const { data: list } = await (supabaseAdmin.auth.admin as any).listUsers({
-        page: 1,
-        perPage: 200,
-      });
-      const found = list?.users?.find(
-        (u: any) => (u.email ?? "").toLowerCase() === email,
-      );
-      if (found?.id) return found.id as string;
-    } catch (e: any) {
-      console.warn("[stripe-webhook] listUsers falhou:", e?.message);
+    if (!email) {
+      return { userId: null, welcomeNeeded: false, tempPassword: "", email: null, fullName: null };
     }
+    const fullName = (customer as Stripe.Customer).name ?? null;
 
-    // 3) convida (trigger handle_new_user cria profile/role/subscription)
-    const fullName = (customer as Stripe.Customer).name ?? "";
-    const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    const { createUserWithTempPassword } = await import("@/lib/user-provisioning.server");
+    const res = await createUserWithTempPassword(supabaseAdmin, { email, fullName });
+    return {
+      userId: res.userId,
+      welcomeNeeded: res.welcomeNeeded,
+      tempPassword: res.tempPassword,
       email,
-      {
-        redirectTo: "https://lumma.ia.br/reset-password",
-        data: fullName ? { full_name: fullName, name: fullName } : undefined,
-      },
-    );
-    if (inviteErr) {
-      console.error("[stripe-webhook] inviteUserByEmail falhou:", inviteErr.message);
-      return null;
-    }
-    return invited?.user?.id ?? null;
+      fullName,
+    };
   } catch (err: any) {
     console.error("[stripe-webhook] resolveOrInviteUserByCustomer erro:", err?.message);
-    return null;
+    return { userId: null, welcomeNeeded: false, tempPassword: "", email: null, fullName: null };
   }
 }
 
@@ -367,8 +345,10 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
       .maybeSingle();
     targetUserId = (data as any)?.user_id ?? null;
   }
+  let provision: Awaited<ReturnType<typeof resolveOrInviteUserByCustomer>> | null = null;
   if (!targetUserId) {
-    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, await getStripeLazy(), customerId);
+    provision = await resolveOrInviteUserByCustomer(supabaseAdmin, await getStripeLazy(), customerId);
+    targetUserId = provision.userId;
   }
   if (!targetUserId) {
     console.warn("[stripe-webhook] subscription sem user_id resolvível", { sub_id: sub.id, customer: customerId });
@@ -383,12 +363,14 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   let planSlug = (sub.metadata?.plan_slug ?? null) as
     | "starter" | "pro" | "clinica" | null;
   let cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;
+  let planName: string | null = null;
+  let planCredits: number | null = null;
 
   // Payment Links não carregam metadata → resolve plano/ciclo pelo price_id
-  if (priceId && (!planSlug || !cycle)) {
+  if (priceId) {
     const { data: planRow } = await supabaseAdmin
       .from("subscription_plans" as any)
-      .select("slug, stripe_price_monthly_id, stripe_price_yearly_id")
+      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
       .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
       .maybeSingle();
     if (planRow) {
@@ -396,6 +378,8 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
       if (!cycle) {
         cycle = (planRow as any).stripe_price_yearly_id === priceId ? "yearly" : "monthly";
       }
+      planName = (planRow as any).name ?? null;
+      planCredits = (planRow as any).monthly_credits ?? null;
     }
   }
 
@@ -419,6 +403,23 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
     .from("subscriptions" as any)
     .upsert({ user_id: targetUserId, ...patch }, { onConflict: "user_id" });
   if (error) throw error;
+
+  // Boas-vindas com senha temporária — só quando acabamos de criar/resetar a conta.
+  if (provision?.welcomeNeeded) {
+    try {
+      const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
+      await sendWelcomeNewPurchaseEmail({
+        userId: targetUserId,
+        email: provision.email,
+        fullName: provision.fullName,
+        tempPassword: provision.tempPassword,
+        planName: planName ?? planSlug ?? "Lumma",
+        credits: planCredits ?? 0,
+      });
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao enviar welcome:", err?.message);
+    }
+  }
 }
 
 /**
@@ -471,8 +472,10 @@ async function handleInvoicePaid(
       .maybeSingle();
     targetUserId = (data as any)?.user_id ?? null;
   }
+  let invoiceProvision: Awaited<ReturnType<typeof resolveOrInviteUserByCustomer>> | null = null;
   if (!targetUserId) {
-    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
+    invoiceProvision = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
+    targetUserId = invoiceProvision.userId;
   }
   if (!targetUserId) return;
 
@@ -547,6 +550,23 @@ async function handleInvoicePaid(
       });
     } catch (err: any) {
       console.error("[stripe-webhook] falha ao enviar email de assinatura:", err?.message);
+    }
+  }
+
+  // Boas-vindas com senha temporária — só quando provisionamos a conta aqui.
+  if (invoiceProvision?.welcomeNeeded) {
+    try {
+      const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
+      await sendWelcomeNewPurchaseEmail({
+        userId: targetUserId,
+        email: invoiceProvision.email,
+        fullName: invoiceProvision.fullName,
+        tempPassword: invoiceProvision.tempPassword,
+        planName: ((plan as any).name ?? (plan as any).slug ?? "Lumma") as string,
+        credits: monthlyCredits,
+      });
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao enviar welcome:", err?.message);
     }
   }
 }
