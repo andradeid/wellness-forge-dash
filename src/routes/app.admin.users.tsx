@@ -97,7 +97,7 @@ function statusLabel(status: string | null, blocked?: boolean) {
 }
 
 function planLabel(plan: string | null) {
-  return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica" } as Record<string, string>)[plan ?? ""] ?? "—";
+  return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica", legado_500: "Legado 500" } as Record<string, string>)[plan ?? ""] ?? "—";
 }
 
 function UsersPage() {
