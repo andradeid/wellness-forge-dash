@@ -995,6 +995,7 @@ export type Database = {
           id: string
           is_blocked: boolean
           legacy_last_login_at: string | null
+          must_change_password: boolean
           phone: string | null
           policy_accepted_at: string | null
           professional_id: string | null
@@ -1013,6 +1014,7 @@ export type Database = {
           id: string
           is_blocked?: boolean
           legacy_last_login_at?: string | null
+          must_change_password?: boolean
           phone?: string | null
           policy_accepted_at?: string | null
           professional_id?: string | null
@@ -1031,6 +1033,7 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           legacy_last_login_at?: string | null
+          must_change_password?: boolean
           phone?: string | null
           policy_accepted_at?: string | null
           professional_id?: string | null
