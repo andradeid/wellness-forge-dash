@@ -102,6 +102,28 @@ function AppLayout() {
     }
   }, [session, loading, navigate]);
 
+  // Gate: senha temporária -> força troca antes de liberar o app
+  useEffect(() => {
+    if (loading || !session?.user) return;
+    if (pathname === "/app/trocar-senha") return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("must_change_password")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (cancelled || error) return;
+      if (data?.must_change_password) {
+        void navigate({ to: "/app/trocar-senha", replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, session?.user?.id, pathname, navigate]);
+
+
   // RBAC: redireciona para /unauthorized se a role atual não tiver permissão.
   // Importante: se a rota é administrativa e o role AINDA não carregou,
   // também bloqueamos — assim um usuário nutri nunca vê a UI admin

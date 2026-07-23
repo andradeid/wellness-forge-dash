@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppTrocarSenhaRouteImport } from './routes/app.trocar-senha'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
 import { Route as AppPlanosRouteImport } from './routes/app.planos'
@@ -86,6 +87,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTrocarSenhaRoute = AppTrocarSenhaRouteImport.update({
+  id: '/trocar-senha',
+  path: '/trocar-senha',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/app/planos': typeof AppPlanosRouteWithChildren
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
@@ -328,6 +335,7 @@ export interface FileRoutesByTo {
   '/app/planos': typeof AppPlanosRouteWithChildren
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/app/planos': typeof AppPlanosRouteWithChildren
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app/': typeof AppIndexRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
@@ -421,6 +430,7 @@ export interface FileRouteTypes {
     | '/app/planos'
     | '/app/politicas'
     | '/app/settings'
+    | '/app/trocar-senha'
     | '/app/'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/app/planos'
     | '/app/politicas'
     | '/app/settings'
+    | '/app/trocar-senha'
     | '/app'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
@@ -510,6 +521,7 @@ export interface FileRouteTypes {
     | '/app/planos'
     | '/app/politicas'
     | '/app/settings'
+    | '/app/trocar-senha'
     | '/app/'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
@@ -608,6 +620,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/trocar-senha': {
+      id: '/app/trocar-senha'
+      path: '/trocar-senha'
+      fullPath: '/app/trocar-senha'
+      preLoaderRoute: typeof AppTrocarSenhaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/settings': {
@@ -885,6 +904,7 @@ interface AppRouteChildren {
   AppPlanosRoute: typeof AppPlanosRouteWithChildren
   AppPoliticasRoute: typeof AppPoliticasRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTrocarSenhaRoute: typeof AppTrocarSenhaRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAdminAdministratorsRoute: typeof AppAdminAdministratorsRoute
   AppAdminAgentCostsRoute: typeof AppAdminAgentCostsRoute
@@ -916,6 +936,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPlanosRoute: AppPlanosRouteWithChildren,
   AppPoliticasRoute: AppPoliticasRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTrocarSenhaRoute: AppTrocarSenhaRoute,
   AppIndexRoute: AppIndexRoute,
   AppAdminAdministratorsRoute: AppAdminAdministratorsRoute,
   AppAdminAgentCostsRoute: AppAdminAgentCostsRoute,
