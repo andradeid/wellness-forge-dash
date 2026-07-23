@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.apply_etapa2_migration(uuid[]);
