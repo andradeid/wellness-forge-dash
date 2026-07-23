@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ManutencaoRouteImport } from './routes/manutencao'
 import { Route as LoginRouteImport } from './routes/login'
@@ -57,6 +58,11 @@ import { Route as AppAdminEmailsCampanhasRouteImport } from './routes/app.admin.
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -282,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -327,6 +334,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -422,6 +431,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/manutencao'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/manutencao'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/manutencao'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
     | '/app/dashboard'
@@ -560,6 +572,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ManutencaoRoute: typeof ManutencaoRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -968,6 +988,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ManutencaoRoute: ManutencaoRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,
