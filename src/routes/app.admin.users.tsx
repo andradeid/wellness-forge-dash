@@ -62,7 +62,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 const DEFAULT_COLORS = ["#e8a04c", "#e89bcf", "#7c9a92", "#6b7fd7", "#d97757", "#8a8a8a", "#2c2c2c"];
 
 
-type PlanType = "free" | "starter" | "pro" | "clinica";
+type PlanType = "free" | "starter" | "pro" | "clinica" | "legado_500";
 type SubStatus = "trial" | "active" | "past_due" | "canceled";
 
 interface UserRow {
