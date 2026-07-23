@@ -1574,7 +1574,7 @@ export type Database = {
       ai_feedback_rating: "positive" | "negative" | "suggestion"
       app_role: "super_admin" | "admin" | "nutri"
       gender_type: "male" | "female" | "other"
-      plan_type: "free" | "starter" | "pro" | "clinica"
+      plan_type: "free" | "starter" | "pro" | "clinica" | "legado_500"
       subscription_status: "trial" | "active" | "past_due" | "canceled"
     }
     CompositeTypes: {
@@ -1706,7 +1706,7 @@ export const Constants = {
       ai_feedback_rating: ["positive", "negative", "suggestion"],
       app_role: ["super_admin", "admin", "nutri"],
       gender_type: ["male", "female", "other"],
-      plan_type: ["free", "starter", "pro", "clinica"],
+      plan_type: ["free", "starter", "pro", "clinica", "legado_500"],
       subscription_status: ["trial", "active", "past_due", "canceled"],
     },
   },
