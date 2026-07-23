@@ -62,7 +62,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 const DEFAULT_COLORS = ["#e8a04c", "#e89bcf", "#7c9a92", "#6b7fd7", "#d97757", "#8a8a8a", "#2c2c2c"];
 
 
-type PlanType = "free" | "starter" | "pro" | "clinica";
+type PlanType = "free" | "starter" | "pro" | "clinica" | "legado_500";
 type SubStatus = "trial" | "active" | "past_due" | "canceled";
 
 interface UserRow {
@@ -97,7 +97,7 @@ function statusLabel(status: string | null, blocked?: boolean) {
 }
 
 function planLabel(plan: string | null) {
-  return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica" } as Record<string, string>)[plan ?? ""] ?? "—";
+  return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica", legado_500: "Legado 500" } as Record<string, string>)[plan ?? ""] ?? "—";
 }
 
 function UsersPage() {
@@ -1011,6 +1011,7 @@ function UsersPage() {
                   <SelectItem value="starter">Starter</SelectItem>
                   <SelectItem value="pro">Pro Individual</SelectItem>
                   <SelectItem value="clinica">Clínica</SelectItem>
+                  <SelectItem value="legado_500">Legado 500</SelectItem>
                 </SelectContent>
               </Select>
             </div>
