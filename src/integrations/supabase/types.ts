@@ -1535,6 +1535,12 @@ export type Database = {
         Returns: number
       }
       aggregate_usage_hour: { Args: { p_hour: string }; Returns: undefined }
+      apply_etapa2_migration: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          processed: number
+        }[]
+      }
       consume_credits: {
         Args: {
           p_agent_key: string
