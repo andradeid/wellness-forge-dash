@@ -473,7 +473,9 @@ async function handleInvoicePaid(
     targetUserId = (data as any)?.user_id ?? null;
   }
   if (!targetUserId) {
-    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
+    const provision = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
+    targetUserId = provision.userId;
+    // welcome será enviado dentro de syncSubscription abaixo (que já tem planName/credits).
   }
   if (!targetUserId) return;
 
