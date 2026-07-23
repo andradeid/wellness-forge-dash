@@ -345,8 +345,10 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
       .maybeSingle();
     targetUserId = (data as any)?.user_id ?? null;
   }
+  let provision: Awaited<ReturnType<typeof resolveOrInviteUserByCustomer>> | null = null;
   if (!targetUserId) {
-    targetUserId = await resolveOrInviteUserByCustomer(supabaseAdmin, await getStripeLazy(), customerId);
+    provision = await resolveOrInviteUserByCustomer(supabaseAdmin, await getStripeLazy(), customerId);
+    targetUserId = provision.userId;
   }
   if (!targetUserId) {
     console.warn("[stripe-webhook] subscription sem user_id resolvível", { sub_id: sub.id, customer: customerId });
@@ -361,12 +363,14 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   let planSlug = (sub.metadata?.plan_slug ?? null) as
     | "starter" | "pro" | "clinica" | null;
   let cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;
+  let planName: string | null = null;
+  let planCredits: number | null = null;
 
   // Payment Links não carregam metadata → resolve plano/ciclo pelo price_id
-  if (priceId && (!planSlug || !cycle)) {
+  if (priceId) {
     const { data: planRow } = await supabaseAdmin
       .from("subscription_plans" as any)
-      .select("slug, stripe_price_monthly_id, stripe_price_yearly_id")
+      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
       .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
       .maybeSingle();
     if (planRow) {
@@ -374,6 +378,8 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
       if (!cycle) {
         cycle = (planRow as any).stripe_price_yearly_id === priceId ? "yearly" : "monthly";
       }
+      planName = (planRow as any).name ?? null;
+      planCredits = (planRow as any).monthly_credits ?? null;
     }
   }
 
@@ -397,6 +403,23 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
     .from("subscriptions" as any)
     .upsert({ user_id: targetUserId, ...patch }, { onConflict: "user_id" });
   if (error) throw error;
+
+  // Boas-vindas com senha temporária — só quando acabamos de criar/resetar a conta.
+  if (provision?.welcomeNeeded) {
+    try {
+      const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
+      await sendWelcomeNewPurchaseEmail({
+        userId: targetUserId,
+        email: provision.email,
+        fullName: provision.fullName,
+        tempPassword: provision.tempPassword,
+        planName: planName ?? planSlug ?? "Lumma",
+        credits: planCredits ?? 0,
+      });
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao enviar welcome:", err?.message);
+    }
+  }
 }
 
 /**
