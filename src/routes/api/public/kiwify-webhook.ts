@@ -12,7 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
  *   - 59a89e30-851b-11f1-be44-db22545a0013 → Pro Anual
  *
  * Eventos tratados:
- *   - order_approved / compra_aprovada  → invite user + assinatura ativa + créditos + histórico
+ *   - order_approved / compra_aprovada  → cria user c/ senha temporária + assinatura ativa + créditos + histórico
  *   - order_refunded / refunded         → cancela assinatura + registra refund
  *   - chargeback                        → cancela assinatura + registra chargeback
  *   - subscription_canceled / subscription_late → status atualizado
