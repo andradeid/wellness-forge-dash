@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
+import { SeoHead } from "@/components/SeoHead";
 
 function NotFoundComponent() {
   return (
@@ -187,6 +188,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SeoHead />
         <Outlet />
         <Toaster />
       </AuthProvider>
