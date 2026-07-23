@@ -235,7 +235,12 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
     return;
   }
 
-  const userId = await resolveOrInviteUserByEmail(supabaseAdmin, customer.email, customer.name);
+  const { createUserWithTempPassword } = await import("@/lib/user-provisioning.server");
+  const provision = await createUserWithTempPassword(supabaseAdmin, {
+    email: customer.email,
+    fullName: customer.name,
+  });
+  const userId = provision.userId;
   if (!userId) {
     console.error(`[kiwify-webhook] não conseguiu criar usuário para ${customer.email}`);
     return;
