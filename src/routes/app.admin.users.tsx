@@ -538,9 +538,16 @@ function UsersPage() {
   };
 
   const sendWelcome = async (u: UserRow) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(u.email);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`E-mail de boas-vindas enviado para ${u.email}`);
+    if (!confirm(
+      `Isto vai redefinir a senha de ${u.email} para a senha temporária e disparar o email de boas-vindas. Continuar?`,
+    )) return;
+    try {
+      const { adminSendWelcomeReset } = await import("@/lib/admin-welcome.functions");
+      await adminSendWelcomeReset({ data: { user_id: u.id } });
+      toast.success(`Senha temporária ativa e email enviado para ${u.email}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao enviar boas-vindas");
+    }
   };
 
   const toggleBlock = async (u: UserRow) => {
