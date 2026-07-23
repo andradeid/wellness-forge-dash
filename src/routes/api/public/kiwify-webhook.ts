@@ -330,6 +330,23 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
       payment_method: payload?.payment_method ?? null,
     },
   });
+
+  // Boas-vindas com senha temporária — só quando acabamos de criar/resetar a conta.
+  if (provision.welcomeNeeded) {
+    try {
+      const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
+      await sendWelcomeNewPurchaseEmail({
+        userId,
+        email: customer.email,
+        fullName: customer.name,
+        tempPassword: provision.tempPassword,
+        planName: (plan as any)?.name ?? mapped.slug,
+        credits: monthlyCredits,
+      });
+    } catch (err: any) {
+      console.error("[kiwify-webhook] falha ao enviar welcome:", err?.message);
+    }
+  }
 }
 
 async function handleRefundOrChargeback(
