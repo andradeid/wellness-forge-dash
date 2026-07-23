@@ -442,10 +442,13 @@ function AuditPage() {
                         className={`text-right font-mono font-medium ${
                           t.amount === 0
                             ? "text-muted-foreground"
+                            : isUnlimited
+                            ? "text-muted-foreground"
                             : isPositive
                             ? "text-emerald-600"
                             : "text-red-600"
                         }`}
+                        title={isUnlimited ? "Uso registrado (não debitado — plano ilimitado)" : undefined}
                       >
                         {t.amount === 0 ? "—" : `${sign}${t.amount}`}
                       </TableCell>
