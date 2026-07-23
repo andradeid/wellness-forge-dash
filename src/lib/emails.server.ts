@@ -157,3 +157,46 @@ export async function sendSubscriptionActivatedEmail(args: {
     html: renderTemplate(tpl.html, vars),
   });
 }
+
+/**
+ * Boas-vindas para compras novas (Stripe/Kiwify) — inclui email + senha
+ * temporária. Enviado apenas quando createUserWithTempPassword indica
+ * welcomeNeeded=true (conta recém-criada OU senha resetada).
+ */
+export async function sendWelcomeNewPurchaseEmail(args: {
+  userId: string;
+  email?: string | null;
+  fullName?: string | null;
+  tempPassword: string;
+  planName: string;
+  credits: number;
+}) {
+  let email = args.email ?? null;
+  let name = args.fullName ?? null;
+  if (!email) {
+    const resolved = await resolveUserEmail(args.userId);
+    email = resolved.email;
+    if (!name) name = resolved.name;
+  }
+  if (!email) return { ok: false, error: "email não encontrado" };
+
+  const tpl = await loadTemplate("welcome_new_purchase");
+  if (!tpl)
+    return { ok: false, error: "template welcome_new_purchase inativo ou não encontrado" };
+
+  const firstName = name?.split(" ")[0] ?? "";
+  const vars: Record<string, string> = {
+    first_name_comma: firstName ? `, ${firstName}` : "",
+    email,
+    temp_password: args.tempPassword,
+    plan_name: args.planName,
+    credits: String(args.credits),
+    dashboard_url: DASHBOARD_URL,
+  };
+
+  return sendEmail({
+    to: email,
+    subject: renderTemplate(tpl.subject, vars),
+    html: renderTemplate(tpl.html, vars),
+  });
+}
