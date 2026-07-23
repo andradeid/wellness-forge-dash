@@ -20,6 +20,18 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
 import { extractMealEstimation } from "@/lib/meal-estimation";
 
+/** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
+function friendlyExamUploadError(raw: string | undefined | null, fileName: string): string {
+  const msg = (raw ?? "").trim();
+  if (
+    !msg ||
+    /failed to fetch|network\s*error|network request failed|load failed|internet connection|err_network|timeout|timed out|aborted|fetch failed/i.test(msg)
+  ) {
+    return `Não consegui enviar "${fileName}". Verifique sua conexão com a internet e tente anexar o exame novamente.`;
+  }
+  return `Não consegui enviar "${fileName}". ${msg.slice(0, 140)}`;
+}
+
 export interface ExamContext {
   patient_name: string;
   patient_profile: string;
@@ -795,9 +807,14 @@ export function useDifyChat(
         upsert: false,
       });
       if (upErr) {
-        updateFileProgress(file, "erro", 100, "Falha ao salvar exame");
-        toast.error(`Falha ao salvar ${file.name}: ${upErr.message}`, { id: toastId });
-        setError(upErr.message);
+        const friendly = friendlyExamUploadError(upErr.message, file.name);
+        updateFileProgress(file, "erro", 100, "Falha ao enviar exame");
+        toast.error(friendly, {
+          id: toastId,
+          description: "Se persistir, troque de Wi‑Fi/4G ou tente de novo em instantes.",
+          duration: 8000,
+        });
+        setError(friendly);
         setThinking(false);
         resetUploadUI();
         return;
@@ -821,9 +838,17 @@ export function useDifyChat(
           .from("exams")
           .createSignedUrl(path, FALLBACK_SIGNED_URL_TTL_SECONDS);
         if (signErr || !signed?.signedUrl) {
+          const friendly = friendlyExamUploadError(
+            signErr?.message ?? "Falha ao preparar o exame",
+            file.name,
+          );
           updateFileProgress(file, "erro", 100, "Falha ao preparar exame");
-          toast.error(`Falha ao preparar ${file.name}`, { id: toastId });
-          setError(signErr?.message ?? "Falha ao gerar URL assinada");
+          toast.error(friendly, {
+            id: toastId,
+            description: "O arquivo foi salvo, mas não consegui liberar para análise. Tente enviar de novo.",
+            duration: 8000,
+          });
+          setError(friendly);
           setThinking(false);
           resetUploadUI();
           return;
