@@ -393,7 +393,8 @@ function AuditPage() {
               <TableBody>
                 {txs.map((t) => {
                   const isPositive = t.type === "credit" || t.type === "grant" || t.type === "refund";
-                  const sign = isPositive ? "+" : "-";
+                  const isUnlimited = !!t.metadata?.unlimited;
+                  const sign = isUnlimited ? "~" : isPositive ? "+" : "-";
                   const isManual = !!t.metadata?.manual;
                   return (
                     <TableRow key={t.id}>
@@ -401,15 +402,22 @@ function AuditPage() {
                         {new Date(t.created_at).toLocaleString("pt-BR")}
                       </TableCell>
                       <TableCell>
-                        {isManual ? (
-                          <Badge variant="outline" className="border-amber-500 text-amber-700">
-                            Manual
-                          </Badge>
-                        ) : t.agent_label ? (
-                          <Badge variant="secondary">{t.agent_label}</Badge>
-                        ) : (
-                          <Badge variant="outline">{t.type}</Badge>
-                        )}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {isManual ? (
+                            <Badge variant="outline" className="border-amber-500 text-amber-700">
+                              Manual
+                            </Badge>
+                          ) : t.agent_label ? (
+                            <Badge variant="secondary">{t.agent_label}</Badge>
+                          ) : (
+                            <Badge variant="outline">{t.type}</Badge>
+                          )}
+                          {isUnlimited && (
+                            <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 text-[10px]">
+                              <InfinityIcon className="h-2.5 w-2.5 mr-0.5" /> Ilimitado
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-md truncate text-xs text-muted-foreground">
                         {t.message_preview ?? "—"}
