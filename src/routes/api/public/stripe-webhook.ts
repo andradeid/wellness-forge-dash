@@ -261,52 +261,30 @@ async function resolveOrInviteUserByCustomer(
   supabaseAdmin: Admin,
   stripe: Stripe,
   customerId: string,
-): Promise<string | null> {
+): Promise<{ userId: string | null; welcomeNeeded: boolean; tempPassword: string; email: string | null; fullName: string | null }> {
   try {
     const customer = await stripe.customers.retrieve(customerId);
-    if ((customer as any).deleted) return null;
+    if ((customer as any).deleted) {
+      return { userId: null, welcomeNeeded: false, tempPassword: "", email: null, fullName: null };
+    }
     const email = ((customer as Stripe.Customer).email ?? "").trim().toLowerCase();
-    if (!email) return null;
-
-    // 1) já existe em profiles?
-    const { data: prof } = await supabaseAdmin
-      .from("profiles" as any)
-      .select("id")
-      .ilike("email", email)
-      .maybeSingle();
-    if ((prof as any)?.id) return (prof as any).id as string;
-
-    // 2) já existe em auth.users?
-    try {
-      const { data: list } = await (supabaseAdmin.auth.admin as any).listUsers({
-        page: 1,
-        perPage: 200,
-      });
-      const found = list?.users?.find(
-        (u: any) => (u.email ?? "").toLowerCase() === email,
-      );
-      if (found?.id) return found.id as string;
-    } catch (e: any) {
-      console.warn("[stripe-webhook] listUsers falhou:", e?.message);
+    if (!email) {
+      return { userId: null, welcomeNeeded: false, tempPassword: "", email: null, fullName: null };
     }
+    const fullName = (customer as Stripe.Customer).name ?? null;
 
-    // 3) convida (trigger handle_new_user cria profile/role/subscription)
-    const fullName = (customer as Stripe.Customer).name ?? "";
-    const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    const { createUserWithTempPassword } = await import("@/lib/user-provisioning.server");
+    const res = await createUserWithTempPassword(supabaseAdmin, { email, fullName });
+    return {
+      userId: res.userId,
+      welcomeNeeded: res.welcomeNeeded,
+      tempPassword: res.tempPassword,
       email,
-      {
-        redirectTo: "https://lumma.ia.br/reset-password",
-        data: fullName ? { full_name: fullName, name: fullName } : undefined,
-      },
-    );
-    if (inviteErr) {
-      console.error("[stripe-webhook] inviteUserByEmail falhou:", inviteErr.message);
-      return null;
-    }
-    return invited?.user?.id ?? null;
+      fullName,
+    };
   } catch (err: any) {
     console.error("[stripe-webhook] resolveOrInviteUserByCustomer erro:", err?.message);
-    return null;
+    return { userId: null, welcomeNeeded: false, tempPassword: "", email: null, fullName: null };
   }
 }
 
