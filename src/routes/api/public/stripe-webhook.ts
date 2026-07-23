@@ -552,6 +552,23 @@ async function handleInvoicePaid(
       console.error("[stripe-webhook] falha ao enviar email de assinatura:", err?.message);
     }
   }
+
+  // Boas-vindas com senha temporária — só quando provisionamos a conta aqui.
+  if (invoiceProvision?.welcomeNeeded) {
+    try {
+      const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
+      await sendWelcomeNewPurchaseEmail({
+        userId: targetUserId,
+        email: invoiceProvision.email,
+        fullName: invoiceProvision.fullName,
+        tempPassword: invoiceProvision.tempPassword,
+        planName: ((plan as any).name ?? (plan as any).slug ?? "Lumma") as string,
+        credits: monthlyCredits,
+      });
+    } catch (err: any) {
+      console.error("[stripe-webhook] falha ao enviar welcome:", err?.message);
+    }
+  }
 }
 
 async function recordInvoiceFailure(
