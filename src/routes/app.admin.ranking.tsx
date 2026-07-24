@@ -173,13 +173,15 @@ function RankingPage() {
         </h1>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1 rounded-full bg-muted/60 p-1">
           {(
             [
+              { key: "24h", label: "24h" },
+              { key: "7d", label: "7 dias" },
               { key: "month", label: "Este mês" },
-              { key: "7d", label: "Últimos 7 dias" },
-              { key: "all", label: "Total acumulado" },
+              { key: "all", label: "Total" },
+              { key: "custom", label: "Personalizado" },
             ] as { key: Period; label: string }[]
           ).map((p) => (
             <button
@@ -197,7 +199,25 @@ function RankingPage() {
             </button>
           ))}
         </div>
+        {period === "custom" && (
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="h-9 rounded-full border bg-white px-3 text-xs text-foreground"
+            />
+            <span className="text-xs text-muted-foreground">até</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="h-9 rounded-full border bg-white px-3 text-xs text-foreground"
+            />
+          </div>
+        )}
       </div>
+
 
       {loading ? (
         <div className="mt-10 py-16 text-center text-sm text-muted-foreground">
