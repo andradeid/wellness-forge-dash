@@ -59,15 +59,22 @@ async function handleKiwifyWebhook(request: Request) {
 
   // Lê body (Kiwify manda JSON)
   const rawBody = await request.text();
-  let payload: any = {};
+  let rawPayload: any = {};
   try {
-    payload = rawBody ? JSON.parse(rawBody) : {};
+    rawPayload = rawBody ? JSON.parse(rawBody) : {};
   } catch {
     return new Response("Body JSON inválido", { status: 400 });
   }
 
+  // Alguns webhooks da Kiwify chegam com o pedido aninhado em `order`
+  // (ex.: envio de teste ou integrações v2). Achatamos preservando os campos
+  // de topo (token, signature, url) para não perder validação.
+  const payload: any = rawPayload?.order && typeof rawPayload.order === "object"
+    ? { ...rawPayload.order, webhook_token: rawPayload.webhook_token ?? rawPayload.token ?? rawPayload.order.webhook_token }
+    : rawPayload;
+
   const tokenBody =
-    payload?.webhook_token ?? payload?.token ?? payload?.Token ?? null;
+    payload?.webhook_token ?? payload?.token ?? payload?.Token ?? rawPayload?.token ?? null;
 
   const suppliedToken = tokenQuery ?? tokenHeader ?? tokenBody;
   if (suppliedToken !== expectedToken) {
