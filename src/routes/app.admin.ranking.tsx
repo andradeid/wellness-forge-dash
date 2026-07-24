@@ -168,9 +168,21 @@ function RankingPage() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground/80">Ranking de uso</span>
         </div>
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          Ranking de <span className="italic text-gradient-brand">uso</span>
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+            Ranking de <span className="italic text-gradient-brand">uso</span>
+          </h1>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="O que é isso?">
+                <Info className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-xs leading-relaxed">
+              Conta <strong>ações clínicas</strong> do usuário: feedbacks de IA + resultados de exames processados. Diferente do <em>Top consumo</em> (Analytics), que conta débitos financeiros no ledger de créditos.
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
