@@ -299,16 +299,18 @@ Período: ${periodo}
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-sm font-medium text-foreground">Top consumo (débitos) no período</h3>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="O que é isso?">
-                  <Info className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs text-xs leading-relaxed">
-                Conta <strong>débitos financeiros</strong> do usuário: cada linha de débito no ledger de créditos (quantas vezes gastou crédito). Diferente do <em>Ranking de uso</em>, que conta ações clínicas (feedbacks + resultados de exames).
-              </TooltipContent>
-            </Tooltip>
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="O que é isso?">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                  Conta <strong>débitos financeiros</strong> do usuário: cada linha de débito no ledger de créditos (quantas vezes gastou crédito). Diferente do <em>Ranking de uso</em>, que conta ações clínicas (feedbacks + resultados de exames).
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
