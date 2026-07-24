@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getUsageStats } from "@/lib/analytics-admin.functions";
+import { OperationalAnalyticsSection } from "@/components/admin/OperationalAnalyticsSection";
 import { Activity, MessageSquare, FlaskConical, Coins } from "lucide-react";
 
 export const Route = createFileRoute("/app/admin/analytics")({
@@ -101,7 +102,7 @@ function AnalyticsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Analytics de uso</h1>
           <p className="text-sm text-muted-foreground">
-            Picos e padrões históricos por hora e dia da semana.
+            Picos históricos + resumo operacional e saúde Langfuse (sob demanda, sem Realtime).
           </p>
         </div>
         <div className="flex gap-2">
@@ -119,11 +120,14 @@ function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Sempre carrega o resumo operacional do período, mesmo se hourly estiver vazio */}
+      <OperationalAnalyticsSection hours={RANGES[range].hours} />
+
       {isLoading ? (
-        <Card className="p-12 text-center text-sm text-muted-foreground">Carregando…</Card>
+        <Card className="p-12 text-center text-sm text-muted-foreground">Carregando gráficos…</Card>
       ) : rows.length === 0 ? (
         <Card className="p-12 text-center text-sm text-muted-foreground">
-          Sem dados nesse período ainda.
+          Sem dados de série horária nesse período ainda.
         </Card>
       ) : (
         <>
