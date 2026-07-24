@@ -53,6 +53,8 @@ function RankingPage() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>("month");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [rows, setRows] = useState<RankRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,11 +66,13 @@ function RankingPage() {
 
   useEffect(() => {
     if (role !== "super_admin") return;
+    if (period === "custom" && (!customFrom || !customTo)) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const start = periodStart(period);
+      const { start, end } = periodRange(period, customFrom, customTo);
       const startIso = start ? start.toISOString() : null;
+      const endIso = end ? end.toISOString() : null;
 
       const fbQ = (supabase as any)
         .from("ai_feedback")
@@ -80,6 +84,11 @@ function RankingPage() {
         fbQ.gte("created_at", startIso);
         exQ.gte("created_at", startIso);
       }
+      if (endIso) {
+        fbQ.lte("created_at", endIso);
+        exQ.lte("created_at", endIso);
+      }
+
 
       const [fbRes, exRes] = await Promise.all([fbQ, exQ]);
       if (fbRes.error || exRes.error) {
