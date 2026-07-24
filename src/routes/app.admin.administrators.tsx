@@ -62,6 +62,7 @@ interface AdminRow {
   avatar_url: string | null;
   is_blocked: boolean;
   promoted_at: string;
+  role: "admin" | "super_admin" | "support";
 }
 
 function AdministratorsPage() {
@@ -83,7 +84,7 @@ function AdministratorsPage() {
     const { data: roleRows, error: rErr } = await (supabase as any)
       .from("user_roles")
       .select("user_id, created_at, role")
-      .in("role", ["admin", "super_admin"]);
+      .in("role", ["admin", "super_admin", "support"]);
     if (rErr) {
       toast.error(rErr.message);
       setLoading(false);
@@ -104,8 +105,15 @@ function AdministratorsPage() {
       setLoading(false);
       return;
     }
-    const promoMap = new Map<string, string>();
-    (roleRows ?? []).forEach((r: any) => promoMap.set(r.user_id, r.created_at));
+    const promoMap = new Map<string, { created_at: string; role: AdminRow["role"] }>();
+    // priority: super_admin > admin > support
+    const priority: Record<string, number> = { super_admin: 3, admin: 2, support: 1 };
+    (roleRows ?? []).forEach((r: any) => {
+      const existing = promoMap.get(r.user_id);
+      if (!existing || priority[r.role] > priority[existing.role]) {
+        promoMap.set(r.user_id, { created_at: r.created_at, role: r.role });
+      }
+    });
     const merged: AdminRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
@@ -113,7 +121,8 @@ function AdministratorsPage() {
       phone: p.phone,
       avatar_url: p.avatar_url,
       is_blocked: !!p.is_blocked,
-      promoted_at: promoMap.get(p.id) ?? "",
+      promoted_at: promoMap.get(p.id)?.created_at ?? "",
+      role: promoMap.get(p.id)?.role ?? "admin",
     }));
     setRows(
       merged.sort((a, b) =>
@@ -141,12 +150,12 @@ function AdministratorsPage() {
       .from("user_roles")
       .delete()
       .eq("user_id", row.id)
-      .eq("role", "admin");
+      .eq("role", row.role);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Administrador removido.");
+    toast.success("Acesso removido.");
     setDeleting(null);
     load();
   };
@@ -251,6 +260,9 @@ function AdministratorsPage() {
                     Telefone
                   </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Papel
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                     Status
                   </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -290,6 +302,21 @@ function AdministratorsPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {r.phone || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const map = {
+                            super_admin: { label: "Super Admin", cls: "border-violet-200 text-violet-700 bg-violet-50" },
+                            admin: { label: "Admin", cls: "border-sky-200 text-sky-700 bg-sky-50" },
+                            support: { label: "Suporte (CS)", cls: "border-amber-200 text-amber-700 bg-amber-50" },
+                          } as const;
+                          const cfg = map[r.role];
+                          return (
+                            <Badge variant="outline" className={`rounded-full ${cfg.cls}`}>
+                              {cfg.label}
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         {r.is_blocked ? (
