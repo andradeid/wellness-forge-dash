@@ -260,6 +260,9 @@ function AdministratorsPage() {
                     Telefone
                   </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Papel
+                  </TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                     Status
                   </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
