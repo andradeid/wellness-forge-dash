@@ -15,9 +15,11 @@ import {
   ShieldAlert,
   Users,
   Coins,
+  Info,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { getOperationalAnalytics } from "@/lib/analytics-admin.functions";
 
 function Kpi({
@@ -295,7 +297,21 @@ Período: ${periodo}
 
       {op.topDebitUsers.length > 0 && (
         <Card className="p-4">
-          <h3 className="text-sm font-medium text-foreground mb-3">Top consumo (débitos) no período</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-medium text-foreground">Top consumo (débitos) no período</h3>
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="O que é isso?">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                  Conta <strong>débitos financeiros</strong> do usuário: cada linha de débito no ledger de créditos (quantas vezes gastou crédito). Diferente do <em>Ranking de uso</em>, que conta ações clínicas (feedbacks + resultados de exames).
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
