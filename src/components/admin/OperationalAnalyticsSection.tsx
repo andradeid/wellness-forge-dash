@@ -83,10 +83,6 @@ export function OperationalAnalyticsSection({ hours }: { hours: number }) {
       .slice(0, 5)
       .map((u, i) => `${i + 1}. ${u.fullName || u.email || "—"} (${u.debits})`)
       .join("\n");
-    const lf = data?.langfuse;
-    const lfLine = lf?.configured
-      ? `🤖 Langfuse: ${(lf.tracesTotal ?? 0).toLocaleString("pt-BR")} traces · ${(lf.errorObservations ?? 0).toLocaleString("pt-BR")} erros`
-      : "🤖 Langfuse: não configurado";
     const msg =
 `📊 *LUMMA — Resumo operacional (${nowStr})*
 Período: ${periodo}
@@ -100,8 +96,8 @@ Período: ${periodo}
 👥 *Pacientes novos:* ${op.patientsCreated} · *Chats novos:* ${op.chatsCreated}
 ⚡ *Pico de concorrência ≈* ${op.concurrencyPeakUsers} usuários${op.concurrencyPeakAt ? ` (${format(new Date(op.concurrencyPeakAt), "dd/MM 'às' HH:mm", { locale: ptBR })})` : ""} — janela ${op.concurrencyWindowMinutes} min
 🔐 *Senha:* ${op.mustChangePasswordStill} ainda pendentes · ${op.passwordClearedProxy} liberaram no período
-⚠️ *Falhas no chat:* ${op.assistantErrorMessages}
-${lfLine}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}`;
+⚠️ *Falhas no chat:* ${op.assistantErrorMessages}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}`;
+
 
     navigator.clipboard.writeText(msg).then(
       () => toast.success("Resumo copiado — cole no WhatsApp"),
