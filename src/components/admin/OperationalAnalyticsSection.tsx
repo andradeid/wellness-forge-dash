@@ -15,9 +15,11 @@ import {
   ShieldAlert,
   Users,
   Coins,
+  Info,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getOperationalAnalytics } from "@/lib/analytics-admin.functions";
 
 function Kpi({
