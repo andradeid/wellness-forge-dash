@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
-type AppRole = "super_admin" | "admin" | "nutri";
+type AppRole = "super_admin" | "admin" | "nutri" | "support";
 
 // RBAC central: rota (prefixo) -> roles permitidos.
 // Defesa em profundidade: páginas continuam com seus guards locais.
@@ -38,17 +38,31 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
   // Admin + super_admin
   { prefix: "/app/admin/administrators", roles: ["admin", "super_admin"] },
   { prefix: "/app/admin/integrations", roles: ["admin", "super_admin"] },
-  { prefix: "/app/admin/nutritionists", roles: ["admin", "super_admin"] },
+  // Nutricionistas: admin, super_admin E suporte (CS)
+  { prefix: "/app/admin/nutritionists", roles: ["admin", "super_admin", "support"] },
   // Qualquer outra rota /app/admin/* exige pelo menos admin
   { prefix: "/app/admin", roles: ["admin", "super_admin"] },
 ];
 
+// Rotas permitidas para o papel Suporte (CS), fora do /app/admin.
+// Whitelist rigorosa: qualquer outra rota /app/* redireciona para a permitida.
+const SUPPORT_ALLOWED_PREFIXES = [
+  "/app/admin/nutritionists",
+  "/app/trocar-senha",
+  "/app/politicas",
+];
+
 function isAllowed(pathname: string, role: AppRole | null): boolean {
+  // Suporte (CS) tem whitelist explícita: bloqueia tudo fora dela.
+  if (role === "support") {
+    return SUPPORT_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
+  }
   const match = ROUTE_ACCESS.find((r) => pathname.startsWith(r.prefix));
   if (!match) return true; // rotas /app não administrativas: liberadas para qualquer role logada
   if (!role) return false;
   return match.roles.includes(role);
 }
+
 
 function AppLayout() {
   const { session, loading, role, user } = useAuth();
