@@ -150,12 +150,12 @@ function AdministratorsPage() {
       .from("user_roles")
       .delete()
       .eq("user_id", row.id)
-      .eq("role", "admin");
+      .eq("role", row.role);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Administrador removido.");
+    toast.success("Acesso removido.");
     setDeleting(null);
     load();
   };
