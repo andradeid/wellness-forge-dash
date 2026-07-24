@@ -505,18 +505,37 @@ async function handleInvoicePaid(
 
 
 
-  await addCreditsToUser(supabaseAdmin, {
-    userId: targetUserId,
-    credits: monthlyCredits,
-    reason: `plan:${(plan as any).slug}:renewal`,
-    metadata: {
-      stripe_invoice_id: invoice.id,
-      stripe_subscription_id: sub.id,
-      stripe_price_id: priceId,
-      plan_slug: (plan as any).slug,
-      source: "stripe_invoice",
-    },
-  });
+
+  // Idempotência extra: se já existe payment_history pago para essa invoice,
+  // pula crédito e recarga (evita duplo crédito em reprocessamento manual).
+  let alreadyCredited = false;
+  if (invoice.id) {
+    const { data: existingInv } = await supabaseAdmin
+      .from("payment_history" as any)
+      .select("id")
+      .eq("stripe_invoice_id", invoice.id)
+      .eq("status", "paid")
+      .maybeSingle();
+    if (existingInv) {
+      alreadyCredited = true;
+      console.log("[stripe-webhook] invoice já creditada", invoice.id);
+    }
+  }
+
+  if (!alreadyCredited) {
+    await addCreditsToUser(supabaseAdmin, {
+      userId: targetUserId,
+      credits: monthlyCredits,
+      reason: `plan:${(plan as any).slug}:renewal`,
+      metadata: {
+        stripe_invoice_id: invoice.id,
+        stripe_subscription_id: sub.id,
+        stripe_price_id: priceId,
+        plan_slug: (plan as any).slug,
+        source: "stripe_invoice",
+      },
+    });
+  }
 
   // Atualiza monthly_quota + quota_reset_at
   const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
