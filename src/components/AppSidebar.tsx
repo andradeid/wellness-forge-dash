@@ -158,6 +158,30 @@ const adminGroups: NavGroup[] = [
 
 ];
 
+const supportGroups: NavGroup[] = [
+  {
+    key: "acesso",
+    label: "ACESSO",
+    subtitle: "Suporte a nutricionistas",
+    icon: KeyRound,
+    items: [
+      { title: "Nutricionistas", url: "/app/admin/nutritionists", icon: Stethoscope },
+    ],
+  },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    bottom: true,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
+    ],
+  },
+];
+
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -220,7 +244,7 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            {role !== "super_admin" && (
+            {role !== "super_admin" && role !== "support" && (
               <CreditsBadge collapsed balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
             )}
           </div>
@@ -229,10 +253,14 @@ export function AppSidebar() {
             <div className="flex items-end gap-2">
               <img src={lummaLockup} alt="Lumma" className="h-7" />
               <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground pb-[3px]">
-                {role === "super_admin" || role === "admin" ? "Admin" : "Nutri"}
+                {role === "super_admin" || role === "admin"
+                  ? "Admin"
+                  : role === "support"
+                    ? "Suporte"
+                    : "Nutri"}
               </span>
             </div>
-              {role !== "super_admin" && (
+              {role !== "super_admin" && role !== "support" && (
                 <CreditsBadge balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
               )}
           </div>
@@ -241,7 +269,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {role !== "super_admin" && role !== "admin" && (
+        {role !== "super_admin" && role !== "admin" && role !== "support" && (
           <div className={cn("px-1 pb-2", collapsed && "px-0")}>
             <Link to="/app/fale-com-lumma" title="Página Inicial">
               <span
@@ -256,8 +284,13 @@ export function AppSidebar() {
             </Link>
           </div>
         )}
-        {(role === "super_admin" || role === "admin" ? adminGroups : nutriGroups)
+        {(role === "support"
+          ? supportGroups
+          : role === "super_admin" || role === "admin"
+            ? adminGroups
+            : nutriGroups)
           .filter((g) => !(role === "super_admin" && g.key === "ajuda"))
+
           .map((g) => {
           const visibleItems = g.items.filter(
             (item) => !item.superAdminOnly || role === "super_admin",
@@ -363,7 +396,12 @@ export function AppSidebar() {
                       {profile?.full_name || profile?.email || "Usuário"}
                     </div>
                     <div className="text-[11px] text-white/60 truncate">
-                      {role === "super_admin" ? "Analista e Desenvolvedor" : `Plano ${planLabel(planType)}`}
+                      {role === "super_admin"
+                        ? "Analista e Desenvolvedor"
+                        : role === "support"
+                          ? "Suporte (CS)"
+                          : `Plano ${planLabel(planType)}`}
+
                     </div>
 
                   </div>
@@ -375,11 +413,18 @@ export function AppSidebar() {
           <DropdownMenuContent side="top" align="start" className="w-60 rounded-2xl p-2 shadow-lg">
             <div className="px-3 pt-2 pb-1">
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                {role === "super_admin" ? "Super Admin" : role === "admin" ? "Administrador" : "Nutricionista"}
+                {role === "super_admin"
+                  ? "Super Admin"
+                  : role === "admin"
+                    ? "Administrador"
+                    : role === "support"
+                      ? "Suporte (CS)"
+                      : "Nutricionista"}
               </p>
               <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
             </div>
-            {role !== "super_admin" && (
+            {role !== "super_admin" && role !== "support" && (
+
               <div className="px-3 pb-2">
                 <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
