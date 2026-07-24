@@ -102,7 +102,8 @@ function planLabel(plan: string | null) {
 
 function UsersPage() {
   const { role } = useAuth();
-  const canAccess = role === "super_admin";
+  const canAccess = role === "super_admin" || role === "support";
+  const isSuperAdmin = role === "super_admin";
   const isForbidden = role !== null && !canAccess;
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
