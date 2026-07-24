@@ -57,7 +57,7 @@ function NutritionistsPage() {
     const { data, error } = await (supabase as any)
       .from("user_roles")
       .select("user_id")
-      .in("role", ["super_admin", "admin"]);
+      .in("role", ["super_admin", "admin", "support"]);
     if (error) { toast.error(error.message); return []; }
     const ids = Array.from(new Set((data ?? []).map((r: any) => r.user_id as string))) as string[];
     excludeIdsRef.current = ids;
