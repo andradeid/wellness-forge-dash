@@ -105,8 +105,15 @@ function AdministratorsPage() {
       setLoading(false);
       return;
     }
-    const promoMap = new Map<string, string>();
-    (roleRows ?? []).forEach((r: any) => promoMap.set(r.user_id, r.created_at));
+    const promoMap = new Map<string, { created_at: string; role: AdminRow["role"] }>();
+    // priority: super_admin > admin > support
+    const priority: Record<string, number> = { super_admin: 3, admin: 2, support: 1 };
+    (roleRows ?? []).forEach((r: any) => {
+      const existing = promoMap.get(r.user_id);
+      if (!existing || priority[r.role] > priority[existing.role]) {
+        promoMap.set(r.user_id, { created_at: r.created_at, role: r.role });
+      }
+    });
     const merged: AdminRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
@@ -114,7 +121,8 @@ function AdministratorsPage() {
       phone: p.phone,
       avatar_url: p.avatar_url,
       is_blocked: !!p.is_blocked,
-      promoted_at: promoMap.get(p.id) ?? "",
+      promoted_at: promoMap.get(p.id)?.created_at ?? "",
+      role: promoMap.get(p.id)?.role ?? "admin",
     }));
     setRows(
       merged.sort((a, b) =>
