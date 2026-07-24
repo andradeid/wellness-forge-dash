@@ -827,28 +827,34 @@ function UsersPage() {
                           <Button size="icon" variant="ghost" onClick={() => openDetails(r)} title="Ver detalhes">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => openPlan(r)} title="Plano & Créditos">
-                            <CreditCard className="h-4 w-4" />
-                          </Button>
+                          {isSuperAdmin && (
+                            <Button size="icon" variant="ghost" onClick={() => openPlan(r)} title="Plano & Créditos">
+                              <CreditCard className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button size="icon" variant="ghost" onClick={() => sendWelcome(r)} title="Enviar boas-vindas / Reset">
                             <Mail className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => toggleBlock(r)}
-                            title={r.is_blocked ? "Reativar" : "Bloquear"}
-                          >
-                            {r.is_blocked ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Ban className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => { setDeleteUser(r); setDeleteConfirm(""); }}
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {isSuperAdmin && (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => toggleBlock(r)}
+                                title={r.is_blocked ? "Reativar" : "Bloquear"}
+                              >
+                                {r.is_blocked ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Ban className="h-4 w-4" />}
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => { setDeleteUser(r); setDeleteConfirm(""); }}
+                                title="Excluir"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
