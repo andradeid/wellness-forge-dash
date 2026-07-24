@@ -85,7 +85,7 @@ export function OperationalAnalyticsSection({ hours }: { hours: number }) {
       .slice(0, 5)
       .map((u, i) => `${i + 1}. ${u.fullName || u.email || "—"} (${u.debits})`)
       .join("\n");
-    // Veredito dinâmico
+    // Leitura do dia (fechamento dinâmico)
     const peakHour = op.concurrencyPeakAt ? new Date(op.concurrencyPeakAt).getHours() : null;
     const periodoDia =
       peakHour === null ? "" :
@@ -94,23 +94,23 @@ export function OperationalAnalyticsSection({ hours }: { hours: number }) {
       peakHour < 18 ? "à tarde" : "à noite";
     const saude =
       op.assistantErrorMessages === 0 && examOkPct >= 95
-        ? "sem falha operacional no fluxo de exame/chat"
+        ? "operação fluindo sem falhas relevantes no atendimento"
         : op.assistantErrorMessages <= 2
-        ? "estabilidade ok, poucas falhas no chat"
-        : `atenção: ${op.assistantErrorMessages} falhas no chat`;
+        ? "operação estável, com pequenos ajustes pontuais no atendimento"
+        : `atenção redobrada: ${op.assistantErrorMessages} atendimentos com falha`;
     const adocao =
       op.mustChangePasswordStill > 100
-        ? `adoção (${op.mustChangePasswordStill.toLocaleString("pt-BR")} com senha pendente)`
+        ? `ativação de conta (${op.mustChangePasswordStill.toLocaleString("pt-BR")} usuários ainda com senha temporária)`
         : op.realActiveUsers < op.loginsUnique / 2
-        ? "engajamento (muitos logam e não usam)"
-        : "conversão de novos débitos";
+        ? "engajamento (muitos entram e não geram uso)"
+        : "conversão de novos usuários em consumo recorrente";
     const clima =
       op.debitsCount > 50 && op.realActiveUsers > 20
         ? "Dia saudável"
         : op.debitsCount > 10
         ? "Dia morno"
         : "Dia fraco";
-    const veredito = `\n\n📌 *Veredito:* ${clima} — ativação com ${op.loginsUnique} logins, uso real concentrado ${periodoDia || "ao longo do dia"}, ${saude}. O gargalo agora é ${adocao}, não estabilidade.`;
+    const veredito = `\n\n📌 *Leitura do dia:* ${clima} — ${op.loginsUnique} logins, uso real concentrado ${periodoDia || "ao longo do dia"}, ${saude}. Foco de melhoria: ${adocao}. Seguimos monitorando de perto. 🚀`;
 
     const msg =
 `📊 *LUMMA — Resumo operacional (${nowStr})*
@@ -119,13 +119,13 @@ Período: ${periodo}
 👤 *Logins únicos:* ${op.loginsUnique} (${op.loginEvents} sessões)
 ✅ *Usuários ativos reais:* ${op.realActiveUsers} (login ∪ chat ∪ exame ∪ débito)
 💬 *Mensagens de usuário:* ${op.userMessages.toLocaleString("pt-BR")} · ${op.chatUsers} pessoas
-🧪 *Exames enviados:* ${op.examsTotal} (${op.examUploaders} pessoas) · ${examOkPct}% com dify_file_id
+🧪 *Exames enviados:* ${op.examsTotal} (${op.examUploaders} pessoas) · ${examOkPct}% processados com sucesso
 🪙 *Débitos (uso):* ${op.debitsCount.toLocaleString("pt-BR")} · ${op.debitsAmountSum.toLocaleString("pt-BR")} créditos · ${op.debitUsers} pessoas
 🎁 *Grants/cortesia:* ${op.grantsCount.toLocaleString("pt-BR")} · ${op.grantsAmountSum.toLocaleString("pt-BR")} créditos · ${op.grantUsers} pessoas
 👥 *Pacientes novos:* ${op.patientsCreated} · *Chats novos:* ${op.chatsCreated}
 ⚡ *Pico de concorrência ≈* ${op.concurrencyPeakUsers} usuários${op.concurrencyPeakAt ? ` (${format(new Date(op.concurrencyPeakAt), "dd/MM 'às' HH:mm", { locale: ptBR })})` : ""} — janela ${op.concurrencyWindowMinutes} min
 🔐 *Senha:* ${op.mustChangePasswordStill} ainda pendentes · ${op.passwordClearedProxy} liberaram no período
-⚠️ *Falhas no chat:* ${op.assistantErrorMessages}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}${veredito}`;
+⚠️ *Falhas no atendimento:* ${op.assistantErrorMessages}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}${veredito}`;
 
 
 
