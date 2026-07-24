@@ -152,7 +152,7 @@ function AppLayout() {
     }
     if (!role) return;
     if (!isAllowed(pathname, role)) {
-      const dest = role === "support" ? "/app/admin/nutritionists" : "/unauthorized";
+      const dest = role === "support" ? "/app/admin/users" : "/unauthorized";
       void navigate({ to: dest, replace: true }).catch((error) => {
         console.warn("[app] falha ao redirecionar acesso negado", error);
       });
