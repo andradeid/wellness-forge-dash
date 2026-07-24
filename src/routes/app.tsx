@@ -30,16 +30,16 @@ type AppRole = "super_admin" | "admin" | "nutri" | "support";
 // Defesa em profundidade: páginas continuam com seus guards locais.
 const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
   // Somente super_admin
-  { prefix: "/app/admin/users", roles: ["super_admin"] },
   { prefix: "/app/admin/ranking", roles: ["super_admin"] },
   { prefix: "/app/admin/playground", roles: ["super_admin"] },
   { prefix: "/app/admin/feedbacks", roles: ["super_admin"] },
   { prefix: "/app/admin/system", roles: ["super_admin"] },
+  // Gestão de usuários: super_admin e suporte (CS)
+  { prefix: "/app/admin/users", roles: ["super_admin", "support"] },
   // Admin + super_admin
   { prefix: "/app/admin/administrators", roles: ["admin", "super_admin"] },
   { prefix: "/app/admin/integrations", roles: ["admin", "super_admin"] },
-  // Nutricionistas: apenas super_admin e suporte (CS)
-  { prefix: "/app/admin/nutritionists", roles: ["super_admin", "support"] },
+  { prefix: "/app/admin/nutritionists", roles: ["super_admin"] },
 
   // Qualquer outra rota /app/admin/* exige pelo menos admin
   { prefix: "/app/admin", roles: ["admin", "super_admin"] },
@@ -48,7 +48,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
 // Rotas permitidas para o papel Suporte (CS), fora do /app/admin.
 // Whitelist rigorosa: qualquer outra rota /app/* redireciona para a permitida.
 const SUPPORT_ALLOWED_PREFIXES = [
-  "/app/admin/nutritionists",
+  "/app/admin/users",
   "/app/trocar-senha",
   "/app/politicas",
 ];
