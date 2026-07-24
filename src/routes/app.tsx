@@ -151,11 +151,13 @@ function AppLayout() {
     }
     if (!role) return;
     if (!isAllowed(pathname, role)) {
-      void navigate({ to: "/unauthorized", replace: true }).catch((error) => {
-        console.warn("[app] falha ao redirecionar para não autorizado", error);
+      const dest = role === "support" ? "/app/admin/nutritionists" : "/unauthorized";
+      void navigate({ to: dest, replace: true }).catch((error) => {
+        console.warn("[app] falha ao redirecionar acesso negado", error);
       });
     }
   }, [loading, session, sessionAllowed, role, pathname, navigate]);
+
 
   // Gatekeeper de sessão única: valida UMA VEZ por sessão (não a cada rota).
   // Revalidar a cada mudança de pathname desmontava a árvore do chat no meio
