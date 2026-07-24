@@ -153,7 +153,7 @@ function RankingPage() {
     return () => {
       cancelled = true;
     };
-  }, [role, period]);
+  }, [role, period, customFrom, customTo]);
 
   const top3 = useMemo(() => rows.slice(0, 3), [rows]);
   const rest = useMemo(() => rows.slice(3), [rows]);
