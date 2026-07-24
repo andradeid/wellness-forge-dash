@@ -165,7 +165,7 @@ const supportGroups: NavGroup[] = [
     subtitle: "Suporte a nutricionistas",
     icon: KeyRound,
     items: [
-      { title: "Nutricionistas", url: "/app/admin/nutritionists", icon: Stethoscope },
+      { title: "Nutricionistas", url: "/app/admin/users", icon: Stethoscope },
     ],
   },
   {

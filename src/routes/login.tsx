@@ -203,7 +203,7 @@ function LoginPage() {
       currentRole === "nutri"
         ? "/app/fale-com-lumma"
         : currentRole === "support"
-          ? "/app/admin/nutritionists"
+          ? "/app/admin/users"
           : "/app";
     navigate({ to, replace: true });
   };
