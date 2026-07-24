@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/admin/ranking")({
   component: RankingPage,
 });
 
-type Period = "month" | "7d" | "all";
+type Period = "24h" | "7d" | "month" | "all" | "custom";
 
 interface RankRow {
   user_id: string;
@@ -27,16 +27,27 @@ interface RankRow {
   last_activity: string | null;
 }
 
-function periodStart(p: Period): Date | null {
+function periodRange(p: Period, customFrom?: string, customTo?: string): { start: Date | null; end: Date | null } {
   const now = new Date();
-  if (p === "month") return new Date(now.getFullYear(), now.getMonth(), 1);
+  if (p === "24h") {
+    const d = new Date(now);
+    d.setHours(d.getHours() - 24);
+    return { start: d, end: null };
+  }
+  if (p === "month") return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: null };
   if (p === "7d") {
     const d = new Date(now);
     d.setDate(d.getDate() - 7);
-    return d;
+    return { start: d, end: null };
   }
-  return null;
+  if (p === "custom") {
+    const s = customFrom ? new Date(customFrom + "T00:00:00") : null;
+    const e = customTo ? new Date(customTo + "T23:59:59") : null;
+    return { start: s, end: e };
+  }
+  return { start: null, end: null };
 }
+
 
 function RankingPage() {
   const { role } = useAuth();
