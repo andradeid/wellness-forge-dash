@@ -186,6 +186,19 @@ async function handleCheckoutCompleted(
       return;
     }
 
+    // Idempotência extra: se já existe payment_history pago para essa session_id,
+    // pula crédito + histórico + email (evita duplo crédito em reprocessamentos).
+    const { data: existingPack } = await supabaseAdmin
+      .from("payment_history" as any)
+      .select("id")
+      .eq("stripe_session_id", session.id)
+      .eq("status", "paid")
+      .maybeSingle();
+    if (existingPack) {
+      console.log("[stripe-webhook] pack já creditado para session", session.id);
+      return;
+    }
+
     await addCreditsToUser(supabaseAdmin, {
       userId,
       credits,
