@@ -158,6 +158,30 @@ const adminGroups: NavGroup[] = [
 
 ];
 
+const supportGroups: NavGroup[] = [
+  {
+    key: "acesso",
+    label: "ACESSO",
+    subtitle: "Suporte a nutricionistas",
+    icon: KeyRound,
+    items: [
+      { title: "Nutricionistas", url: "/app/admin/nutritionists", icon: Stethoscope },
+    ],
+  },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    bottom: true,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
+    ],
+  },
+];
+
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
