@@ -413,11 +413,18 @@ export function AppSidebar() {
           <DropdownMenuContent side="top" align="start" className="w-60 rounded-2xl p-2 shadow-lg">
             <div className="px-3 pt-2 pb-1">
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                {role === "super_admin" ? "Super Admin" : role === "admin" ? "Administrador" : "Nutricionista"}
+                {role === "super_admin"
+                  ? "Super Admin"
+                  : role === "admin"
+                    ? "Administrador"
+                    : role === "support"
+                      ? "Suporte (CS)"
+                      : "Nutricionista"}
               </p>
               <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
             </div>
-            {role !== "super_admin" && (
+            {role !== "super_admin" && role !== "support" && (
+
               <div className="px-3 pb-2">
                 <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
