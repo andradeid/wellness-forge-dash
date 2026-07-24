@@ -16,7 +16,7 @@ async function fetchPaged<T extends Record<string, unknown>>(
     q = apply(q);
     const { data, error } = await q;
     if (error) throw new Error(`${table}: ${error.message}`);
-    const batch = (data ?? []) as T[];
+    const batch = ((data ?? []) as unknown) as T[];
     rows.push(...batch);
     if (batch.length < pageSize) break;
     from += pageSize;
