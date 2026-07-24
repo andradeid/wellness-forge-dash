@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/admin/ranking")({
   component: RankingPage,
 });
 
-type Period = "month" | "7d" | "all";
+type Period = "24h" | "7d" | "month" | "all" | "custom";
 
 interface RankRow {
   user_id: string;
@@ -27,21 +27,34 @@ interface RankRow {
   last_activity: string | null;
 }
 
-function periodStart(p: Period): Date | null {
+function periodRange(p: Period, customFrom?: string, customTo?: string): { start: Date | null; end: Date | null } {
   const now = new Date();
-  if (p === "month") return new Date(now.getFullYear(), now.getMonth(), 1);
+  if (p === "24h") {
+    const d = new Date(now);
+    d.setHours(d.getHours() - 24);
+    return { start: d, end: null };
+  }
+  if (p === "month") return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: null };
   if (p === "7d") {
     const d = new Date(now);
     d.setDate(d.getDate() - 7);
-    return d;
+    return { start: d, end: null };
   }
-  return null;
+  if (p === "custom") {
+    const s = customFrom ? new Date(customFrom + "T00:00:00") : null;
+    const e = customTo ? new Date(customTo + "T23:59:59") : null;
+    return { start: s, end: e };
+  }
+  return { start: null, end: null };
 }
+
 
 function RankingPage() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>("month");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [rows, setRows] = useState<RankRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,11 +66,13 @@ function RankingPage() {
 
   useEffect(() => {
     if (role !== "super_admin") return;
+    if (period === "custom" && (!customFrom || !customTo)) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const start = periodStart(period);
+      const { start, end } = periodRange(period, customFrom, customTo);
       const startIso = start ? start.toISOString() : null;
+      const endIso = end ? end.toISOString() : null;
 
       const fbQ = (supabase as any)
         .from("ai_feedback")
@@ -69,6 +84,11 @@ function RankingPage() {
         fbQ.gte("created_at", startIso);
         exQ.gte("created_at", startIso);
       }
+      if (endIso) {
+        fbQ.lte("created_at", endIso);
+        exQ.lte("created_at", endIso);
+      }
+
 
       const [fbRes, exRes] = await Promise.all([fbQ, exQ]);
       if (fbRes.error || exRes.error) {
@@ -133,7 +153,7 @@ function RankingPage() {
     return () => {
       cancelled = true;
     };
-  }, [role, period]);
+  }, [role, period, customFrom, customTo]);
 
   const top3 = useMemo(() => rows.slice(0, 3), [rows]);
   const rest = useMemo(() => rows.slice(3), [rows]);
@@ -153,13 +173,15 @@ function RankingPage() {
         </h1>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1 rounded-full bg-muted/60 p-1">
           {(
             [
+              { key: "24h", label: "24h" },
+              { key: "7d", label: "7 dias" },
               { key: "month", label: "Este mês" },
-              { key: "7d", label: "Últimos 7 dias" },
-              { key: "all", label: "Total acumulado" },
+              { key: "all", label: "Total" },
+              { key: "custom", label: "Personalizado" },
             ] as { key: Period; label: string }[]
           ).map((p) => (
             <button
@@ -177,7 +199,25 @@ function RankingPage() {
             </button>
           ))}
         </div>
+        {period === "custom" && (
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="h-9 rounded-full border bg-white px-3 text-xs text-foreground"
+            />
+            <span className="text-xs text-muted-foreground">até</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="h-9 rounded-full border bg-white px-3 text-xs text-foreground"
+            />
+          </div>
+        )}
       </div>
+
 
       {loading ? (
         <div className="mt-10 py-16 text-center text-sm text-muted-foreground">
