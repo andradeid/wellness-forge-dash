@@ -38,8 +38,9 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
   // Admin + super_admin
   { prefix: "/app/admin/administrators", roles: ["admin", "super_admin"] },
   { prefix: "/app/admin/integrations", roles: ["admin", "super_admin"] },
-  // Nutricionistas: admin, super_admin E suporte (CS)
-  { prefix: "/app/admin/nutritionists", roles: ["admin", "super_admin", "support"] },
+  // Nutricionistas: apenas super_admin e suporte (CS)
+  { prefix: "/app/admin/nutritionists", roles: ["super_admin", "support"] },
+
   // Qualquer outra rota /app/admin/* exige pelo menos admin
   { prefix: "/app/admin", roles: ["admin", "super_admin"] },
 ];
