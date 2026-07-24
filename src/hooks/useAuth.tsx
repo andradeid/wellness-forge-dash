@@ -10,7 +10,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { clearLocalSessionToken } from "@/lib/session-guard";
 
-export type AppRole = "super_admin" | "admin" | "nutri";
+export type AppRole = "super_admin" | "admin" | "nutri" | "support";
 
 export interface Profile {
   id: string;
