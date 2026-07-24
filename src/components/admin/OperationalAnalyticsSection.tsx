@@ -83,6 +83,33 @@ export function OperationalAnalyticsSection({ hours }: { hours: number }) {
       .slice(0, 5)
       .map((u, i) => `${i + 1}. ${u.fullName || u.email || "—"} (${u.debits})`)
       .join("\n");
+    // Veredito dinâmico
+    const peakHour = op.concurrencyPeakAt ? new Date(op.concurrencyPeakAt).getHours() : null;
+    const periodoDia =
+      peakHour === null ? "" :
+      peakHour < 6 ? "de madrugada" :
+      peakHour < 12 ? "pela manhã" :
+      peakHour < 18 ? "à tarde" : "à noite";
+    const saude =
+      op.assistantErrorMessages === 0 && examOkPct >= 95
+        ? "sem falha operacional no fluxo de exame/chat"
+        : op.assistantErrorMessages <= 2
+        ? "estabilidade ok, poucas falhas no chat"
+        : `atenção: ${op.assistantErrorMessages} falhas no chat`;
+    const adocao =
+      op.mustChangePasswordStill > 100
+        ? `adoção (${op.mustChangePasswordStill.toLocaleString("pt-BR")} com senha pendente)`
+        : op.realActiveUsers < op.loginsUnique / 2
+        ? "engajamento (muitos logam e não usam)"
+        : "conversão de novos débitos";
+    const clima =
+      op.debitsCount > 50 && op.realActiveUsers > 20
+        ? "Dia saudável"
+        : op.debitsCount > 10
+        ? "Dia morno"
+        : "Dia fraco";
+    const veredito = `\n\n📌 *Veredito:* ${clima} — ativação com ${op.loginsUnique} logins, uso real concentrado ${periodoDia || "ao longo do dia"}, ${saude}. O gargalo agora é ${adocao}, não estabilidade.`;
+
     const msg =
 `📊 *LUMMA — Resumo operacional (${nowStr})*
 Período: ${periodo}
@@ -90,13 +117,14 @@ Período: ${periodo}
 👤 *Logins únicos:* ${op.loginsUnique} (${op.loginEvents} sessões)
 ✅ *Usuários ativos reais:* ${op.realActiveUsers} (login ∪ chat ∪ exame ∪ débito)
 💬 *Mensagens de usuário:* ${op.userMessages.toLocaleString("pt-BR")} · ${op.chatUsers} pessoas
-🧪 *Exames enviados:* ${op.examsTotal} (${op.examUploaders} pessoas) · ${op.examsTotal > 0 ? Math.round((op.examsWithDifyFileId / op.examsTotal) * 100) : 100}% com dify_file_id
+🧪 *Exames enviados:* ${op.examsTotal} (${op.examUploaders} pessoas) · ${examOkPct}% com dify_file_id
 🪙 *Débitos (uso):* ${op.debitsCount.toLocaleString("pt-BR")} · ${op.debitsAmountSum.toLocaleString("pt-BR")} créditos · ${op.debitUsers} pessoas
 🎁 *Grants/cortesia:* ${op.grantsCount.toLocaleString("pt-BR")} · ${op.grantsAmountSum.toLocaleString("pt-BR")} créditos · ${op.grantUsers} pessoas
 👥 *Pacientes novos:* ${op.patientsCreated} · *Chats novos:* ${op.chatsCreated}
 ⚡ *Pico de concorrência ≈* ${op.concurrencyPeakUsers} usuários${op.concurrencyPeakAt ? ` (${format(new Date(op.concurrencyPeakAt), "dd/MM 'às' HH:mm", { locale: ptBR })})` : ""} — janela ${op.concurrencyWindowMinutes} min
 🔐 *Senha:* ${op.mustChangePasswordStill} ainda pendentes · ${op.passwordClearedProxy} liberaram no período
-⚠️ *Falhas no chat:* ${op.assistantErrorMessages}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}`;
+⚠️ *Falhas no chat:* ${op.assistantErrorMessages}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}${veredito}`;
+
 
 
     navigator.clipboard.writeText(msg).then(
