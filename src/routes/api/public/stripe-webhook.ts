@@ -186,6 +186,19 @@ async function handleCheckoutCompleted(
       return;
     }
 
+    // Idempotência extra: se já existe payment_history pago para essa session_id,
+    // pula crédito + histórico + email (evita duplo crédito em reprocessamentos).
+    const { data: existingPack } = await supabaseAdmin
+      .from("payment_history" as any)
+      .select("id")
+      .eq("stripe_session_id", session.id)
+      .eq("status", "paid")
+      .maybeSingle();
+    if (existingPack) {
+      console.log("[stripe-webhook] pack já creditado para session", session.id);
+      return;
+    }
+
     await addCreditsToUser(supabaseAdmin, {
       userId,
       credits,
@@ -492,18 +505,37 @@ async function handleInvoicePaid(
 
 
 
-  await addCreditsToUser(supabaseAdmin, {
-    userId: targetUserId,
-    credits: monthlyCredits,
-    reason: `plan:${(plan as any).slug}:renewal`,
-    metadata: {
-      stripe_invoice_id: invoice.id,
-      stripe_subscription_id: sub.id,
-      stripe_price_id: priceId,
-      plan_slug: (plan as any).slug,
-      source: "stripe_invoice",
-    },
-  });
+
+  // Idempotência extra: se já existe payment_history pago para essa invoice,
+  // pula crédito e recarga (evita duplo crédito em reprocessamento manual).
+  let alreadyCredited = false;
+  if (invoice.id) {
+    const { data: existingInv } = await supabaseAdmin
+      .from("payment_history" as any)
+      .select("id")
+      .eq("stripe_invoice_id", invoice.id)
+      .eq("status", "paid")
+      .maybeSingle();
+    if (existingInv) {
+      alreadyCredited = true;
+      console.log("[stripe-webhook] invoice já creditada", invoice.id);
+    }
+  }
+
+  if (!alreadyCredited) {
+    await addCreditsToUser(supabaseAdmin, {
+      userId: targetUserId,
+      credits: monthlyCredits,
+      reason: `plan:${(plan as any).slug}:renewal`,
+      metadata: {
+        stripe_invoice_id: invoice.id,
+        stripe_subscription_id: sub.id,
+        stripe_price_id: priceId,
+        plan_slug: (plan as any).slug,
+        source: "stripe_invoice",
+      },
+    });
+  }
 
   // Atualiza monthly_quota + quota_reset_at
   const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
@@ -534,9 +566,10 @@ async function handleInvoicePaid(
     metadata: { plan_slug: (plan as any).slug, billing_cycle: cycle, stripe_subscription_id: sub.id },
   });
 
-  // Email de ativação — apenas na primeira fatura da assinatura (não em renovações)
+  // Email de ativação — apenas na primeira fatura da assinatura (não em renovações
+  // nem em reprocessamentos idempotentes)
   const billingReason = (invoice as any).billing_reason as string | undefined;
-  if (billingReason === "subscription_create") {
+  if (!alreadyCredited && billingReason === "subscription_create") {
     try {
       const { sendSubscriptionActivatedEmail } = await import("@/lib/emails.server");
       await sendSubscriptionActivatedEmail({
