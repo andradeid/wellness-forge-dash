@@ -62,6 +62,7 @@ interface AdminRow {
   avatar_url: string | null;
   is_blocked: boolean;
   promoted_at: string;
+  role: "admin" | "super_admin" | "support";
 }
 
 function AdministratorsPage() {
