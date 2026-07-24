@@ -1572,7 +1572,7 @@ export type Database = {
     }
     Enums: {
       ai_feedback_rating: "positive" | "negative" | "suggestion"
-      app_role: "super_admin" | "admin" | "nutri"
+      app_role: "super_admin" | "admin" | "nutri" | "support"
       gender_type: "male" | "female" | "other"
       plan_type: "free" | "starter" | "pro" | "clinica" | "legado_500"
       subscription_status: "trial" | "active" | "past_due" | "canceled"
@@ -1704,7 +1704,7 @@ export const Constants = {
   public: {
     Enums: {
       ai_feedback_rating: ["positive", "negative", "suggestion"],
-      app_role: ["super_admin", "admin", "nutri"],
+      app_role: ["super_admin", "admin", "nutri", "support"],
       gender_type: ["male", "female", "other"],
       plan_type: ["free", "starter", "pro", "clinica", "legado_500"],
       subscription_status: ["trial", "active", "past_due", "canceled"],
