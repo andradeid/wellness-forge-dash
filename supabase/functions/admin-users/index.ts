@@ -40,13 +40,19 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: roleRow } = await admin
+  const { data: roleRows } = await admin
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId)
-    .eq("role", "super_admin")
-    .maybeSingle();
-  if (!roleRow) return json({ ok: false, error: "Acesso restrito" }, 403);
+    .in("role", ["super_admin", "support"]);
+  const callerRoles = (roleRows ?? []).map((r: any) => r.role as string);
+  if (callerRoles.length === 0) return json({ ok: false, error: "Acesso restrito" }, 403);
+  const isSuperAdmin = callerRoles.includes("super_admin");
+
+  // Suporte (CS) só pode criar nutricionista — não pode bloquear/desbloquear
+  if (req.method === "PATCH" && !isSuperAdmin) {
+    return json({ ok: false, error: "Ação restrita ao super admin" }, 403);
+  }
 
   try {
     if (req.method === "POST") {
