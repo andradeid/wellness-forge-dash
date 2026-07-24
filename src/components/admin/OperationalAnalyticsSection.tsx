@@ -74,15 +74,60 @@ export function OperationalAnalyticsSection({ hours }: { hours: number }) {
   const examOkPct =
     op.examsTotal > 0 ? Math.round((op.examsWithDifyFileId / op.examsTotal) * 100) : 100;
 
+  const copyWhatsapp = () => {
+    if (!op) return;
+    const nowStr = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
+    const periodo =
+      hours <= 24 ? "últimas 24h" : hours <= 24 * 7 ? "últimos 7 dias" : hours <= 24 * 30 ? "últimos 30 dias" : `últimos ${Math.round(hours / 24)} dias`;
+    const top = op.topDebitUsers
+      .slice(0, 5)
+      .map((u, i) => `${i + 1}. ${u.fullName || u.email || "—"} (${u.debits})`)
+      .join("\n");
+    const lf = data?.langfuse;
+    const lfLine = lf?.configured
+      ? `🤖 Langfuse: ${(lf.tracesTotal ?? 0).toLocaleString("pt-BR")} traces · ${(lf.errorObservations ?? 0).toLocaleString("pt-BR")} erros`
+      : "🤖 Langfuse: não configurado";
+    const msg =
+`📊 *LUMMA — Resumo operacional (${nowStr})*
+Período: ${periodo}
+
+👤 *Logins únicos:* ${op.loginsUnique} (${op.loginEvents} sessões)
+✅ *Usuários ativos reais:* ${op.realActiveUsers} (login ∪ chat ∪ exame ∪ débito)
+💬 *Mensagens de usuário:* ${op.userMessages.toLocaleString("pt-BR")} · ${op.chatUsers} pessoas
+🧪 *Exames enviados:* ${op.examsTotal} (${op.examUploaders} pessoas) · ${op.examsTotal > 0 ? Math.round((op.examsWithDifyFileId / op.examsTotal) * 100) : 100}% com dify_file_id
+🪙 *Débitos (uso):* ${op.debitsCount.toLocaleString("pt-BR")} · ${op.debitsAmountSum.toLocaleString("pt-BR")} créditos · ${op.debitUsers} pessoas
+🎁 *Grants/cortesia:* ${op.grantsCount.toLocaleString("pt-BR")} · ${op.grantsAmountSum.toLocaleString("pt-BR")} créditos · ${op.grantUsers} pessoas
+👥 *Pacientes novos:* ${op.patientsCreated} · *Chats novos:* ${op.chatsCreated}
+⚡ *Pico de concorrência ≈* ${op.concurrencyPeakUsers} usuários${op.concurrencyPeakAt ? ` (${format(new Date(op.concurrencyPeakAt), "dd/MM 'às' HH:mm", { locale: ptBR })})` : ""} — janela ${op.concurrencyWindowMinutes} min
+🔐 *Senha:* ${op.mustChangePasswordStill} ainda pendentes · ${op.passwordClearedProxy} liberaram no período
+⚠️ *Falhas no chat:* ${op.assistantErrorMessages}
+${lfLine}${top ? `\n\n🏆 *Top consumo:*\n${top}` : ""}`;
+
+    navigator.clipboard.writeText(msg).then(
+      () => toast.success("Resumo copiado — cole no WhatsApp"),
+      () => toast.error("Não consegui copiar"),
+    );
+  };
+
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">Resumo operacional</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Histórico sob demanda (sem Realtime). Grant/cortesia separado de uso real.
-          Concorrência = usuários distintos com débito ou exame na mesma janela de{" "}
-          {op.concurrencyWindowMinutes} min (aproximação).
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Resumo operacional</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Histórico sob demanda (sem Realtime). Grant/cortesia separado de uso real.
+            Concorrência = usuários distintos com débito ou exame na mesma janela de{" "}
+            {op.concurrencyWindowMinutes} min (aproximação).
+          </p>
+        </div>
+        <Button
+          size="sm"
+          onClick={copyWhatsapp}
+          className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 hover:opacity-90"
+        >
+          <Copy className="h-4 w-4 mr-2" />
+          Copiar para WhatsApp
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
