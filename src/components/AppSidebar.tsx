@@ -396,7 +396,12 @@ export function AppSidebar() {
                       {profile?.full_name || profile?.email || "Usuário"}
                     </div>
                     <div className="text-[11px] text-white/60 truncate">
-                      {role === "super_admin" ? "Analista e Desenvolvedor" : `Plano ${planLabel(planType)}`}
+                      {role === "super_admin"
+                        ? "Analista e Desenvolvedor"
+                        : role === "support"
+                          ? "Suporte (CS)"
+                          : `Plano ${planLabel(planType)}`}
+
                     </div>
 
                   </div>
