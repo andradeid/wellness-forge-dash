@@ -566,9 +566,10 @@ async function handleInvoicePaid(
     metadata: { plan_slug: (plan as any).slug, billing_cycle: cycle, stripe_subscription_id: sub.id },
   });
 
-  // Email de ativação — apenas na primeira fatura da assinatura (não em renovações)
+  // Email de ativação — apenas na primeira fatura da assinatura (não em renovações
+  // nem em reprocessamentos idempotentes)
   const billingReason = (invoice as any).billing_reason as string | undefined;
-  if (billingReason === "subscription_create") {
+  if (!alreadyCredited && billingReason === "subscription_create") {
     try {
       const { sendSubscriptionActivatedEmail } = await import("@/lib/emails.server");
       await sendSubscriptionActivatedEmail({
