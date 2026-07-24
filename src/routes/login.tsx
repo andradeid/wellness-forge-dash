@@ -199,11 +199,15 @@ function LoginPage() {
 
   const finalizeEntry = (currentRole: AppRole | null) => {
     toast.success("Bem-vindo de volta!");
-    navigate({
-      to: currentRole === "nutri" ? "/app/fale-com-lumma" : "/app",
-      replace: true,
-    });
+    const to =
+      currentRole === "nutri"
+        ? "/app/fale-com-lumma"
+        : currentRole === "support"
+          ? "/app/admin/nutritionists"
+          : "/app";
+    navigate({ to, replace: true });
   };
+
 
   const fetchRoleForNavigation = async (userId: string): Promise<AppRole | null> => {
     const { data, error } = await (supabase as any)
