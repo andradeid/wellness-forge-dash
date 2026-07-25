@@ -3,12 +3,73 @@ import { getRequestHost, getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+import type Stripe from "stripe";
+
 /** Base URL a partir do request (para success/cancel/return URLs). */
 function getOrigin(): string {
   const forwardedProto = getRequestHeader("x-forwarded-proto");
   const host = getRequestHost();
   const proto = forwardedProto ?? (host.includes("localhost") ? "http" : "https");
   return `${proto}://${host}`;
+}
+
+/**
+ * Garante um customer válido no modo atual da chave Stripe (live/test).
+ * IDs salvos em test mode quebram após troca para sk_live_ — recria nesses casos.
+ */
+async function getOrCreateStripeCustomer(opts: {
+  stripe: Stripe;
+  supabase: any;
+  userId: string;
+}): Promise<string> {
+  const { stripe, supabase, userId } = opts;
+
+  const { data: sub } = await supabase
+    .from("subscriptions" as any)
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  let customerId = (sub as any)?.stripe_customer_id as string | null;
+
+  if (customerId) {
+    try {
+      const existing = await stripe.customers.retrieve(customerId);
+      if (!(existing as any)?.deleted) return customerId;
+    } catch (err: any) {
+      const msg = String(err?.message ?? err ?? "");
+      const wrongMode =
+        /No such customer/i.test(msg) ||
+        /similar object exists in test mode/i.test(msg) ||
+        /similar object exists in live mode/i.test(msg);
+      if (!wrongMode) throw err;
+      console.warn(
+        "[stripe] customer inválido no modo atual; recriando",
+        { userId, customerId, reason: msg.slice(0, 160) },
+      );
+      customerId = null;
+    }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles" as any)
+    .select("email, full_name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const customer = await stripe.customers.create({
+    email: (profile as any)?.email ?? undefined,
+    name: (profile as any)?.full_name ?? undefined,
+    metadata: { user_id: userId },
+  });
+  customerId = customer.id;
+
+  await supabase.from("subscriptions" as any).upsert(
+    { user_id: userId, stripe_customer_id: customerId },
+    { onConflict: "user_id" },
+  );
+
+  return customerId!;
 }
 
 /**
@@ -51,33 +112,12 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       );
     }
 
-    // 2) Recupera / cria stripe_customer_id
-    const { data: sub } = await context.supabase
-      .from("subscriptions" as any)
-      .select("stripe_customer_id")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    let customerId = (sub as any)?.stripe_customer_id as string | null;
-    if (!customerId) {
-      const { data: profile } = await context.supabase
-        .from("profiles" as any)
-        .select("email, full_name")
-        .eq("id", context.userId)
-        .maybeSingle();
-      const customer = await stripe.customers.create({
-        email: (profile as any)?.email ?? undefined,
-        name: (profile as any)?.full_name ?? undefined,
-        metadata: { user_id: context.userId },
-      });
-      customerId = customer.id;
-      await context.supabase
-        .from("subscriptions" as any)
-        .upsert(
-          { user_id: context.userId, stripe_customer_id: customerId },
-          { onConflict: "user_id" },
-        );
-    }
+    // 2) Recupera / cria stripe_customer_id (válido no modo live/test atual)
+    const customerId = await getOrCreateStripeCustomer({
+      stripe,
+      supabase: context.supabase,
+      userId: context.userId,
+    });
 
     // 3) Cria Checkout Session
     const origin = getOrigin();
@@ -139,33 +179,11 @@ export const createPackCheckout = createServerFn({ method: "POST" })
       );
     }
 
-    // Recupera / cria customer (mesma lógica da assinatura)
-    const { data: sub } = await context.supabase
-      .from("subscriptions" as any)
-      .select("stripe_customer_id")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    let customerId = (sub as any)?.stripe_customer_id as string | null;
-    if (!customerId) {
-      const { data: profile } = await context.supabase
-        .from("profiles" as any)
-        .select("email, full_name")
-        .eq("id", context.userId)
-        .maybeSingle();
-      const customer = await stripe.customers.create({
-        email: (profile as any)?.email ?? undefined,
-        name: (profile as any)?.full_name ?? undefined,
-        metadata: { user_id: context.userId },
-      });
-      customerId = customer.id;
-      await context.supabase
-        .from("subscriptions" as any)
-        .upsert(
-          { user_id: context.userId, stripe_customer_id: customerId },
-          { onConflict: "user_id" },
-        );
-    }
+    const customerId = await getOrCreateStripeCustomer({
+      stripe,
+      supabase: context.supabase,
+      userId: context.userId,
+    });
 
     const origin = getOrigin();
     const session = await stripe.checkout.sessions.create({
@@ -202,16 +220,11 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
     const { getStripe } = await import("./stripe.server");
     const stripe = getStripe();
 
-    const { data: sub } = await context.supabase
-      .from("subscriptions" as any)
-      .select("stripe_customer_id")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    const customerId = (sub as any)?.stripe_customer_id as string | null;
-    if (!customerId) {
-      throw new Error("Sem cliente Stripe associado. Assine um plano ou compre um pacote primeiro.");
-    }
+    const customerId = await getOrCreateStripeCustomer({
+      stripe,
+      supabase: context.supabase,
+      userId: context.userId,
+    });
 
     const origin = getOrigin();
     const portal = await stripe.billingPortal.sessions.create({
