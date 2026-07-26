@@ -207,7 +207,7 @@ function ChatPage() {
   }, [pendingModuleFromUrl, patientProfile, patient, loadingAgents, getAgentForCard, setAgentType, navigate]);
 
   // Auto-seleciona o super agente do perfil da paciente assim que ela carrega,
-  // pra nutri não precisar clicar em "Análise e Consulta" antes de escolher a
+  // pra nutri não precisar clicar em "Avaliação Integrativa" antes de escolher a
   // tarefa. Só roda quando: (1) não há agentType ainda, (2) paciente e agentes
   // carregaram, (3) não veio ?agent/?module/?task da URL, (4) não é chat legado
   // sendo aberto por forceChatId, (5) não há mensagens (chat novo).
@@ -781,7 +781,7 @@ function ChatPage() {
               return (
                 <div className="mb-2 flex items-center gap-2 rounded-2xl border border-[#e8a04c]/30 bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 px-3 py-2 text-xs text-foreground/80 animate-in fade-in slide-in-from-bottom-1">
                   <Sparkles className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
-                  <span className="font-semibold text-foreground">Análise e Consulta:</span>
+                  <span className="font-semibold text-foreground">Avaliação Integrativa:</span>
                   <span className="truncate">{currentAgent.label.replace(/^Super\s+/i, "")}</span>
                   {taskLabel && (
                     <>
@@ -873,7 +873,7 @@ function ChatPage() {
                                   ? superAgentTasks.find(t => t.agent_id === currentAgent!.agent_id && t.task_key === selectedTask)?.label
                                   : null;
                                 const label = isSuperActive
-                                  ? `${(currentAgent?.label ?? "").replace(/^Super\s+/i, "") || "Análise e Consulta"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
+                                  ? `${(currentAgent?.label ?? "").replace(/^Super\s+/i, "") || "Avaliação Integrativa"}${activeTaskLabel ? ` · ${activeTaskLabel}` : ""}`
                                   : (cardTrigger && CARD_LABELS[cardTrigger]) || (agentType ? currentAgent?.label?.replace(/^Super\s+/i, "") : "Selecione uma tarefa");
                                 const Icon = isSuperActive ? Sparkles : ((cardTrigger && CARD_ICONS[cardTrigger]) || Sparkles);
                                 if (loadingAgents) return <span>Carregando...</span>;
@@ -934,7 +934,7 @@ function ChatPage() {
                                       const effectiveTaskKey = resolved?.taskKey ?? task.task_key;
                                       const isActive = agentType === effectiveAgentId && selectedTask === effectiveTaskKey;
                                       const displayLabel = card.card_trigger === 'analise_completa'
-                                        ? 'Análise e Consulta'
+                                        ? 'Avaliação Integrativa'
                                         : card.label;
                                       return (
                                         <button

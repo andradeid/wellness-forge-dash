@@ -848,7 +848,7 @@ function FaleComLummaPage() {
                           const agent = agents.find((a) => a.agent_id === task.agent_id && a.is_super_agent);
                           if (!agent || !agent.is_active) return null;
                           const title = card.card_trigger === 'analise_completa'
-                            ? 'Análise e Consulta'
+                            ? 'Avaliação Integrativa'
                             : card.label;
                           return (
                             <motion.button
@@ -869,7 +869,7 @@ function FaleComLummaPage() {
                         })}
                         {clinicalCards.map((card, idx) => {
                           // Triggers que devem rodar via SUPER AGENTE + task por perfil,
-                          // mesma regra do card "Análise e Consulta" (analise_completa).
+                          // mesma regra do card "Avaliação Integrativa" (analise_completa).
                           const SUPER_ROUTED = new Set([
                             "exames_de_sangue",
                             "composicao_metabolismo",
