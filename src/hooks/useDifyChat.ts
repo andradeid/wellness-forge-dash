@@ -1140,9 +1140,10 @@ export function useDifyChat(
           }),
         });
 
-      // Em conversas antigas, o Dify pode ter salvo o conversation_id com outro `user`.
-      // Ao anexar exame, abrimos uma nova conversa Dify com o UUID correto e mantemos o contexto via meta.
-      const initialConv = difyFiles.length ? undefined : conversationIdRef.current || undefined;
+      // Sempre reaproveita o conversation_id atual — inclusive quando há arquivos —
+      // para que mensagens com imagem/PDF herdem o histórico da conversa. Se o Dify
+      // rejeitar (404 abaixo), abrimos uma nova conversa como fallback.
+      const initialConv = conversationIdRef.current || undefined;
       let res = await callDify(initialConv);
 
       // Se o Dify rejeitar o conversation_id (404 / "Conversation Not Exists"),
