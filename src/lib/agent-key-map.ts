@@ -68,6 +68,11 @@ const MAP_TASK: Record<string, string> = {
   formulacao_magistral: "formulacao_magistral",
   estimativa_refeicao_foto: "analise_visual",
   composicao_corporal_foto: "analise_visual",
+  // Novas tasks clínicas (mesmo custo de exames laboratoriais)
+  bioimpedancia: "exames_laboratoriais",
+  calorimetria: "exames_laboratoriais",
+  genetica: "exames_laboratoriais",
+  microbioma: "exames_laboratoriais",
 };
 
 export interface ResolveAgentKeyOptions {
