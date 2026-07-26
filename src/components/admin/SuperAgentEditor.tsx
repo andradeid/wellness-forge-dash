@@ -365,7 +365,11 @@ export function SuperAgentEditor({ agentUuid, agentLabel }: SuperAgentEditorProp
               <code className="font-mono">reasoning</code>,{" "}
               <code className="font-mono">research</code>,{" "}
               <code className="font-mono">estimativa_refeicao_foto</code>,{" "}
-              <code className="font-mono">composicao_corporal_foto</code>.
+              <code className="font-mono">composicao_corporal_foto</code>,{" "}
+              <code className="font-mono">bioimpedancia</code>,{" "}
+              <code className="font-mono">calorimetria</code>,{" "}
+              <code className="font-mono">genetica</code>,{" "}
+              <code className="font-mono">microbioma</code>.
             </p>
 
 

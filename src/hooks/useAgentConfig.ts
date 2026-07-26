@@ -225,6 +225,10 @@ export function useAgentConfig() {
         break;
       case 'composicao_metabolismo': taskKey = 'composition'; break;
       case 'genetica_microbioma': taskKey = 'genetics'; break;
+      case 'bioimpedancia': taskKey = 'bioimpedancia'; break;
+      case 'calorimetria': taskKey = 'calorimetria'; break;
+      case 'genetica': taskKey = 'genetica'; break;
+      case 'microbioma': taskKey = 'microbioma'; break;
       case 'estimativa_refeicao_foto': taskKey = 'estimativa_refeicao_foto'; break;
       case 'composicao_corporal_foto': taskKey = 'composicao_corporal_foto'; break;
       case 'casos_clinicos': taskKey = 'reasoning'; break;
