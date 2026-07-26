@@ -989,8 +989,17 @@ function ChatPage() {
                       );
 
                       const isSuperActive = !!currentAgent?.is_super_agent;
+                      // Allowlist de task_keys visíveis na UI — espelha os cards da home.
+                      // Antigas "composition" e "genetics" continuam ativas no banco como
+                      // fallback de roteamento, mas ficam escondidas do menu do chat.
+                      const UI_VISIBLE_TASKS = new Set([
+                        "exam_masc", "exam_fem", "exam_gest_mono", "exam_gest_gem",
+                        "bioimpedancia", "calorimetria", "genetica", "microbioma",
+                        "estimativa_refeicao_foto", "composicao_corporal_foto",
+                        "reasoning", "production",
+                      ]);
                       const tasksForCurrentSuper = isSuperActive
-                        ? superAgentTasks.filter(t => t.agent_id === currentAgent!.agent_id && t.is_active).sort((a, b) => a.sort_order - b.sort_order)
+                        ? superAgentTasks.filter(t => t.agent_id === currentAgent!.agent_id && t.is_active && UI_VISIBLE_TASKS.has(t.task_key)).sort((a, b) => a.sort_order - b.sort_order)
                         : [];
                       const activeTaskObj = isSuperActive && selectedTask
                         ? tasksForCurrentSuper.find(t => t.task_key === selectedTask)
