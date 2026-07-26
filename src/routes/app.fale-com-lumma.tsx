@@ -208,8 +208,10 @@ function FaleComLummaPage() {
           setPendingTrigger(undefined);
         } else if (new Set([
           "exames_de_sangue",
-          "composicao_metabolismo",
-          "genetica_microbioma",
+          "bioimpedancia",
+          "calorimetria",
+          "genetica",
+          "microbioma",
           "estimativa_refeicao_foto",
           "composicao_corporal_foto",
           "casos_clinicos",
@@ -820,8 +822,10 @@ function FaleComLummaPage() {
 
                   const clinicalCards = [
                     { trigger: "exames_de_sangue", icon: Droplet, title: "Exames de Sangue", color: "#e89bcf" },
-                    { trigger: "composicao_metabolismo", icon: Scale, title: "Composição e Metabolismo", color: "#e89bcf" },
-                    { trigger: "genetica_microbioma", icon: Dna, title: "Genética e Microbioma", color: "#e89bcf" },
+                    { trigger: "bioimpedancia", icon: Activity, title: "Bioimpedância", color: "#e89bcf" },
+                    { trigger: "calorimetria", icon: Stethoscope, title: "Calorimetria", color: "#e89bcf" },
+                    { trigger: "genetica", icon: Dna, title: "Genética", color: "#e89bcf" },
+                    { trigger: "microbioma", icon: Microscope, title: "Microbioma", color: "#e89bcf" },
                     { trigger: "estimativa_refeicao_foto", icon: Utensils, title: "Refeição por Foto", color: "#e8a04c" },
                     { trigger: "composicao_corporal_foto", icon: Activity, title: "Composição por Foto", color: "#4ade80" },
                     { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" },
@@ -872,8 +876,10 @@ function FaleComLummaPage() {
                           // mesma regra do card "Avaliação Integrativa" (analise_completa).
                           const SUPER_ROUTED = new Set([
                             "exames_de_sangue",
-                            "composicao_metabolismo",
-                            "genetica_microbioma",
+                            "bioimpedancia",
+                            "calorimetria",
+                            "genetica",
+                            "microbioma",
                             "estimativa_refeicao_foto",
                             "composicao_corporal_foto",
                             "casos_clinicos",
@@ -1055,8 +1061,10 @@ function FaleComLummaPage() {
                             // Cards super-roteados: resolvem super agente + task por perfil
                             const SUPER_ROUTED_TRIGGERS = new Set([
                               "exames_de_sangue",
-                              "composicao_metabolismo",
-                              "genetica_microbioma",
+                              "bioimpedancia",
+                              "calorimetria",
+                              "genetica",
+                              "microbioma",
                               "estimativa_refeicao_foto",
                               "composicao_corporal_foto",
                               "casos_clinicos",
