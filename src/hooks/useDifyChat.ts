@@ -19,6 +19,13 @@ import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
 import { extractMealEstimation } from "@/lib/meal-estimation";
+import {
+  CONCURRENCY_TOAST_DESCRIPTION,
+  CONCURRENCY_TOAST_TITLE,
+  CONCURRENCY_USER_MESSAGE,
+  extractDifyStreamErrorMessage,
+  isProviderConcurrencyError,
+} from "@/lib/dify-error-messages";
 
 /** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
 function friendlyExamUploadError(raw: string | undefined | null, fileName: string): string {
@@ -1191,6 +1198,16 @@ export function useDifyChat(
           return;
         }
 
+        // Pico de concorrência do provedor LLM (ex.: Gemini 503 concurrent).
+        if (isProviderConcurrencyError(rawMessage)) {
+          setError(CONCURRENCY_USER_MESSAGE);
+          toast.warning(CONCURRENCY_TOAST_TITLE, {
+            description: CONCURRENCY_TOAST_DESCRIPTION,
+            duration: 10000,
+          });
+          return;
+        }
+
         // 500/502/503/504 do Dify (upstream instável, workflow em processamento
         // longo, timeout momentâneo): mostra aviso amigável pedindo para
         // tentar de novo em alguns segundos — a mensagem geralmente processa
@@ -1272,6 +1289,102 @@ export function useDifyChat(
                   }, 15000);
                 }
               }
+            } else if (data.event === "error") {
+              // Dify emite event:error no meio do stream (ex.: 503 concurrent no nó LLM).
+              // Avisa o usuário e NÃO debita crédito.
+              const rawErr = extractDifyStreamErrorMessage(data);
+              console.warn("[dify] stream event:error", {
+                agent_type: agentType,
+                selected_task: selectedTask ?? null,
+                conversation_id: data.conversation_id ?? null,
+                raw: rawErr.slice(0, 240),
+              });
+
+              const isConcurrency = isProviderConcurrencyError(rawErr);
+              const errorText = isConcurrency
+                ? CONCURRENCY_USER_MESSAGE
+                : "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+              const errorReason = isConcurrency ? "provider_concurrency" : "stream_error";
+
+              if (!assistantSavedRef.current && agentType !== "research") {
+                assistantSavedRef.current = true;
+                if (data.conversation_id) {
+                  conversationIdRef.current = data.conversation_id;
+                  if (agentType) {
+                    conversationMapRef.current = {
+                      ...conversationMapRef.current,
+                      [agentType]: data.conversation_id,
+                    };
+                    setActiveAgents(Object.keys(conversationMapRef.current));
+                  }
+                  await (supabase as any)
+                    .from("patient_chats")
+                    .update({
+                      dify_conversation_id: data.conversation_id,
+                      dify_conversations: conversationMapRef.current,
+                    })
+                    .eq("id", chatId);
+                }
+                const processingMs = Math.round(performance.now() - startedAt);
+                const errorStructured = {
+                  processing_ms: processingMs,
+                  error: true,
+                  error_reason: errorReason,
+                };
+                const contentToSave = fullText.trim()
+                  ? `${fullText.trim()}\n\n${errorText}`
+                  : errorText;
+                const { data: errIns } = await (supabase as any)
+                  .from("chat_messages")
+                  .insert({
+                    chat_id: chatId,
+                    created_by: user.id,
+                    role: "assistant",
+                    content: contentToSave,
+                    agent_type: agentType,
+                    selected_task: selectedTask ?? null,
+                    structured_data: errorStructured,
+                  })
+                  .select("id")
+                  .single();
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          id: errIns?.id ?? m.id,
+                          content: contentToSave,
+                          structured_data: errorStructured,
+                        }
+                      : m,
+                  ),
+                );
+              } else if (agentType === "research" && !researchSavedRef.current) {
+                researchSavedRef.current = true;
+                const contentToSave = fullText.trim()
+                  ? `${fullText.trim()}\n\n${errorText}`
+                  : errorText;
+                await saveAssistantToSupabase(contentToSave, data.conversation_id);
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, content: contentToSave } : m,
+                  ),
+                );
+              }
+
+              setError(errorText);
+              if (isConcurrency) {
+                toast.warning(CONCURRENCY_TOAST_TITLE, {
+                  description: CONCURRENCY_TOAST_DESCRIPTION,
+                  duration: 10000,
+                });
+              } else {
+                toast.error("A Lumma não conseguiu responder desta vez", {
+                  description: "Tente enviar novamente em alguns instantes.",
+                  duration: 8000,
+                });
+              }
+              continue;
             } else if (data.event === "message_end" || data.event === "workflow_finished") {
               if (researchTimeoutRef.current) {
                 clearTimeout(researchTimeoutRef.current);

@@ -7,6 +7,13 @@ import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { enforceSessionGuard } from "@/lib/session-guard";
+import {
+  CONCURRENCY_TOAST_DESCRIPTION,
+  CONCURRENCY_TOAST_TITLE,
+  CONCURRENCY_USER_MESSAGE,
+  extractDifyStreamErrorMessage,
+  isProviderConcurrencyError,
+} from "@/lib/dify-error-messages";
 
 export function useGeneralChat(chatId: string, agentType: string) {
   const { user } = useAuth();
@@ -201,6 +208,13 @@ export function useGeneralChat(chatId: string, agentType: string) {
           toast.warning(msg, { duration: 6000 });
           return;
         }
+        if (isProviderConcurrencyError(errorText)) {
+          toast.warning(CONCURRENCY_TOAST_TITLE, {
+            description: CONCURRENCY_TOAST_DESCRIPTION,
+            duration: 10000,
+          });
+          return;
+        }
         throw new Error(errorText || "Falha ao comunicar com agente");
       }
 
@@ -298,6 +312,29 @@ export function useGeneralChat(chatId: string, agentType: string) {
                 clearTimeout(researchTimeoutRef.current);
                 researchTimeoutRef.current = null;
               }
+              const rawErr = extractDifyStreamErrorMessage(parsed);
+              if (isProviderConcurrencyError(rawErr)) {
+                const contentToSave = fullAssistantText.trim()
+                  ? `${fullAssistantText.trim()}\n\n${CONCURRENCY_USER_MESSAGE}`
+                  : CONCURRENCY_USER_MESSAGE;
+                if (contentToSave && !researchSavedRef.current) {
+                  researchSavedRef.current = true;
+                  await saveAssistantToSupabase(contentToSave, parsed.conversation_id);
+                }
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIdx = updated.length - 1;
+                  if (updated[lastIdx]?.role === "assistant") {
+                    updated[lastIdx] = { ...updated[lastIdx], content: contentToSave };
+                  }
+                  return updated;
+                });
+                toast.warning(CONCURRENCY_TOAST_TITLE, {
+                  description: CONCURRENCY_TOAST_DESCRIPTION,
+                  duration: 10000,
+                });
+                return;
+              }
               throw new Error(parsed.message || "Erro no Dify");
             }
           } catch (e) {
@@ -308,7 +345,15 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
     } catch (e: any) {
       console.error("Chat error:", e);
-      toast.error(e.message || "Erro na comunicação");
+      const raw = String(e?.message || "");
+      if (isProviderConcurrencyError(raw)) {
+        toast.warning(CONCURRENCY_TOAST_TITLE, {
+          description: CONCURRENCY_TOAST_DESCRIPTION,
+          duration: 10000,
+        });
+      } else {
+        toast.error(e.message || "Erro na comunicação");
+      }
       // Remove the last assistant message if it's empty and there was an error
       setMessages((prev) => {
         const last = prev[prev.length - 1];
