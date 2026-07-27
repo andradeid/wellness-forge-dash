@@ -1,0 +1,1 @@
+UPDATE public.super_agent_tasks SET label = 'Plano Alimentar e Formulações' WHERE task_key = 'production';
