@@ -240,21 +240,13 @@ function ChatPage() {
     setAgentType(superAgentId);
   }, [agentType, loadingAgents, patient, patientProfile, agents, initialAgent, pendingModuleFromUrl, initialTask, forceChatId, messages.length, setAgentType]);
 
-  // Abre automaticamente o popover de tarefas em chat novo assim que o super
-  // agente for autosetado — evita o clique duplo (abrir "Selecione uma tarefa"
-  // para depois escolher a tarefa). Só dispara uma vez por chat vazio.
+  // Antes abríamos o popover de tarefas automaticamente em chat novo. Isso
+  // sofria de corrida de estados e às vezes não abria. Substituímos por um
+  // grid inline de tarefas no corpo do chat vazio (ver bloco de render), então
+  // o auto-open aqui foi desativado. O ref é mantido só para eventual retorno.
   const autoOpenedTaskRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!agentType) return;
-    if (selectedTask) return;
-    if (messages.length > 0) return;
-    if (thinking) return;
-    if (autoOpenedTaskRef.current === (chatId ?? "new")) return;
-    const currentAgent = agents.find(a => a.agent_id === agentType);
-    if (!currentAgent?.is_super_agent) return;
-    autoOpenedTaskRef.current = chatId ?? "new";
-    setTaskOpen(true);
-  }, [agentType, selectedTask, messages.length, thinking, agents, chatId]);
+  void autoOpenedTaskRef;
+
 
 
   useEffect(() => {
