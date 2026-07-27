@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, ClipboardList, AlertCircle } from "lucide-react";
+import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Apple, BookOpen, ClipboardList, AlertCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
@@ -37,24 +37,18 @@ function GeneralChatPage() {
   const [editTitle, setEditTitle] = useState("");
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
-  // Somente agent_ids ATIVOS em dify_agents. 'exam' e 'metabolism' estavam
-  // inativos/inexistentes no banco e causavam "Agente não encontrado".
+  // Chat SEM paciente: apenas tarefas que fazem sentido sem perfil identificado.
+  // Cards que exigem paciente (exames por perfil, composição, genética) rodam
+  // via super agente no fluxo com paciente (app.chat.$patientId.tsx).
   const AGENT_OPTIONS = [
-    { id: "exam_feminino", title: "Exames — Feminino", icon: Droplet, color: "#e89bcf", line: 1 },
-    { id: "exam_masculino", title: "Exames — Masculino", icon: Droplet, color: "#e89bcf", line: 1 },
-    { id: "exam_gestante_mono", title: "Exames — Gestante (único)", icon: Droplet, color: "#e89bcf", line: 1 },
-    { id: "exam_gestante_gem", title: "Exames — Gestante (gemelar)", icon: Droplet, color: "#e89bcf", line: 1 },
-    { id: "composition", title: "Composição Corporal", icon: Scale, color: "#e89bcf", line: 1 },
-    { id: "genetics", title: "Genética e Microbioma", icon: Dna, color: "#e89bcf", line: 1 },
-    { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 2 },
-    { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 2 },
-    { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 2 },
+    { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 1 },
+    { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 1 },
+    { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 1 },
   ];
 
   const getActiveAgentLabel = (id: string | undefined) => {
     const agent = AGENT_OPTIONS.find(a => a.id === id);
     if (!agent) return "Pergunta Clínica";
-    if (agent.id.startsWith("exam")) return "Analisando Exame";
     if (agent.id === "production") return "Elaborando Plano & Receitas";
     return agent.title;
   };
@@ -279,7 +273,7 @@ function GeneralChatPage() {
                       className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
                     >
                       {(() => {
-                        const agent = AGENT_OPTIONS.find(a => a.id === agentType) || AGENT_OPTIONS[3];
+                        const agent = AGENT_OPTIONS.find(a => a.id === agentType) || AGENT_OPTIONS[0];
                         const Icon = agent.icon;
                         return <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />;
                       })()}
