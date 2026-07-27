@@ -1685,26 +1685,31 @@ export function useDifyChat(
     }
   }, [chatId, patientId, readOnly, agentType, examContext, messages, getCost, consume, refetchCredits]);
 
-  const resetChat = useCallback(async () => {
+  const resetChat = useCallback(async (opts?: { agentType?: string | null; selectedTask?: string | null }) => {
     if (readOnly) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const nextAgentType = opts?.agentType?.trim() || "";
+    const nextSelectedTask = opts?.selectedTask?.trim() || null;
     const { data: created, error: cErr } = await (supabase as any)
       .from("patient_chats")
-      .insert({ patient_id: patientId, created_by: user.id })
+      .insert({
+        patient_id: patientId,
+        created_by: user.id,
+        ...(nextAgentType ? { agent_type: nextAgentType } : {}),
+        ...(nextSelectedTask ? { selected_task: nextSelectedTask } : {}),
+      })
       .select("id")
       .single();
     if (cErr) { setError(cErr.message); return; }
     conversationIdRef.current = "";
     conversationMapRef.current = {};
-    selectedTaskRef.current = null;
-    setSelectedTaskState(null);
+    selectedTaskRef.current = nextSelectedTask;
+    setSelectedTaskState(nextSelectedTask);
     setActiveAgents([]);
     setMessages([]);
     setError(null);
-    // Força o usuário a escolher explicitamente o agente/tarefa antes
-    // de enviar a primeira mensagem da nova consulta.
-    setAgentType("");
+    setAgentType(nextAgentType);
     setExamContext(null);
     setChatId(created.id as string);
   }, [patientId, readOnly]);
