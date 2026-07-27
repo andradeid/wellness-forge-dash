@@ -1178,43 +1178,74 @@ function ChatPage() {
         </div>
       </div>
 
-      <AlertDialog open={confirmNewChatOpen} onOpenChange={setConfirmNewChatOpen}>
-        <AlertDialogContent className="max-w-md border-0 shadow-xl rounded-2xl overflow-hidden p-0">
+      <AlertDialog open={newChatPickerOpen} onOpenChange={setNewChatPickerOpen}>
+        <AlertDialogContent className="max-w-lg border-0 shadow-xl rounded-2xl overflow-hidden p-0">
           <div className="h-1 w-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
           <div className="p-6">
             <AlertDialogHeader>
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#e8a04c]/15 to-[#e89bcf]/15 ring-1 ring-[#e89bcf]/25">
-                <Sparkles className="h-6 w-6 text-transparent bg-clip-text" style={{ stroke: "url(#lumma-grad)" }} />
-                <svg width="0" height="0" className="absolute">
-                  <defs>
-                    <linearGradient id="lumma-grad" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#e8a04c" />
-                      <stop offset="100%" stopColor="#e89bcf" />
-                    </linearGradient>
-                  </defs>
-                </svg>
+                <Sparkles className="h-6 w-6 text-[#e8a04c]" />
               </div>
               <AlertDialogTitle className="text-center text-lg font-semibold">
-                Iniciar uma nova consulta?
+                Nova consulta
               </AlertDialogTitle>
               <AlertDialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
-                A conversa atual será encerrada e arquivada no histórico do paciente. Você poderá consultá-la a qualquer momento.
+                {messages.length > 0
+                  ? "Escolha a tarefa para iniciar. A conversa atual será arquivada no histórico do paciente."
+                  : "Escolha a tarefa para iniciar a conversa."}
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {(() => {
+              const currentAgent = agents.find(a => a.agent_id === agentType);
+              const isSuperActive = !!currentAgent?.is_super_agent;
+              const UI_VISIBLE_TASKS_PICKER = new Set([
+                "exam_masc", "exam_fem", "exam_gest_mono", "exam_gest_gem",
+                "bioimpedancia", "calorimetria", "genetica", "microbioma",
+                "estimativa_refeicao_foto", "composicao_corporal_foto",
+                "reasoning", "production",
+              ]);
+              const tasksForPicker = isSuperActive
+                ? superAgentTasks
+                    .filter(t => t.agent_id === currentAgent!.agent_id && t.is_active && UI_VISIBLE_TASKS_PICKER.has(t.task_key))
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                : [];
+              if (!tasksForPicker.length) {
+                return (
+                  <p className="mt-4 text-center text-sm text-muted-foreground">
+                    Nenhuma tarefa disponível para este perfil.
+                  </p>
+                );
+              }
+              return (
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {tasksForPicker.map(t => {
+                    const TaskIcon = getAgentIcon((t as any).icon);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => startNewChatWithTask(t.task_key)}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-left text-xs font-medium text-foreground/80 bg-white border border-black/5 shadow-sm hover:shadow-md hover:border-[#e8a04c]/40 hover:bg-gradient-to-r hover:from-[#e8a04c]/5 hover:to-[#e89bcf]/5 transition-all"
+                      >
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 shrink-0">
+                          <TaskIcon className="h-4 w-4 text-[#e8a04c]" />
+                        </div>
+                        <span className="flex-1 truncate">{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             <AlertDialogFooter className="mt-6 flex-row justify-center gap-3 sm:justify-center">
               <AlertDialogCancel className="rounded-full px-6 mt-0">
                 Cancelar
               </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmNewChat}
-                className="rounded-full px-6 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white hover:opacity-90 border-0"
-              >
-                Iniciar nova consulta
-              </AlertDialogAction>
             </AlertDialogFooter>
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }
