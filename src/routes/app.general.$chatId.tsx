@@ -273,7 +273,7 @@ function GeneralChatPage() {
                       className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
                     >
                       {(() => {
-                        const agent = AGENT_OPTIONS.find(a => a.id === agentType) || AGENT_OPTIONS[3];
+                        const agent = AGENT_OPTIONS.find(a => a.id === agentType) || AGENT_OPTIONS[0];
                         const Icon = agent.icon;
                         return <Icon className="h-3.5 w-3.5 text-[#e8a04c]" />;
                       })()}
