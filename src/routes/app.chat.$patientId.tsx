@@ -240,21 +240,13 @@ function ChatPage() {
     setAgentType(superAgentId);
   }, [agentType, loadingAgents, patient, patientProfile, agents, initialAgent, pendingModuleFromUrl, initialTask, forceChatId, messages.length, setAgentType]);
 
-  // Abre automaticamente o popover de tarefas em chat novo assim que o super
-  // agente for autosetado — evita o clique duplo (abrir "Selecione uma tarefa"
-  // para depois escolher a tarefa). Só dispara uma vez por chat vazio.
+  // Antes abríamos o popover de tarefas automaticamente em chat novo. Isso
+  // sofria de corrida de estados e às vezes não abria. Substituímos por um
+  // grid inline de tarefas no corpo do chat vazio (ver bloco de render), então
+  // o auto-open aqui foi desativado. O ref é mantido só para eventual retorno.
   const autoOpenedTaskRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!agentType) return;
-    if (selectedTask) return;
-    if (messages.length > 0) return;
-    if (thinking) return;
-    if (autoOpenedTaskRef.current === (chatId ?? "new")) return;
-    const currentAgent = agents.find(a => a.agent_id === agentType);
-    if (!currentAgent?.is_super_agent) return;
-    autoOpenedTaskRef.current = chatId ?? "new";
-    setTaskOpen(true);
-  }, [agentType, selectedTask, messages.length, thinking, agents, chatId]);
+  void autoOpenedTaskRef;
+
 
 
   useEffect(() => {
@@ -776,6 +768,60 @@ function ChatPage() {
             ) : (
               <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
                 <InactiveChatBanner chatId={chatId} onNewChat={handleNewChat} />
+                {(() => {
+                  const currentAgent = agents.find(a => a.agent_id === agentType);
+                  const isSuperActive = !!currentAgent?.is_super_agent;
+                  const UI_VISIBLE_TASKS_EMPTY = new Set([
+                    "exam_masc", "exam_fem", "exam_gest_mono", "exam_gest_gem",
+                    "bioimpedancia", "calorimetria", "genetica", "microbioma",
+                    "estimativa_refeicao_foto", "composicao_corporal_foto",
+                    "reasoning", "production",
+                  ]);
+                  const tasksForEmpty = isSuperActive
+                    ? superAgentTasks
+                        .filter(t => t.agent_id === currentAgent!.agent_id && t.is_active && UI_VISIBLE_TASKS_EMPTY.has(t.task_key))
+                        .sort((a, b) => a.sort_order - b.sort_order)
+                    : [];
+                  const showTaskGrid =
+                    !readOnly &&
+                    !thinking &&
+                    messages.length === 0 &&
+                    !selectedTask &&
+                    isSuperActive &&
+                    tasksForEmpty.length > 0;
+
+                  if (!showTaskGrid) return null;
+                  const profileLabel = currentAgent?.label?.replace(/^Super\s+/i, "") ?? "";
+                  return (
+                    <div className="px-4 sm:px-6 pt-6 pb-2 mx-auto w-full max-w-3xl">
+                      <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">
+                        <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
+                        Tarefas · {profileLabel}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {tasksForEmpty.map(t => {
+                          const TaskIcon = getAgentIcon((t as any).icon);
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => setSelectedTask(t.task_key)}
+                              className="flex items-center gap-3 px-3 py-3 rounded-2xl text-left text-xs font-medium text-foreground/80 bg-white border border-white/60 shadow-sm hover:shadow-md hover:border-[#e8a04c]/40 hover:bg-gradient-to-r hover:from-[#e8a04c]/5 hover:to-[#e89bcf]/5 transition-all"
+                            >
+                              <div className="p-2 rounded-xl bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 shrink-0">
+                                <TaskIcon className="h-4 w-4 text-[#e8a04c]" />
+                              </div>
+                              <span className="flex-1 truncate">{t.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-3 text-[11px] text-muted-foreground/70 text-center">
+                        Escolha uma tarefa para começar. Você pode trocar depois pelo botão "Escolher tarefa".
+                      </p>
+                    </div>
+                  );
+                })()}
                 <ChatMessageList 
                   messages={messages} 
                   thinking={thinking} 
@@ -789,6 +835,7 @@ function ChatPage() {
 
               </div>
             )}
+
           </div>
         </main>
 
