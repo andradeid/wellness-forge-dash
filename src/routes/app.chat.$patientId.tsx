@@ -301,6 +301,7 @@ function ChatPage() {
   // patientProfile useMemo moved up to be available for the pendingModule logic
 
   const [newChatPickerOpen, setNewChatPickerOpen] = useState(false);
+  const pendingTaskAfterResetRef = useRef<string | null>(null);
 
   const handleNewChat = useCallback(async () => {
     if (thinking) return;
@@ -309,11 +310,30 @@ function ChatPage() {
 
   const startNewChatWithTask = useCallback(async (taskKey: string) => {
     setNewChatPickerOpen(false);
+    // Guarda a task para aplicar DEPOIS que o auto-select de agentType rode
+    // (senão o switchAgent interno limparia a selectedTask).
+    pendingTaskAfterResetRef.current = taskKey;
     if (messages.length > 0) {
       await resetChat();
+    } else {
+      // Chat já vazio: agentType provavelmente já é o super — aplica direto.
+      setSelectedTask(taskKey);
+      pendingTaskAfterResetRef.current = null;
     }
-    setSelectedTask(taskKey);
   }, [messages.length, resetChat, setSelectedTask]);
+
+  // Aplica a task pendente assim que o agentType volta a ser um super agent
+  // após um resetChat iniciado pelo picker de nova consulta.
+  useEffect(() => {
+    const pending = pendingTaskAfterResetRef.current;
+    if (!pending) return;
+    const currentAgent = agents.find(a => a.agent_id === agentType);
+    if (!currentAgent?.is_super_agent) return;
+    if (messages.length !== 0) return;
+    pendingTaskAfterResetRef.current = null;
+    setSelectedTask(pending);
+  }, [agentType, agents, messages.length, setSelectedTask]);
+
 
 
   const wrappedSend = useCallback(
