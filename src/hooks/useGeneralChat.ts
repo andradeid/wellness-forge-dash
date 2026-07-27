@@ -324,6 +324,33 @@ export function useGeneralChat(chatId: string, agentType: string) {
       }
       thinkingRef.current = false;
       setThinking(false);
+
+      // Fallback: se o stream não entregou conteúdo visível, recarrega do banco
+      // (o servidor pode ter salvo via safety timer / message_end atrasado).
+      try {
+        const localLast = currentFullTextRef.current.trim();
+        if (!localLast || localLast.length < 20) {
+          const attempt = async () => {
+            const { data } = await supabase
+              .from("general_chat_messages")
+              .select("id, role, content, created_at")
+              .eq("chat_id", chatId)
+              .order("created_at", { ascending: true });
+            if (data && data.length) {
+              const lastDb = data[data.length - 1] as any;
+              if (lastDb?.role === "assistant" && (lastDb.content ?? "").trim().length > 0) {
+                setMessages(data as ChatMessage[]);
+                return true;
+              }
+            }
+            return false;
+          };
+          setTimeout(() => { attempt(); }, 3000);
+          setTimeout(() => { attempt(); }, 10000);
+        }
+      } catch (recoverErr) {
+        console.warn("[general-chat] fallback reload falhou:", recoverErr);
+      }
     }
     } finally {
       sendingRef.current = false;
