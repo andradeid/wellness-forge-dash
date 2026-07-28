@@ -69,11 +69,11 @@ Deno.serve(async (req) => {
       if (!full_name || full_name.length > 120) return json({ ok: false, error: "Nome inválido" }, 400);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255)
         return json({ ok: false, error: "E-mail inválido" }, 400);
-      if (plan_slug && !["starter", "pro"].includes(plan_slug))
+      if (plan_slug && !["starter", "pro", "legado_500"].includes(plan_slug))
         return json({ ok: false, error: "Plano inválido" }, 400);
       if (cycle && !["monthly", "yearly"].includes(cycle))
         return json({ ok: false, error: "Ciclo inválido" }, 400);
-      if (plan_slug && !cycle)
+      if (plan_slug && plan_slug !== "legado_500" && !cycle)
         return json({ ok: false, error: "Informe o ciclo (mensal/anual) do plano" }, 400);
 
       // Mesmo fluxo do webhook Stripe: convite via email → user define a própria senha
