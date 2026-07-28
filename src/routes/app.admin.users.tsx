@@ -1201,9 +1201,21 @@ function UsersPage() {
                     maxLength={200}
                     disabled={!createForm.plan_slug}
                   />
-                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Validade da assinatura (opcional)</Label>
+                <Input
+                  type="date"
+                  value={createForm.expires_at}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, expires_at: e.target.value }))}
+                  disabled={!createForm.plan_slug}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Se vazio: mensal = +30 dias, anual = +365 dias, Legado 500 = 23/07/2027.
+                </p>
               </div>
             </div>
+          </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
