@@ -145,7 +145,7 @@ function UsersPage() {
     email: "",
     phone: "",
     professional_id: "",
-    plan_slug: "" as "" | "starter" | "pro",
+    plan_slug: "" as "" | "starter" | "pro" | "legado_500",
     cycle: "" as "" | "monthly" | "yearly",
     payment_method: "",
     payment_note: "",
