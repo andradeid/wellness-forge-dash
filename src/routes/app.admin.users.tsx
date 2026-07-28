@@ -18,7 +18,10 @@ import {
   Plus,
   X,
   Check,
+  Copy,
 } from "lucide-react";
+
+const TEMP_PASSWORD_DISPLAY = "Lumma2@102030";
 
 
 import { supabase } from "@/integrations/supabase/client";
