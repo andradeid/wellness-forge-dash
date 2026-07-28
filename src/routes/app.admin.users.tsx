@@ -592,16 +592,34 @@ function UsersPage() {
     refreshAll();
   };
 
-  const sendWelcome = async (u: UserRow) => {
-    if (!confirm(
-      `Isto vai redefinir a senha de ${u.email} para a senha temporária e disparar o email de boas-vindas. Continuar?`,
-    )) return;
+  const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
+  const [resetSending, setResetSending] = useState(false);
+
+  const sendWelcome = (u: UserRow) => {
+    setResetTarget(u);
+  };
+
+  const confirmResetWelcome = async () => {
+    if (!resetTarget) return;
+    setResetSending(true);
     try {
       const { adminSendWelcomeReset } = await import("@/lib/admin-welcome.functions");
-      await adminSendWelcomeReset({ data: { user_id: u.id } });
-      toast.success(`Senha temporária ativa e email enviado para ${u.email}`);
+      await adminSendWelcomeReset({ data: { user_id: resetTarget.id } });
+      toast.success(`Senha temporária ativa e email enviado para ${resetTarget.email}`);
+      setResetTarget(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao enviar boas-vindas");
+    } finally {
+      setResetSending(false);
+    }
+  };
+
+  const copyTempPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(TEMP_PASSWORD_DISPLAY);
+      toast.success("Senha temporária copiada");
+    } catch {
+      toast.error("Não foi possível copiar. Copie manualmente.");
     }
   };
 
