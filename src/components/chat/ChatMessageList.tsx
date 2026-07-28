@@ -719,7 +719,7 @@ export function ChatMessageList({
                   )}
                   {m.role === "assistant" && m.structured_data?.meal_estimation && (
                     <div className="mb-4">
-                      <MessageEstimationSlot data={m.structured_data.meal_estimation} />
+                      <MealEstimationCard data={m.structured_data.meal_estimation} />
                     </div>
                   )}
                   {m.role === "assistant" && (() => {
