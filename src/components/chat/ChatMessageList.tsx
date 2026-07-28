@@ -719,9 +719,17 @@ export function ChatMessageList({
                   )}
                   {m.role === "assistant" && m.structured_data?.meal_estimation && (
                     <div className="mb-4">
-                      <MealEstimationCard data={m.structured_data.meal_estimation} />
+                      <MessageEstimationSlot data={m.structured_data.meal_estimation} />
                     </div>
                   )}
+                  {m.role === "assistant" && (() => {
+                    const ba = extractBodyAssessment(m.content);
+                    return ba ? (
+                      <div className="mb-4">
+                        <BodyAssessmentCard data={ba} />
+                      </div>
+                    ) : null;
+                  })()}
                   {m.role === "assistant" && m.structured_data?.formulacoes_sugeridas && onGenerateRecipe && (
                     <div className="mb-4 p-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white shadow-sm">
                       <div className="flex items-start gap-3">
