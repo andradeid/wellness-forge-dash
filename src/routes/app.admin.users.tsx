@@ -1048,6 +1048,32 @@ function UsersPage() {
                     : "—"}
                 </div>
               </section>
+              {/* Criação manual / auditoria */}
+              {detailExtra?.manualCreation && (
+                <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 space-y-2">
+                  <p className="text-[11px] uppercase tracking-wider text-amber-800">Criação manual (auditoria)</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <DetailCell
+                      label="Criado por"
+                      value={
+                        detailExtra.manualCreation.creatorName ||
+                        detailExtra.manualCreation.creatorEmail ||
+                        "—"
+                      }
+                    />
+                    <DetailCell
+                      label="Perfil / Data"
+                      value={`${detailExtra.manualCreation.creatorRole ?? "—"} · ${new Date(detailExtra.manualCreation.createdAt).toLocaleString("pt-BR")}`}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Motivo da criação</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                      {detailExtra.manualCreation.reason || "—"}
+                    </p>
+                  </div>
+                </section>
+              )}
 
             </div>
           )}
