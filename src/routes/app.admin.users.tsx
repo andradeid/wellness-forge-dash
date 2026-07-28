@@ -149,6 +149,7 @@ function UsersPage() {
     cycle: "" as "" | "monthly" | "yearly",
     payment_method: "",
     payment_note: "",
+    expires_at: "",
   });
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
