@@ -117,8 +117,10 @@ Deno.serve(async (req) => {
 
         const now = new Date();
         let periodEnd: Date;
-        if (isLegado) {
-          // Legado 500: cortesia até 23/07/2027 (mesma regra da migração Black 2025)
+        if (expires_at_override) {
+          periodEnd = expires_at_override;
+        } else if (isLegado) {
+          // Legado 500: cortesia até 23/07/2027 (default)
           periodEnd = new Date("2027-07-23T23:59:59Z");
         } else {
           periodEnd = new Date(now);
