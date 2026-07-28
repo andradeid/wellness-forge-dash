@@ -150,6 +150,7 @@ function UsersPage() {
     payment_method: "",
     payment_note: "",
     expires_at: "",
+    creation_reason: "",
   });
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
