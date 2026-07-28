@@ -18,8 +18,9 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel, getTaskLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
-import { stripBodyAssessmentJson } from "@/lib/body-assessment";
+import { stripBodyAssessmentJson, extractBodyAssessment } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
+import { BodyAssessmentCard } from "./BodyAssessmentCard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -721,6 +722,14 @@ export function ChatMessageList({
                       <MealEstimationCard data={m.structured_data.meal_estimation} />
                     </div>
                   )}
+                  {m.role === "assistant" && (() => {
+                    const ba = extractBodyAssessment(m.content);
+                    return ba ? (
+                      <div className="mb-4">
+                        <BodyAssessmentCard data={ba} />
+                      </div>
+                    ) : null;
+                  })()}
                   {m.role === "assistant" && m.structured_data?.formulacoes_sugeridas && onGenerateRecipe && (
                     <div className="mb-4 p-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white shadow-sm">
                       <div className="flex items-start gap-3">
