@@ -1141,6 +1141,22 @@ function UsersPage() {
               A nutricionista receberá um email de boas-vindas com link para definir a própria senha (mesmo fluxo do Stripe).
             </p>
 
+            <div className="pt-3 border-t space-y-2">
+              <Label>
+                Motivo da criação <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={createForm.creation_reason}
+                onChange={(e) => setCreateForm((f) => ({ ...f, creation_reason: e.target.value }))}
+                placeholder="Ex: cliente pagou por Pix fora do Stripe, comprovante enviado no WhatsApp; ou: reposição de conta perdida do usuário X"
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                Registrado em auditoria junto com o autor da criação. Mín. 5 caracteres.
+              </p>
+            </div>
+
             <div className="pt-3 border-t space-y-3">
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Plano contratado (opcional — para pagamentos fora do Stripe)
