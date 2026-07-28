@@ -167,6 +167,13 @@ function UsersPage() {
     totalGranted: number;
     lastActivityAt: string | null;
     lastAgent: string | null;
+    manualCreation: {
+      reason: string;
+      creatorName: string | null;
+      creatorEmail: string | null;
+      creatorRole: string | null;
+      createdAt: string;
+    } | null;
   } | null>(null);
   
 
@@ -468,6 +475,7 @@ function UsersPage() {
       profRes,
       txAggRes,
       txLastRes,
+      manualCreationRes,
     ] = await Promise.all([
       sb.from("patient_exams").select("id", { count: "exact", head: true }).eq("uploaded_by", u.id),
       sb.from("patients").select("id", { count: "exact", head: true }).eq("created_by", u.id).is("deleted_at", null),
@@ -477,6 +485,14 @@ function UsersPage() {
       sb.from("profiles").select("professional_id").eq("id", u.id).maybeSingle(),
       sb.from("credit_transactions").select("type, amount").eq("user_id", u.id).limit(1000),
       sb.from("credit_transactions").select("created_at, agent_label, agent_key").eq("user_id", u.id).order("created_at", { ascending: false }).limit(1),
+      sb.from("integration_logs")
+        .select("payload, created_at")
+        .eq("source", "admin-users")
+        .eq("event", "manual_user_creation")
+        .contains("payload", { created_user_id: u.id })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     setExamCount(examsRes.count ?? 0);
@@ -488,6 +504,37 @@ function UsersPage() {
       else if (t.type === "grant") totalGranted += t.amount ?? 0;
     }
     const lastTx = (txLastRes.data ?? [])[0] as { created_at: string; agent_label: string | null; agent_key: string | null } | undefined;
+
+    // Buscar dados de quem criou (se houver log de criação manual)
+    let manualCreation: {
+      reason: string;
+      creatorName: string | null;
+      creatorEmail: string | null;
+      creatorRole: string | null;
+      createdAt: string;
+    } | null = null;
+    const logRow = (manualCreationRes as any)?.data;
+    if (logRow?.payload) {
+      const p = logRow.payload as Record<string, any>;
+      let creatorName: string | null = null;
+      let creatorEmail: string | null = null;
+      if (p.created_by) {
+        const { data: creatorProf } = await sb
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", p.created_by)
+          .maybeSingle();
+        creatorName = (creatorProf as any)?.full_name ?? null;
+        creatorEmail = (creatorProf as any)?.email ?? null;
+      }
+      manualCreation = {
+        reason: p.reason ?? "",
+        creatorName,
+        creatorEmail,
+        creatorRole: p.creator_role ?? null,
+        createdAt: logRow.created_at,
+      };
+    }
 
     setDetailExtra({
       patientsCount: patientsRes.count ?? 0,
@@ -502,6 +549,7 @@ function UsersPage() {
       totalGranted,
       lastActivityAt: lastTx?.created_at ?? null,
       lastAgent: lastTx?.agent_label ?? lastTx?.agent_key ?? null,
+      manualCreation,
     });
   };
 
@@ -1000,6 +1048,32 @@ function UsersPage() {
                     : "—"}
                 </div>
               </section>
+              {/* Criação manual / auditoria */}
+              {detailExtra?.manualCreation && (
+                <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 space-y-2">
+                  <p className="text-[11px] uppercase tracking-wider text-amber-800">Criação manual (auditoria)</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <DetailCell
+                      label="Criado por"
+                      value={
+                        detailExtra.manualCreation.creatorName ||
+                        detailExtra.manualCreation.creatorEmail ||
+                        "—"
+                      }
+                    />
+                    <DetailCell
+                      label="Perfil / Data"
+                      value={`${detailExtra.manualCreation.creatorRole ?? "—"} · ${new Date(detailExtra.manualCreation.createdAt).toLocaleString("pt-BR")}`}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Motivo da criação</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                      {detailExtra.manualCreation.reason || "—"}
+                    </p>
+                  </div>
+                </section>
+              )}
 
             </div>
           )}
