@@ -145,7 +145,7 @@ function UsersPage() {
     email: "",
     phone: "",
     professional_id: "",
-    plan_slug: "" as "" | "starter" | "pro",
+    plan_slug: "" as "" | "starter" | "pro" | "legado_500",
     cycle: "" as "" | "monthly" | "yearly",
     payment_method: "",
     payment_note: "",
@@ -585,8 +585,8 @@ function UsersPage() {
     const f = createForm;
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
-    if (f.plan_slug && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
-    if (f.plan_slug && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
+    if (f.plan_slug && f.plan_slug !== "legado_500" && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
+    if (f.plan_slug && f.plan_slug !== "legado_500" && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
     const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "POST",
@@ -1147,12 +1147,13 @@ function UsersPage() {
                   <Label>Plano</Label>
                   <Select
                     value={createForm.plan_slug}
-                    onValueChange={(v) => setCreateForm((f) => ({ ...f, plan_slug: v as "" | "starter" | "pro" }))}
+                    onValueChange={(v) => setCreateForm((f) => ({ ...f, plan_slug: v as "" | "starter" | "pro" | "legado_500" }))}
                   >
                     <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="starter">Starter</SelectItem>
                       <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="legado_500">Legado 500 (cortesia)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

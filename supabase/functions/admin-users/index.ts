@@ -69,11 +69,11 @@ Deno.serve(async (req) => {
       if (!full_name || full_name.length > 120) return json({ ok: false, error: "Nome inválido" }, 400);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255)
         return json({ ok: false, error: "E-mail inválido" }, 400);
-      if (plan_slug && !["starter", "pro"].includes(plan_slug))
+      if (plan_slug && !["starter", "pro", "legado_500"].includes(plan_slug))
         return json({ ok: false, error: "Plano inválido" }, 400);
       if (cycle && !["monthly", "yearly"].includes(cycle))
         return json({ ok: false, error: "Ciclo inválido" }, 400);
-      if (plan_slug && !cycle)
+      if (plan_slug && plan_slug !== "legado_500" && !cycle)
         return json({ ok: false, error: "Informe o ciclo (mensal/anual) do plano" }, 400);
 
       // Mesmo fluxo do webhook Stripe: convite via email → user define a própria senha
@@ -97,18 +97,27 @@ Deno.serve(async (req) => {
         await admin.from("profiles").update(profilePatch).eq("id", newUserId);
       }
 
-      if (plan_slug && cycle) {
+      if (plan_slug) {
+        const isLegado = plan_slug === "legado_500";
+        const effectiveCycle = cycle ?? "monthly";
+
         const { data: plan } = await admin
           .from("subscription_plans")
-          .select("price_monthly_cents, price_yearly_cents")
+          .select("price_monthly_cents, price_yearly_cents, monthly_credits")
           .eq("slug", plan_slug)
           .eq("is_active", true)
           .maybeSingle();
 
         const now = new Date();
-        const periodEnd = new Date(now);
-        if (cycle === "monthly") periodEnd.setMonth(periodEnd.getMonth() + 1);
-        else periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        let periodEnd: Date;
+        if (isLegado) {
+          // Legado 500: cortesia até 23/07/2027 (mesma regra da migração Black 2025)
+          periodEnd = new Date("2027-07-23T23:59:59Z");
+        } else {
+          periodEnd = new Date(now);
+          if (effectiveCycle === "monthly") periodEnd.setMonth(periodEnd.getMonth() + 1);
+          else periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        }
 
         await admin.from("subscriptions").upsert(
           {
@@ -116,31 +125,50 @@ Deno.serve(async (req) => {
             status: "active",
             plan_type: plan_slug,
             current_period_end: periodEnd.toISOString(),
+            unlimited_credits: false,
+            billing_cycle: isLegado ? "monthly" : effectiveCycle,
           },
           { onConflict: "user_id" },
         );
 
-        const amountCents =
-          cycle === "monthly"
-            ? (plan?.price_monthly_cents ?? 0)
-            : (plan?.price_yearly_cents ?? 0);
+        if (isLegado) {
+          const credits = plan?.monthly_credits ?? 500;
+          const quotaReset = new Date(now);
+          quotaReset.setDate(quotaReset.getDate() + 30);
+          await admin.from("user_credits").upsert(
+            {
+              user_id: newUserId,
+              balance: credits,
+              monthly_quota: credits,
+              quota_reset_at: quotaReset.toISOString(),
+            },
+            { onConflict: "user_id" },
+          );
+        }
 
-        await admin.from("payment_history").insert({
-          user_id: newUserId,
-          kind: "subscription",
-          description: `Assinatura ${plan_slug} (${cycle === "monthly" ? "mensal" : "anual"}) — pagamento externo${payment_method ? ` via ${payment_method}` : ""}`,
-          amount_cents: amountCents,
-          currency: "brl",
-          status: "succeeded",
-          metadata: {
-            manual_creation: true,
-            created_by: callerId,
-            plan_slug,
-            cycle,
-            payment_method,
-            payment_note,
-          },
-        });
+        if (!isLegado) {
+          const amountCents =
+            effectiveCycle === "monthly"
+              ? (plan?.price_monthly_cents ?? 0)
+              : (plan?.price_yearly_cents ?? 0);
+
+          await admin.from("payment_history").insert({
+            user_id: newUserId,
+            kind: "subscription",
+            description: `Assinatura ${plan_slug} (${effectiveCycle === "monthly" ? "mensal" : "anual"}) — pagamento externo${payment_method ? ` via ${payment_method}` : ""}`,
+            amount_cents: amountCents,
+            currency: "brl",
+            status: "succeeded",
+            metadata: {
+              manual_creation: true,
+              created_by: callerId,
+              plan_slug,
+              cycle: effectiveCycle,
+              payment_method,
+              payment_note,
+            },
+          });
+        }
       }
 
       return json({ ok: true, user_id: newUserId });
