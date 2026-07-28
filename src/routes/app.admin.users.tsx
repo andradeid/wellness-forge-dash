@@ -587,6 +587,7 @@ function UsersPage() {
     const f = createForm;
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
+    if (!f.creation_reason.trim() || f.creation_reason.trim().length < 5) { toast.error("Informe o motivo da criação (mín. 5 caracteres)"); return; }
     if (f.plan_slug && f.plan_slug !== "legado_500" && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
     if (f.plan_slug && f.plan_slug !== "legado_500" && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
