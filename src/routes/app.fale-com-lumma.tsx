@@ -262,7 +262,7 @@ function FaleComLummaPage() {
     const agent = agents.find(a => a.agent_id === id);
     if (!agent) return "Pergunta Clínica";
     if (agent.agent_id === "exam") return "Analisando Exame";
-    if (agent.agent_id === "production") return "Elaborando Plano & Receitas";
+    if (agent.agent_id === "production") return "Elaborando Plano & Formulações";
     return agent.label.replace(/^Super\s+/i, "");
   };
 
