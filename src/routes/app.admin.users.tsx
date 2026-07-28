@@ -1147,12 +1147,13 @@ function UsersPage() {
                   <Label>Plano</Label>
                   <Select
                     value={createForm.plan_slug}
-                    onValueChange={(v) => setCreateForm((f) => ({ ...f, plan_slug: v as "" | "starter" | "pro" }))}
+                    onValueChange={(v) => setCreateForm((f) => ({ ...f, plan_slug: v as "" | "starter" | "pro" | "legado_500" }))}
                   >
                     <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="starter">Starter</SelectItem>
                       <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="legado_500">Legado 500 (cortesia)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
