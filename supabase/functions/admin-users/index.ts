@@ -72,10 +72,13 @@ Deno.serve(async (req) => {
         if (isNaN(d.getTime())) return json({ ok: false, error: "Data de validade inválida" }, 400);
         expires_at_override = d;
       }
+      const creation_reason = body.creation_reason ? String(body.creation_reason).trim() : "";
 
       if (!full_name || full_name.length > 120) return json({ ok: false, error: "Nome inválido" }, 400);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255)
         return json({ ok: false, error: "E-mail inválido" }, 400);
+      if (!creation_reason || creation_reason.length < 5 || creation_reason.length > 500)
+        return json({ ok: false, error: "Informe o motivo da criação (5–500 caracteres)" }, 400);
       if (plan_slug && !["starter", "pro", "legado_500"].includes(plan_slug))
         return json({ ok: false, error: "Plano inválido" }, 400);
       if (cycle && !["monthly", "yearly"].includes(cycle))
@@ -179,6 +182,27 @@ Deno.serve(async (req) => {
           });
         }
       }
+
+      // Auditoria: registra criação manual com autor e motivo
+      await admin.from("integration_logs").insert({
+        source: "admin-users",
+        event: "manual_user_creation",
+        status: "success",
+        message: `Nutricionista criada manualmente por ${callerId}`,
+        payload: {
+          created_user_id: newUserId,
+          created_by: callerId,
+          creator_role: isSuperAdmin ? "super_admin" : "support",
+          reason: creation_reason,
+          email,
+          full_name,
+          plan_slug,
+          cycle,
+          expires_at: expires_at_override ? expires_at_override.toISOString() : null,
+          payment_method,
+          payment_note,
+        },
+      });
 
       return json({ ok: true, user_id: newUserId });
     }

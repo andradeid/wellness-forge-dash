@@ -24,6 +24,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,6 +151,7 @@ function UsersPage() {
     payment_method: "",
     payment_note: "",
     expires_at: "",
+    creation_reason: "",
   });
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
@@ -586,6 +588,7 @@ function UsersPage() {
     const f = createForm;
     if (!f.full_name.trim()) { toast.error("Informe o nome completo"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { toast.error("E-mail inválido"); return; }
+    if (!f.creation_reason.trim() || f.creation_reason.trim().length < 5) { toast.error("Informe o motivo da criação (mín. 5 caracteres)"); return; }
     if (f.plan_slug && f.plan_slug !== "legado_500" && !f.cycle) { toast.error("Selecione o ciclo do plano (mensal ou anual)"); return; }
     if (f.plan_slug && f.plan_slug !== "legado_500" && !f.payment_method) { toast.error("Informe a forma de pagamento"); return; }
     setCreating(true);
@@ -654,7 +657,7 @@ function UsersPage() {
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
               <Button
-                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "", expires_at: "" }); setCreateOpen(true); }}
+                onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "", expires_at: "", creation_reason: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
               >
                 <UserPlus className="h-4 w-4 mr-2" /> Novo nutricionista
@@ -1138,6 +1141,22 @@ function UsersPage() {
             <p className="text-xs text-muted-foreground -mt-1">
               A nutricionista receberá um email de boas-vindas com link para definir a própria senha (mesmo fluxo do Stripe).
             </p>
+
+            <div className="pt-3 border-t space-y-2">
+              <Label>
+                Motivo da criação <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={createForm.creation_reason}
+                onChange={(e) => setCreateForm((f) => ({ ...f, creation_reason: e.target.value }))}
+                placeholder="Ex: cliente pagou por Pix fora do Stripe, comprovante enviado no WhatsApp; ou: reposição de conta perdida do usuário X"
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                Registrado em auditoria junto com o autor da criação. Mín. 5 caracteres.
+              </p>
+            </div>
 
             <div className="pt-3 border-t space-y-3">
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
