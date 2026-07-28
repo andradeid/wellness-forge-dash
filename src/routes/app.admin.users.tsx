@@ -167,6 +167,13 @@ function UsersPage() {
     totalGranted: number;
     lastActivityAt: string | null;
     lastAgent: string | null;
+    manualCreation: {
+      reason: string;
+      creatorName: string | null;
+      creatorEmail: string | null;
+      creatorRole: string | null;
+      createdAt: string;
+    } | null;
   } | null>(null);
   
 
