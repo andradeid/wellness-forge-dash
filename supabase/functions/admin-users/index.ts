@@ -183,6 +183,27 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Auditoria: registra criação manual com autor e motivo
+      await admin.from("integration_logs").insert({
+        source: "admin-users",
+        event: "manual_user_creation",
+        status: "success",
+        message: `Nutricionista criada manualmente por ${callerId}`,
+        payload: {
+          created_user_id: newUserId,
+          created_by: callerId,
+          creator_role: isSuperAdmin ? "super_admin" : "support",
+          reason: creation_reason,
+          email,
+          full_name,
+          plan_slug,
+          cycle,
+          expires_at: expires_at_override ? expires_at_override.toISOString() : null,
+          payment_method,
+          payment_note,
+        },
+      });
+
       return json({ ok: true, user_id: newUserId });
     }
 
