@@ -18,7 +18,10 @@ import {
   Plus,
   X,
   Check,
+  Copy,
 } from "lucide-react";
+
+const TEMP_PASSWORD_DISPLAY = "Lumma2@102030";
 
 
 import { supabase } from "@/integrations/supabase/client";
@@ -589,16 +592,34 @@ function UsersPage() {
     refreshAll();
   };
 
-  const sendWelcome = async (u: UserRow) => {
-    if (!confirm(
-      `Isto vai redefinir a senha de ${u.email} para a senha temporária e disparar o email de boas-vindas. Continuar?`,
-    )) return;
+  const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
+  const [resetSending, setResetSending] = useState(false);
+
+  const sendWelcome = (u: UserRow) => {
+    setResetTarget(u);
+  };
+
+  const confirmResetWelcome = async () => {
+    if (!resetTarget) return;
+    setResetSending(true);
     try {
       const { adminSendWelcomeReset } = await import("@/lib/admin-welcome.functions");
-      await adminSendWelcomeReset({ data: { user_id: u.id } });
-      toast.success(`Senha temporária ativa e email enviado para ${u.email}`);
+      await adminSendWelcomeReset({ data: { user_id: resetTarget.id } });
+      toast.success(`Senha temporária ativa e email enviado para ${resetTarget.email}`);
+      setResetTarget(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao enviar boas-vindas");
+    } finally {
+      setResetSending(false);
+    }
+  };
+
+  const copyTempPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(TEMP_PASSWORD_DISPLAY);
+      toast.success("Senha temporária copiada");
+    } catch {
+      toast.error("Não foi possível copiar. Copie manualmente.");
     }
   };
 
@@ -1159,6 +1180,44 @@ function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* AlertDialog: Reset de senha / boas-vindas */}
+      <AlertDialog open={!!resetTarget} onOpenChange={(o) => { if (!o && !resetSending) setResetTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar senha e enviar boas-vindas</AlertDialogTitle>
+            <AlertDialogDescription>
+              A senha de <span className="font-semibold text-foreground">{resetTarget?.email}</span> será
+              redefinida para a senha temporária padrão abaixo. Um email de boas-vindas com essas credenciais
+              será disparado automaticamente. No primeiro login o usuário será obrigado a trocar a senha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Senha temporária padrão</div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 rounded-md bg-background px-3 py-2 font-mono text-sm border">
+                {TEMP_PASSWORD_DISPLAY}
+              </code>
+              <Button type="button" variant="outline" size="sm" onClick={copyTempPassword}>
+                <Copy className="h-4 w-4 mr-1" /> Copiar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Use este valor para repassar ao usuário (ex.: WhatsApp) caso o email demore a chegar.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetSending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmResetWelcome(); }}
+              disabled={resetSending}
+            >
+              {resetSending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Resetar e enviar email
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Modal: Novo Nutricionista */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
