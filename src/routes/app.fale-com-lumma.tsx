@@ -108,6 +108,10 @@ function FaleComLummaPage() {
   const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("nao_sei");
   const [creating, setCreating] = useState(false);
 
+  // Perguntas Clínicas (sem paciente) → seletor de perfil para rotear ao Super Agente.
+  const [profilePickerOpen, setProfilePickerOpen] = useState(false);
+  const [profilePickerLoading, setProfilePickerLoading] = useState(false);
+
   const loadPatients = async () => {
     if (!user) return;
     setLoadingPatients(true);
