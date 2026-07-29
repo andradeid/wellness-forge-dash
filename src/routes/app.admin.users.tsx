@@ -19,6 +19,7 @@ import {
   X,
   Check,
   Copy,
+  Pencil,
 } from "lucide-react";
 
 const TEMP_PASSWORD_DISPLAY = "Lumma2@102030";
@@ -156,6 +157,17 @@ function UsersPage() {
     expires_at: "",
     creation_reason: "",
   });
+  // Edição
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    phone: "",
+    professional_id: "",
+    status: "" as "" | SubStatus,
+    expires_at: "",
+    edit_reason: "",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
     patientsCount: number;
@@ -177,6 +189,14 @@ function UsersPage() {
       creatorRole: string | null;
       createdAt: string;
     } | null;
+    editHistory: Array<{
+      reason: string;
+      editorName: string | null;
+      editorEmail: string | null;
+      editorRole: string | null;
+      changes: Record<string, { from: unknown; to: unknown }>;
+      createdAt: string;
+    }>;
   } | null>(null);
   
 
@@ -479,6 +499,7 @@ function UsersPage() {
       txAggRes,
       txLastRes,
       manualCreationRes,
+      editLogsRes,
     ] = await Promise.all([
       sb.from("patient_exams").select("id", { count: "exact", head: true }).eq("uploaded_by", u.id),
       sb.from("patients").select("id", { count: "exact", head: true }).eq("created_by", u.id).is("deleted_at", null),
@@ -496,6 +517,13 @@ function UsersPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      sb.from("integration_logs")
+        .select("payload, created_at")
+        .eq("source", "admin-users")
+        .eq("event", "manual_user_edit")
+        .contains("payload", { edited_user_id: u.id })
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
 
     setExamCount(examsRes.count ?? 0);
@@ -517,27 +545,50 @@ function UsersPage() {
       createdAt: string;
     } | null = null;
     const logRow = (manualCreationRes as any)?.data;
+
+    // Coletar todos os creator/editor ids únicos para fazer 1 fetch de profiles
+    const creatorIds = new Set<string>();
+    if (logRow?.payload?.created_by) creatorIds.add(logRow.payload.created_by);
+    const editRows = ((editLogsRes as any)?.data ?? []) as Array<{ payload: any; created_at: string }>;
+    for (const row of editRows) {
+      if (row?.payload?.edited_by) creatorIds.add(row.payload.edited_by);
+    }
+
+    const creatorMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (creatorIds.size > 0) {
+      const { data: profs } = await sb
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", Array.from(creatorIds));
+      for (const p of (profs ?? []) as Array<any>) {
+        creatorMap.set(p.id, { full_name: p.full_name ?? null, email: p.email ?? null });
+      }
+    }
+
     if (logRow?.payload) {
       const p = logRow.payload as Record<string, any>;
-      let creatorName: string | null = null;
-      let creatorEmail: string | null = null;
-      if (p.created_by) {
-        const { data: creatorProf } = await sb
-          .from("profiles")
-          .select("full_name, email")
-          .eq("id", p.created_by)
-          .maybeSingle();
-        creatorName = (creatorProf as any)?.full_name ?? null;
-        creatorEmail = (creatorProf as any)?.email ?? null;
-      }
+      const creator = p.created_by ? creatorMap.get(p.created_by) : null;
       manualCreation = {
         reason: p.reason ?? "",
-        creatorName,
-        creatorEmail,
+        creatorName: creator?.full_name ?? null,
+        creatorEmail: creator?.email ?? null,
         creatorRole: p.creator_role ?? null,
         createdAt: logRow.created_at,
       };
     }
+
+    const editHistory = editRows.map((row) => {
+      const p = row.payload ?? {};
+      const editor = p.edited_by ? creatorMap.get(p.edited_by) : null;
+      return {
+        reason: p.reason ?? "",
+        editorName: editor?.full_name ?? null,
+        editorEmail: editor?.email ?? null,
+        editorRole: p.editor_role ?? null,
+        changes: (p.changes ?? {}) as Record<string, { from: unknown; to: unknown }>,
+        createdAt: row.created_at,
+      };
+    });
 
     setDetailExtra({
       patientsCount: patientsRes.count ?? 0,
@@ -553,6 +604,7 @@ function UsersPage() {
       lastActivityAt: lastTx?.created_at ?? null,
       lastAgent: lastTx?.agent_label ?? lastTx?.agent_key ?? null,
       manualCreation,
+      editHistory,
     });
   };
 
@@ -670,6 +722,60 @@ function UsersPage() {
     toast.success("Nutricionista criada com sucesso");
     excludeIdsRef.current = null;
     setCreateOpen(false);
+    refreshAll();
+  };
+
+  const openEdit = (u: UserRow) => {
+    setEditUser(u);
+    setEditForm({
+      full_name: u.full_name ?? "",
+      phone: u.phone ?? "",
+      professional_id: "",
+      status: (u.status as SubStatus) ?? "",
+      expires_at: u.current_period_end ? u.current_period_end.slice(0, 10) : "",
+      edit_reason: "",
+    });
+    // Buscar professional_id atual
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("professional_id")
+        .eq("id", u.id)
+        .maybeSingle();
+      setEditForm((f) => ({ ...f, professional_id: (data as any)?.professional_id ?? "" }));
+    })();
+  };
+
+  const saveEdit = async () => {
+    if (!editUser) return;
+    const f = editForm;
+    if (!f.full_name.trim()) { toast.error("Nome não pode ficar vazio"); return; }
+    if (!f.edit_reason.trim() || f.edit_reason.trim().length < 5) {
+      toast.error("Informe o motivo da edição (mín. 5 caracteres)");
+      return;
+    }
+    setSavingEdit(true);
+    const body: Record<string, unknown> = {
+      user_id: editUser.id,
+      edit_reason: f.edit_reason.trim(),
+      full_name: f.full_name,
+      phone: f.phone,
+      professional_id: f.professional_id,
+    };
+    if (f.status) body.status = f.status;
+    if (f.expires_at) body.expires_at = f.expires_at;
+
+    const { data, error } = await supabase.functions.invoke("admin-users", {
+      method: "PUT",
+      body,
+    });
+    setSavingEdit(false);
+    if (error || !data?.ok) {
+      toast.error(data?.error ?? error?.message ?? "Falha ao editar usuário");
+      return;
+    }
+    toast.success("Dados atualizados com sucesso");
+    setEditUser(null);
     refreshAll();
   };
 
@@ -900,6 +1006,9 @@ function UsersPage() {
                           <Button size="icon" variant="ghost" onClick={() => openDetails(r)} title="Ver detalhes">
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar cadastro">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           {isSuperAdmin && (
                             <Button size="icon" variant="ghost" onClick={() => openPlan(r)} title="Plano & Créditos">
                               <CreditCard className="h-4 w-4" />
@@ -1095,6 +1204,55 @@ function UsersPage() {
                   </div>
                 </section>
               )}
+
+              {/* Histórico de edições */}
+              {detailExtra?.editHistory && detailExtra.editHistory.length > 0 && (
+                <section className="rounded-xl border border-blue-200 bg-blue-50/40 p-4 space-y-3">
+                  <p className="text-[11px] uppercase tracking-wider text-blue-800">
+                    Histórico de edições ({detailExtra.editHistory.length})
+                  </p>
+                  <div className="space-y-3 max-h-72 overflow-y-auto">
+                    {detailExtra.editHistory.map((h, idx) => (
+                      <div key={idx} className="rounded-lg border bg-background p-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium">
+                            {h.editorName || h.editorEmail || "—"}
+                            <span className="text-muted-foreground ml-1">({h.editorRole ?? "—"})</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            {new Date(h.createdAt).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Motivo: </span>
+                          <span className="whitespace-pre-wrap">{h.reason || "—"}</span>
+                        </div>
+                        {Object.keys(h.changes).length > 0 && (
+                          <div className="text-[11px] space-y-0.5 pt-1 border-t">
+                            {Object.entries(h.changes).map(([field, diff]) => (
+                              <div key={field} className="font-mono">
+                                <span className="text-muted-foreground">{field}:</span>{" "}
+                                <span className="line-through text-destructive/70">
+                                  {diff.from === null || diff.from === undefined || diff.from === ""
+                                    ? "∅"
+                                    : String(diff.from)}
+                                </span>{" "}
+                                →{" "}
+                                <span className="text-emerald-700">
+                                  {diff.to === null || diff.to === undefined || diff.to === ""
+                                    ? "∅"
+                                    : String(diff.to)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
 
             </div>
           )}
@@ -1378,6 +1536,94 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Modal: Editar cadastro */}
+      <Dialog open={!!editUser} onOpenChange={(o) => { if (!o && !savingEdit) setEditUser(null); }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-normal">Editar cadastro</DialogTitle>
+            <DialogDescription>
+              {editUser?.email} — alterações são registradas em auditoria com autor e motivo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Nome completo</Label>
+              <Input
+                value={editForm.full_name}
+                onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))}
+                maxLength={120}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="(11) 90000-0000"
+                  maxLength={30}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>CRN / CPF</Label>
+                <Input
+                  value={editForm.professional_id}
+                  onChange={(e) => setEditForm((f) => ({ ...f, professional_id: e.target.value }))}
+                  maxLength={50}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Status da assinatura</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) => setEditForm((f) => ({ ...f, status: v as SubStatus }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="past_due">Inadimplente</SelectItem>
+                    <SelectItem value="canceled">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Validade (opcional)</Label>
+                <Input
+                  type="date"
+                  value={editForm.expires_at}
+                  onChange={(e) => setEditForm((f) => ({ ...f, expires_at: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="pt-3 border-t space-y-2">
+              <Label>
+                Motivo da edição <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={editForm.edit_reason}
+                onChange={(e) => setEditForm((f) => ({ ...f, edit_reason: e.target.value }))}
+                placeholder="Ex: usuário solicitou correção do nome via WhatsApp; reativação após regularização de pagamento; ajuste de validade combinado com o comercial."
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                Registrado em auditoria junto com seu usuário. Mín. 5 caracteres.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)} disabled={savingEdit}>Cancelar</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="bg-gradient-brand text-white">
+              {savingEdit && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal: Gerenciar Etiquetas */}
       <Dialog open={manageTagsOpen} onOpenChange={setManageTagsOpen}>
         <DialogContent className="sm:max-w-md">

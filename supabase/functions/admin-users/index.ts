@@ -1,12 +1,13 @@
 // Edge function: gestão administrativa de nutricionistas
 // POST   -> cria usuário (auth + perfil)
+// PUT    -> edita dados do usuário (com motivo obrigatório e auditoria)
 // PATCH  -> bloqueia / desbloqueia (ban_duration no auth.users + is_blocked no profile)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, PUT, PATCH, OPTIONS",
 };
 
 function json(body: unknown, status = 200) {
@@ -36,7 +37,7 @@ Deno.serve(async (req) => {
 
   const callerId = userData.user.id;
 
-  // 2) Validar super_admin
+  // 2) Validar super_admin / support
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -49,7 +50,7 @@ Deno.serve(async (req) => {
   if (callerRoles.length === 0) return json({ ok: false, error: "Acesso restrito" }, 403);
   const isSuperAdmin = callerRoles.includes("super_admin");
 
-  // Suporte (CS) só pode criar nutricionista — não pode bloquear/desbloquear
+  // Suporte (CS) não pode bloquear/desbloquear
   if (req.method === "PATCH" && !isSuperAdmin) {
     return json({ ok: false, error: "Ação restrita ao super admin" }, 403);
   }
@@ -123,7 +124,6 @@ Deno.serve(async (req) => {
         if (expires_at_override) {
           periodEnd = expires_at_override;
         } else if (isLegado) {
-          // Legado 500: cortesia até 23/07/2027 (default)
           periodEnd = new Date("2027-07-23T23:59:59Z");
         } else {
           periodEnd = new Date(now);
@@ -183,7 +183,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Auditoria: registra criação manual com autor e motivo
       await admin.from("integration_logs").insert({
         source: "admin-users",
         event: "manual_user_creation",
@@ -205,6 +204,113 @@ Deno.serve(async (req) => {
       });
 
       return json({ ok: true, user_id: newUserId });
+    }
+
+    if (req.method === "PUT") {
+      const body = await req.json();
+      const userId = String(body.user_id ?? "").trim();
+      const edit_reason = String(body.edit_reason ?? "").trim();
+
+      if (!userId) return json({ ok: false, error: "user_id ausente" }, 400);
+      if (!edit_reason || edit_reason.length < 5 || edit_reason.length > 500)
+        return json({ ok: false, error: "Informe o motivo da edição (5–500 caracteres)" }, 400);
+
+      // Snapshot ANTES da edição — para diff auditável
+      const [{ data: beforeProfile }, { data: beforeSub }] = await Promise.all([
+        admin.from("profiles").select("full_name, phone, professional_id").eq("id", userId).maybeSingle(),
+        admin.from("subscriptions").select("status, current_period_end, plan_type").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (!beforeProfile) return json({ ok: false, error: "Usuário não encontrado" }, 404);
+
+      // Coleta campos editáveis (só aplica os fornecidos)
+      const profilePatch: Record<string, unknown> = {};
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+
+      if (typeof body.full_name === "string") {
+        const v = body.full_name.trim();
+        if (!v || v.length > 120) return json({ ok: false, error: "Nome inválido" }, 400);
+        if (v !== (beforeProfile as any).full_name) {
+          profilePatch.full_name = v;
+          changes.full_name = { from: (beforeProfile as any).full_name, to: v };
+        }
+      }
+      if (typeof body.phone === "string") {
+        const v = body.phone.trim() || null;
+        if (v && v.length > 30) return json({ ok: false, error: "Telefone inválido" }, 400);
+        if (v !== (beforeProfile as any).phone) {
+          profilePatch.phone = v;
+          changes.phone = { from: (beforeProfile as any).phone, to: v };
+        }
+      }
+      if (typeof body.professional_id === "string") {
+        const v = body.professional_id.trim() || null;
+        if (v && v.length > 50) return json({ ok: false, error: "CRN/CPF inválido" }, 400);
+        if (v !== (beforeProfile as any).professional_id) {
+          profilePatch.professional_id = v;
+          changes.professional_id = { from: (beforeProfile as any).professional_id, to: v };
+        }
+      }
+
+      if (Object.keys(profilePatch).length > 0) {
+        const { error: pErr } = await admin.from("profiles").update(profilePatch).eq("id", userId);
+        if (pErr) return json({ ok: false, error: `Falha ao atualizar perfil: ${pErr.message}` }, 400);
+      }
+
+      // Subscription (status + validade). Suporte pode reativar cadastros cancelados.
+      const subPatch: Record<string, unknown> = {};
+      if (typeof body.status === "string" && body.status) {
+        const v = body.status.trim().toLowerCase();
+        if (!["trial", "active", "past_due", "canceled"].includes(v))
+          return json({ ok: false, error: "Status inválido" }, 400);
+        if (v !== (beforeSub as any)?.status) {
+          subPatch.status = v;
+          changes.status = { from: (beforeSub as any)?.status ?? null, to: v };
+        }
+      }
+      if (typeof body.expires_at === "string" && body.expires_at) {
+        const raw = body.expires_at.trim();
+        const d = new Date(raw.length === 10 ? `${raw}T23:59:59Z` : raw);
+        if (isNaN(d.getTime())) return json({ ok: false, error: "Data de validade inválida" }, 400);
+        const iso = d.toISOString();
+        if (iso !== (beforeSub as any)?.current_period_end) {
+          subPatch.current_period_end = iso;
+          changes.expires_at = { from: (beforeSub as any)?.current_period_end ?? null, to: iso };
+        }
+      }
+
+      if (Object.keys(subPatch).length > 0) {
+        // Se não existe subscription ainda, cria com plan_type free/legado (upsert)
+        const payload = {
+          user_id: userId,
+          ...subPatch,
+          ...(beforeSub ? {} : { plan_type: "free", status: subPatch.status ?? "trial" }),
+        };
+        const { error: sErr } = await admin
+          .from("subscriptions")
+          .upsert(payload, { onConflict: "user_id" });
+        if (sErr) return json({ ok: false, error: `Falha ao atualizar assinatura: ${sErr.message}` }, 400);
+      }
+
+      if (Object.keys(changes).length === 0) {
+        return json({ ok: false, error: "Nenhuma alteração detectada" }, 400);
+      }
+
+      // Auditoria
+      await admin.from("integration_logs").insert({
+        source: "admin-users",
+        event: "manual_user_edit",
+        status: "success",
+        message: `Nutricionista editada manualmente por ${callerId}`,
+        payload: {
+          edited_user_id: userId,
+          edited_by: callerId,
+          editor_role: isSuperAdmin ? "super_admin" : "support",
+          reason: edit_reason,
+          changes,
+        },
+      });
+
+      return json({ ok: true, changes });
     }
 
     if (req.method === "PATCH") {
