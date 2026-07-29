@@ -1008,6 +1008,42 @@ function FaleComLummaPage() {
         </div>
       </div>
 
+      {/* Modal: Perfil da conversa (Perguntas Clínicas sem paciente) */}
+      <Dialog open={profilePickerOpen} onOpenChange={(o) => !profilePickerLoading && setProfilePickerOpen(o)}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
+          <div className="h-1.5 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+          <div className="px-6 pt-6 pb-6 bg-gradient-to-b from-[#f7f5f0] to-white space-y-4">
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-lg">Para qual perfil é a pergunta?</DialogTitle>
+              <DialogDescription className="text-xs">
+                Nenhum paciente será cadastrado — usamos o perfil apenas para escolher o Super Agente certo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { key: "adulto_masculino", label: "Adulto Masculino" },
+                { key: "adulto_feminino", label: "Adulto Feminino" },
+                { key: "gestante_mono", label: "Gestante Monofetal" },
+                { key: "gestante_gemelar", label: "Gestante Gemelar" },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  disabled={profilePickerLoading}
+                  onClick={() => startPerguntasClinicas(opt.key as any)}
+                  className="rounded-xl border border-[#e8a04c]/25 bg-white hover:bg-[#fff7ed] transition px-4 py-3 text-sm font-medium text-left disabled:opacity-50"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {profilePickerLoading && (
+              <p className="text-xs text-muted-foreground text-center">Abrindo conversa…</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal: Identificar paciente */}
       <Dialog open={identifyOpen} onOpenChange={setIdentifyOpen}>
         <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
