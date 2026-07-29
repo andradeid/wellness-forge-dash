@@ -157,6 +157,17 @@ function UsersPage() {
     expires_at: "",
     creation_reason: "",
   });
+  // Edição
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    phone: "",
+    professional_id: "",
+    status: "" as "" | SubStatus,
+    expires_at: "",
+    edit_reason: "",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
   const [examCount, setExamCount] = useState<number | null>(null);
   const [detailExtra, setDetailExtra] = useState<{
     patientsCount: number;
@@ -178,6 +189,14 @@ function UsersPage() {
       creatorRole: string | null;
       createdAt: string;
     } | null;
+    editHistory: Array<{
+      reason: string;
+      editorName: string | null;
+      editorEmail: string | null;
+      editorRole: string | null;
+      changes: Record<string, { from: unknown; to: unknown }>;
+      createdAt: string;
+    }>;
   } | null>(null);
   
 
