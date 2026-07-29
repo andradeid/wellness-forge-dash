@@ -81,7 +81,14 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
 
 
     // Gate de créditos
-    const billingKey = resolveAgentKey(agentType);
+    // Se for Super Agente (perfil escolhido) + task, resolve o custo pela task.
+    const isSuper = !!agentType && agentType.startsWith("super_");
+    const billingKey = resolveAgentKey(
+      agentType,
+      isSuper && selectedTaskKey
+        ? { isSuperAgent: true, selectedTask: selectedTaskKey }
+        : undefined,
+    );
     if (billingKey) {
       try {
         const { cost, label } = await getCost(billingKey);
