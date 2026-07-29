@@ -734,6 +734,7 @@ function UsersPage() {
       professional_id: "",
       status: (u.status as SubStatus) ?? "",
       expires_at: u.current_period_end ? u.current_period_end.slice(0, 10) : "",
+      plan_type: (u.plan_type as any) ?? "",
       edit_reason: "",
     });
     // Buscar professional_id atual
