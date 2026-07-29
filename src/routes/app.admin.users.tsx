@@ -766,6 +766,7 @@ function UsersPage() {
     };
     if (f.status) body.status = f.status;
     if (f.expires_at) body.expires_at = f.expires_at;
+    if (f.plan_type) body.plan_type = f.plan_type;
 
     const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "PUT",
