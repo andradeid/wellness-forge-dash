@@ -1205,6 +1205,55 @@ function UsersPage() {
                 </section>
               )}
 
+              {/* Histórico de edições */}
+              {detailExtra?.editHistory && detailExtra.editHistory.length > 0 && (
+                <section className="rounded-xl border border-blue-200 bg-blue-50/40 p-4 space-y-3">
+                  <p className="text-[11px] uppercase tracking-wider text-blue-800">
+                    Histórico de edições ({detailExtra.editHistory.length})
+                  </p>
+                  <div className="space-y-3 max-h-72 overflow-y-auto">
+                    {detailExtra.editHistory.map((h, idx) => (
+                      <div key={idx} className="rounded-lg border bg-background p-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium">
+                            {h.editorName || h.editorEmail || "—"}
+                            <span className="text-muted-foreground ml-1">({h.editorRole ?? "—"})</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            {new Date(h.createdAt).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Motivo: </span>
+                          <span className="whitespace-pre-wrap">{h.reason || "—"}</span>
+                        </div>
+                        {Object.keys(h.changes).length > 0 && (
+                          <div className="text-[11px] space-y-0.5 pt-1 border-t">
+                            {Object.entries(h.changes).map(([field, diff]) => (
+                              <div key={field} className="font-mono">
+                                <span className="text-muted-foreground">{field}:</span>{" "}
+                                <span className="line-through text-destructive/70">
+                                  {diff.from === null || diff.from === undefined || diff.from === ""
+                                    ? "∅"
+                                    : String(diff.from)}
+                                </span>{" "}
+                                →{" "}
+                                <span className="text-emerald-700">
+                                  {diff.to === null || diff.to === undefined || diff.to === ""
+                                    ? "∅"
+                                    : String(diff.to)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+
             </div>
           )}
           <DialogFooter>
