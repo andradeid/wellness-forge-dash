@@ -311,24 +311,35 @@ function GeneralChatPage() {
                       <span>Perfil: {PROFILE_LABEL[chatProfile] ?? chatProfile}</span>
                     </div>
                   )}
-                  {/* Seletor de tarefa dentro do super agente */}
+                  {/* Seletor de tarefa dentro do super agente — mesma identidade do chat com paciente */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full transition group max-w-full px-3 py-1 text-[11px] font-medium border",
+                          !selectedTaskKey
+                            ? "bg-amber-50 border-amber-300 text-amber-900 animate-pulse"
+                            : "bg-gradient-to-r from-[#e8a04c]/10 to-[#e89bcf]/10 border-[#e8a04c]/30 text-foreground hover:from-[#e8a04c]/15 hover:to-[#e89bcf]/15"
+                        )}
+                        title="Escolher tarefa do Super Agente"
                       >
-                        <ClipboardList className="h-3.5 w-3.5 text-[#e8a04c]" />
-                        <span>{currentTaskLabel}</span>
-                        <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
-                        <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                        <Sparkles className="h-3.5 w-3.5 text-[#e8a04c] shrink-0" />
+                        <span className="truncate">
+                          {activeTaskObj ? (activeTaskObj as any).label : "Escolher tarefa"}
+                        </span>
+                        <ChevronDown className="shrink-0 h-3 w-3 text-muted-foreground/60 group-hover:text-muted-foreground" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent
                       side="top"
                       align="center"
-                      className="w-72 p-2 rounded-2xl bg-white/95 backdrop-blur-xl border-white/60 shadow-2xl max-h-[60vh] overflow-y-auto"
+                      className="w-64 p-2 rounded-2xl bg-white/90 backdrop-blur-xl border-white/60 shadow-2xl animate-in fade-in slide-in-from-bottom-2"
                     >
+                      <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-foreground/40 flex items-center gap-1.5">
+                        <Sparkles className="h-2.5 w-2.5 text-[#e8a04c]" />
+                        Tarefas · {(currentAgentLabel ?? "").replace(/^Super\s+/i, "")}
+                      </div>
                       {availableTasks.length === 0 ? (
                         <div className="px-3 py-4 text-xs text-muted-foreground text-center">
                           Nenhuma tarefa ativa neste super agente.
@@ -337,18 +348,25 @@ function GeneralChatPage() {
                         <div className="space-y-1">
                           {availableTasks.map((t: any) => {
                             const isActive = selectedTaskKey === t.task_key;
+                            const TaskIcon = getAgentIcon(t.icon);
                             return (
                               <button
                                 key={t.id}
                                 onClick={() => setSelectedTaskKey(t.task_key)}
                                 className={cn(
-                                  "w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group/opt",
                                   isActive
-                                    ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20"
-                                    : "text-foreground/70 hover:bg-white hover:shadow-sm",
+                                    ? "bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15 text-foreground border border-[#e8a04c]/30"
+                                    : "text-foreground/70 hover:bg-white hover:text-foreground hover:shadow-sm"
                                 )}
                               >
-                                <span className="flex-1 text-left">{t.label}</span>
+                                <div className={cn(
+                                  "p-1.5 rounded-lg transition-colors",
+                                  isActive ? "bg-white shadow-sm" : "bg-gradient-to-br from-[#e8a04c]/10 to-[#e89bcf]/10 group-hover/opt:bg-white"
+                                )}>
+                                  <TaskIcon className="h-3.5 w-3.5 text-[#e8a04c]" />
+                                </div>
+                                <span className="flex-1 text-left truncate">{t.label}</span>
                                 {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
                               </button>
                             );
