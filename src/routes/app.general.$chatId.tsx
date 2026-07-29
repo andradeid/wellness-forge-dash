@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useParams, useSearch, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Apple, BookOpen, ClipboardList, AlertCircle, Sparkles } from "lucide-react";
+import { getAgentIcon } from "@/lib/agent-icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
