@@ -499,6 +499,7 @@ function UsersPage() {
       txAggRes,
       txLastRes,
       manualCreationRes,
+      editLogsRes,
     ] = await Promise.all([
       sb.from("patient_exams").select("id", { count: "exact", head: true }).eq("uploaded_by", u.id),
       sb.from("patients").select("id", { count: "exact", head: true }).eq("created_by", u.id).is("deleted_at", null),
@@ -516,6 +517,13 @@ function UsersPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      sb.from("integration_logs")
+        .select("payload, created_at")
+        .eq("source", "admin-users")
+        .eq("event", "manual_user_edit")
+        .contains("payload", { edited_user_id: u.id })
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
 
     setExamCount(examsRes.count ?? 0);
@@ -537,27 +545,50 @@ function UsersPage() {
       createdAt: string;
     } | null = null;
     const logRow = (manualCreationRes as any)?.data;
+
+    // Coletar todos os creator/editor ids únicos para fazer 1 fetch de profiles
+    const creatorIds = new Set<string>();
+    if (logRow?.payload?.created_by) creatorIds.add(logRow.payload.created_by);
+    const editRows = ((editLogsRes as any)?.data ?? []) as Array<{ payload: any; created_at: string }>;
+    for (const row of editRows) {
+      if (row?.payload?.edited_by) creatorIds.add(row.payload.edited_by);
+    }
+
+    const creatorMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (creatorIds.size > 0) {
+      const { data: profs } = await sb
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", Array.from(creatorIds));
+      for (const p of (profs ?? []) as Array<any>) {
+        creatorMap.set(p.id, { full_name: p.full_name ?? null, email: p.email ?? null });
+      }
+    }
+
     if (logRow?.payload) {
       const p = logRow.payload as Record<string, any>;
-      let creatorName: string | null = null;
-      let creatorEmail: string | null = null;
-      if (p.created_by) {
-        const { data: creatorProf } = await sb
-          .from("profiles")
-          .select("full_name, email")
-          .eq("id", p.created_by)
-          .maybeSingle();
-        creatorName = (creatorProf as any)?.full_name ?? null;
-        creatorEmail = (creatorProf as any)?.email ?? null;
-      }
+      const creator = p.created_by ? creatorMap.get(p.created_by) : null;
       manualCreation = {
         reason: p.reason ?? "",
-        creatorName,
-        creatorEmail,
+        creatorName: creator?.full_name ?? null,
+        creatorEmail: creator?.email ?? null,
         creatorRole: p.creator_role ?? null,
         createdAt: logRow.created_at,
       };
     }
+
+    const editHistory = editRows.map((row) => {
+      const p = row.payload ?? {};
+      const editor = p.edited_by ? creatorMap.get(p.edited_by) : null;
+      return {
+        reason: p.reason ?? "",
+        editorName: editor?.full_name ?? null,
+        editorEmail: editor?.email ?? null,
+        editorRole: p.editor_role ?? null,
+        changes: (p.changes ?? {}) as Record<string, { from: unknown; to: unknown }>,
+        createdAt: row.created_at,
+      };
+    });
 
     setDetailExtra({
       patientsCount: patientsRes.count ?? 0,
@@ -573,6 +604,7 @@ function UsersPage() {
       lastActivityAt: lastTx?.created_at ?? null,
       lastAgent: lastTx?.agent_label ?? lastTx?.agent_key ?? null,
       manualCreation,
+      editHistory,
     });
   };
 
