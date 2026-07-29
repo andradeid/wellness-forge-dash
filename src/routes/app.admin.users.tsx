@@ -1006,6 +1006,9 @@ function UsersPage() {
                           <Button size="icon" variant="ghost" onClick={() => openDetails(r)} title="Ver detalhes">
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar cadastro">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           {isSuperAdmin && (
                             <Button size="icon" variant="ghost" onClick={() => openPlan(r)} title="Plano & Créditos">
                               <CreditCard className="h-4 w-4" />
