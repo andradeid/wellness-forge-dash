@@ -408,7 +408,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
     } finally {
       sendingRef.current = false;
     }
-  }, [chatId, user, agentType, getCost, consume, refetchCredits]);
+  }, [chatId, user, agentType, selectedTaskKey, getCost, consume, refetchCredits]);
 
   return { messages, sendMessage, thinking };
 }
