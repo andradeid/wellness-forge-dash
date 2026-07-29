@@ -165,6 +165,7 @@ function UsersPage() {
     professional_id: "",
     status: "" as "" | SubStatus,
     expires_at: "",
+    plan_type: "" as "" | "free" | "starter" | "pro" | "clinica" | "legado_500",
     edit_reason: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
@@ -733,6 +734,7 @@ function UsersPage() {
       professional_id: "",
       status: (u.status as SubStatus) ?? "",
       expires_at: u.current_period_end ? u.current_period_end.slice(0, 10) : "",
+      plan_type: (u.plan_type as any) ?? "",
       edit_reason: "",
     });
     // Buscar professional_id atual
@@ -764,6 +766,7 @@ function UsersPage() {
     };
     if (f.status) body.status = f.status;
     if (f.expires_at) body.expires_at = f.expires_at;
+    if (f.plan_type) body.plan_type = f.plan_type;
 
     const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "PUT",
@@ -1597,6 +1600,25 @@ function UsersPage() {
                   onChange={(e) => setEditForm((f) => ({ ...f, expires_at: e.target.value }))}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Plano</Label>
+              <Select
+                value={editForm.plan_type}
+                onValueChange={(v) => setEditForm((f) => ({ ...f, plan_type: v as typeof f.plan_type }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="clinica">Clínica</SelectItem>
+                  <SelectItem value="legado_500">Legado 500 (cortesia)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Mudar o plano reseta a cota mensal de créditos para o valor do novo plano.
+              </p>
             </div>
             <div className="pt-3 border-t space-y-2">
               <Label>

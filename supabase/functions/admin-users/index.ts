@@ -277,19 +277,53 @@ Deno.serve(async (req) => {
           changes.expires_at = { from: (beforeSub as any)?.current_period_end ?? null, to: iso };
         }
       }
+      if (typeof body.plan_type === "string" && body.plan_type) {
+        const v = body.plan_type.trim().toLowerCase();
+        if (!["free", "starter", "pro", "clinica", "legado_500"].includes(v))
+          return json({ ok: false, error: "Plano inválido" }, 400);
+        if (v !== (beforeSub as any)?.plan_type) {
+          subPatch.plan_type = v;
+          changes.plan_type = { from: (beforeSub as any)?.plan_type ?? null, to: v };
+        }
+      }
 
       if (Object.keys(subPatch).length > 0) {
         // Se não existe subscription ainda, cria com plan_type free/legado (upsert)
         const payload = {
           user_id: userId,
           ...subPatch,
-          ...(beforeSub ? {} : { plan_type: "free", status: subPatch.status ?? "trial" }),
+          ...(beforeSub ? {} : { plan_type: subPatch.plan_type ?? "free", status: subPatch.status ?? "trial" }),
         };
         const { error: sErr } = await admin
           .from("subscriptions")
           .upsert(payload, { onConflict: "user_id" });
         if (sErr) return json({ ok: false, error: `Falha ao atualizar assinatura: ${sErr.message}` }, 400);
+
+        // Se mudou o plano, ajusta cota de créditos conforme monthly_credits do novo plano
+        if (subPatch.plan_type) {
+          const { data: newPlan } = await admin
+            .from("subscription_plans")
+            .select("monthly_credits")
+            .eq("slug", subPatch.plan_type)
+            .maybeSingle();
+          const credits = (newPlan as any)?.monthly_credits ?? 0;
+          if (credits > 0) {
+            const quotaReset = new Date();
+            quotaReset.setDate(quotaReset.getDate() + 30);
+            await admin.from("user_credits").upsert(
+              {
+                user_id: userId,
+                balance: credits,
+                monthly_quota: credits,
+                quota_reset_at: quotaReset.toISOString(),
+              },
+              { onConflict: "user_id" },
+            );
+            changes.credits_reset = { from: null, to: credits };
+          }
+        }
       }
+
 
       if (Object.keys(changes).length === 0) {
         return json({ ok: false, error: "Nenhuma alteração detectada" }, 400);
