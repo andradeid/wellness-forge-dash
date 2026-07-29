@@ -368,6 +368,7 @@ export function useDifyChat(
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
+  const markersEmittedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
   // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
   // encerra sem answer. Limitado a UMA tentativa por envio original.
@@ -720,6 +721,7 @@ export function useDifyChat(
 
     researchSavedRef.current = false;
     assistantSavedRef.current = false;
+    markersEmittedRef.current = false;
     currentFullTextRef.current = "";
     if (researchTimeoutRef.current) {
       clearTimeout(researchTimeoutRef.current);
@@ -1270,9 +1272,34 @@ export function useDifyChat(
               if (text) {
                 fullText += text;
                 currentFullTextRef.current = fullText;
+
+                // Emissão antecipada do painel de marcadores: assim que o bloco
+                // JSON {"markers":[...]} fechar (scanner balanceado retorna array),
+                // atualiza structured_data para o card renderizar antes do texto.
+                // Persistência, débito de créditos e reconciliação de id continuam
+                // exclusivamente no message_end. allowHeuristic:false garante zero
+                // falso positivo sobre prosa parcial.
+                let earlyMarkers: Marker[] | null = null;
+                if (!markersEmittedRef.current && fullText.indexOf('"markers"') !== -1) {
+                  earlyMarkers = tryExtractMarkers(fullText, { allowHeuristic: false });
+                  if (earlyMarkers && earlyMarkers.length > 0) {
+                    markersEmittedRef.current = true;
+                  } else {
+                    earlyMarkers = null;
+                  }
+                }
+
                 setMessages((prev) =>
                   prev.map((m) =>
-                    m.id === assistantId ? { ...m, content: fullText } : m
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          content: fullText,
+                          ...(earlyMarkers
+                            ? { structured_data: { ...(m.structured_data ?? {}), markers: earlyMarkers } }
+                            : {}),
+                        }
+                      : m
                   )
                 );
 
