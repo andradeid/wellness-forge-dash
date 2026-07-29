@@ -368,6 +368,7 @@ export function useDifyChat(
   const researchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
+  const markersEmittedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
   // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
   // encerra sem answer. Limitado a UMA tentativa por envio original.
