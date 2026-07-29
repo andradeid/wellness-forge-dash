@@ -725,6 +725,60 @@ function UsersPage() {
     refreshAll();
   };
 
+  const openEdit = (u: UserRow) => {
+    setEditUser(u);
+    setEditForm({
+      full_name: u.full_name ?? "",
+      phone: u.phone ?? "",
+      professional_id: "",
+      status: (u.status as SubStatus) ?? "",
+      expires_at: u.current_period_end ? u.current_period_end.slice(0, 10) : "",
+      edit_reason: "",
+    });
+    // Buscar professional_id atual
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("professional_id")
+        .eq("id", u.id)
+        .maybeSingle();
+      setEditForm((f) => ({ ...f, professional_id: (data as any)?.professional_id ?? "" }));
+    })();
+  };
+
+  const saveEdit = async () => {
+    if (!editUser) return;
+    const f = editForm;
+    if (!f.full_name.trim()) { toast.error("Nome não pode ficar vazio"); return; }
+    if (!f.edit_reason.trim() || f.edit_reason.trim().length < 5) {
+      toast.error("Informe o motivo da edição (mín. 5 caracteres)");
+      return;
+    }
+    setSavingEdit(true);
+    const body: Record<string, unknown> = {
+      user_id: editUser.id,
+      edit_reason: f.edit_reason.trim(),
+      full_name: f.full_name,
+      phone: f.phone,
+      professional_id: f.professional_id,
+    };
+    if (f.status) body.status = f.status;
+    if (f.expires_at) body.expires_at = f.expires_at;
+
+    const { data, error } = await supabase.functions.invoke("admin-users", {
+      method: "PUT",
+      body,
+    });
+    setSavingEdit(false);
+    if (error || !data?.ok) {
+      toast.error(data?.error ?? error?.message ?? "Falha ao editar usuário");
+      return;
+    }
+    toast.success("Dados atualizados com sucesso");
+    setEditUser(null);
+    refreshAll();
+  };
+
   if (isForbidden) {
     return (
       <div className="p-12 text-center text-sm text-muted-foreground">
