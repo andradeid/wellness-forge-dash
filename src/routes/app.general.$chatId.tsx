@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useParams, useSearch, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Apple, BookOpen, ClipboardList, AlertCircle } from "lucide-react";
+import { ArrowLeft, Menu, ShieldCheck, Plus, Search, Loader2, Pin, Edit2, Check, X, ChevronDown, Apple, BookOpen, ClipboardList, AlertCircle, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { useGeneralChat } from "@/hooks/useGeneralChat";
+import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -25,21 +26,59 @@ export const Route = createFileRoute("/app/general/$chatId")({
   component: GeneralChatPage,
 });
 
+const PROFILE_LABEL: Record<string, string> = {
+  adulto_masculino: "Adulto Masculino",
+  adulto_feminino: "Adulto Feminino",
+  gestante_mono: "Gestante Monofetal",
+  gestante_gemelar: "Gestante Gemelar",
+};
+
 function GeneralChatPage() {
   const { chatId } = useParams({ from: "/app/general/$chatId" });
   const { module: agentType } = Route.useSearch();
   const navigate = useNavigate();
-  const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType);
+  const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
+  const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType, selectedTaskKey);
   const [query, setQuery] = useState("");
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const { role, user } = useAuth();
+  const { tasks: superAgentTasks, agents } = useAgentConfig();
+  const [chatProfile, setChatProfile] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
-  // Chat SEM paciente: apenas tarefas que fazem sentido sem perfil identificado.
-  // Cards que exigem paciente (exames por perfil, composição, genética) rodam
-  // via super agente no fluxo com paciente (app.chat.$patientId.tsx).
+  const isSuperAgent = !!agentType && agentType.startsWith("super_");
+
+  // Carrega o perfil salvo no chat (quando aplicável).
+  useEffect(() => {
+    if (!chatId) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("general_chats")
+        .select("profile")
+        .eq("id", chatId)
+        .maybeSingle();
+      setChatProfile((data?.profile as string) ?? null);
+    })();
+  }, [chatId]);
+
+  // Tarefas disponíveis quando é um Super Agente.
+  const availableTasks = useMemo(() => {
+    if (!isSuperAgent) return [];
+    return superAgentTasks
+      .filter((t) => t.agent_id === agentType && t.is_active)
+      .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [isSuperAgent, superAgentTasks, agentType]);
+
+  const currentTaskLabel = useMemo(() => {
+    if (!isSuperAgent) return null;
+    if (!selectedTaskKey) return "Selecionar tarefa";
+    const t = availableTasks.find((x: any) => x.task_key === selectedTaskKey);
+    return (t as any)?.label || selectedTaskKey;
+  }, [isSuperAgent, selectedTaskKey, availableTasks]);
+
+  // Chat SEM paciente (modo legado, não-super): apenas tarefas gerais.
   const AGENT_OPTIONS = [
     { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 1 },
     { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 1 },
@@ -52,6 +91,7 @@ function GeneralChatPage() {
     if (agent.id === "production") return "Elaborando Plano & Receitas";
     return agent.title;
   };
+
 
 
   const handleUpdateTitle = async (id: string) => {
