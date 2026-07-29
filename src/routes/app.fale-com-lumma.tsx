@@ -296,6 +296,40 @@ function FaleComLummaPage() {
     navigate({ to: `/app/general/${data.id}`, search: { module: agentType } });
   };
 
+  // Cria uma conversa "Perguntas Clínicas" sem paciente, roteada para o Super
+  // Agente do perfil escolhido. O perfil é guardado só no general_chats.profile
+  // — nada é inserido em `patients`.
+  const startPerguntasClinicas = async (
+    profileKey: "adulto_masculino" | "adulto_feminino" | "gestante_mono" | "gestante_gemelar",
+  ) => {
+    if (!user?.id) return;
+    const agentId =
+      profileKey === "adulto_masculino" ? "super_masculino"
+      : profileKey === "adulto_feminino" ? "super_feminino"
+      : profileKey === "gestante_mono" ? "super_gestante_mono"
+      : "super_gestante_gemelar";
+
+    setProfilePickerLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("general_chats")
+      .insert({
+        agent_type: agentId,
+        title: "Perguntas Clínicas",
+        profile: profileKey,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    setProfilePickerLoading(false);
+
+    if (error || !data) {
+      toast.error(error?.message || "Não foi possível abrir a conversa.");
+      return;
+    }
+    setProfilePickerOpen(false);
+    navigate({ to: `/app/general/${data.id}`, search: { module: agentId } });
+  };
+
   const filtered = useMemo(
     () =>
       chats.filter((c) =>
