@@ -19,6 +19,7 @@ import {
   X,
   Check,
   Copy,
+  Pencil,
 } from "lucide-react";
 
 const TEMP_PASSWORD_DISPLAY = "Lumma2@102030";
