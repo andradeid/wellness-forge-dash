@@ -937,7 +937,7 @@ function FaleComLummaPage() {
                               transition={{ duration: 0.5, delay: (dedupedSuper.length + idx) * 0.08, ease: "easeOut" }}
                               onClick={() => {
                                 if (card.trigger === "perguntas_clinicas") {
-                                  startGeneralChat("reasoning");
+                                  setProfilePickerOpen(true);
                                   return;
                                 }
                                 if (isSuperRouted) {
