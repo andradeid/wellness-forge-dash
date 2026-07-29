@@ -184,6 +184,16 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      // Sem paciente não há perfil → não dá pra usar Super Agente por perfil.
+      // O app "production" está inativo, então roteamos "Plano Alimentar &
+      // Formulações" para o agente "reasoning" (ativo) com um prefixo de
+      // tarefa. O billing continua debitando como `plano_alimentar` porque
+      // resolveAgentKey usa o agentType original.
+      const upstreamAgent = agentType === "production" ? "reasoning" : agentType;
+      const upstreamQuery =
+        agentType === "production"
+          ? `[TAREFA: Elaborar plano alimentar e formulações magistrais]\n\n${text}`
+          : text;
       const res = await fetch("/api/dify/chat", {
         method: "POST",
         headers: {
@@ -191,8 +201,8 @@ export function useGeneralChat(chatId: string, agentType: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: text,
-          agent_type: agentType,
+          query: upstreamQuery,
+          agent_type: upstreamAgent,
           conversation_id: conversationIdRef.current || undefined,
         }),
       });
