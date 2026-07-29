@@ -165,6 +165,7 @@ function UsersPage() {
     professional_id: "",
     status: "" as "" | SubStatus,
     expires_at: "",
+    plan_type: "" as "" | "free" | "starter" | "pro" | "clinica" | "legado_500",
     edit_reason: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
