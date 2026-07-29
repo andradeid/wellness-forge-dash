@@ -1599,6 +1599,7 @@ function UsersPage() {
                   value={editForm.expires_at}
                   onChange={(e) => setEditForm((f) => ({ ...f, expires_at: e.target.value }))}
                 />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Plano</Label>
