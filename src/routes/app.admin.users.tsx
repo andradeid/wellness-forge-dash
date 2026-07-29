@@ -1536,6 +1536,94 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Modal: Editar cadastro */}
+      <Dialog open={!!editUser} onOpenChange={(o) => { if (!o && !savingEdit) setEditUser(null); }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-normal">Editar cadastro</DialogTitle>
+            <DialogDescription>
+              {editUser?.email} — alterações são registradas em auditoria com autor e motivo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Nome completo</Label>
+              <Input
+                value={editForm.full_name}
+                onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))}
+                maxLength={120}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="(11) 90000-0000"
+                  maxLength={30}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>CRN / CPF</Label>
+                <Input
+                  value={editForm.professional_id}
+                  onChange={(e) => setEditForm((f) => ({ ...f, professional_id: e.target.value }))}
+                  maxLength={50}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Status da assinatura</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) => setEditForm((f) => ({ ...f, status: v as SubStatus }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="past_due">Inadimplente</SelectItem>
+                    <SelectItem value="canceled">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Validade (opcional)</Label>
+                <Input
+                  type="date"
+                  value={editForm.expires_at}
+                  onChange={(e) => setEditForm((f) => ({ ...f, expires_at: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="pt-3 border-t space-y-2">
+              <Label>
+                Motivo da edição <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={editForm.edit_reason}
+                onChange={(e) => setEditForm((f) => ({ ...f, edit_reason: e.target.value }))}
+                placeholder="Ex: usuário solicitou correção do nome via WhatsApp; reativação após regularização de pagamento; ajuste de validade combinado com o comercial."
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                Registrado em auditoria junto com seu usuário. Mín. 5 caracteres.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)} disabled={savingEdit}>Cancelar</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="bg-gradient-brand text-white">
+              {savingEdit && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal: Gerenciar Etiquetas */}
       <Dialog open={manageTagsOpen} onOpenChange={setManageTagsOpen}>
         <DialogContent className="sm:max-w-md">
