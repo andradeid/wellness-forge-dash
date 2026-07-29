@@ -282,8 +282,64 @@ function GeneralChatPage() {
 
         <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
-            <div className="mb-2 flex justify-center">
-              {agentType === "research" ? (
+            <div className="mb-2 flex justify-center gap-2 flex-wrap">
+              {isSuperAgent ? (
+                <>
+                  {/* Chip: perfil escolhido no início da conversa (imutável) */}
+                  {chatProfile && (
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground/80 shadow-sm select-none">
+                      <Sparkles className="h-3.5 w-3.5 text-[#e8a04c]" />
+                      <span>Perfil: {PROFILE_LABEL[chatProfile] ?? chatProfile}</span>
+                    </div>
+                  )}
+                  {/* Seletor de tarefa dentro do super agente */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#e8a04c]/30 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-white transition group"
+                      >
+                        <ClipboardList className="h-3.5 w-3.5 text-[#e8a04c]" />
+                        <span>{currentTaskLabel}</span>
+                        <span className="text-muted-foreground/70 text-[10px]">• trocar</span>
+                        <ChevronDown className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="top"
+                      align="center"
+                      className="w-72 p-2 rounded-2xl bg-white/95 backdrop-blur-xl border-white/60 shadow-2xl max-h-[60vh] overflow-y-auto"
+                    >
+                      {availableTasks.length === 0 ? (
+                        <div className="px-3 py-4 text-xs text-muted-foreground text-center">
+                          Nenhuma tarefa ativa neste super agente.
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {availableTasks.map((t: any) => {
+                            const isActive = selectedTaskKey === t.task_key;
+                            return (
+                              <button
+                                key={t.id}
+                                onClick={() => setSelectedTaskKey(t.task_key)}
+                                className={cn(
+                                  "w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                                  isActive
+                                    ? "bg-gradient-to-r from-[#fef2f8] to-[#fff7ed] text-foreground border border-[#e8a04c]/20"
+                                    : "text-foreground/70 hover:bg-white hover:shadow-sm",
+                                )}
+                              >
+                                <span className="flex-1 text-left">{t.label}</span>
+                                {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#e8a04c]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </>
+              ) : agentType === "research" ? (
                 <TooltipProvider delayDuration={150}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -363,7 +419,16 @@ function GeneralChatPage() {
               )}
             </div>
 
-            <ChatInput onSubmit={(text) => sendMessage(text)} disabled={thinking} />
+            <ChatInput
+              onSubmit={(text) => {
+                if (isSuperAgent && !selectedTaskKey) {
+                  // Sinal visual mínimo: sem toast dep aqui — o placeholder do popover já orienta.
+                  return;
+                }
+                sendMessage(text);
+              }}
+              disabled={thinking || (isSuperAgent && !selectedTaskKey)}
+            />
             <TooltipProvider delayDuration={150}>
               <Tooltip>
                 <TooltipTrigger asChild>
