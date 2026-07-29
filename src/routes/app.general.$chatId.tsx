@@ -64,20 +64,38 @@ function GeneralChatPage() {
     })();
   }, [chatId]);
 
+  // Allowlist idêntica ao chat com paciente para manter identidade visual.
+  const UI_VISIBLE_TASKS = useMemo(() => new Set([
+    "exam_masc", "exam_fem", "exam_gest_mono", "exam_gest_gem",
+    "bioimpedancia", "calorimetria", "genetica", "microbioma",
+    "estimativa_refeicao_foto", "composicao_corporal_foto",
+    "reasoning", "production",
+  ]), []);
+
   // Tarefas disponíveis quando é um Super Agente.
   const availableTasks = useMemo(() => {
     if (!isSuperAgent) return [];
     return superAgentTasks
-      .filter((t) => t.agent_id === agentType && t.is_active)
+      .filter((t: any) => t.agent_id === agentType && t.is_active && UI_VISIBLE_TASKS.has(t.task_key))
       .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-  }, [isSuperAgent, superAgentTasks, agentType]);
+  }, [isSuperAgent, superAgentTasks, agentType, UI_VISIBLE_TASKS]);
 
-  const currentTaskLabel = useMemo(() => {
+  // Pré-seleciona "Raciocínio Clínico" ao abrir o chat de Super Agente.
+  useEffect(() => {
+    if (!isSuperAgent || selectedTaskKey) return;
+    const hasReasoning = availableTasks.some((t: any) => t.task_key === "reasoning");
+    if (hasReasoning) setSelectedTaskKey("reasoning");
+  }, [isSuperAgent, availableTasks, selectedTaskKey]);
+
+  const activeTaskObj = useMemo(
+    () => (isSuperAgent && selectedTaskKey ? availableTasks.find((x: any) => x.task_key === selectedTaskKey) : null),
+    [isSuperAgent, selectedTaskKey, availableTasks],
+  );
+  const currentAgentLabel = useMemo(() => {
     if (!isSuperAgent) return null;
-    if (!selectedTaskKey) return "Selecionar tarefa";
-    const t = availableTasks.find((x: any) => x.task_key === selectedTaskKey);
-    return (t as any)?.label || selectedTaskKey;
-  }, [isSuperAgent, selectedTaskKey, availableTasks]);
+    const a = agents.find((x: any) => x.agent_id === agentType);
+    return (a as any)?.label ?? "";
+  }, [isSuperAgent, agents, agentType]);
 
   // Chat SEM paciente (modo legado, não-super): apenas tarefas gerais.
   const AGENT_OPTIONS = [
