@@ -108,6 +108,10 @@ function FaleComLummaPage() {
   const [menstrualCyclePhase, setMenstrualCyclePhase] = useState<string>("nao_sei");
   const [creating, setCreating] = useState(false);
 
+  // Perguntas Clínicas (sem paciente) → seletor de perfil para rotear ao Super Agente.
+  const [profilePickerOpen, setProfilePickerOpen] = useState(false);
+  const [profilePickerLoading, setProfilePickerLoading] = useState(false);
+
   const loadPatients = async () => {
     if (!user) return;
     setLoadingPatients(true);
@@ -290,6 +294,40 @@ function FaleComLummaPage() {
     }
     
     navigate({ to: `/app/general/${data.id}`, search: { module: agentType } });
+  };
+
+  // Cria uma conversa "Perguntas Clínicas" sem paciente, roteada para o Super
+  // Agente do perfil escolhido. O perfil é guardado só no general_chats.profile
+  // — nada é inserido em `patients`.
+  const startPerguntasClinicas = async (
+    profileKey: "adulto_masculino" | "adulto_feminino" | "gestante_mono" | "gestante_gemelar",
+  ) => {
+    if (!user?.id) return;
+    const agentId =
+      profileKey === "adulto_masculino" ? "super_masculino"
+      : profileKey === "adulto_feminino" ? "super_feminino"
+      : profileKey === "gestante_mono" ? "super_gestante_mono"
+      : "super_gestante_gemelar";
+
+    setProfilePickerLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("general_chats")
+      .insert({
+        agent_type: agentId,
+        title: "Perguntas Clínicas",
+        profile: profileKey,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    setProfilePickerLoading(false);
+
+    if (error || !data) {
+      toast.error(error?.message || "Não foi possível abrir a conversa.");
+      return;
+    }
+    setProfilePickerOpen(false);
+    navigate({ to: `/app/general/${data.id}`, search: { module: agentId } });
   };
 
   const filtered = useMemo(
@@ -899,7 +937,7 @@ function FaleComLummaPage() {
                               transition={{ duration: 0.5, delay: (dedupedSuper.length + idx) * 0.08, ease: "easeOut" }}
                               onClick={() => {
                                 if (card.trigger === "perguntas_clinicas") {
-                                  startGeneralChat("reasoning");
+                                  setProfilePickerOpen(true);
                                   return;
                                 }
                                 if (isSuperRouted) {
@@ -969,6 +1007,42 @@ function FaleComLummaPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal: Perfil da conversa (Perguntas Clínicas sem paciente) */}
+      <Dialog open={profilePickerOpen} onOpenChange={(o) => !profilePickerLoading && setProfilePickerOpen(o)}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-xl">
+          <div className="h-1.5 bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
+          <div className="px-6 pt-6 pb-6 bg-gradient-to-b from-[#f7f5f0] to-white space-y-4">
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-lg">Para qual perfil é a pergunta?</DialogTitle>
+              <DialogDescription className="text-xs">
+                Nenhum paciente será cadastrado — usamos o perfil apenas para escolher o Super Agente certo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { key: "adulto_masculino", label: "Adulto Masculino" },
+                { key: "adulto_feminino", label: "Adulto Feminino" },
+                { key: "gestante_mono", label: "Gestante Monofetal" },
+                { key: "gestante_gemelar", label: "Gestante Gemelar" },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  disabled={profilePickerLoading}
+                  onClick={() => startPerguntasClinicas(opt.key as any)}
+                  className="rounded-xl border border-[#e8a04c]/25 bg-white hover:bg-[#fff7ed] transition px-4 py-3 text-sm font-medium text-left disabled:opacity-50"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {profilePickerLoading && (
+              <p className="text-xs text-muted-foreground text-center">Abrindo conversa…</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal: Identificar paciente */}
       <Dialog open={identifyOpen} onOpenChange={setIdentifyOpen}>

@@ -517,6 +517,7 @@ export type Database = {
           dify_conversation_id: string | null
           id: string
           pinned_at: string | null
+          profile: string | null
           title: string | null
           updated_at: string | null
         }
@@ -527,6 +528,7 @@ export type Database = {
           dify_conversation_id?: string | null
           id?: string
           pinned_at?: string | null
+          profile?: string | null
           title?: string | null
           updated_at?: string | null
         }
@@ -537,6 +539,7 @@ export type Database = {
           dify_conversation_id?: string | null
           id?: string
           pinned_at?: string | null
+          profile?: string | null
           title?: string | null
           updated_at?: string | null
         }

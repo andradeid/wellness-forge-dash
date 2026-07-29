@@ -15,7 +15,7 @@ import {
   isProviderConcurrencyError,
 } from "@/lib/dify-error-messages";
 
-export function useGeneralChat(chatId: string, agentType: string) {
+export function useGeneralChat(chatId: string, agentType: string, selectedTaskKey?: string | null) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
@@ -81,7 +81,14 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
 
     // Gate de créditos
-    const billingKey = resolveAgentKey(agentType);
+    // Se for Super Agente (perfil escolhido) + task, resolve o custo pela task.
+    const isSuper = !!agentType && agentType.startsWith("super_");
+    const billingKey = resolveAgentKey(
+      agentType,
+      isSuper && selectedTaskKey
+        ? { isSuperAgent: true, selectedTask: selectedTaskKey }
+        : undefined,
+    );
     if (billingKey) {
       try {
         const { cost, label } = await getCost(billingKey);
@@ -184,16 +191,6 @@ export function useGeneralChat(chatId: string, agentType: string) {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      // Sem paciente não há perfil → não dá pra usar Super Agente por perfil.
-      // O app "production" está inativo, então roteamos "Plano Alimentar &
-      // Formulações" para o agente "reasoning" (ativo) com um prefixo de
-      // tarefa. O billing continua debitando como `plano_alimentar` porque
-      // resolveAgentKey usa o agentType original.
-      const upstreamAgent = agentType === "production" ? "reasoning" : agentType;
-      const upstreamQuery =
-        agentType === "production"
-          ? `[TAREFA: Elaborar plano alimentar e formulações magistrais]\n\n${text}`
-          : text;
       const res = await fetch("/api/dify/chat", {
         method: "POST",
         headers: {
@@ -201,9 +198,10 @@ export function useGeneralChat(chatId: string, agentType: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: upstreamQuery,
-          agent_type: upstreamAgent,
+          query: text,
+          agent_type: agentType,
           conversation_id: conversationIdRef.current || undefined,
+          ...(isSuper && selectedTaskKey ? { selected_task: selectedTaskKey } : {}),
         }),
       });
 
@@ -410,7 +408,7 @@ export function useGeneralChat(chatId: string, agentType: string) {
     } finally {
       sendingRef.current = false;
     }
-  }, [chatId, user, agentType, getCost, consume, refetchCredits]);
+  }, [chatId, user, agentType, selectedTaskKey, getCost, consume, refetchCredits]);
 
   return { messages, sendMessage, thinking };
 }
