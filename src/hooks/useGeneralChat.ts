@@ -15,7 +15,7 @@ import {
   isProviderConcurrencyError,
 } from "@/lib/dify-error-messages";
 
-export function useGeneralChat(chatId: string, agentType: string) {
+export function useGeneralChat(chatId: string, agentType: string, selectedTaskKey?: string | null) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
