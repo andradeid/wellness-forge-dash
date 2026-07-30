@@ -794,7 +794,17 @@ export function useDifyChat(
       }
     };
 
-    for (const file of files) {
+    // Retry: reaproveita os anexos já processados (dify_file_id) — a
+    // nutricionista não precisa reanexar o exame.
+    const reusedAttachments =
+      opts?._isRetry && lastRequestRef.current?.resolved ? lastRequestRef.current.resolved : null;
+    if (reusedAttachments) {
+      difyFiles.push(...reusedAttachments.difyFiles);
+      attachments.push(...reusedAttachments.attachments);
+      lastExamId = reusedAttachments.lastExamId;
+    }
+
+    for (const file of reusedAttachments ? [] : files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
       updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
