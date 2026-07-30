@@ -145,6 +145,15 @@ const adminGroups: NavGroup[] = [
     ],
   },
   {
+    key: "curadoria",
+    label: "CURADORIA",
+    subtitle: "Solicitações e melhorias",
+    icon: Lightbulb,
+    items: [
+      { title: "Solicitações", url: "/app/admin/curadoria", icon: Lightbulb, superAdminOnly: true, badge: "NOVO" },
+    ],
+  },
+  {
     key: "ajuda",
     label: "AJUDA & SUPORTE",
     subtitle: "Documentação e termos",
