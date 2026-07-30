@@ -106,8 +106,8 @@ function AdministratorsPage() {
       return;
     }
     const promoMap = new Map<string, { created_at: string; role: AdminRow["role"] }>();
-    // priority: super_admin > admin > support
-    const priority: Record<string, number> = { super_admin: 3, admin: 2, support: 1 };
+    // priority: super_admin > admin > support > curator
+    const priority: Record<string, number> = { super_admin: 4, admin: 3, support: 2, curator: 1 };
     (roleRows ?? []).forEach((r: any) => {
       const existing = promoMap.get(r.user_id);
       if (!existing || priority[r.role] > priority[existing.role]) {
