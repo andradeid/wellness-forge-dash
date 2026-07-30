@@ -201,6 +201,7 @@ const curatorGroups: NavGroup[] = [
     icon: Lightbulb,
     items: [
       { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
+      { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText },
     ],
   },
   ...nutriGroups.filter((g) => g.bottom),
