@@ -1,0 +1,1 @@
+UPDATE auth.users SET banned_until = NULL, updated_at = now() WHERE email = 'nutricionistalusoares@gmail.com'; UPDATE public.profiles SET is_blocked = false WHERE id = 'b6d67e3e-8c5c-4d35-9692-2a29caf9c256';
