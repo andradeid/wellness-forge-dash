@@ -137,6 +137,42 @@ export type Database = {
         }
         Relationships: []
       }
+      block_reconciliation_log: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          email: string | null
+          id: string
+          plan_type: string | null
+          subscription_status: string | null
+          user_id: string
+          was_auth_banned: boolean
+          was_profile_blocked: boolean
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          email?: string | null
+          id?: string
+          plan_type?: string | null
+          subscription_status?: string | null
+          user_id: string
+          was_auth_banned?: boolean
+          was_profile_blocked?: boolean
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          email?: string | null
+          id?: string
+          plan_type?: string | null
+          subscription_status?: string | null
+          user_id?: string
+          was_auth_banned?: boolean
+          was_profile_blocked?: boolean
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           agent_type: string | null
@@ -1702,6 +1738,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reconcile_subscription_blocks: { Args: never; Returns: number }
       refresh_recent_usage_stats: { Args: never; Returns: undefined }
       release_stream_slot: { Args: { p_user_id: string }; Returns: undefined }
       toggle_unlimited_credits: {
