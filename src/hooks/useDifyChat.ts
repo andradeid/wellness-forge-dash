@@ -23,8 +23,11 @@ import {
   CONCURRENCY_TOAST_DESCRIPTION,
   CONCURRENCY_TOAST_TITLE,
   CONCURRENCY_USER_MESSAGE,
+  classifyAgentError,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  sanitizeStreamingText,
+  type AgentErrorInfo,
 } from "@/lib/dify-error-messages";
 
 /** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
@@ -208,39 +211,18 @@ function messageCarriesReport(text: string, filesCount: number): boolean {
   return false;
 }
 
-function tryExtractLabReportError(text: string): string | null {
-  if (!text) return null;
-  const tryParse = (raw: string): string | null => {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.error === true && parsed?.error_type === "not_a_lab_report") {
-        return parsed.message || "Imagem não reconhecida como laudo laboratorial.";
-      }
-    } catch { /* ignore */ }
-    return null;
-  };
-
-  // 1) ```json blocks
-  const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
-  let m: RegExpExecArray | null;
-  while ((m = blockRe.exec(text))) {
-    const r = tryParse(m[1].trim());
-    if (r) return r;
-  }
-
-  // 2) Raw JSON anywhere no texto contendo "not_a_lab_report"
-  const idx = text.indexOf('"not_a_lab_report"');
-  if (idx !== -1) {
-    const start = text.lastIndexOf("{", idx);
-    const end = text.indexOf("}", idx);
-    if (start !== -1 && end !== -1) {
-      const r = tryParse(text.slice(start, end + 1));
-      if (r) return r;
-    }
-  }
-
-  return null;
+/**
+ * Classifica erro estruturado devolvido no corpo da resposta do agente.
+ * `content` (não é laudo) só é permitido em contexto de exame; qualquer outro
+ * erro vira `technical`, para nunca acusar indevidamente o arquivo enviado.
+ */
+function detectAgentError(text: string, isExamLike: boolean): AgentErrorInfo | null {
+  const info = classifyAgentError(text);
+  if (!info) return null;
+  if (info.kind === "content" && !isExamLike) return null;
+  return info;
 }
+
 
 /**
  * Scanner balanceado: a partir do `{` em startIdx, encontra o `}` correspondente
@@ -281,8 +263,8 @@ function truncateBeforeFormulations(text: string): string {
 
 function tryExtractMarkers(text: string, opts?: { allowHeuristic?: boolean }): Marker[] | null {
   const allowHeuristic = opts?.allowHeuristic ?? true;
-  // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
-  if (tryExtractLabReportError(text)) return null;
+  // Se o texto for um payload de erro (conteúdo ou técnico), não extrai marcadores
+  if (classifyAgentError(text)) return null;
 
   // 1) ```json blocks containing { "markers": [...] }
   const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
@@ -371,13 +353,21 @@ export function useDifyChat(
   const markersEmittedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
   // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
-  // encerra sem answer. Limitado a UMA tentativa por envio original.
+  // encerra sem answer ou devolve erro técnico (503/timeout).
+  // `resolved` guarda os anexos já processados (dify_file_id) para reenviar sem
+  // pedir novo upload do exame.
   const lastRequestRef = useRef<{
     text: string;
     files: File[];
     opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string };
+    resolved?: {
+      difyFiles: DifyFileRef[];
+      attachments: Array<{ name: string; path?: string; mime_type?: string }>;
+      lastExamId: string | null;
+    };
   } | null>(null);
   const retryUsedRef = useRef<boolean>(false);
+  const [canRetry, setCanRetry] = useState(false);
   const sendMessageRef = useRef<((text: string, files: File[], opts?: any) => Promise<void>) | null>(null);
   // Espelha o estado de `thinking` em ref para uso síncrono dentro do init().
   // Usado para impedir que uma re-execução do init (ex.: troca de role/readOnly
@@ -663,6 +653,7 @@ export function useDifyChat(
       retryUsedRef.current = false;
       lastRequestRef.current = { text, files, opts };
     }
+    setCanRetry(false);
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
     const agentType = opts?.overrideAgent ?? agentTypeState;
@@ -803,7 +794,17 @@ export function useDifyChat(
       }
     };
 
-    for (const file of files) {
+    // Retry: reaproveita os anexos já processados (dify_file_id) — a
+    // nutricionista não precisa reanexar o exame.
+    const reusedAttachments =
+      opts?._isRetry && lastRequestRef.current?.resolved ? lastRequestRef.current.resolved : null;
+    if (reusedAttachments) {
+      difyFiles.push(...reusedAttachments.difyFiles);
+      attachments.push(...reusedAttachments.attachments);
+      lastExamId = reusedAttachments.lastExamId;
+    }
+
+    for (const file of reusedAttachments ? [] : files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
       updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
@@ -887,6 +888,16 @@ export function useDifyChat(
       updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
+
+    // Guarda os anexos resolvidos para um eventual "Tentar novamente".
+    if (lastRequestRef.current && difyFiles.length > 0) {
+      lastRequestRef.current.resolved = {
+        difyFiles: [...difyFiles],
+        attachments: [...attachments],
+        lastExamId,
+      };
+    }
+
 
     // 1e) Follow-ups: regenera signed URL FRESH (7 dias) para exames LEGACY
     //     deste chat que estão sem dify_file_id. Não inspecionamos o histórico
@@ -1289,12 +1300,15 @@ export function useDifyChat(
                   }
                 }
 
+                // Nunca renderizar JSON de erro cru enquanto o stream chega.
+                const displayText = sanitizeStreamingText(fullText);
+
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId
                       ? {
                           ...m,
-                          content: fullText,
+                          content: displayText,
                           ...(earlyMarkers
                             ? { structured_data: { ...(m.structured_data ?? {}), markers: earlyMarkers } }
                             : {}),
@@ -1533,7 +1547,19 @@ export function useDifyChat(
                   });
 
                   const processingMs = Math.round(performance.now() - startedAt);
-                  const labReportError = isExamLike ? tryExtractLabReportError(fullText) : null;
+                  const agentError = detectAgentError(fullText, isExamLike);
+                  if (agentError) {
+                    console.warn("[dify] erro estruturado no answer", {
+                      kind: agentError.kind,
+                      agent_type: agentType,
+                      selected_task: selectedTask ?? null,
+                      raw: agentError.raw,
+                    });
+                  }
+                  // Erro técnico é transitório → habilita "Tentar novamente".
+                  if (agentError?.kind === "technical" && !retryUsedRef.current && lastRequestRef.current) {
+                    setCanRetry(true);
+                  }
 
                   // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
                   // por qualquer agente (exame handoff OU agente de produção).
@@ -1542,22 +1568,26 @@ export function useDifyChat(
                   // Estimativa de refeição por foto (Super Agente): bloco { "foods": [...] }
                   const mealEstimation = extractMealEstimation(fullText);
 
-                  // Quando o agente rejeita o laudo, o JSON cru não deve
-                  // aparecer para a nutricionista: exibimos só a mensagem.
-                  if (labReportError) {
-                    fullText = labReportError;
+                  // O JSON cru nunca aparece para a nutricionista: a bolha passa
+                  // a conter apenas a mensagem amigável (renderizada uma única
+                  // vez pelo card de erro em ChatMessageList).
+                  if (agentError) {
+                    fullText = agentError.message;
                     setMessages((prev) =>
-                      prev.map((m) => (m.id === assistantId ? { ...m, content: labReportError } : m)),
+                      prev.map((m) => (m.id === assistantId ? { ...m, content: agentError.message } : m)),
                     );
                   }
 
-                  const structured: Record<string, unknown> = labReportError
-                    ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
+                  const structured: Record<string, unknown> = agentError
+                    ? {
+                        processing_ms: processingMs,
+                        agent_error: { kind: agentError.kind, message: agentError.message },
+                      }
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
-                  if (formulacoes) structured.formulacoes_sugeridas = formulacoes;
-                  if (mealEstimation) structured.meal_estimation = mealEstimation;
+                  if (!agentError && formulacoes) structured.formulacoes_sugeridas = formulacoes;
+                  if (!agentError && mealEstimation) structured.meal_estimation = mealEstimation;
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)
@@ -1583,7 +1613,7 @@ export function useDifyChat(
                   }
 
                   // Débito de créditos APÓS resposta completa
-                  if (billingKey && fullText.trim() && !labReportError) {
+                  if (billingKey && fullText.trim() && !agentError) {
                     try {
                       await consume(billingKey, text.slice(0, 200));
                     } catch (e) {
@@ -1609,7 +1639,7 @@ export function useDifyChat(
                   const shouldRefreshExamContext =
                     isExamLike &&
                     fullText.trim() &&
-                    !labReportError &&
+                    !agentError &&
                     (difyFiles.length > 0 || (markers && markers.length > 0));
 
                   if (shouldRefreshExamContext) {
@@ -1885,5 +1915,14 @@ export function useDifyChat(
     sendMessageRef.current = sendMessage as any;
   }, [sendMessage]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask };
+  /** Reenvia o último pedido (com os mesmos anexos já processados no Dify). */
+  const retryLastRequest = useCallback(() => {
+    if (retryUsedRef.current || !lastRequestRef.current) return;
+    retryUsedRef.current = true;
+    setCanRetry(false);
+    const req = lastRequestRef.current;
+    void sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+  }, []);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest };
 }

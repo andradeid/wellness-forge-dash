@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical, Eye } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical, Eye, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { format, differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,7 @@ export interface ChatMessage {
     parse_error?: boolean;
     processing_ms?: number;
     not_a_lab_report_error?: string;
+    agent_error?: { kind: "content" | "technical"; message: string };
     formulacoes_sugeridas?: FormulacoesPayload;
     meal_estimation?: MealEstimation;
   } | null;
@@ -547,6 +548,8 @@ export function ChatMessageList({
   taskType,
   onGenerateRecipe,
   patient,
+  onRetry,
+  canRetry,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -557,6 +560,9 @@ export function ChatMessageList({
   taskType?: string | null;
   onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
   patient?: PrescriptionPatient | null;
+  /** Reenvia o último pedido após erro técnico temporário (503/timeout). */
+  onRetry?: () => void;
+  canRetry?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -698,14 +704,44 @@ export function ChatMessageList({
                       })}
                     </div>
                   )}
-                  {m.structured_data?.not_a_lab_report_error && (
-                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3 text-amber-900 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                      <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                      <div className="text-sm font-medium leading-relaxed">
-                        {m.structured_data.not_a_lab_report_error}
+                  {(() => {
+                    // Erro amigável (nunca JSON cru), renderizado UMA única vez.
+                    const legacy = m.structured_data?.not_a_lab_report_error;
+                    const err =
+                      m.structured_data?.agent_error ??
+                      (legacy ? { kind: "content" as const, message: legacy } : null);
+                    if (!err) return null;
+                    const technical = err.kind === "technical";
+                    return (
+                      <div
+                        className={`mb-4 p-3 rounded-lg flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300 ${
+                          technical
+                            ? "bg-sky-50 border border-sky-200 text-sky-900"
+                            : "bg-amber-50 border border-amber-200 text-amber-900"
+                        }`}
+                      >
+                        {technical ? (
+                          <RefreshCw className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
+                        ) : (
+                          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium leading-relaxed">{err.message}</div>
+                          {technical && onRetry && canRetry && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="mt-3 border-sky-300 text-sky-800 hover:bg-sky-100"
+                              onClick={onRetry}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                              Tentar novamente
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   {m.structured_data?.markers &&
                    m.structured_data.markers.length > 0 &&
                    (
@@ -758,7 +794,9 @@ export function ChatMessageList({
                     </div>
                   )}
                   <div id={`msg-content-${m.id}`}>
-                  {parts
+                  {(m.structured_data?.agent_error || m.structured_data?.not_a_lab_report_error
+                    ? []
+                    : parts)
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
                       const isResearch = m.agent_type === "research" || agentType === "research";

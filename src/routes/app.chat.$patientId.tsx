@@ -121,7 +121,7 @@ function ChatPage() {
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { agents, tasks: superAgentTasks, cards: superAgentCards, getAgentForCard, resolveAnaliseCompleta, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
@@ -784,6 +784,8 @@ function ChatPage() {
                   agentType={agentType}
                   taskType={selectedTask}
                   patient={patient}
+                  onRetry={retryLastRequest}
+                  canRetry={canRetry}
                 />
 
               </div>
