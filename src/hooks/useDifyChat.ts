@@ -889,6 +889,16 @@ export function useDifyChat(
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
 
+    // Guarda os anexos resolvidos para um eventual "Tentar novamente".
+    if (lastRequestRef.current && difyFiles.length > 0) {
+      lastRequestRef.current.resolved = {
+        difyFiles: [...difyFiles],
+        attachments: [...attachments],
+        lastExamId,
+      };
+    }
+
+
     // 1e) Follow-ups: regenera signed URL FRESH (7 dias) para exames LEGACY
     //     deste chat que estão sem dify_file_id. Não inspecionamos o histórico
     //     interno do Dify — usamos patient_exams como fonte de verdade.
