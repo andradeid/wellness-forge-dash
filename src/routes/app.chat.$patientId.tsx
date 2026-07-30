@@ -630,7 +630,7 @@ function ChatPage() {
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3] transition-colors duration-500">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3] transition-colors duration-500">
       {/* Sheet — Sidebar acessível via hambúrguer */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" className="p-0 w-80 max-w-[85vw] flex flex-col bg-white">
@@ -796,7 +796,7 @@ function ChatPage() {
           </div>
         </main>
 
-        <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
+        <div className="shrink-0 px-3 sm:px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
             {(() => {
               const currentAgent = agents.find(a => a.agent_id === agentType);
