@@ -144,16 +144,14 @@ export function CurationDetailDrawer({
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!request) return;
-      const { error } = await (supabase as never as ReturnType<typeof supabase.from>)
-        ? await (supabase as any)
-            .from("curation_requests")
-            .update({
-              status,
-              admin_notes: adminNotes.trim() || null,
-              admin_final_classification: finalClassification || null,
-            })
-            .eq("id", request.id)
-        : { error: null };
+      const { error } = await (supabase as any)
+        .from("curation_requests")
+        .update({
+          status,
+          admin_notes: adminNotes.trim() || null,
+          admin_final_classification: finalClassification || null,
+        })
+        .eq("id", request.id);
       if (error) throw error;
     },
     onSuccess: () => {
