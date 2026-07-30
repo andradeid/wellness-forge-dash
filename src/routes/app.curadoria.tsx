@@ -67,6 +67,10 @@ const STATUS_LABELS: Record<string, string> = {
   arquivado: "Arquivado",
 };
 
+const ATTACHMENT_BUCKET = "curation-attachments";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+
 interface CurationRow {
   id: string;
   title: string;
@@ -74,6 +78,7 @@ interface CurationRow {
   curator_dimension: string | null;
   status: string;
   created_at: string;
+  image_url: string | null;
 }
 
 function formatDate(value: string) {
@@ -83,6 +88,45 @@ function formatDate(value: string) {
     year: "numeric",
   });
 }
+
+function AttachmentThumbnail({ path }: { path: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["curation-attachment", path],
+    staleTime: 4 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from(ATTACHMENT_BUCKET)
+        .createSignedUrl(path, 300);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+  });
+
+  if (isLoading) {
+    return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+  }
+
+  if (!data) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <ImageIcon className="h-3.5 w-3.5" />
+        Anexo
+      </span>
+    );
+  }
+
+  return (
+    <a href={data} target="_blank" rel="noreferrer" title="Abrir imagem anexada">
+      <img
+        src={data}
+        alt="Miniatura da imagem anexada à solicitação"
+        loading="lazy"
+        className="h-10 w-10 rounded-md border object-cover transition-opacity hover:opacity-80"
+      />
+    </a>
+  );
+}
+
 
 function CuradoriaPage() {
   const { user, role, loading } = useAuth();
