@@ -33,6 +33,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
   { prefix: "/app/admin/ranking", roles: ["super_admin"] },
   { prefix: "/app/admin/playground", roles: ["super_admin"] },
   { prefix: "/app/admin/feedbacks", roles: ["super_admin"] },
+  { prefix: "/app/admin/curadoria", roles: ["super_admin"] },
   { prefix: "/app/admin/system", roles: ["super_admin"] },
   // Gestão de usuários: super_admin e suporte (CS)
   { prefix: "/app/admin/users", roles: ["super_admin", "support"] },
