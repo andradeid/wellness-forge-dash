@@ -181,6 +181,30 @@ const supportGroups: NavGroup[] = [
   },
 ];
 
+const curatorGroups: NavGroup[] = [
+  {
+    key: "curadoria",
+    label: "CURADORIA",
+    subtitle: "Solicitações e melhorias",
+    icon: Lightbulb,
+    items: [
+      { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
+    ],
+  },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    bottom: true,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
+    ],
+  },
+];
+
+
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -244,7 +268,7 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            {role !== "super_admin" && role !== "support" && (
+            {role !== "super_admin" && role !== "support" && role !== "curator" && (
               <CreditsBadge collapsed balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
             )}
           </div>
@@ -260,7 +284,7 @@ export function AppSidebar() {
                     : "Nutri"}
               </span>
             </div>
-              {role !== "super_admin" && role !== "support" && (
+              {role !== "super_admin" && role !== "support" && role !== "curator" && (
                 <CreditsBadge balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
               )}
           </div>
@@ -269,7 +293,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {role !== "super_admin" && role !== "admin" && role !== "support" && (
+        {role !== "super_admin" && role !== "admin" && role !== "support" && role !== "curator" && (
           <div className={cn("px-1 pb-2", collapsed && "px-0")}>
             <Link to="/app/fale-com-lumma" title="Página Inicial">
               <span
@@ -286,9 +310,11 @@ export function AppSidebar() {
         )}
         {(role === "support"
           ? supportGroups
-          : role === "super_admin" || role === "admin"
-            ? adminGroups
-            : nutriGroups)
+          : role === "curator"
+            ? curatorGroups
+            : role === "super_admin" || role === "admin"
+              ? adminGroups
+              : nutriGroups)
           .filter((g) => !(role === "super_admin" && g.key === "ajuda"))
 
           .map((g) => {
@@ -400,7 +426,9 @@ export function AppSidebar() {
                         ? "Analista e Desenvolvedor"
                         : role === "support"
                           ? "Suporte (CS)"
-                          : `Plano ${planLabel(planType)}`}
+                          : role === "curator"
+                            ? "Curadoria"
+                            : `Plano ${planLabel(planType)}`}
 
                     </div>
 
@@ -423,7 +451,7 @@ export function AppSidebar() {
               </p>
               <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
             </div>
-            {role !== "super_admin" && role !== "support" && (
+            {role !== "super_admin" && role !== "support" && role !== "curator" && (
 
               <div className="px-3 pb-2">
                 <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">

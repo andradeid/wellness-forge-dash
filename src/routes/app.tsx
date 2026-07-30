@@ -44,7 +44,18 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
 
   // Qualquer outra rota /app/admin/* exige pelo menos admin
   { prefix: "/app/admin", roles: ["admin", "super_admin"] },
+
+  // Área do curador (fora de /app/admin)
+  { prefix: "/app/curadoria", roles: ["curator", "super_admin"] },
 ];
+
+// Rotas permitidas para o papel Curador. Whitelist rigorosa.
+const CURATOR_ALLOWED_PREFIXES = [
+  "/app/curadoria",
+  "/app/trocar-senha",
+  "/app/politicas",
+];
+
 
 // Rotas permitidas para o papel Suporte (CS), fora do /app/admin.
 // Whitelist rigorosa: qualquer outra rota /app/* redireciona para a permitida.
@@ -59,6 +70,11 @@ function isAllowed(pathname: string, role: AppRole | null): boolean {
   if (role === "support") {
     return SUPPORT_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
   }
+  // Curador: whitelist explícita da área de curadoria.
+  if (role === "curator") {
+    return CURATOR_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+  }
+
   const match = ROUTE_ACCESS.find((r) => pathname.startsWith(r.prefix));
   if (!match) return true; // rotas /app não administrativas: liberadas para qualquer role logada
   if (!role) return false;
@@ -153,7 +169,12 @@ function AppLayout() {
     }
     if (!role) return;
     if (!isAllowed(pathname, role)) {
-      const dest = role === "support" ? "/app/admin/users" : "/unauthorized";
+      const dest =
+        role === "support"
+          ? "/app/admin/users"
+          : role === "curator"
+            ? "/app/curadoria"
+            : "/unauthorized";
       void navigate({ to: dest, replace: true }).catch((error) => {
         console.warn("[app] falha ao redirecionar acesso negado", error);
       });
