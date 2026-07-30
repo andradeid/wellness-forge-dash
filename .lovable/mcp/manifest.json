@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "sdk_version": "0.25.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://bidarktpgytizdgmmqrg.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "lumma-2-0-nutripro-dashboard",
+      "version": "1.0.0",
+      "title": "Lumma 2.0 NutriPro Dashboard"
+    },
+    "tools": [
+      {
+        "name": "get_context",
+        "title": "Manual do sistema de curadoria",
+        "description": "Retorna o manual completo do sistema de curadoria da Lumma em texto: o que é a Lumma, o que é curadoria, o significado das classificações (suporte, melhoria, requer_analise_humana), o que é a baseline e o dicionário de cada campo dos reports. SEMPRE chame esta tool primeiro, antes de analisar qualquer report.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_baseline",
+        "title": "Baseline do sistema (fonte da verdade)",
+        "description": "Retorna todos os itens da baseline (baseline_items): o retrato congelado do sistema na entrega do contrato. Use o campo 'existia' (sim | nao | parcial) de cada funcionalidade para decidir se um report é suporte (existia e quebrou), melhoria (não existia) ou requer_analise_humana (zona cinza). Campos: area, funcionalidade, existia, camada, comportamento_tecnico, legivel, situacao_legivel.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "area": {
+              "description": "Filtra por área (ex: 'Exame de Sangue').",
+              "type": "string"
+            },
+            "existia": {
+              "description": "Filtra pelo estado da funcionalidade na entrega.",
+              "type": "string",
+              "enum": [
+                "sim",
+                "nao",
+                "parcial"
+              ]
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_reports",
+        "title": "Listar solicitações de curadoria",
+        "description": "Lista os reports (curation_requests) da curadoria, do mais recente para o mais antigo. Filtros opcionais por status, classificação do curador, status da análise de IA e intervalo de datas de criação. Retorna o relato, as classificações do curador e da IA, o status, a concordância, duplicidade e o contexto de origem (agente, chat, mensagem, paciente). O campo ai_technical_direction só é incluído para super admins. has_image indica se existe print anexado — use get_report para vê-lo.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filtra por status do report.",
+              "type": "string",
+              "enum": [
+                "registrado",
+                "em_analise",
+                "aprovado_ajuste",
+                "classificado_melhoria",
+                "em_desenvolvimento",
+                "concluido",
+                "duplicada"
+              ]
+            },
+            "curator_classification": {
+              "description": "Filtra pela classificação feita pelo curador.",
+              "type": "string",
+              "enum": [
+                "suporte",
+                "melhoria"
+              ]
+            },
+            "ai_status": {
+              "description": "Filtra pelo status da classificação automática por IA.",
+              "type": "string",
+              "enum": [
+                "pending",
+                "success",
+                "failed",
+                "skipped"
+              ]
+            },
+            "created_from": {
+              "description": "Data/hora inicial ISO 8601 (inclusive).",
+              "type": "string"
+            },
+            "created_to": {
+              "description": "Data/hora final ISO 8601 (inclusive).",
+              "type": "string"
+            },
+            "limit": {
+              "default": 50,
+              "description": "Máximo de reports (1-200).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "offset": {
+              "default": 0,
+              "description": "Deslocamento para paginação.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_report",
+        "title": "Detalhar uma solicitação de curadoria",
+        "description": "Retorna um report completo de curadoria a partir do seu id (UUID), incluindo a imagem anexada embutida em base64 (nunca como link), lida do bucket privado curation-attachments no servidor. O campo ai_technical_direction só é incluído para super admins.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "UUID do report (curation_requests.id), obtido em list_reports."
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_conversation",
+        "title": "Ver a conversa original de um report",
+        "description": "Retorna, somente leitura, a conversa original que gerou um report de curadoria. Recebe APENAS o id do report (curation_request_id) — nunca um chat_id arbitrário. A mensagem reportada vem marcada com is_reported. Contém dados clínicos: cada visualização é registrada em trilha de auditoria. Curadores só acessam a conversa dos próprios reports; super admins acessam todas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "curation_request_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "UUID do report (curation_requests.id) cuja conversa original deve ser lida."
+            }
+          },
+          "required": [
+            "curation_request_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

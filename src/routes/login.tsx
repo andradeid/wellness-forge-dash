@@ -74,7 +74,20 @@ function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void 
   );
 }
 
+/**
+ * Valida o destino pós-login: só aceitamos caminho relativo de mesma origem
+ * (nunca URL absoluta), para não virar open redirect.
+ */
+function sanitizeNext(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (!value.startsWith("/") || value.startsWith("//")) return undefined;
+  return value;
+}
+
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    next: sanitizeNext(search.next),
+  }),
   head: () => ({
     meta: [
       { title: "Entrar — LUMMA" },
@@ -87,6 +100,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { session, signIn, signUp, loading, role } = useAuth();
+  const { next } = Route.useSearch();
   const navigate = useNavigate();
   const { data: systemSettings } = useSystemSettings();
 
@@ -199,6 +213,11 @@ function LoginPage() {
 
   const finalizeEntry = (currentRole: AppRole | null) => {
     toast.success("Bem-vindo de volta!");
+    // Fluxo OAuth do MCP: voltar exatamente para a tela de consentimento.
+    if (next) {
+      window.location.href = next;
+      return;
+    }
     const to =
       currentRole === "nutri"
         ? "/app/fale-com-lumma"
