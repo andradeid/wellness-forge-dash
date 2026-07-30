@@ -607,7 +607,7 @@ function DashboardPage() {
               );
             })}
           </div>
-          {role === "nutri" && (
+          {(role === "nutri" || role === "curator") && (
             <Button
               asChild
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white shadow hover:opacity-90 min-h-[44px]"

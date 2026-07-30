@@ -109,6 +109,8 @@ function ChatPage() {
   const navigate = useNavigate();
   const { role, profile } = useAuth();
   const readOnly = role === "admin" || role === "super_admin";
+  // Curador usa o sistema como nutricionista (testes/curadoria).
+  const isNutriLike = role === "nutri" || role === "curator";
   const [patient, setPatient] = useState<PatientCtx | null>(null);
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [reportMarkers, setReportMarkers] = useState<any[]>([]);
@@ -161,12 +163,12 @@ function ChatPage() {
 
   // Se não houver mensagens e o usuário for nutricionista, mostra o seletor inicial
   useEffect(() => {
-    if (messages.length === 0 && !pendingModuleFromUrl && role === "nutri" && !thinking) {
+    if (messages.length === 0 && !pendingModuleFromUrl && isNutriLike && !thinking) {
       setShowModuleSelector(true);
     } else if (messages.length > 0) {
       setShowModuleSelector(false);
     }
-  }, [messages.length, pendingModuleFromUrl, role, thinking]);
+  }, [messages.length, pendingModuleFromUrl, isNutriLike, thinking]);
 
   const patientProfile = useMemo(() => {
     return filters.publico === "gestante"
@@ -569,7 +571,7 @@ function ChatPage() {
         </div>
       </div>
 
-      {role === "nutri" && (
+      {isNutriLike && (
         <div className="px-3 pt-3">
           <Button
             onClick={() => { closeMenu(); handleNewChat(); }}
@@ -707,7 +709,7 @@ function ChatPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {role === "nutri" && (
+            {isNutriLike && (
               <Button
                 onClick={handleNewChat}
                 disabled={thinking}
@@ -756,7 +758,7 @@ function ChatPage() {
 
         <main className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {(!thinking && !agentType && !pendingModuleFromUrl && (showModuleSelector || (messages.length === 0 && role === "nutri"))) ? (
+            {(!thinking && !agentType && !pendingModuleFromUrl && (showModuleSelector || (messages.length === 0 && isNutriLike))) ? (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <ChatIntentPanel
                   filters={filters}

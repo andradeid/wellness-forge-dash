@@ -1542,6 +1542,15 @@ export function useDifyChat(
                   // Estimativa de refeição por foto (Super Agente): bloco { "foods": [...] }
                   const mealEstimation = extractMealEstimation(fullText);
 
+                  // Quando o agente rejeita o laudo, o JSON cru não deve
+                  // aparecer para a nutricionista: exibimos só a mensagem.
+                  if (labReportError) {
+                    fullText = labReportError;
+                    setMessages((prev) =>
+                      prev.map((m) => (m.id === assistantId ? { ...m, content: labReportError } : m)),
+                    );
+                  }
+
                   const structured: Record<string, unknown> = labReportError
                     ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
                     : (markers
