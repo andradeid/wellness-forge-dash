@@ -279,6 +279,105 @@ function AdminSystemPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="mcp" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>MCP de Curadoria (somente leitura)</CardTitle>
+              <CardDescription>
+                Servidor que permite a um cliente de IA (Claude, ChatGPT) ler o sistema de curadoria
+                da Lumma: manual de contexto, baseline, relatos com print e as conversas clínicas
+                originais. Nenhuma ferramenta cria, altera ou apaga dados.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 text-sm">
+              <section className="space-y-2">
+                <h3 className="font-medium">O que ele expõe</h3>
+                <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                  <li>
+                    <code>get_context</code> — manual do sistema de curadoria (comece sempre por ele)
+                  </li>
+                  <li>
+                    <code>get_baseline</code> — os itens da baseline, fonte da verdade
+                  </li>
+                  <li>
+                    <code>list_reports</code> / <code>get_report</code> — relatos, com print em base64
+                  </li>
+                  <li>
+                    <code>get_conversation</code> — a conversa clínica original de um relato
+                  </li>
+                </ul>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-medium">URL de conexão</h3>
+                <code className="block rounded-lg bg-muted p-3 font-mono text-xs">
+                  https://lumma.ia.br/mcp
+                </code>
+                <p className="text-muted-foreground">
+                  Exige o app publicado. Não há chave de API: o cliente descobre o login sozinho e
+                  a autenticação é feita por OAuth com uma conta Lumma.
+                </p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-medium">Conta a usar</h3>
+                <p className="text-muted-foreground">
+                  <code>mcp@lumma.ia.br</code> — papel <strong>curador</strong>, criada
+                  exclusivamente para automação (não é conta de uso humano). A senha fica no cofre
+                  de senhas da equipe. Papel curador é o acesso mínimo necessário: a direção técnica
+                  interna, exposta apenas a super admins, não sai por essa conta.
+                </p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-medium">Como conectar, passo a passo</h3>
+                <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+                  <li>No cliente de IA, adicione um conector personalizado e cole a URL acima.</li>
+                  <li>
+                    O navegador abre o login da Lumma — entre com <code>mcp@lumma.ia.br</code> e a
+                    senha do cofre.
+                  </li>
+                  <li>Na tela de consentimento, revise o acesso pedido e aprove.</li>
+                  <li>
+                    Teste chamando <code>get_context</code>: ele deve devolver o manual do sistema.
+                  </li>
+                </ol>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-medium">Como revogar o acesso</h3>
+                <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+                  <li>Troque a senha da conta <code>mcp@lumma.ia.br</code>.</li>
+                  <li>
+                    No painel do Supabase, em Authentication → OAuth Apps, revogue o aplicativo
+                    conectado. Isso invalida também os tokens já emitidos.
+                  </li>
+                  <li>
+                    Em caso de urgência, bloquear ou remover o papel de curador da conta corta o
+                    acesso imediatamente.
+                  </li>
+                </ol>
+              </section>
+
+              <Alert variant="destructive">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Cuidados obrigatórios</AlertTitle>
+                <AlertDescription className="space-y-1">
+                  <p>
+                    Mesmo como curador, esta conta enxerga conversas clínicas e imagens de pacientes
+                    através do MCP. Trate a credencial com o mesmo cuidado de um acesso a dados de
+                    saúde.
+                  </p>
+                  <p>
+                    Nunca cole a senha em prompt de IA, em chamado de suporte ou no repositório, e
+                    rotacione-a após qualquer compartilhamento.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
