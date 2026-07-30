@@ -10,6 +10,7 @@ import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
 import { MessageCopyButton } from "./MessageCopyButton";
+import { ReportMessageButton } from "./ReportMessageButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
@@ -550,6 +551,8 @@ export function ChatMessageList({
   patient,
   onRetry,
   canRetry,
+  chatId,
+  patientId,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -563,6 +566,9 @@ export function ChatMessageList({
   /** Reenvia o último pedido após erro técnico temporário (503/timeout). */
   onRetry?: () => void;
   canRetry?: boolean;
+  /** Contexto opcional usado apenas pelo botão "Reportar" (curadoria). */
+  chatId?: string | null;
+  patientId?: string | null;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -572,6 +578,7 @@ export function ChatMessageList({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
+  const canCurate = role === "curator" || role === "super_admin";
   const lastUserIndex = messages.reduce((acc, msg, idx) => (msg.role === "user" ? idx : acc), -1);
 
   const scrollToBottom = (smooth = true) => {
@@ -930,7 +937,19 @@ export function ChatMessageList({
                     <MessageFeedback
                       messageId={m.id}
                       rightSlot={
-                        <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                        <>
+                          {canCurate && (
+                            <ReportMessageButton
+                              context={{
+                                chat_id: chatId ?? null,
+                                message_id: m.id,
+                                patient_id: patientId ?? null,
+                                agent_key: m.agent_type ?? agentType ?? null,
+                              }}
+                            />
+                          )}
+                          <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                        </>
                       }
                     />
                   ) : (

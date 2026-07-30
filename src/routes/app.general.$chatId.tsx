@@ -296,6 +296,7 @@ function GeneralChatPage() {
             thinking={thinking} 
             isStreaming={thinking}
             agentType={agentType}
+            chatId={chatId}
           />
         </main>
 
