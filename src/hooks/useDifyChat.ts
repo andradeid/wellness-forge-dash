@@ -263,8 +263,8 @@ function truncateBeforeFormulations(text: string): string {
 
 function tryExtractMarkers(text: string, opts?: { allowHeuristic?: boolean }): Marker[] | null {
   const allowHeuristic = opts?.allowHeuristic ?? true;
-  // Se for detectado um erro de "não é um laudo", não tentamos extrair marcadores
-  if (tryExtractLabReportError(text)) return null;
+  // Se o texto for um payload de erro (conteúdo ou técnico), não extrai marcadores
+  if (classifyAgentError(text)) return null;
 
   // 1) ```json blocks containing { "markers": [...] }
   const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
