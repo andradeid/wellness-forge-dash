@@ -181,6 +181,30 @@ const supportGroups: NavGroup[] = [
   },
 ];
 
+const curatorGroups: NavGroup[] = [
+  {
+    key: "curadoria",
+    label: "CURADORIA",
+    subtitle: "Solicitações e melhorias",
+    icon: Lightbulb,
+    items: [
+      { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
+    ],
+  },
+  {
+    key: "ajuda",
+    label: "AJUDA & SUPORTE",
+    subtitle: "Documentação e termos",
+    icon: LifeBuoy,
+    bottom: true,
+    items: [
+      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
+      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
+    ],
+  },
+];
+
+
 
 export function AppSidebar() {
   const { state } = useSidebar();
