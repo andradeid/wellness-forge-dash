@@ -155,6 +155,7 @@ export async function createUserWithTempPassword(
   }
 
   const userId = authUser.id as string;
+  await ensureUnbanned(supabaseAdmin, userId);
   const hasPassword =
     Boolean(authUser.last_sign_in_at) ||
     Boolean(authUser.encrypted_password) ||
@@ -180,8 +181,9 @@ export async function createUserWithTempPassword(
   // Sem senha ativa → reseta para a temporária.
   const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(
     userId,
-    { password: TEMP_PASSWORD, email_confirm: true },
+    { password: TEMP_PASSWORD, email_confirm: true, ban_duration: "none" },
   );
+
   if (updateErr) {
     console.error("[provisioning] updateUserById falhou:", updateErr.message);
     return {
