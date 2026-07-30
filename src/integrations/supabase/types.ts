@@ -283,6 +283,8 @@ export type Database = {
           chat_id: string | null
           created_at: string
           created_by: string
+          curator_classification: string | null
+          curator_dimension: string | null
           description: string
           id: string
           message_id: string | null
@@ -304,6 +306,8 @@ export type Database = {
           chat_id?: string | null
           created_at?: string
           created_by: string
+          curator_classification?: string | null
+          curator_dimension?: string | null
           description: string
           id?: string
           message_id?: string | null
@@ -325,6 +329,8 @@ export type Database = {
           chat_id?: string | null
           created_at?: string
           created_by?: string
+          curator_classification?: string | null
+          curator_dimension?: string | null
           description?: string
           id?: string
           message_id?: string | null
