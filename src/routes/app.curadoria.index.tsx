@@ -69,6 +69,12 @@ const STATUS_LABELS: Record<string, string> = {
 const OPEN_STATUSES = ["registrado", "em_analise", "classificado", "classificado_melhoria"];
 const DONE_STATUSES = ["concluido", "aprovado", "aprovado_ajuste", "arquivado", "rejeitado"];
 
+const AI_CLASSIFICATION_LABELS: Record<string, string> = {
+  suporte: "Suporte",
+  melhoria: "Melhoria",
+  requer_analise_humana: "Requer análise humana",
+};
+
 interface CurationRow {
   id: string;
   title: string;
