@@ -24,11 +24,12 @@ import { Route as AppPlanosRouteImport } from './routes/app.planos'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
-import { Route as AppCuradoriaRouteImport } from './routes/app.curadoria'
 import { Route as AppChatsRouteImport } from './routes/app.chats'
+import { Route as AppCuradoriaIndexRouteImport } from './routes/app.curadoria.index'
 import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
+import { Route as AppCuradoriaBaselineRouteImport } from './routes/app.curadoria.baseline'
 import { Route as AppCheckoutSucessoRouteImport } from './routes/app.checkout.sucesso'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
@@ -132,14 +133,14 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCuradoriaRoute = AppCuradoriaRouteImport.update({
-  id: '/curadoria',
-  path: '/curadoria',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppChatsRoute = AppChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaIndexRoute = AppCuradoriaIndexRouteImport.update({
+  id: '/curadoria/',
+  path: '/curadoria/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlanosHistoricoRoute = AppPlanosHistoricoRouteImport.update({
@@ -155,6 +156,11 @@ const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
 const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
   id: '/evolution/$patientId',
   path: '/evolution/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaBaselineRoute = AppCuradoriaBaselineRouteImport.update({
+  id: '/curadoria/baseline',
+  path: '/curadoria/baseline',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCheckoutSucessoRoute = AppCheckoutSucessoRouteImport.update({
@@ -303,7 +309,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
-  '/app/curadoria': typeof AppCuradoriaRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
@@ -337,9 +342,11 @@ export interface FileRoutesByFullPath {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
+  '/app/curadoria/baseline': typeof AppCuradoriaBaselineRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
+  '/app/curadoria/': typeof AppCuradoriaIndexRoute
   '/app/admin/emails/campanhas': typeof AppAdminEmailsCampanhasRoute
   '/app/admin/emails/': typeof AppAdminEmailsIndexRoute
 }
@@ -351,7 +358,6 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
-  '/app/curadoria': typeof AppCuradoriaRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
@@ -385,9 +391,11 @@ export interface FileRoutesByTo {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
+  '/app/curadoria/baseline': typeof AppCuradoriaBaselineRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
+  '/app/curadoria': typeof AppCuradoriaIndexRoute
   '/app/admin/emails/campanhas': typeof AppAdminEmailsCampanhasRoute
   '/app/admin/emails': typeof AppAdminEmailsIndexRoute
 }
@@ -401,7 +409,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
-  '/app/curadoria': typeof AppCuradoriaRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
@@ -435,9 +442,11 @@ export interface FileRoutesById {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
+  '/app/curadoria/baseline': typeof AppCuradoriaBaselineRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
+  '/app/curadoria/': typeof AppCuradoriaIndexRoute
   '/app/admin/emails/campanhas': typeof AppAdminEmailsCampanhasRoute
   '/app/admin/emails/': typeof AppAdminEmailsIndexRoute
 }
@@ -452,7 +461,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
-    | '/app/curadoria'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
@@ -486,9 +494,11 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/checkout/sucesso'
+    | '/app/curadoria/baseline'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
+    | '/app/curadoria/'
     | '/app/admin/emails/campanhas'
     | '/app/admin/emails/'
   fileRoutesByTo: FileRoutesByTo
@@ -500,7 +510,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
-    | '/app/curadoria'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
@@ -534,9 +543,11 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/checkout/sucesso'
+    | '/app/curadoria/baseline'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
+    | '/app/curadoria'
     | '/app/admin/emails/campanhas'
     | '/app/admin/emails'
   id:
@@ -549,7 +560,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
-    | '/app/curadoria'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
@@ -583,9 +593,11 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/checkout/sucesso'
+    | '/app/curadoria/baseline'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
+    | '/app/curadoria/'
     | '/app/admin/emails/campanhas'
     | '/app/admin/emails/'
   fileRoutesById: FileRoutesById
@@ -715,18 +727,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/curadoria': {
-      id: '/app/curadoria'
-      path: '/curadoria'
-      fullPath: '/app/curadoria'
-      preLoaderRoute: typeof AppCuradoriaRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/chats': {
       id: '/app/chats'
       path: '/chats'
       fullPath: '/app/chats'
       preLoaderRoute: typeof AppChatsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria/': {
+      id: '/app/curadoria/'
+      path: '/curadoria'
+      fullPath: '/app/curadoria/'
+      preLoaderRoute: typeof AppCuradoriaIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/planos/historico': {
@@ -748,6 +760,13 @@ declare module '@tanstack/react-router' {
       path: '/evolution/$patientId'
       fullPath: '/app/evolution/$patientId'
       preLoaderRoute: typeof AppEvolutionPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria/baseline': {
+      id: '/app/curadoria/baseline'
+      path: '/curadoria/baseline'
+      fullPath: '/app/curadoria/baseline'
+      preLoaderRoute: typeof AppCuradoriaBaselineRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/checkout/sucesso': {
@@ -956,7 +975,6 @@ const AppPlanosRouteWithChildren = AppPlanosRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppChatsRoute: typeof AppChatsRoute
-  AppCuradoriaRoute: typeof AppCuradoriaRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppFaleComLummaRoute: typeof AppFaleComLummaRoute
   AppPatientsRoute: typeof AppPatientsRoute
@@ -982,15 +1000,16 @@ interface AppRouteChildren {
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
   AppCheckoutSucessoRoute: typeof AppCheckoutSucessoRoute
+  AppCuradoriaBaselineRoute: typeof AppCuradoriaBaselineRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
   AppGeneralChatIdRoute: typeof AppGeneralChatIdRoute
+  AppCuradoriaIndexRoute: typeof AppCuradoriaIndexRoute
   AppAdminEmailsCampanhasRoute: typeof AppAdminEmailsCampanhasRoute
   AppAdminEmailsIndexRoute: typeof AppAdminEmailsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppChatsRoute: AppChatsRoute,
-  AppCuradoriaRoute: AppCuradoriaRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppFaleComLummaRoute: AppFaleComLummaRoute,
   AppPatientsRoute: AppPatientsRoute,
@@ -1016,8 +1035,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
   AppCheckoutSucessoRoute: AppCheckoutSucessoRoute,
+  AppCuradoriaBaselineRoute: AppCuradoriaBaselineRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
   AppGeneralChatIdRoute: AppGeneralChatIdRoute,
+  AppCuradoriaIndexRoute: AppCuradoriaIndexRoute,
   AppAdminEmailsCampanhasRoute: AppAdminEmailsCampanhasRoute,
   AppAdminEmailsIndexRoute: AppAdminEmailsIndexRoute,
 }
@@ -1044,13 +1065,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

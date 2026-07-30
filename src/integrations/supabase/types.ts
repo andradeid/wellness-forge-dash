@@ -95,6 +95,48 @@ export type Database = {
         }
         Relationships: []
       }
+      baseline_items: {
+        Row: {
+          area: string
+          baseline_version: string
+          camada: string
+          comportamento_tecnico: string | null
+          created_at: string
+          existia: string
+          funcionalidade: string
+          id: string
+          legivel: string
+          situacao_legivel: string
+          sort_order: number
+        }
+        Insert: {
+          area: string
+          baseline_version?: string
+          camada: string
+          comportamento_tecnico?: string | null
+          created_at?: string
+          existia: string
+          funcionalidade: string
+          id?: string
+          legivel: string
+          situacao_legivel: string
+          sort_order?: number
+        }
+        Update: {
+          area?: string
+          baseline_version?: string
+          camada?: string
+          comportamento_tecnico?: string | null
+          created_at?: string
+          existia?: string
+          funcionalidade?: string
+          id?: string
+          legivel?: string
+          situacao_legivel?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           agent_type: string | null

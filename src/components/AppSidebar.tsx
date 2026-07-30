@@ -151,6 +151,7 @@ const adminGroups: NavGroup[] = [
     icon: Lightbulb,
     items: [
       { title: "Solicitações", url: "/app/admin/curadoria", icon: Lightbulb, superAdminOnly: true, badge: "NOVO" },
+      { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText, superAdminOnly: true, badge: "NOVO" },
     ],
   },
   {
@@ -200,6 +201,7 @@ const curatorGroups: NavGroup[] = [
     icon: Lightbulb,
     items: [
       { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
+      { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText },
     ],
   },
   ...nutriGroups.filter((g) => g.bottom),
