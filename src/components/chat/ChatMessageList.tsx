@@ -10,6 +10,7 @@ import { ExamResultCard, type Marker } from "./ExamResultCard";
 import { ChatThinking } from "./ChatThinking";
 import { MessageFeedback } from "./MessageFeedback";
 import { MessageCopyButton } from "./MessageCopyButton";
+import { ReportMessageButton } from "./ReportMessageButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrandingProfile } from "@/hooks/useBrandingProfile";
 import { Button } from "@/components/ui/button";
