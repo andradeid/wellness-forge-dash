@@ -135,7 +135,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Lumma - IA para Nutricionistas" },
       { name: "description", content: "Assistente de IA educacional para nutricionistas especializada em Nutrição Funcional, Modulação Intestinal e Eixo Hormonal Feminino" },
       { name: "author", content: "Lovable" },

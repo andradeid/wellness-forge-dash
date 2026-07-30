@@ -141,7 +141,7 @@ function GeneralChatPage() {
   );
 
   return (
-    <div className="relative h-screen w-full overflow-hidden flex bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
+    <div className="relative h-[100dvh] w-full overflow-hidden flex bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
       {/* Painel lateral: últimos chats */}
 
       {/* Painel lateral: últimos chats */}
@@ -300,7 +300,7 @@ function GeneralChatPage() {
           />
         </main>
 
-        <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3">
+        <div className="shrink-0 px-3 sm:px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-6 pt-3">
           <div className="mx-auto w-full max-w-3xl">
             <div className="mb-2 flex justify-center gap-2 flex-wrap">
               {isSuperAgent ? (
