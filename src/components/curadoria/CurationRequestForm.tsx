@@ -113,6 +113,10 @@ export function CurationRequestForm({
     });
   }
 
+  const createFn = useServerFn(createCurationRequest);
+  const duplicateFn = useServerFn(resolveCurationDuplicate);
+  const agreementFn = useServerFn(setCuratorAgreement);
+
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Sessão expirada. Entre novamente.");
@@ -146,27 +150,29 @@ export function CurationRequestForm({
         imagePath = path;
       }
 
-      const { error } = await (supabase as any).from("curation_requests").insert({
-        created_by: user.id,
-        title: cleanTitle,
-        description: cleanDescription,
-        curator_classification: classification,
-        curator_dimension: dimension,
-        status: "registrado",
-        image_url: imagePath,
-        ...(context?.chat_id ? { chat_id: context.chat_id } : {}),
-        ...(context?.message_id ? { message_id: context.message_id } : {}),
-        ...(context?.patient_id ? { patient_id: context.patient_id } : {}),
-        ...(context?.agent_key ? { agent_key: context.agent_key } : {}),
-      });
-      if (error) {
+      try {
+        // O servidor grava o report ANTES de chamar a IA — nada se perde.
+        return await createFn({
+          data: {
+            title: cleanTitle,
+            description: cleanDescription,
+            curatorClassification: classification,
+            curatorDimension: dimension,
+            imagePath,
+            chatId: context?.chat_id ?? null,
+            messageId: context?.message_id ?? null,
+            patientId: context?.patient_id ?? null,
+            agentKey: context?.agent_key ?? null,
+          },
+        });
+      } catch (error) {
         if (imagePath) {
           await supabase.storage.from(ATTACHMENT_BUCKET).remove([imagePath]);
         }
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast.success("Solicitação registrada com sucesso.");
       setTitle("");
       setDescription("");
@@ -174,6 +180,13 @@ export function CurationRequestForm({
       setDimension("");
       clearImage();
       void queryClient.invalidateQueries({ queryKey: ["curation-requests", "mine", user?.id] });
+
+      const analysis = result?.analysis;
+      if (analysis && analysis.ai_status === "done") {
+        setReview({ requestId: result.requestId, analysis });
+        return;
+      }
+      toast.message("Análise automática indisponível agora — sua solicitação foi registrada.");
       onSuccess?.();
     },
     onError: (error: unknown) => {
@@ -182,6 +195,159 @@ export function CurationRequestForm({
       toast.error(message);
     },
   });
+
+  /** Passo de revisão pós-IA (duplicata + concordância). Nunca mostra direção técnica. */
+  const [review, setReview] = useState<{
+    requestId: string;
+    analysis: {
+      classificacao: string | null;
+      confianca: string | null;
+      justificativa: string | null;
+      possivel_duplicata: boolean;
+      duplicata: { id: string; status: string; title?: string } | null;
+    };
+  } | null>(null);
+  const [duplicateResolved, setDuplicateResolved] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<{ title: string; status: string } | null>(
+    null,
+  );
+  const [reviewBusy, setReviewBusy] = useState(false);
+
+  function finishReview() {
+    setReview(null);
+    setDuplicateResolved(false);
+    setDuplicateInfo(null);
+    void queryClient.invalidateQueries({ queryKey: ["curation-requests", "mine", user?.id] });
+    onSuccess?.();
+  }
+
+  async function handleDuplicate(isSame: boolean) {
+    if (!review?.analysis.duplicata) return;
+    setReviewBusy(true);
+    try {
+      const r = await duplicateFn({
+        data: {
+          requestId: review.requestId,
+          duplicateOf: review.analysis.duplicata.id,
+          isSame,
+        },
+      });
+      setDuplicateResolved(true);
+      if (r?.linked && r.original) {
+        setDuplicateInfo({ title: r.original.title, status: r.original.status });
+        toast.message("Já está em análise, aguarde retorno.");
+      }
+    } catch {
+      toast.error("Não foi possível registrar a resposta.");
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function handleAgreement(agrees: boolean) {
+    if (!review) return;
+    setReviewBusy(true);
+    try {
+      await agreementFn({ data: { requestId: review.requestId, agrees } });
+      toast.success(agrees ? "Concordância registrada." : "Divergência registrada.");
+    } catch {
+      toast.error("Não foi possível registrar sua resposta.");
+    } finally {
+      setReviewBusy(false);
+      finishReview();
+    }
+  }
+
+  const AI_LABELS: Record<string, string> = {
+    suporte: "Suporte",
+    melhoria: "Melhoria",
+    requer_analise_humana: "Requer análise humana",
+  };
+
+  if (review) {
+    const { analysis } = review;
+    const needsDuplicate = analysis.possivel_duplicata && !!analysis.duplicata;
+
+    return (
+      <div className="space-y-4">
+        {needsDuplicate && !duplicateResolved && (
+          <div className="space-y-3 rounded-lg border border-orange-300 bg-orange-50 p-3">
+            <p className="flex items-start gap-2 text-sm text-orange-900">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Esta solicitação parece com uma já registrada (#
+                {analysis.duplicata!.id.slice(0, 8)}, situação: {analysis.duplicata!.status}
+                ). É o mesmo problema?
+              </span>
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" disabled={reviewBusy} onClick={() => void handleDuplicate(true)}>
+                Sim, é o mesmo
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={reviewBusy}
+                onClick={() => void handleDuplicate(false)}
+              >
+                Não, é diferente
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {duplicateInfo && (
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium">Já está em análise, aguarde retorno.</p>
+            <p className="text-muted-foreground">
+              Solicitação original: “{duplicateInfo.title}” — situação: {duplicateInfo.status}.
+            </p>
+          </div>
+        )}
+
+        {(!needsDuplicate || duplicateResolved) && (
+          <div className="space-y-3 rounded-lg border bg-card p-3">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-[#e8a04c]" />
+              Análise automática
+            </p>
+            <p className="text-sm">
+              Classificação:{" "}
+              <span className="font-medium">
+                {AI_LABELS[analysis.classificacao ?? ""] ?? analysis.classificacao}
+              </span>
+              {analysis.confianca ? (
+                <span className="text-muted-foreground"> · confiança {analysis.confianca}</span>
+              ) : null}
+            </p>
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {analysis.justificativa}
+            </p>
+            <p className="text-sm font-medium">Você concorda com essa classificação?</p>
+            <div className="flex gap-2">
+              <Button size="sm" disabled={reviewBusy} onClick={() => void handleAgreement(true)}>
+                <ThumbsUp className="h-4 w-4" />
+                Concordo
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={reviewBusy}
+                onClick={() => void handleAgreement(false)}
+              >
+                <ThumbsDown className="h-4 w-4" />
+                Não concordo
+              </Button>
+              <Button size="sm" variant="ghost" disabled={reviewBusy} onClick={finishReview}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
 
   return (
     <form
