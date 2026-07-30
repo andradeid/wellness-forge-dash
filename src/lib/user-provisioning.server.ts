@@ -49,6 +49,30 @@ async function findAuthUserByEmail(
   return null;
 }
 
+/**
+ * Remove qualquer banimento herdado da importação de legado.
+ * Toda compra confirmada deve resultar em conta liberada.
+ */
+async function ensureUnbanned(
+  supabaseAdmin: any,
+  userId: string,
+): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      ban_duration: "none",
+    });
+    if (error) {
+      console.warn("[provisioning] falha ao desbanir:", error.message);
+    }
+    await supabaseAdmin
+      .from("profiles" as any)
+      .update({ is_blocked: false })
+      .eq("id", userId);
+  } catch (e) {
+    console.warn("[provisioning] erro inesperado ao desbanir:", e);
+  }
+}
+
 export async function createUserWithTempPassword(
   supabaseAdmin: any,
   args: { email: string; fullName?: string | null },
@@ -56,20 +80,24 @@ export async function createUserWithTempPassword(
   const email = args.email.trim().toLowerCase();
   const fullName = args.fullName?.trim() || null;
 
-  // 1) Já existe em profiles? Nunca reenvia welcome nesse caso.
+  // 1) Já existe em profiles? Nunca reenvia welcome nesse caso,
+  //    mas garante que a conta não siga banida após pagar.
   const { data: prof } = await supabaseAdmin
     .from("profiles" as any)
     .select("id")
     .ilike("email", email)
     .maybeSingle();
   if ((prof as any)?.id) {
+    const existingId = (prof as any).id as string;
+    await ensureUnbanned(supabaseAdmin, existingId);
     return {
-      userId: (prof as any).id as string,
+      userId: existingId,
       isNew: false,
       welcomeNeeded: false,
       tempPassword: TEMP_PASSWORD,
     };
   }
+
 
   // 2) Tenta criar. O trigger handle_new_user cria profile/role/subscription.
   const userMetadata = fullName
