@@ -548,6 +548,8 @@ export function ChatMessageList({
   taskType,
   onGenerateRecipe,
   patient,
+  onRetry,
+  canRetry,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -558,6 +560,9 @@ export function ChatMessageList({
   taskType?: string | null;
   onGenerateRecipe?: (payload: FormulacoesPayload, messageId: string) => void;
   patient?: PrescriptionPatient | null;
+  /** Reenvia o último pedido após erro técnico temporário (503/timeout). */
+  onRetry?: () => void;
+  canRetry?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
