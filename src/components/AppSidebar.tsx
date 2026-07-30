@@ -181,7 +181,9 @@ const supportGroups: NavGroup[] = [
   },
 ];
 
+// Curador = nutricionista + área de curadoria.
 const curatorGroups: NavGroup[] = [
+  ...nutriGroups.filter((g) => !g.bottom),
   {
     key: "curadoria",
     label: "CURADORIA",
@@ -191,18 +193,9 @@ const curatorGroups: NavGroup[] = [
       { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
     ],
   },
-  {
-    key: "ajuda",
-    label: "AJUDA & SUPORTE",
-    subtitle: "Documentação e termos",
-    icon: LifeBuoy,
-    bottom: true,
-    items: [
-      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
-      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
-    ],
-  },
+  ...nutriGroups.filter((g) => g.bottom),
 ];
+
 
 
 
