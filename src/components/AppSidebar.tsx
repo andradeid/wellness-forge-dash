@@ -181,7 +181,9 @@ const supportGroups: NavGroup[] = [
   },
 ];
 
+// Curador = nutricionista + área de curadoria.
 const curatorGroups: NavGroup[] = [
+  ...nutriGroups.filter((g) => !g.bottom),
   {
     key: "curadoria",
     label: "CURADORIA",
@@ -191,18 +193,9 @@ const curatorGroups: NavGroup[] = [
       { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
     ],
   },
-  {
-    key: "ajuda",
-    label: "AJUDA & SUPORTE",
-    subtitle: "Documentação e termos",
-    icon: LifeBuoy,
-    bottom: true,
-    items: [
-      { title: "Políticas e Termos", url: "/app/politicas", icon: FileText },
-      { title: "Suporte no WhatsApp", url: WHATSAPP_SUPPORT_URL, icon: MessageCircle },
-    ],
-  },
+  ...nutriGroups.filter((g) => g.bottom),
 ];
+
 
 
 
@@ -268,7 +261,7 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-            {role !== "super_admin" && role !== "support" && role !== "curator" && (
+            {role !== "super_admin" && role !== "support" && (
               <CreditsBadge collapsed balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
             )}
           </div>
@@ -284,7 +277,7 @@ export function AppSidebar() {
                     : "Nutri"}
               </span>
             </div>
-              {role !== "super_admin" && role !== "support" && role !== "curator" && (
+              {role !== "super_admin" && role !== "support" && (
                 <CreditsBadge balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
               )}
           </div>
@@ -293,7 +286,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 gap-1">
-        {role !== "super_admin" && role !== "admin" && role !== "support" && role !== "curator" && (
+        {role !== "super_admin" && role !== "admin" && role !== "support" && (
           <div className={cn("px-1 pb-2", collapsed && "px-0")}>
             <Link to="/app/fale-com-lumma" title="Página Inicial">
               <span
@@ -451,7 +444,7 @@ export function AppSidebar() {
               </p>
               <p className="text-sm font-medium mt-1 break-all">{profile?.email}</p>
             </div>
-            {role !== "super_admin" && role !== "support" && role !== "curator" && (
+            {role !== "super_admin" && role !== "support" && (
 
               <div className="px-3 pb-2">
                 <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
