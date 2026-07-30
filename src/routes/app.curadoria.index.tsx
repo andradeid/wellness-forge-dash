@@ -83,6 +83,12 @@ interface CurationRow {
   message_id: string | null;
   patient_id: string | null;
   agent_key: string | null;
+  /** Visão do curador: nunca inclui a direção técnica (exclusiva do super admin). */
+  ai_classification: string | null;
+  ai_justification: string | null;
+  ai_status: string | null;
+  curator_agreement: string | null;
+  duplicate_of: string | null;
 }
 
 function formatDate(value: string) {
