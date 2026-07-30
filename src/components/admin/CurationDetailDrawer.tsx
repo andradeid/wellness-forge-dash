@@ -67,8 +67,15 @@ export interface CurationAdminRow {
   image_url: string | null;
   ai_classification: string | null;
   ai_confidence: number | null;
+  ai_confidence_label?: string | null;
   ai_justification: string | null;
   ai_technical_direction: string | null;
+  ai_status?: string | null;
+  ai_functionality?: string | null;
+  ai_baseline_item?: string | null;
+  ai_error?: string | null;
+  duplicate_of?: string | null;
+  curator_agreement?: string | null;
   admin_final_classification: string | null;
   admin_notes: string | null;
 }
