@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
@@ -7,6 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -14,22 +22,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  CurationDetailDrawer,
+  STATUS_LABEL,
+  STATUS_ORDER,
+  type CurationAdminRow,
+  type CurationStatus,
+} from "@/components/admin/CurationDetailDrawer";
+import {
+  CLASSIFICATION_LABELS,
+  DIMENSION_LABELS,
+  type Classification,
+  type Dimension,
+} from "@/components/curadoria/CurationRequestForm";
 
 export const Route = createFileRoute("/app/admin/curadoria")({
-  component: CuradoriaPage,
+  component: CuradoriaAdminPage,
   head: () => ({
     meta: [
       { title: "Curadoria de Feedback | LUMMA" },
       {
         name: "description",
         content:
-          "Painel interno de curadoria de feedback clínico da Lumma: acompanhe as solicitações registradas pelas nutricionistas.",
+          "Painel interno de curadoria de feedback clínico da Lumma: gerencie as solicitações registradas pelo time de curadoria.",
       },
       { property: "og:title", content: "Curadoria de Feedback | LUMMA" },
       {
         property: "og:description",
         content:
-          "Painel interno de curadoria de feedback clínico da Lumma: acompanhe as solicitações registradas pelas nutricionistas.",
+          "Painel interno de curadoria de feedback clínico da Lumma: gerencie as solicitações registradas pelo time de curadoria.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -37,50 +58,7 @@ export const Route = createFileRoute("/app/admin/curadoria")({
   }),
 });
 
-/** Situações possíveis de uma solicitação de curadoria. */
-type CurationStatus =
-  | "registrado"
-  | "em_analise"
-  | "classificado"
-  | "aprovado"
-  | "rejeitado"
-  | "arquivado";
-
-interface CurationRequestRow {
-  id: string;
-  created_at: string;
-  title: string;
-  request_type: string;
-  priority: string;
-  status: CurationStatus;
-  agent_key: string | null;
-  created_by: string;
-}
-
-const STATUS_LABEL: Record<CurationStatus, string> = {
-  registrado: "Registrado",
-  em_analise: "Em análise",
-  classificado: "Classificado",
-  aprovado: "Aprovado",
-  rejeitado: "Rejeitado",
-  arquivado: "Arquivado",
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  resposta_incorreta: "Resposta incorreta",
-  resposta_incompleta: "Resposta incompleta",
-  alucinacao: "Alucinação",
-  formatacao: "Formatação",
-  sugestao_melhoria: "Sugestão de melhoria",
-  outro: "Outro",
-};
-
-const PRIORITY_LABEL: Record<string, string> = {
-  baixa: "Baixa",
-  media: "Média",
-  alta: "Alta",
-  critica: "Crítica",
-};
+const ALL = "__all__";
 
 function formatDateBR(iso: string): string {
   try {
@@ -96,26 +74,88 @@ function formatDateBR(iso: string): string {
   }
 }
 
-function CuradoriaPage() {
+function CuradoriaAdminPage() {
   const { role, loading: authLoading } = useAuth();
   const isSuperAdmin = role === "super_admin";
 
+  const [statusFilter, setStatusFilter] = useState<string>(ALL);
+  const [classificationFilter, setClassificationFilter] = useState<string>(ALL);
+  const [curatorFilter, setCuratorFilter] = useState<string>(ALL);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["curation-requests"],
+    queryKey: ["curation-requests-admin"],
     enabled: isSuperAdmin,
     staleTime: 30_000,
-    queryFn: async (): Promise<CurationRequestRow[]> => {
+    queryFn: async (): Promise<CurationAdminRow[]> => {
       const { data, error } = await (supabase as any)
         .from("curation_requests")
         .select(
-          "id, created_at, title, request_type, priority, status, agent_key, created_by",
+          "id, created_at, title, description, status, agent_key, chat_id, message_id, patient_id, created_by, curator_classification, curator_dimension, image_url, ai_classification, ai_confidence, ai_justification, ai_technical_direction, admin_final_classification, admin_notes",
         )
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(500);
       if (error) throw error;
-      return (data ?? []) as CurationRequestRow[];
+      return (data ?? []) as CurationAdminRow[];
     },
   });
+
+  const curatorIds = useMemo(
+    () => Array.from(new Set((data ?? []).map((row) => row.created_by))),
+    [data],
+  );
+
+  const { data: curators } = useQuery({
+    queryKey: ["curation-curators", curatorIds],
+    enabled: isSuperAdmin && curatorIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", curatorIds);
+      if (error) return {};
+      const map: Record<string, string> = {};
+      for (const p of data ?? []) {
+        map[p.id] = p.full_name || p.email || p.id.slice(0, 8);
+      }
+      return map;
+    },
+  });
+
+  const nameOf = (id: string) => curators?.[id] ?? `${id.slice(0, 8)}…`;
+
+  const counters = useMemo(() => {
+    const rows = data ?? [];
+    const byStatus: Record<string, number> = {};
+    for (const key of STATUS_ORDER) byStatus[key] = 0;
+    let suporte = 0;
+    let melhoria = 0;
+    let aiPending = 0;
+    for (const row of rows) {
+      byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
+      if (row.curator_classification === "suporte") suporte += 1;
+      if (row.curator_classification === "melhoria") melhoria += 1;
+      if (!row.ai_classification) aiPending += 1;
+    }
+    return { total: rows.length, byStatus, suporte, melhoria, aiPending };
+  }, [data]);
+
+  const filtered = useMemo(() => {
+    return (data ?? []).filter((row) => {
+      if (statusFilter !== ALL && row.status !== statusFilter) return false;
+      if (classificationFilter !== ALL && row.curator_classification !== classificationFilter)
+        return false;
+      if (curatorFilter !== ALL && row.created_by !== curatorFilter) return false;
+      return true;
+    });
+  }, [data, statusFilter, classificationFilter, curatorFilter]);
+
+  const selected = useMemo(
+    () => (data ?? []).find((row) => row.id === selectedId) ?? null,
+    [data, selectedId],
+  );
 
   if (authLoading) {
     return <Skeleton className="h-64 w-full rounded-lg" />;
@@ -141,21 +181,99 @@ function CuradoriaPage() {
           <ClipboardList className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-foreground">
-            Curadoria de Feedback
-          </h1>
+          <h1 className="text-xl font-semibold text-foreground">Curadoria de Feedback</h1>
           <p className="text-sm text-muted-foreground">
-            Solicitações registradas para revisão clínica. Estrutura inicial —
-            sem criação e sem análise por IA nesta etapa.
+            Gestão das solicitações registradas pelo time de curadoria.
           </p>
         </div>
       </div>
 
+      {/* Contadores */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="rounded-lg shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{counters.total}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-lg shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Por situação</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {STATUS_ORDER.map((key) => (
+              <Badge key={key} variant="secondary">
+                {STATUS_LABEL[key]}: {counters.byStatus[key] ?? 0}
+              </Badge>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-lg shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              Classificação do curador
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">Suporte: {counters.suporte}</Badge>
+              <Badge variant="secondary">Melhoria: {counters.melhoria}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Classificação da IA: {counters.aiPending} aguardando análise
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lista + filtros */}
       <Card className="rounded-lg shadow-md">
-        <CardHeader>
-          <CardTitle className="text-base">
-            Solicitações {data ? `(${data.length})` : ""}
-          </CardTitle>
+        <CardHeader className="gap-4">
+          <CardTitle className="text-base">Solicitações ({filtered.length})</CardTitle>
+          <div className="grid gap-3 md:grid-cols-3">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Situação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Todas as situações</SelectItem>
+                {STATUS_ORDER.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {STATUS_LABEL[key]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={classificationFilter} onValueChange={setClassificationFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Classificação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Todas as classificações</SelectItem>
+                <SelectItem value="suporte">Suporte</SelectItem>
+                <SelectItem value="melhoria">Melhoria</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={curatorFilter} onValueChange={setCuratorFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Curador" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Todos os curadores</SelectItem>
+                {curatorIds.map((id) => (
+                  <SelectItem key={id} value={id}>
+                    {nameOf(id)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -166,44 +284,61 @@ function CuradoriaPage() {
             </div>
           ) : error ? (
             <p className="text-sm text-destructive">
-              Não foi possível carregar as solicitações. Tente novamente em
-              instantes.
+              Não foi possível carregar as solicitações. Tente novamente em instantes.
             </p>
-          ) : !data || data.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhuma solicitação de curadoria registrada até o momento.
+              Nenhuma solicitação encontrada com os filtros atuais.
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Título</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Prioridade</TableHead>
+                  <TableHead>Curador</TableHead>
+                  <TableHead>Classificação</TableHead>
+                  <TableHead>Dimensão</TableHead>
+                  <TableHead>Origem</TableHead>
                   <TableHead>Situação</TableHead>
-                  <TableHead>Agente</TableHead>
-                  <TableHead>Criado em</TableHead>
+                  <TableHead>Criada em</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="max-w-[280px] truncate font-medium">
+                {filtered.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelectedId(row.id);
+                      setDrawerOpen(true);
+                    }}
+                  >
+                    <TableCell className="max-w-[260px] truncate font-medium">
                       {row.title}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {TYPE_LABEL[row.request_type] ?? row.request_type}
+                      {nameOf(row.created_by)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {PRIORITY_LABEL[row.priority] ?? row.priority}
+                      {row.curator_classification
+                        ? (CLASSIFICATION_LABELS[
+                            row.curator_classification as Classification
+                          ] ?? row.curator_classification)
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {row.curator_dimension
+                        ? (DIMENSION_LABELS[row.curator_dimension as Dimension] ??
+                          row.curator_dimension)
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{row.chat_id ? "Chat" : "Avulso"}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {STATUS_LABEL[row.status] ?? row.status}
+                        {STATUS_LABEL[row.status as CurationStatus] ?? row.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {row.agent_key ?? "—"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {formatDateBR(row.created_at)}
@@ -215,6 +350,16 @@ function CuradoriaPage() {
           )}
         </CardContent>
       </Card>
+
+      <CurationDetailDrawer
+        request={selected}
+        curatorName={selected ? nameOf(selected.created_by) : ""}
+        open={drawerOpen}
+        onOpenChange={(open) => {
+          setDrawerOpen(open);
+          if (!open) setSelectedId(null);
+        }}
+      />
     </div>
   );
 }
