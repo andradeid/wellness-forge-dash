@@ -551,6 +551,8 @@ export function ChatMessageList({
   patient,
   onRetry,
   canRetry,
+  chatId,
+  patientId,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -564,6 +566,9 @@ export function ChatMessageList({
   /** Reenvia o último pedido após erro técnico temporário (503/timeout). */
   onRetry?: () => void;
   canRetry?: boolean;
+  /** Contexto opcional usado apenas pelo botão "Reportar" (curadoria). */
+  chatId?: string | null;
+  patientId?: string | null;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -573,6 +578,7 @@ export function ChatMessageList({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "super_admin" || role === "admin";
+  const canCurate = role === "curator" || role === "super_admin";
   const lastUserIndex = messages.reduce((acc, msg, idx) => (msg.role === "user" ? idx : acc), -1);
 
   const scrollToBottom = (smooth = true) => {
