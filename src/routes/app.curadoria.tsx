@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { ImageIcon, Loader2, Plus, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  CurationRequestForm,
+  CLASSIFICATION_LABELS,
+  DIMENSION_LABELS,
+  ATTACHMENT_BUCKET,
+  type Classification,
+  type Dimension,
+} from "@/components/curadoria/CurationRequestForm";
 import {
   Card,
   CardContent,
@@ -17,13 +19,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -37,27 +32,6 @@ export const Route = createFileRoute("/app/curadoria")({
   component: CuradoriaPage,
 });
 
-type Classification = "suporte" | "melhoria";
-type Dimension =
-  | "comportamento"
-  | "tabela_dado"
-  | "formatacao"
-  | "clinico"
-  | "outro";
-
-const CLASSIFICATION_LABELS: Record<Classification, string> = {
-  suporte: "Suporte",
-  melhoria: "Melhoria",
-};
-
-const DIMENSION_LABELS: Record<Dimension, string> = {
-  comportamento: "Comportamento",
-  tabela_dado: "Tabela / Dado",
-  formatacao: "Formatação",
-  clinico: "Clínico",
-  outro: "Outro",
-};
-
 const STATUS_LABELS: Record<string, string> = {
   registrado: "Registrado",
   em_analise: "Em análise",
@@ -67,9 +41,6 @@ const STATUS_LABELS: Record<string, string> = {
   arquivado: "Arquivado",
 };
 
-const ATTACHMENT_BUCKET = "curation-attachments";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
 interface CurationRow {
   id: string;
