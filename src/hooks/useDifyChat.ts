@@ -1556,6 +1556,10 @@ export function useDifyChat(
                       raw: agentError.raw,
                     });
                   }
+                  // Erro técnico é transitório → habilita "Tentar novamente".
+                  if (agentError?.kind === "technical" && !retryUsedRef.current && lastRequestRef.current) {
+                    setCanRetry(true);
+                  }
 
                   // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
                   // por qualquer agente (exame handoff OU agente de produção).
