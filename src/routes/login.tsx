@@ -212,6 +212,11 @@ function LoginPage() {
 
   const finalizeEntry = (currentRole: AppRole | null) => {
     toast.success("Bem-vindo de volta!");
+    // Fluxo OAuth do MCP: voltar exatamente para a tela de consentimento.
+    if (next) {
+      window.location.href = next;
+      return;
+    }
     const to =
       currentRole === "nutri"
         ? "/app/fale-com-lumma"
