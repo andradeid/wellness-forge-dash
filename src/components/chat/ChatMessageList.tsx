@@ -931,7 +931,19 @@ export function ChatMessageList({
                     <MessageFeedback
                       messageId={m.id}
                       rightSlot={
-                        <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                        <>
+                          {canCurate && (
+                            <ReportMessageButton
+                              context={{
+                                chat_id: m.chat_id ?? chatId ?? null,
+                                message_id: m.id,
+                                patient_id: patientId ?? null,
+                                agent_key: m.agent_type ?? agentType ?? null,
+                              }}
+                            />
+                          )}
+                          <MessageCopyButton getElement={() => document.getElementById(`msg-content-${m.id}`)} />
+                        </>
                       }
                     />
                   ) : (
