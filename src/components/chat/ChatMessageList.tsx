@@ -794,7 +794,9 @@ export function ChatMessageList({
                     </div>
                   )}
                   <div id={`msg-content-${m.id}`}>
-                  {parts
+                  {(m.structured_data?.agent_error || m.structured_data?.not_a_lab_report_error
+                    ? []
+                    : parts)
                     .filter((p) => p.type === "text")
                     .map((p, i) => {
                       const isResearch = m.agent_type === "research" || agentType === "research";
