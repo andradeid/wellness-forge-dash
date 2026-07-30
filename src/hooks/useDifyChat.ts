@@ -1515,7 +1515,15 @@ export function useDifyChat(
                   });
 
                   const processingMs = Math.round(performance.now() - startedAt);
-                  const labReportError = isExamLike ? tryExtractLabReportError(fullText) : null;
+                  const agentError = detectAgentError(fullText, isExamLike);
+                  if (agentError) {
+                    console.warn("[dify] erro estruturado no answer", {
+                      kind: agentError.kind,
+                      agent_type: agentType,
+                      selected_task: selectedTask ?? null,
+                      raw: agentError.raw,
+                    });
+                  }
 
                   // Extrai o marcador <!--FORMULACOES_SUGERIDAS:{...}--> emitido
                   // por qualquer agente (exame handoff OU agente de produção).
@@ -1524,22 +1532,26 @@ export function useDifyChat(
                   // Estimativa de refeição por foto (Super Agente): bloco { "foods": [...] }
                   const mealEstimation = extractMealEstimation(fullText);
 
-                  // Quando o agente rejeita o laudo, o JSON cru não deve
-                  // aparecer para a nutricionista: exibimos só a mensagem.
-                  if (labReportError) {
-                    fullText = labReportError;
+                  // O JSON cru nunca aparece para a nutricionista: a bolha passa
+                  // a conter apenas a mensagem amigável (renderizada uma única
+                  // vez pelo card de erro em ChatMessageList).
+                  if (agentError) {
+                    fullText = agentError.message;
                     setMessages((prev) =>
-                      prev.map((m) => (m.id === assistantId ? { ...m, content: labReportError } : m)),
+                      prev.map((m) => (m.id === assistantId ? { ...m, content: agentError.message } : m)),
                     );
                   }
 
-                  const structured: Record<string, unknown> = labReportError
-                    ? { not_a_lab_report_error: labReportError, processing_ms: processingMs }
+                  const structured: Record<string, unknown> = agentError
+                    ? {
+                        processing_ms: processingMs,
+                        agent_error: { kind: agentError.kind, message: agentError.message },
+                      }
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
-                  if (formulacoes) structured.formulacoes_sugeridas = formulacoes;
-                  if (mealEstimation) structured.meal_estimation = mealEstimation;
+                  if (!agentError && formulacoes) structured.formulacoes_sugeridas = formulacoes;
+                  if (!agentError && mealEstimation) structured.meal_estimation = mealEstimation;
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)
