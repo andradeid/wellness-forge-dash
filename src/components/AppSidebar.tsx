@@ -151,6 +151,7 @@ const adminGroups: NavGroup[] = [
     icon: Lightbulb,
     items: [
       { title: "Solicitações", url: "/app/admin/curadoria", icon: Lightbulb, superAdminOnly: true, badge: "NOVO" },
+      { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText, superAdminOnly: true, badge: "NOVO" },
     ],
   },
   {

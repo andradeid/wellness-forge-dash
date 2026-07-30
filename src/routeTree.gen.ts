@@ -29,6 +29,7 @@ import { Route as AppCuradoriaIndexRouteImport } from './routes/app.curadoria.in
 import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
 import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
+import { Route as AppCuradoriaBaselineRouteImport } from './routes/app.curadoria.baseline'
 import { Route as AppCheckoutSucessoRouteImport } from './routes/app.checkout.sucesso'
 import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
 import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
@@ -155,6 +156,11 @@ const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
 const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
   id: '/evolution/$patientId',
   path: '/evolution/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaBaselineRoute = AppCuradoriaBaselineRouteImport.update({
+  id: '/curadoria/baseline',
+  path: '/curadoria/baseline',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCheckoutSucessoRoute = AppCheckoutSucessoRouteImport.update({
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
+  '/app/curadoria/baseline': typeof AppCuradoriaBaselineRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
+  '/app/curadoria/baseline': typeof AppCuradoriaBaselineRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
@@ -434,6 +442,7 @@ export interface FileRoutesById {
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/chat/$patientId': typeof AppChatPatientIdRoute
   '/app/checkout/sucesso': typeof AppCheckoutSucessoRoute
+  '/app/curadoria/baseline': typeof AppCuradoriaBaselineRoute
   '/app/evolution/$patientId': typeof AppEvolutionPatientIdRoute
   '/app/general/$chatId': typeof AppGeneralChatIdRoute
   '/app/planos/historico': typeof AppPlanosHistoricoRoute
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/checkout/sucesso'
+    | '/app/curadoria/baseline'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/checkout/sucesso'
+    | '/app/curadoria/baseline'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/app/admin/users'
     | '/app/chat/$patientId'
     | '/app/checkout/sucesso'
+    | '/app/curadoria/baseline'
     | '/app/evolution/$patientId'
     | '/app/general/$chatId'
     | '/app/planos/historico'
@@ -748,6 +760,13 @@ declare module '@tanstack/react-router' {
       path: '/evolution/$patientId'
       fullPath: '/app/evolution/$patientId'
       preLoaderRoute: typeof AppEvolutionPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria/baseline': {
+      id: '/app/curadoria/baseline'
+      path: '/curadoria/baseline'
+      fullPath: '/app/curadoria/baseline'
+      preLoaderRoute: typeof AppCuradoriaBaselineRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/checkout/sucesso': {
@@ -981,6 +1000,7 @@ interface AppRouteChildren {
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppChatPatientIdRoute: typeof AppChatPatientIdRoute
   AppCheckoutSucessoRoute: typeof AppCheckoutSucessoRoute
+  AppCuradoriaBaselineRoute: typeof AppCuradoriaBaselineRoute
   AppEvolutionPatientIdRoute: typeof AppEvolutionPatientIdRoute
   AppGeneralChatIdRoute: typeof AppGeneralChatIdRoute
   AppCuradoriaIndexRoute: typeof AppCuradoriaIndexRoute
@@ -1015,6 +1035,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppChatPatientIdRoute: AppChatPatientIdRoute,
   AppCheckoutSucessoRoute: AppCheckoutSucessoRoute,
+  AppCuradoriaBaselineRoute: AppCuradoriaBaselineRoute,
   AppEvolutionPatientIdRoute: AppEvolutionPatientIdRoute,
   AppGeneralChatIdRoute: AppGeneralChatIdRoute,
   AppCuradoriaIndexRoute: AppCuradoriaIndexRoute,
