@@ -57,7 +57,7 @@ export default defineTool({
       const { data, error } = await query;
       if (error) throw new Error(error.message);
 
-      const reports = (data ?? []).map((row) => {
+      const reports = ((data ?? []) as unknown[]).map((row) => {
         const { image_url, ...rest } = row as Record<string, unknown>;
         return { ...rest, has_image: !!image_url };
       });
