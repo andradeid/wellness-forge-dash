@@ -1,9 +1,15 @@
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  createCurationRequest,
+  resolveCurationDuplicate,
+  setCuratorAgreement,
+} from "@/lib/curation.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
