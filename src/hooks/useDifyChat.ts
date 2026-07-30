@@ -23,8 +23,11 @@ import {
   CONCURRENCY_TOAST_DESCRIPTION,
   CONCURRENCY_TOAST_TITLE,
   CONCURRENCY_USER_MESSAGE,
+  classifyAgentError,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  sanitizeStreamingText,
+  type AgentErrorInfo,
 } from "@/lib/dify-error-messages";
 
 /** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
