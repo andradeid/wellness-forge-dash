@@ -653,6 +653,7 @@ export function useDifyChat(
       retryUsedRef.current = false;
       lastRequestRef.current = { text, files, opts };
     }
+    setCanRetry(false);
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
     const agentType = opts?.overrideAgent ?? agentTypeState;
