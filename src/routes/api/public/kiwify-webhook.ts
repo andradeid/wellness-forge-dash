@@ -22,7 +22,10 @@ import { createFileRoute } from "@tanstack/react-router";
 const PRODUCT_MAP: Record<string, { slug: "starter" | "pro"; cycle: "yearly" }> = {
   "a19b7600-851a-11f1-ac2c-dbf6162aa415": { slug: "starter", cycle: "yearly" },
   "59a89e30-851b-11f1-be44-db22545a0013": { slug: "pro", cycle: "yearly" },
+  // Upgrade - Lumma 2.0 - Pro Anual (quem já é Starter e migra para Pro)
+  "53f6ae60-89d9-11f1-be8a-11fc729f7dc2": { slug: "pro", cycle: "yearly" },
 };
+
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
