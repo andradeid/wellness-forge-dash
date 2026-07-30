@@ -169,7 +169,12 @@ function AppLayout() {
     }
     if (!role) return;
     if (!isAllowed(pathname, role)) {
-      const dest = role === "support" ? "/app/admin/users" : "/unauthorized";
+      const dest =
+        role === "support"
+          ? "/app/admin/users"
+          : role === "curator"
+            ? "/app/curadoria"
+            : "/unauthorized";
       void navigate({ to: dest, replace: true }).catch((error) => {
         console.warn("[app] falha ao redirecionar acesso negado", error);
       });
