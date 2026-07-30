@@ -1,0 +1,2 @@
+ALTER TABLE public.curation_requests DROP CONSTRAINT IF EXISTS curation_requests_status_check;
+ALTER TABLE public.curation_requests ADD CONSTRAINT curation_requests_status_check CHECK (status = ANY (ARRAY['registrado'::text,'em_analise'::text,'aprovado_ajuste'::text,'classificado_melhoria'::text,'em_desenvolvimento'::text,'concluido'::text]));
