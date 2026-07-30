@@ -55,6 +55,7 @@ export interface ChatMessage {
     parse_error?: boolean;
     processing_ms?: number;
     not_a_lab_report_error?: string;
+    agent_error?: { kind: "content" | "technical"; message: string };
     formulacoes_sugeridas?: FormulacoesPayload;
     meal_estimation?: MealEstimation;
   } | null;
