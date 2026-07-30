@@ -84,7 +84,7 @@ function AdministratorsPage() {
     const { data: roleRows, error: rErr } = await (supabase as any)
       .from("user_roles")
       .select("user_id, created_at, role")
-      .in("role", ["admin", "super_admin", "support"]);
+      .in("role", ["admin", "super_admin", "support", "curator"]);
     if (rErr) {
       toast.error(rErr.message);
       setLoading(false);
