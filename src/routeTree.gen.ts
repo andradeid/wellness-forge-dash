@@ -59,6 +59,7 @@ import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
 import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AppAdminEmailsIndexRouteImport } from './routes/app.admin.emails.index'
 import { Route as AppAdminEmailsCampanhasRouteImport } from './routes/app.admin.emails.campanhas'
 
@@ -316,6 +317,11 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppAdminEmailsIndexRoute = AppAdminEmailsIndexRouteImport.update({
   id: '/admin/emails/',
   path: '/admin/emails/',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app/': typeof AppIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
@@ -400,6 +407,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app': typeof AppIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app/': typeof AppIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
@@ -511,6 +520,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/trocar-senha'
     | '/app/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/trocar-senha'
     | '/app'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
@@ -618,6 +629,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/trocar-senha'
     | '/app/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
@@ -664,6 +676,7 @@ export interface RootRouteChildren {
   UnauthorizedRoute: typeof UnauthorizedRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
@@ -1027,6 +1040,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/admin/emails/': {
       id: '/app/admin/emails/'
       path: '/admin/emails'
@@ -1140,6 +1160,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,
