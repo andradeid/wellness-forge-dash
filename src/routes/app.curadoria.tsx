@@ -426,7 +426,9 @@ function CuradoriaPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Imagem</TableHead>
                   <TableHead>Criada em</TableHead>
-
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {listQuery.data!.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">{row.title}</TableCell>
