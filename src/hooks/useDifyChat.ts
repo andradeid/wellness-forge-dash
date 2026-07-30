@@ -1271,12 +1271,15 @@ export function useDifyChat(
                   }
                 }
 
+                // Nunca renderizar JSON de erro cru enquanto o stream chega.
+                const displayText = sanitizeStreamingText(fullText);
+
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId
                       ? {
                           ...m,
-                          content: fullText,
+                          content: displayText,
                           ...(earlyMarkers
                             ? { structured_data: { ...(m.structured_data ?? {}), markers: earlyMarkers } }
                             : {}),
