@@ -24,6 +24,7 @@ import { Route as AppPlanosRouteImport } from './routes/app.planos'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
+import { Route as AppCuradoriaRouteImport } from './routes/app.curadoria'
 import { Route as AppChatsRouteImport } from './routes/app.chats'
 import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
@@ -129,6 +130,11 @@ const AppFaleComLummaRoute = AppFaleComLummaRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaRoute = AppCuradoriaRouteImport.update({
+  id: '/curadoria',
+  path: '/curadoria',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatsRoute = AppChatsRouteImport.update({
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
+  '/app/curadoria': typeof AppCuradoriaRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
@@ -344,6 +351,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
+  '/app/curadoria': typeof AppCuradoriaRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/app/chats': typeof AppChatsRoute
+  '/app/curadoria': typeof AppCuradoriaRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
@@ -443,6 +452,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
+    | '/app/curadoria'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
+    | '/app/curadoria'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
@@ -538,6 +549,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/unauthorized'
     | '/app/chats'
+    | '/app/curadoria'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
     | '/app/patients'
@@ -701,6 +713,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/app/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria': {
+      id: '/app/curadoria'
+      path: '/curadoria'
+      fullPath: '/app/curadoria'
+      preLoaderRoute: typeof AppCuradoriaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/chats': {
@@ -937,6 +956,7 @@ const AppPlanosRouteWithChildren = AppPlanosRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppChatsRoute: typeof AppChatsRoute
+  AppCuradoriaRoute: typeof AppCuradoriaRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppFaleComLummaRoute: typeof AppFaleComLummaRoute
   AppPatientsRoute: typeof AppPatientsRoute
@@ -970,6 +990,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppChatsRoute: AppChatsRoute,
+  AppCuradoriaRoute: AppCuradoriaRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppFaleComLummaRoute: AppFaleComLummaRoute,
   AppPatientsRoute: AppPatientsRoute,

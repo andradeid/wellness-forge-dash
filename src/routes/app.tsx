@@ -44,7 +44,18 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
 
   // Qualquer outra rota /app/admin/* exige pelo menos admin
   { prefix: "/app/admin", roles: ["admin", "super_admin"] },
+
+  // Área do curador (fora de /app/admin)
+  { prefix: "/app/curadoria", roles: ["curator", "super_admin"] },
 ];
+
+// Rotas permitidas para o papel Curador. Whitelist rigorosa.
+const CURATOR_ALLOWED_PREFIXES = [
+  "/app/curadoria",
+  "/app/trocar-senha",
+  "/app/politicas",
+];
+
 
 // Rotas permitidas para o papel Suporte (CS), fora do /app/admin.
 // Whitelist rigorosa: qualquer outra rota /app/* redireciona para a permitida.
