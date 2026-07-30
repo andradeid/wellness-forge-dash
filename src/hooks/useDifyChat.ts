@@ -1915,5 +1915,14 @@ export function useDifyChat(
     sendMessageRef.current = sendMessage as any;
   }, [sendMessage]);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask };
+  /** Reenvia o último pedido (com os mesmos anexos já processados no Dify). */
+  const retryLastRequest = useCallback(() => {
+    if (retryUsedRef.current || !lastRequestRef.current) return;
+    retryUsedRef.current = true;
+    setCanRetry(false);
+    const req = lastRequestRef.current;
+    void sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+  }, []);
+
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest };
 }
