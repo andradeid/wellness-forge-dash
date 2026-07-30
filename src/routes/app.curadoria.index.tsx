@@ -231,7 +231,7 @@ function CuradoriaPage() {
       const { data, error } = await (supabase as any)
         .from("curation_requests")
         .select(
-          "id, title, description, curator_classification, curator_dimension, status, created_at, updated_at, image_url, chat_id, message_id, patient_id, agent_key",
+          "id, title, description, curator_classification, curator_dimension, status, created_at, updated_at, image_url, chat_id, message_id, patient_id, agent_key, ai_classification, ai_justification, ai_status, curator_agreement, duplicate_of",
         )
         .eq("created_by", user!.id)
         .order("created_at", { ascending: false });
