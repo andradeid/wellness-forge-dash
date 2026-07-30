@@ -358,6 +358,36 @@ function CuradoriaPage() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="curation-image">Imagem (opcional)</Label>
+              <Input
+                id="curation-image"
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => handleImageChange(event.target.files?.[0] ?? null)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Anexe 1 print de tela em PNG, JPG ou WEBP (até 5 MB).
+              </p>
+              {imagePreview && (
+                <div className="flex items-center gap-3 rounded-md border p-2">
+                  <img
+                    src={imagePreview}
+                    alt="Pré-visualização da imagem selecionada"
+                    className="h-14 w-14 rounded object-cover"
+                  />
+                  <span className="flex-1 truncate text-xs text-muted-foreground">
+                    {imageFile?.name}
+                  </span>
+                  <Button type="button" variant="ghost" size="sm" onClick={clearImage}>
+                    <X className="h-4 w-4" />
+                    Remover
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
