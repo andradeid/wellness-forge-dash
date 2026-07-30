@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const Route = createFileRoute("/app/curadoria")({
+export const Route = createFileRoute("/app/curadoria/")({
   component: CuradoriaPage,
 });
 
