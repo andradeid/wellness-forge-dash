@@ -468,6 +468,43 @@ function CuradoriaPage() {
 
                 <div>
                   <p className="mb-1 text-xs font-medium uppercase text-muted-foreground">
+                    Análise automática
+                  </p>
+                  <DetailRow
+                    label="Classificação"
+                    value={
+                      selected.ai_status === "done"
+                        ? (AI_CLASSIFICATION_LABELS[selected.ai_classification ?? ""] ??
+                          selected.ai_classification)
+                        : "Em análise"
+                    }
+                  />
+                  {selected.ai_justification ? (
+                    <DetailRow label="Justificativa" value={selected.ai_justification} />
+                  ) : null}
+                  {selected.curator_agreement ? (
+                    <DetailRow
+                      label="Sua resposta"
+                      value={
+                        selected.curator_agreement === "concorda"
+                          ? "Você concordou com a classificação"
+                          : "Você registrou divergência"
+                      }
+                    />
+                  ) : null}
+                  {selected.duplicate_of ? (
+                    <DetailRow
+                      label="Duplicata"
+                      value={`Vinculada à solicitação #${selected.duplicate_of.slice(0, 8)}`}
+                    />
+                  ) : null}
+                </div>
+
+                <Separator />
+
+
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase text-muted-foreground">
                     Acompanhamento
                   </p>
                   <DetailRow
