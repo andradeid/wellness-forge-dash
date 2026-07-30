@@ -310,9 +310,11 @@ export function AppSidebar() {
         )}
         {(role === "support"
           ? supportGroups
-          : role === "super_admin" || role === "admin"
-            ? adminGroups
-            : nutriGroups)
+          : role === "curator"
+            ? curatorGroups
+            : role === "super_admin" || role === "admin"
+              ? adminGroups
+              : nutriGroups)
           .filter((g) => !(role === "super_admin" && g.key === "ajuda"))
 
           .map((g) => {
