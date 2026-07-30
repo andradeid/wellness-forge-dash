@@ -100,6 +100,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { session, signIn, signUp, loading, role } = useAuth();
+  const { next } = Route.useSearch();
   const navigate = useNavigate();
   const { data: systemSettings } = useSystemSettings();
 
