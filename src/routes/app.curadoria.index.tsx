@@ -69,6 +69,12 @@ const STATUS_LABELS: Record<string, string> = {
 const OPEN_STATUSES = ["registrado", "em_analise", "classificado", "classificado_melhoria"];
 const DONE_STATUSES = ["concluido", "aprovado", "aprovado_ajuste", "arquivado", "rejeitado"];
 
+const AI_CLASSIFICATION_LABELS: Record<string, string> = {
+  suporte: "Suporte",
+  melhoria: "Melhoria",
+  requer_analise_humana: "Requer análise humana",
+};
+
 interface CurationRow {
   id: string;
   title: string;
@@ -83,6 +89,12 @@ interface CurationRow {
   message_id: string | null;
   patient_id: string | null;
   agent_key: string | null;
+  /** Visão do curador: nunca inclui a direção técnica (exclusiva do super admin). */
+  ai_classification: string | null;
+  ai_justification: string | null;
+  ai_status: string | null;
+  curator_agreement: string | null;
+  duplicate_of: string | null;
 }
 
 function formatDate(value: string) {
@@ -231,7 +243,7 @@ function CuradoriaPage() {
       const { data, error } = await (supabase as any)
         .from("curation_requests")
         .select(
-          "id, title, description, curator_classification, curator_dimension, status, created_at, updated_at, image_url, chat_id, message_id, patient_id, agent_key",
+          "id, title, description, curator_classification, curator_dimension, status, created_at, updated_at, image_url, chat_id, message_id, patient_id, agent_key, ai_classification, ai_justification, ai_status, curator_agreement, duplicate_of",
         )
         .eq("created_by", user!.id)
         .order("created_at", { ascending: false });
@@ -459,6 +471,43 @@ function CuradoriaPage() {
                 ) : null}
 
                 <Separator />
+
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase text-muted-foreground">
+                    Análise automática
+                  </p>
+                  <DetailRow
+                    label="Classificação"
+                    value={
+                      selected.ai_status === "done"
+                        ? (AI_CLASSIFICATION_LABELS[selected.ai_classification ?? ""] ??
+                          selected.ai_classification)
+                        : "Em análise"
+                    }
+                  />
+                  {selected.ai_justification ? (
+                    <DetailRow label="Justificativa" value={selected.ai_justification} />
+                  ) : null}
+                  {selected.curator_agreement ? (
+                    <DetailRow
+                      label="Sua resposta"
+                      value={
+                        selected.curator_agreement === "concorda"
+                          ? "Você concordou com a classificação"
+                          : "Você registrou divergência"
+                      }
+                    />
+                  ) : null}
+                  {selected.duplicate_of ? (
+                    <DetailRow
+                      label="Duplicata"
+                      value={`Vinculada à solicitação #${selected.duplicate_of.slice(0, 8)}`}
+                    />
+                  ) : null}
+                </div>
+
+                <Separator />
+
 
                 <div>
                   <p className="mb-1 text-xs font-medium uppercase text-muted-foreground">

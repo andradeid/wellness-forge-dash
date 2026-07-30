@@ -318,16 +318,24 @@ export type Database = {
           admin_final_classification: string | null
           admin_notes: string | null
           agent_key: string | null
+          ai_analyzed_at: string | null
+          ai_baseline_item: string | null
           ai_classification: string | null
           ai_confidence: number | null
+          ai_confidence_label: string | null
+          ai_error: string | null
+          ai_functionality: string | null
           ai_justification: string | null
+          ai_status: string
           ai_technical_direction: string | null
           chat_id: string | null
           created_at: string
           created_by: string
+          curator_agreement: string | null
           curator_classification: string | null
           curator_dimension: string | null
           description: string
+          duplicate_of: string | null
           id: string
           image_url: string | null
           message_id: string | null
@@ -342,16 +350,24 @@ export type Database = {
           admin_final_classification?: string | null
           admin_notes?: string | null
           agent_key?: string | null
+          ai_analyzed_at?: string | null
+          ai_baseline_item?: string | null
           ai_classification?: string | null
           ai_confidence?: number | null
+          ai_confidence_label?: string | null
+          ai_error?: string | null
+          ai_functionality?: string | null
           ai_justification?: string | null
+          ai_status?: string
           ai_technical_direction?: string | null
           chat_id?: string | null
           created_at?: string
           created_by: string
+          curator_agreement?: string | null
           curator_classification?: string | null
           curator_dimension?: string | null
           description: string
+          duplicate_of?: string | null
           id?: string
           image_url?: string | null
           message_id?: string | null
@@ -366,16 +382,24 @@ export type Database = {
           admin_final_classification?: string | null
           admin_notes?: string | null
           agent_key?: string | null
+          ai_analyzed_at?: string | null
+          ai_baseline_item?: string | null
           ai_classification?: string | null
           ai_confidence?: number | null
+          ai_confidence_label?: string | null
+          ai_error?: string | null
+          ai_functionality?: string | null
           ai_justification?: string | null
+          ai_status?: string
           ai_technical_direction?: string | null
           chat_id?: string | null
           created_at?: string
           created_by?: string
+          curator_agreement?: string | null
           curator_classification?: string | null
           curator_dimension?: string | null
           description?: string
+          duplicate_of?: string | null
           id?: string
           image_url?: string | null
           message_id?: string | null
@@ -386,7 +410,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "curation_requests_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "curation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dify_agents: {
         Row: {
