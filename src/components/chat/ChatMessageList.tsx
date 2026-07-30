@@ -941,7 +941,7 @@ export function ChatMessageList({
                           {canCurate && (
                             <ReportMessageButton
                               context={{
-                                chat_id: m.chat_id ?? chatId ?? null,
+                                chat_id: chatId ?? null,
                                 message_id: m.id,
                                 patient_id: patientId ?? null,
                                 agent_key: m.agent_type ?? agentType ?? null,
