@@ -211,39 +211,18 @@ function messageCarriesReport(text: string, filesCount: number): boolean {
   return false;
 }
 
-function tryExtractLabReportError(text: string): string | null {
-  if (!text) return null;
-  const tryParse = (raw: string): string | null => {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.error === true && parsed?.error_type === "not_a_lab_report") {
-        return parsed.message || "Imagem não reconhecida como laudo laboratorial.";
-      }
-    } catch { /* ignore */ }
-    return null;
-  };
-
-  // 1) ```json blocks
-  const blockRe = /```(?:json)?\s*([\s\S]*?)```/g;
-  let m: RegExpExecArray | null;
-  while ((m = blockRe.exec(text))) {
-    const r = tryParse(m[1].trim());
-    if (r) return r;
-  }
-
-  // 2) Raw JSON anywhere no texto contendo "not_a_lab_report"
-  const idx = text.indexOf('"not_a_lab_report"');
-  if (idx !== -1) {
-    const start = text.lastIndexOf("{", idx);
-    const end = text.indexOf("}", idx);
-    if (start !== -1 && end !== -1) {
-      const r = tryParse(text.slice(start, end + 1));
-      if (r) return r;
-    }
-  }
-
-  return null;
+/**
+ * Classifica erro estruturado devolvido no corpo da resposta do agente.
+ * `content` (não é laudo) só é permitido em contexto de exame; qualquer outro
+ * erro vira `technical`, para nunca acusar indevidamente o arquivo enviado.
+ */
+function detectAgentError(text: string, isExamLike: boolean): AgentErrorInfo | null {
+  const info = classifyAgentError(text);
+  if (!info) return null;
+  if (info.kind === "content" && !isExamLike) return null;
+  return info;
 }
+
 
 /**
  * Scanner balanceado: a partir do `{` em startIdx, encontra o `}` correspondente
