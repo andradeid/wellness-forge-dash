@@ -426,7 +426,9 @@ export function AppSidebar() {
                         ? "Analista e Desenvolvedor"
                         : role === "support"
                           ? "Suporte (CS)"
-                          : `Plano ${planLabel(planType)}`}
+                          : role === "curator"
+                            ? "Curadoria"
+                            : `Plano ${planLabel(planType)}`}
 
                     </div>
 
