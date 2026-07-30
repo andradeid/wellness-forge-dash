@@ -449,7 +449,15 @@ function CuradoriaPage() {
                         {STATUS_LABELS[row.status] ?? row.status}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      {row.image_url ? (
+                        <AttachmentThumbnail path={row.image_url} />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>{formatDate(row.created_at)}</TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
