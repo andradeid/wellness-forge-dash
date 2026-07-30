@@ -287,6 +287,7 @@ export type Database = {
           curator_dimension: string | null
           description: string
           id: string
+          image_url: string | null
           message_id: string | null
           patient_id: string | null
           priority: string
@@ -310,6 +311,7 @@ export type Database = {
           curator_dimension?: string | null
           description: string
           id?: string
+          image_url?: string | null
           message_id?: string | null
           patient_id?: string | null
           priority?: string
@@ -333,6 +335,7 @@ export type Database = {
           curator_dimension?: string | null
           description?: string
           id?: string
+          image_url?: string | null
           message_id?: string | null
           patient_id?: string | null
           priority?: string
