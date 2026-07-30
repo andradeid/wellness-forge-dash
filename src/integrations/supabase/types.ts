@@ -271,6 +271,72 @@ export type Database = {
         }
         Relationships: []
       }
+      curation_requests: {
+        Row: {
+          admin_final_classification: string | null
+          admin_notes: string | null
+          agent_key: string | null
+          ai_classification: string | null
+          ai_confidence: number | null
+          ai_justification: string | null
+          ai_technical_direction: string | null
+          chat_id: string | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          message_id: string | null
+          patient_id: string | null
+          priority: string
+          request_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_final_classification?: string | null
+          admin_notes?: string | null
+          agent_key?: string | null
+          ai_classification?: string | null
+          ai_confidence?: number | null
+          ai_justification?: string | null
+          ai_technical_direction?: string | null
+          chat_id?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          message_id?: string | null
+          patient_id?: string | null
+          priority?: string
+          request_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_final_classification?: string | null
+          admin_notes?: string | null
+          agent_key?: string | null
+          ai_classification?: string | null
+          ai_confidence?: number | null
+          ai_justification?: string | null
+          ai_technical_direction?: string | null
+          chat_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          message_id?: string | null
+          patient_id?: string | null
+          priority?: string
+          request_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dify_agents: {
         Row: {
           agent_id: string
@@ -1575,7 +1641,7 @@ export type Database = {
     }
     Enums: {
       ai_feedback_rating: "positive" | "negative" | "suggestion"
-      app_role: "super_admin" | "admin" | "nutri" | "support"
+      app_role: "super_admin" | "admin" | "nutri" | "support" | "curator"
       gender_type: "male" | "female" | "other"
       plan_type: "free" | "starter" | "pro" | "clinica" | "legado_500"
       subscription_status: "trial" | "active" | "past_due" | "canceled"
@@ -1707,7 +1773,7 @@ export const Constants = {
   public: {
     Enums: {
       ai_feedback_rating: ["positive", "negative", "suggestion"],
-      app_role: ["super_admin", "admin", "nutri", "support"],
+      app_role: ["super_admin", "admin", "nutri", "support", "curator"],
       gender_type: ["male", "female", "other"],
       plan_type: ["free", "starter", "pro", "clinica", "legado_500"],
       subscription_status: ["trial", "active", "past_due", "canceled"],

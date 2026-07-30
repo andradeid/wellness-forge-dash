@@ -40,6 +40,7 @@ import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.int
 import { Route as AppAdminImportNutriRouteImport } from './routes/app.admin.import-nutri'
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
 import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashboard'
+import { Route as AppAdminCuradoriaRouteImport } from './routes/app.admin.curadoria'
 import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
 import { Route as AppAdminAnalyticsRouteImport } from './routes/app.admin.analytics'
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
@@ -210,6 +211,11 @@ const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
   path: '/admin/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminCuradoriaRoute = AppAdminCuradoriaRouteImport.update({
+  id: '/admin/curadoria',
+  path: '/admin/curadoria',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminCreditsAuditRoute = AppAdminCreditsAuditRouteImport.update({
   id: '/admin/credits-audit',
   path: '/admin/credits-audit',
@@ -311,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
+  '/app/admin/curadoria': typeof AppAdminCuradoriaRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
@@ -357,6 +364,7 @@ export interface FileRoutesByTo {
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
+  '/app/admin/curadoria': typeof AppAdminCuradoriaRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
@@ -405,6 +413,7 @@ export interface FileRoutesById {
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/app/admin/credits-audit': typeof AppAdminCreditsAuditRoute
+  '/app/admin/curadoria': typeof AppAdminCuradoriaRoute
   '/app/admin/dashboard': typeof AppAdminDashboardRoute
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/app/admin/agent-costs'
     | '/app/admin/analytics'
     | '/app/admin/credits-audit'
+    | '/app/admin/curadoria'
     | '/app/admin/dashboard'
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
@@ -500,6 +510,7 @@ export interface FileRouteTypes {
     | '/app/admin/agent-costs'
     | '/app/admin/analytics'
     | '/app/admin/credits-audit'
+    | '/app/admin/curadoria'
     | '/app/admin/dashboard'
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/app/admin/agent-costs'
     | '/app/admin/analytics'
     | '/app/admin/credits-audit'
+    | '/app/admin/curadoria'
     | '/app/admin/dashboard'
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
@@ -803,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/curadoria': {
+      id: '/app/admin/curadoria'
+      path: '/admin/curadoria'
+      fullPath: '/app/admin/curadoria'
+      preLoaderRoute: typeof AppAdminCuradoriaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/credits-audit': {
       id: '/app/admin/credits-audit'
       path: '/admin/credits-audit'
@@ -930,6 +949,7 @@ interface AppRouteChildren {
   AppAdminAgentCostsRoute: typeof AppAdminAgentCostsRoute
   AppAdminAnalyticsRoute: typeof AppAdminAnalyticsRoute
   AppAdminCreditsAuditRoute: typeof AppAdminCreditsAuditRoute
+  AppAdminCuradoriaRoute: typeof AppAdminCuradoriaRoute
   AppAdminDashboardRoute: typeof AppAdminDashboardRoute
   AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminImportNutriRoute: typeof AppAdminImportNutriRoute
@@ -962,6 +982,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAgentCostsRoute: AppAdminAgentCostsRoute,
   AppAdminAnalyticsRoute: AppAdminAnalyticsRoute,
   AppAdminCreditsAuditRoute: AppAdminCreditsAuditRoute,
+  AppAdminCuradoriaRoute: AppAdminCuradoriaRoute,
   AppAdminDashboardRoute: AppAdminDashboardRoute,
   AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminImportNutriRoute: AppAdminImportNutriRoute,
