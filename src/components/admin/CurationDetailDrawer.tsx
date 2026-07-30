@@ -80,6 +80,42 @@ export interface CurationAdminRow {
   admin_notes: string | null;
 }
 
+const TECHNICAL_LABELS: Record<string, string> = {
+  camada: "Camada",
+  tipo_ajuste: "Tipo de ajuste",
+  sugestao: "Sugestão",
+  verificar_antes: "Verificar antes",
+  ideias_extras: "Ideias extras",
+};
+
+/** Renderiza a direção técnica (JSON) de forma legível. Só o super admin vê isto. */
+function TechnicalDirection({ value }: { value: string | null }) {
+  if (!value) return <p className="text-muted-foreground">Aguardando análise da IA</p>;
+
+  let parsed: Record<string, unknown> | null = null;
+  try {
+    const candidate = JSON.parse(value);
+    if (candidate && typeof candidate === "object") parsed = candidate as Record<string, unknown>;
+  } catch {
+    parsed = null;
+  }
+
+  if (!parsed) return <p className="whitespace-pre-wrap">{value}</p>;
+
+  return (
+    <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-1">
+      {Object.entries(parsed)
+        .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== "")
+        .map(([key, v]) => (
+          <div key={key} className="contents">
+            <dt className="text-muted-foreground">{TECHNICAL_LABELS[key] ?? key}</dt>
+            <dd className="whitespace-pre-wrap">{String(v)}</dd>
+          </div>
+        ))}
+    </dl>
+  );
+}
+
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("pt-BR", {
     day: "2-digit",
