@@ -353,13 +353,21 @@ export function useDifyChat(
   const markersEmittedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
   // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
-  // encerra sem answer. Limitado a UMA tentativa por envio original.
+  // encerra sem answer ou devolve erro técnico (503/timeout).
+  // `resolved` guarda os anexos já processados (dify_file_id) para reenviar sem
+  // pedir novo upload do exame.
   const lastRequestRef = useRef<{
     text: string;
     files: File[];
     opts?: { overrideAgent?: string; extraInputs?: Record<string, unknown>; displayText?: string; selectedTask?: string };
+    resolved?: {
+      difyFiles: DifyFileRef[];
+      attachments: Array<{ name: string; path?: string; mime_type?: string }>;
+      lastExamId: string | null;
+    };
   } | null>(null);
   const retryUsedRef = useRef<boolean>(false);
+  const [canRetry, setCanRetry] = useState(false);
   const sendMessageRef = useRef<((text: string, files: File[], opts?: any) => Promise<void>) | null>(null);
   // Espelha o estado de `thinking` em ref para uso síncrono dentro do init().
   // Usado para impedir que uma re-execução do init (ex.: troca de role/readOnly
