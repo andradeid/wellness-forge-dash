@@ -101,48 +101,9 @@ function AttachmentThumbnail({ path }: { path: string }) {
 
 function CuradoriaPage() {
   const { user, role, loading } = useAuth();
-  const queryClient = useQueryClient();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [classification, setClassification] = useState<Classification | "">("");
-  const [dimension, setDimension] = useState<Dimension | "">("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const allowed = role === "curator" || role === "super_admin";
 
-  function clearImage() {
-    setImageFile(null);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
-  function handleImageChange(file: File | null) {
-    if (!file) {
-      clearImage();
-      return;
-    }
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Formato inválido. Envie uma imagem PNG, JPG ou WEBP.");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error("A imagem excede o limite de 5 MB.");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-    setImageFile(file);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
-  }
 
   const listQuery = useQuery({
     queryKey: ["curation-requests", "mine", user?.id],
