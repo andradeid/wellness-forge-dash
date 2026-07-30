@@ -70,9 +70,11 @@ function isAllowed(pathname: string, role: AppRole | null): boolean {
   if (role === "support") {
     return SUPPORT_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
   }
-  // Curador: whitelist explícita da área de curadoria.
-  if (role === "curator") {
-    return CURATOR_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+  // Curador: acesso equivalente ao nutricionista (fluxo padrão do ROUTE_ACCESS)
+  // MAIS a área de curadoria. Rotas /app/admin/* seguem bloqueadas pelo
+  // ROUTE_ACCESS abaixo, exceto quando explicitamente liberadas para curator.
+  if (role === "curator" && CURATOR_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p))) {
+    return true;
   }
 
   const match = ROUTE_ACCESS.find((r) => pathname.startsWith(r.prefix));
@@ -80,6 +82,7 @@ function isAllowed(pathname: string, role: AppRole | null): boolean {
   if (!role) return false;
   return match.roles.includes(role);
 }
+
 
 
 function AppLayout() {
