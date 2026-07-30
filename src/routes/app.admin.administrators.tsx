@@ -309,6 +309,7 @@ function AdministratorsPage() {
                             super_admin: { label: "Super Admin", cls: "border-violet-200 text-violet-700 bg-violet-50" },
                             admin: { label: "Admin", cls: "border-sky-200 text-sky-700 bg-sky-50" },
                             support: { label: "Suporte (CS)", cls: "border-amber-200 text-amber-700 bg-amber-50" },
+                            curator: { label: "Curador", cls: "border-emerald-200 text-emerald-700 bg-emerald-50" },
                           } as const;
                           const cfg = map[r.role];
                           return (
