@@ -1577,7 +1577,7 @@ export function useDifyChat(
                   }
 
                   // Débito de créditos APÓS resposta completa
-                  if (billingKey && fullText.trim() && !labReportError) {
+                  if (billingKey && fullText.trim() && !agentError) {
                     try {
                       await consume(billingKey, text.slice(0, 200));
                     } catch (e) {
@@ -1603,7 +1603,7 @@ export function useDifyChat(
                   const shouldRefreshExamContext =
                     isExamLike &&
                     fullText.trim() &&
-                    !labReportError &&
+                    !agentError &&
                     (difyFiles.length > 0 || (markers && markers.length > 0));
 
                   if (shouldRefreshExamContext) {
