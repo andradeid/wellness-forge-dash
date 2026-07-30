@@ -92,7 +92,7 @@ function CuradoriaAdminPage() {
       const { data, error } = await (supabase as any)
         .from("curation_requests")
         .select(
-          "id, created_at, title, description, status, agent_key, chat_id, message_id, patient_id, created_by, curator_classification, curator_dimension, image_url, ai_classification, ai_confidence, ai_justification, ai_technical_direction, admin_final_classification, admin_notes",
+          "id, created_at, title, description, status, agent_key, chat_id, message_id, patient_id, created_by, curator_classification, curator_dimension, image_url, ai_classification, ai_confidence, ai_justification, ai_technical_direction, ai_status, ai_confidence_label, ai_functionality, ai_baseline_item, ai_error, duplicate_of, curator_agreement, admin_final_classification, admin_notes",
         )
         .order("created_at", { ascending: false })
         .limit(500);
