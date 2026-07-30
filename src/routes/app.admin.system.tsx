@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSystemSettings, useUpdateSystemSettings, type SystemSettings } from "@/hooks/useSystemSettings";
@@ -75,11 +77,12 @@ function AdminSystemPage() {
       </header>
 
       <Tabs defaultValue="seo">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="seo">SEO</TabsTrigger>
           <TabsTrigger value="site">Site</TabsTrigger>
           <TabsTrigger value="timezone">Timezone</TabsTrigger>
           <TabsTrigger value="maintenance">Manutenção</TabsTrigger>
+          <TabsTrigger value="mcp">Integrações / MCP</TabsTrigger>
         </TabsList>
 
         <TabsContent value="seo" className="mt-4">
