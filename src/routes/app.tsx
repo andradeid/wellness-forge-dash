@@ -70,6 +70,11 @@ function isAllowed(pathname: string, role: AppRole | null): boolean {
   if (role === "support") {
     return SUPPORT_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
   }
+  // Curador: whitelist explícita da área de curadoria.
+  if (role === "curator") {
+    return CURATOR_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+  }
+
   const match = ROUTE_ACCESS.find((r) => pathname.startsWith(r.prefix));
   if (!match) return true; // rotas /app não administrativas: liberadas para qualquer role logada
   if (!role) return false;
