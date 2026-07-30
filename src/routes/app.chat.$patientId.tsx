@@ -784,6 +784,8 @@ function ChatPage() {
                   agentType={agentType}
                   taskType={selectedTask}
                   patient={patient}
+                  chatId={chatId}
+                  patientId={patientId}
                   onRetry={retryLastRequest}
                   canRetry={canRetry}
                 />
