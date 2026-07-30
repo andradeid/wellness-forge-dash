@@ -243,25 +243,58 @@ export function CurationDetailDrawer({
                   <Sparkles className="h-4 w-4 text-[#e8a04c]" />
                   Análise da IA
                 </h3>
+                {request.ai_status === "failed" && (
+                  <p className="rounded-md border border-orange-300 bg-orange-50 p-2 text-xs text-orange-900">
+                    A análise automática falhou nesta solicitação.
+                    {request.ai_error ? ` Motivo: ${request.ai_error}` : ""}
+                  </p>
+                )}
                 <dl className="grid grid-cols-[130px_1fr] gap-x-3 gap-y-1 text-xs">
                   <dt className="text-muted-foreground">Classificação</dt>
                   <dd>{request.ai_classification ?? "Aguardando análise da IA"}</dd>
                   <dt className="text-muted-foreground">Confiança</dt>
                   <dd>
-                    {request.ai_confidence !== null
-                      ? `${Math.round(Number(request.ai_confidence) * 100)}%`
-                      : "Aguardando análise da IA"}
+                    {request.ai_confidence_label ??
+                      (request.ai_confidence !== null
+                        ? `${Math.round(Number(request.ai_confidence) * 100)}%`
+                        : "Aguardando análise da IA")}
                   </dd>
+                  <dt className="text-muted-foreground">Funcionalidade</dt>
+                  <dd>{request.ai_functionality ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Item da baseline</dt>
+                  <dd>{request.ai_baseline_item ?? "—"}</dd>
                   <dt className="text-muted-foreground">Justificativa</dt>
                   <dd className="whitespace-pre-wrap">
                     {request.ai_justification ?? "Aguardando análise da IA"}
                   </dd>
-                  <dt className="text-muted-foreground">Direção técnica</dt>
-                  <dd className="whitespace-pre-wrap">
-                    {request.ai_technical_direction ?? "Aguardando análise da IA"}
+                  <dt className="text-muted-foreground">Curador × IA</dt>
+                  <dd>
+                    {request.curator_agreement === "discorda" ? (
+                      <span className="font-medium text-destructive">
+                        Divergência — curador: {request.curator_classification ?? "—"} · IA:{" "}
+                        {request.ai_classification ?? "—"}
+                      </span>
+                    ) : request.curator_agreement === "concorda" ? (
+                      "Curador concordou com a IA"
+                    ) : (
+                      "Sem resposta do curador"
+                    )}
                   </dd>
+                  {request.duplicate_of && (
+                    <>
+                      <dt className="text-muted-foreground">Duplicata de</dt>
+                      <dd>#{request.duplicate_of.slice(0, 8)}</dd>
+                    </>
+                  )}
                 </dl>
+
+                {/* Direção técnica: exclusiva do super admin — nunca exposta ao curador. */}
+                <div className="rounded-md border bg-muted/30 p-2 text-xs">
+                  <p className="mb-1 font-medium">Direção técnica (interno)</p>
+                  <TechnicalDirection value={request.ai_technical_direction} />
+                </div>
               </section>
+
 
               <Separator />
 
