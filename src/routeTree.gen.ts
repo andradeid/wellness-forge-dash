@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ManutencaoRouteImport } from './routes/manutencao'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
@@ -25,6 +26,8 @@ import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppChatsRouteImport } from './routes/app.chats'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AppCuradoriaIndexRouteImport } from './routes/app.curadoria.index'
 import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
@@ -55,6 +58,7 @@ import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
 import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AppAdminEmailsIndexRouteImport } from './routes/app.admin.emails.index'
 import { Route as AppAdminEmailsCampanhasRouteImport } from './routes/app.admin.emails.campanhas'
 
@@ -71,6 +75,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManutencaoRoute = ManutencaoRouteImport.update({
@@ -138,6 +147,18 @@ const AppChatsRoute = AppChatsRouteImport.update({
   path: '/chats',
   getParentRoute: () => AppRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppCuradoriaIndexRoute = AppCuradoriaIndexRouteImport.update({
   id: '/curadoria/',
   path: '/curadoria/',
@@ -289,6 +310,12 @@ const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
   path: '/api/audit/structured',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppAdminEmailsIndexRoute = AppAdminEmailsIndexRouteImport.update({
   id: '/admin/emails/',
   path: '/admin/emails/',
@@ -305,9 +332,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
@@ -317,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app/': typeof AppIndexRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
@@ -354,9 +385,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
@@ -366,6 +400,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app': typeof AppIndexRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
@@ -405,9 +440,12 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/manutencao': typeof ManutencaoRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/app/chats': typeof AppChatsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
@@ -417,6 +455,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
   '/app/': typeof AppIndexRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
@@ -457,9 +496,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/manutencao'
+    | '/mcp'
     | '/reset-password'
     | '/sitemap.xml'
     | '/unauthorized'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/app/chats'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
@@ -469,6 +511,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/trocar-senha'
     | '/app/'
+    | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
     | '/api/dify/chat'
@@ -506,9 +549,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/manutencao'
+    | '/mcp'
     | '/reset-password'
     | '/sitemap.xml'
     | '/unauthorized'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/app/chats'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
@@ -518,6 +564,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/trocar-senha'
     | '/app'
+    | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
     | '/api/dify/chat'
@@ -556,9 +603,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/manutencao'
+    | '/mcp'
     | '/reset-password'
     | '/sitemap.xml'
     | '/unauthorized'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/app/chats'
     | '/app/dashboard'
     | '/app/fale-com-lumma'
@@ -568,6 +618,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/trocar-senha'
     | '/app/'
+    | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
     | '/api/dify/agent-test'
     | '/api/dify/chat'
@@ -607,9 +658,13 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   ManutencaoRoute: typeof ManutencaoRoute
+  McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
   ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
@@ -641,6 +696,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manutencao': {
@@ -733,6 +795,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/chats'
       preLoaderRoute: typeof AppChatsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/curadoria/': {
       id: '/app/curadoria/'
@@ -944,6 +1020,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuditStructuredRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/admin/emails/': {
       id: '/app/admin/emails/'
       path: '/admin/emails'
@@ -1050,9 +1133,14 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   ManutencaoRoute: ManutencaoRoute,
+  McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,
   ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
