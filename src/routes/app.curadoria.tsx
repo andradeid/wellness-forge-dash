@@ -119,70 +119,8 @@ function CuradoriaPage() {
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) throw new Error("Sessão expirada. Entre novamente.");
-      const cleanTitle = title.trim();
-      const cleanDescription = description.trim();
-      if (cleanTitle.length < 3) throw new Error("O título precisa ter ao menos 3 caracteres.");
-      if (cleanDescription.length < 10)
-        throw new Error("A descrição precisa ter ao menos 10 caracteres.");
-      if (!classification) throw new Error("Escolha a classificação.");
-      if (!dimension) throw new Error("Escolha a dimensão.");
 
-      let imagePath: string | null = null;
-      if (imageFile) {
-        if (!ALLOWED_IMAGE_TYPES.includes(imageFile.type))
-          throw new Error("Formato inválido. Envie uma imagem PNG, JPG ou WEBP.");
-        if (imageFile.size > MAX_IMAGE_BYTES)
-          throw new Error("A imagem excede o limite de 5 MB.");
 
-        const extension = (imageFile.name.split(".").pop() ?? "png")
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "")
-          .slice(0, 5);
-        const path = `${user.id}/${crypto.randomUUID()}.${extension || "png"}`;
-        const { error: uploadError } = await supabase.storage
-          .from(ATTACHMENT_BUCKET)
-          .upload(path, imageFile, {
-            contentType: imageFile.type,
-            upsert: false,
-          });
-        if (uploadError) throw new Error("Não foi possível enviar a imagem. Tente novamente.");
-        imagePath = path;
-      }
-
-      const { error } = await (supabase as any).from("curation_requests").insert({
-        created_by: user.id,
-        title: cleanTitle,
-        description: cleanDescription,
-        curator_classification: classification,
-        curator_dimension: dimension,
-        status: "registrado",
-        image_url: imagePath,
-      });
-      if (error) {
-        if (imagePath) {
-          await supabase.storage.from(ATTACHMENT_BUCKET).remove([imagePath]);
-        }
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      toast.success("Solicitação registrada com sucesso.");
-      setTitle("");
-      setDescription("");
-      setClassification("");
-      setDimension("");
-      clearImage();
-      void queryClient.invalidateQueries({ queryKey: ["curation-requests", "mine", user?.id] });
-    },
-    onError: (error: unknown) => {
-      const message =
-        error instanceof Error ? error.message : "Não foi possível registrar a solicitação.";
-      toast.error(message);
-    },
-  });
 
 
   if (loading) {
