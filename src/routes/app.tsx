@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
-type AppRole = "super_admin" | "admin" | "nutri" | "support";
+type AppRole = "super_admin" | "admin" | "nutri" | "support" | "curator";
 
 // RBAC central: rota (prefixo) -> roles permitidos.
 // Defesa em profundidade: páginas continuam com seus guards locais.
