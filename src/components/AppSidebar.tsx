@@ -153,7 +153,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { title: "Solicitações", url: "/app/admin/curadoria", icon: Lightbulb, superAdminOnly: true, badge: "NOVO" },
       { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText, superAdminOnly: true, badge: "NOVO" },
-      { title: "Changelog de ajustes", url: "/app/curadoria/changelog", icon: History, superAdminOnly: true, badge: "NOVO" },
+      { title: "Changelog de ajustes", url: "/app/curadoria/changelog", icon: HistoryIcon, superAdminOnly: true, badge: "NOVO" },
     ],
   },
   {
