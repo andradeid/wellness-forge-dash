@@ -28,6 +28,7 @@ import {
   Sparkles,
   MessageCircle,
   Mail,
+  History as HistoryIcon,
 } from "lucide-react";
 
 const WHATSAPP_SUPPORT_URL = `https://wa.me/5519997285302?text=${encodeURIComponent("Oi! Você pode me ajudar com com a LUMMA 2.0?")}`;
@@ -152,6 +153,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { title: "Solicitações", url: "/app/admin/curadoria", icon: Lightbulb, superAdminOnly: true, badge: "NOVO" },
       { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText, superAdminOnly: true, badge: "NOVO" },
+      { title: "Changelog de ajustes", url: "/app/curadoria/changelog", icon: HistoryIcon, superAdminOnly: true, badge: "NOVO" },
     ],
   },
   {
@@ -202,6 +204,7 @@ const curatorGroups: NavGroup[] = [
     items: [
       { title: "Minhas solicitações", url: "/app/curadoria", icon: Lightbulb },
       { title: "Baseline da entrega", url: "/app/curadoria/baseline", icon: FileText },
+      { title: "Changelog de ajustes", url: "/app/curadoria/changelog", icon: HistoryIcon },
     ],
   },
   ...nutriGroups.filter((g) => g.bottom),
