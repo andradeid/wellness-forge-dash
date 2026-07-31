@@ -173,6 +173,107 @@ export type Database = {
         }
         Relationships: []
       }
+      changelog_item_reports: {
+        Row: {
+          created_at: string
+          item_id: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_item_reports_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "changelog_item_reports_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "curation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      changelog_items: {
+        Row: {
+          camada: string
+          classificacao: string
+          created_at: string
+          descricao_legivel: string
+          descricao_tecnica: string | null
+          id: string
+          round_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          camada: string
+          classificacao: string
+          created_at?: string
+          descricao_legivel: string
+          descricao_tecnica?: string | null
+          id?: string
+          round_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          camada?: string
+          classificacao?: string
+          created_at?: string
+          descricao_legivel?: string
+          descricao_tecnica?: string | null
+          id?: string
+          round_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_items_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      changelog_rounds: {
+        Row: {
+          created_at: string
+          id: string
+          rodada_data: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rodada_data: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rodada_data?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           agent_type: string | null
