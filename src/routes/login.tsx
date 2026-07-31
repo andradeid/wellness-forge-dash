@@ -169,6 +169,10 @@ function LoginPage() {
   const [resolving, setResolving] = useState(false);
   const conflictConfirmedRef = useRef(false);
   const cleanupInProgressRef = useRef(false);
+  /** Impede signOut de “sessão órfã” de apagar um login que acabou de autenticar. */
+  const loginInProgressRef = useRef(false);
+  /** Invalida signOut assíncronos atrasados (corrida com novo login). */
+  const orphanCleanupGenRef = useRef(0);
 
   // Aviso quando o usuário foi derrubado por outro dispositivo
   useEffect(() => {
@@ -183,11 +187,23 @@ function LoginPage() {
 
   useEffect(() => {
     if (loading || !session || submitting || pendingUserId) return;
+    if (loginInProgressRef.current) return;
     if (getLocalSessionToken()) return;
     clearLocalSessionToken();
-    void supabase.auth.signOut().catch((error) => {
-      console.warn("[login] falha ao limpar sessão sem assento", error);
-    });
+    const gen = ++orphanCleanupGenRef.current;
+    void (async () => {
+      // Janela curta: se o usuário clicar em Entrar, o gen sobe e abortamos o signOut.
+      await new Promise((r) => setTimeout(r, 100));
+      if (gen !== orphanCleanupGenRef.current) return;
+      if (loginInProgressRef.current) return;
+      if (getLocalSessionToken()) return;
+      try {
+        await supabase.auth.signOut();
+      } catch (error) {
+        if (gen !== orphanCleanupGenRef.current || loginInProgressRef.current) return;
+        console.warn("[login] falha ao limpar sessão sem assento", error);
+      }
+    })();
   }, [loading, session, submitting, pendingUserId]);
 
   useEffect(() => {
@@ -247,10 +263,11 @@ function LoginPage() {
     setSubmitting(true);
     setSignInError(null);
     conflictConfirmedRef.current = false;
+    loginInProgressRef.current = true;
+    // Cancela qualquer signOut de limpeza já disparado antes deste login.
+    orphanCleanupGenRef.current += 1;
     try {
-      await signIn(email, password);
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
+      const { userId: uid } = await signIn(email, password);
       if (!uid) throw new Error("Não foi possível identificar o usuário.");
 
       const newToken = generateSessionToken();
@@ -258,6 +275,7 @@ function LoginPage() {
 
       // Super admin não tem assento — entra direto sem gravar sessão única.
       if (currentRole === "super_admin") {
+        loginInProgressRef.current = false;
         finalizeEntry(currentRole);
         return;
       }
@@ -272,11 +290,13 @@ function LoginPage() {
       // Há vaga disponível (ou é admin/super_admin) — entra direto.
       if (sameDevice || seatInfo.unlimited || seatInfo.active.length < seatInfo.limit) {
         await addSessionSeat(uid, newToken);
+        loginInProgressRef.current = false;
         finalizeEntry(currentRole);
         return;
       }
 
       // Limite atingido — pedir confirmação para derrubar o assento mais antigo.
+      // Mantém loginInProgressRef=true até confirmar/cancelar o conflito (pendingUserId).
       setPendingUserId(uid);
       setPendingToken(newToken);
       setPendingRole(currentRole);
@@ -284,6 +304,7 @@ function LoginPage() {
       setConflictOpen(true);
       setSubmitting(false);
     } catch (err: any) {
+      loginInProgressRef.current = false;
       const friendly = translateAuthError(err?.message ?? "");
       setSignInError(friendly);
       toast.error(friendly);
@@ -303,6 +324,7 @@ function LoginPage() {
       const role = pendingRole;
       setPendingRole(null);
       setPendingSeatInfo(null);
+      loginInProgressRef.current = false;
       finalizeEntry(role);
     } catch (err: any) {
       conflictConfirmedRef.current = false;
@@ -316,6 +338,7 @@ function LoginPage() {
     if (cleanupInProgressRef.current) return;
     cleanupInProgressRef.current = true;
     conflictConfirmedRef.current = false;
+    loginInProgressRef.current = false;
     setConflictOpen(false);
     setPendingUserId(null);
     setPendingToken(null);

@@ -28,7 +28,7 @@ interface AuthContextValue {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ userId: string }>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -250,7 +250,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       throw error;
     }
+    const userId = data.session?.user?.id ?? data.user?.id;
+    if (!userId || !data.session) {
+      setLoading(false);
+      throw new Error("Não foi possível identificar o usuário.");
+    }
     await applySession(data.session);
+    // Reafirma a sessão no client: um signOut de limpeza em voo na /login
+    // pode ter corrido com este login e apagado o storage.
+    const { error: restoreError } = await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+    if (restoreError) {
+      console.warn("[auth] falha ao reafirmar sessão pós-login", restoreError);
+    }
+    return { userId };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
