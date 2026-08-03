@@ -1,0 +1,3 @@
+DELETE FROM public.changelog_item_reports WHERE request_id IN (SELECT id FROM public.curation_requests WHERE created_by = '57b58670-1919-43ea-b844-ad848196b519');
+UPDATE public.curation_requests SET duplicate_of = NULL WHERE duplicate_of IN (SELECT id FROM public.curation_requests WHERE created_by = '57b58670-1919-43ea-b844-ad848196b519');
+DELETE FROM public.curation_requests WHERE created_by = '57b58670-1919-43ea-b844-ad848196b519';
