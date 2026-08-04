@@ -203,7 +203,8 @@ export async function classifyCurationRequest(
       
       try {
         if (mime === "application/pdf") {
-          const pdf = await import("pdf-parse/lib/pdf-parse.js");
+          // @ts-ignore
+          const pdf = await import("pdf-parse");
           const data = await pdf.default(input.attachmentBuffer);
           extractedText = data.text?.trim() || null;
 
