@@ -88,6 +88,7 @@ const CATEGORY_NAMES: Record<string, string> = {
   hemograma_anemias: "Hemograma e Anemias",
   hemograma: "Hemograma",
   perfil_lipidico: "Perfil Lipídico",
+  relacoes_clinicas: "Relações Clínicas",
   perfil_glicidico: "Perfil Glicídico",
   perfil_tireoidiano: "Perfil Tireoidiano",
   perfil_hormonal: "Perfil Hormonal",
