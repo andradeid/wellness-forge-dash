@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ExternalLink, ImageIcon, Loader2, Save, Sparkles } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, Loader2, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ATTACHMENT_BUCKET } from "@/components/curadoria/CurationRequestForm";
 import { CurationConversationDialog } from "@/components/admin/CurationConversationDialog";
@@ -79,6 +79,7 @@ export interface CurationAdminRow {
   curator_agreement?: string | null;
   admin_final_classification: string | null;
   admin_notes: string | null;
+  attachment_mime_type: string | null;
 }
 
 const TECHNICAL_LABELS: Record<string, string> = {
@@ -127,7 +128,7 @@ function formatDateTime(value: string) {
   });
 }
 
-function AttachmentImage({ path }: { path: string }) {
+function AttachmentPreview({ path, mimeType }: { path: string; mimeType?: string | null }) {
   const { data, isLoading } = useQuery({
     queryKey: ["curation-attachment", path],
     staleTime: 4 * 60 * 1000,
@@ -148,14 +149,36 @@ function AttachmentImage({ path }: { path: string }) {
       </span>
     );
 
+  const isImage = !mimeType || mimeType.startsWith("image/");
+
+  if (isImage) {
+    return (
+      <a href={data} target="_blank" rel="noreferrer">
+        <img
+          src={data}
+          alt="Imagem anexada à solicitação de curadoria"
+          className="max-h-64 rounded-lg border object-contain transition-opacity hover:opacity-80"
+        />
+      </a>
+    );
+  }
+
   return (
-    <a href={data} target="_blank" rel="noreferrer">
-      <img
-        src={data}
-        alt="Imagem anexada à solicitação de curadoria"
-        className="max-h-64 rounded-lg border object-contain transition-opacity hover:opacity-80"
-      />
-    </a>
+    <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded bg-background shadow-sm">
+        <FileText className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <p className="truncate text-sm font-medium">Documento anexado</p>
+        <p className="text-xs text-muted-foreground">{mimeType}</p>
+      </div>
+      <Button variant="outline" size="sm" asChild>
+        <a href={data} target="_blank" rel="noreferrer">
+          <ExternalLink className="mr-2 h-4 w-4" />
+          Abrir
+        </a>
+      </Button>
+    </div>
   );
 }
 
@@ -247,7 +270,7 @@ export function CurationDetailDrawer({
               {request.image_url && (
                 <section className="space-y-2">
                   <h3 className="text-sm font-semibold">Imagem anexada</h3>
-                  <AttachmentImage path={request.image_url} />
+                  <AttachmentPreview path={request.image_url} mimeType={request.attachment_mime_type} />
                 </section>
               )}
 
