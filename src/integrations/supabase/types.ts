@@ -466,6 +466,7 @@ export type Database = {
           ai_classification: string | null
           ai_confidence: number | null
           ai_confidence_label: string | null
+          ai_content_analysis: string | null
           ai_error: string | null
           ai_functionality: string | null
           ai_justification: string | null
@@ -499,6 +500,7 @@ export type Database = {
           ai_classification?: string | null
           ai_confidence?: number | null
           ai_confidence_label?: string | null
+          ai_content_analysis?: string | null
           ai_error?: string | null
           ai_functionality?: string | null
           ai_justification?: string | null
@@ -532,6 +534,7 @@ export type Database = {
           ai_classification?: string | null
           ai_confidence?: number | null
           ai_confidence_label?: string | null
+          ai_content_analysis?: string | null
           ai_error?: string | null
           ai_functionality?: string | null
           ai_justification?: string | null
