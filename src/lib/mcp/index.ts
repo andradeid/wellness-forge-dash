@@ -4,6 +4,8 @@ import listReportsTool from "./tools/list-reports";
 import getReportTool from "./tools/get-report";
 import getBaselineTool from "./tools/get-baseline";
 import getConversationTool from "./tools/get-conversation";
+import listChangelogTool from "./tools/list-changelog";
+
 
 // O issuer OAuth precisa ser o host direto do Supabase. VITE_SUPABASE_PROJECT_ID
 // é inlinado pelo Vite em build-time; o fallback só mantém a URL bem-formada
@@ -20,5 +22,13 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [getContextTool, getBaselineTool, listReportsTool, getReportTool, getConversationTool],
+  tools: [
+    getContextTool,
+    getBaselineTool,
+    listReportsTool,
+    getReportTool,
+    getConversationTool,
+    listChangelogTool,
+  ],
+
 });

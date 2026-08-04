@@ -188,6 +188,38 @@
           ]
         },
         "outputSchema": null
+      },
+      {
+        "name": "list_changelog",
+        "title": "Listar Changelog (Rodadas de Ajustes)",
+        "description": "Lista as rodadas semanais de ajustes (changelog_rounds) e seus itens (changelog_items). Útil para entender o que já foi entregue, corrigido ou melhorado no sistema. Retorna a data da rodada, o título, as notas do curador e do admin, e a lista detalhada de itens com seus respectivos reports vinculados.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 10,
+              "description": "Máximo de rodadas (1-50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "offset": {
+              "default": 0,
+              "description": "Deslocamento para paginação.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
       }
     ]
   }
