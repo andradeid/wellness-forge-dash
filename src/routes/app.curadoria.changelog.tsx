@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarDays, CheckCircle2, Link2, Sparkles } from "lucide-react";
+import { CalendarDays, CheckCircle2, Link2, Sparkles, Clock, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,6 +129,34 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             items={melhorias}
             isFull={isFull}
           />
+        )}
+
+        {round.notas_curador && (
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Clock className="h-4 w-4 text-blue-500" />
+              ⏳ Em análise
+            </div>
+            <div className="rounded-lg border bg-blue-50/30 p-3">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                {round.notas_curador}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {isFull && round.notas_admin && (
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <FileText className="h-4 w-4 text-purple-500" />
+              Notas da rodada (Admin)
+            </div>
+            <div className="rounded-lg border bg-purple-50/30 p-3">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                {round.notas_admin}
+              </p>
+            </div>
+          </div>
         )}
 
         {round.itens.length === 0 && (
