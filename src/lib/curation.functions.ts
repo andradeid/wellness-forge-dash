@@ -17,6 +17,7 @@ interface CreateInput {
   curatorClassification: string;
   curatorDimension: string;
   imagePath?: string | null;
+  attachmentMimeType?: string | null;
   chatId?: string | null;
   messageId?: string | null;
   patientId?: string | null;
@@ -57,6 +58,7 @@ export const createCurationRequest = createServerFn({ method: "POST" })
       curatorClassification: data.curatorClassification,
       curatorDimension: data.curatorDimension,
       imagePath,
+      attachmentMimeType: typeof data?.attachmentMimeType === "string" ? data.attachmentMimeType : null,
       chatId: optionalUuid(data?.chatId),
       messageId: optionalUuid(data?.messageId),
       patientId: optionalUuid(data?.patientId),
@@ -94,6 +96,20 @@ export const createCurationRequest = createServerFn({ method: "POST" })
 
     // 2. Classificação é complemento: nunca derruba a criação.
     const { classifyCurationRequest } = await import("./curation-ai.server");
+    
+    // Busca o buffer do anexo se existir para análise da IA
+    let attachmentBuffer: Buffer | null = null;
+    if (data.imagePath) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: blob, error: downloadError } = await supabaseAdmin.storage
+        .from("curation-attachments")
+        .download(data.imagePath);
+      
+      if (!downloadError && blob) {
+        attachmentBuffer = Buffer.from(await blob.arrayBuffer());
+      }
+    }
+
     const analysis = await classifyCurationRequest({
       requestId,
       title: data.title,
@@ -101,6 +117,8 @@ export const createCurationRequest = createServerFn({ method: "POST" })
       curatorClassification: data.curatorClassification,
       curatorDimension: data.curatorDimension,
       imagePath: data.imagePath,
+      attachmentBuffer,
+      attachmentMimeType: data.attachmentMimeType,
     });
 
     // 3. Resposta ao curador — sem direção técnica.

@@ -8,82 +8,61 @@
  */
 
 export const CURATION_CLASSIFIER_SYSTEM_PROMPT = `Você é o Classificador de Curadoria da Lumma, um sistema de nutrição clínica. 
-Sua função tem DUAS partes, nesta ordem: (1) detectar se o relato já foi 
-reportado antes, e (2) classificar o relato como suporte ou melhoria, comparando 
-com a BASELINE (o que o sistema fazia na entrega).
+Sua função tem TRÊS partes, nesta ordem: 
+(1) detectar se o relato já foi reportado antes (DUPLICATA);
+(2) interpretar o ANEXO (imagem ou documento) fornecendo uma análise clínica/técnica;
+(3) classificar o relato como suporte ou melhoria, comparando com a BASELINE.
 
 Você receberá:
-- BASELINE: lista de funcionalidades do sistema na entrega, cada uma com: area, 
-  funcionalidade, existia (sim/nao/parcial), camada (dify/lovable/banco), 
-  comportamento_tecnico, legivel.
-- REPORTS_EXISTENTES: solicitações já registradas (com id, título, descrição, 
-  status, classificação).
-- NOVO_RELATO: o relato do curador a ser analisado (título, descrição, 
-  classificação que o curador escolheu, e imagem se houver).
+- BASELINE: lista de funcionalidades do sistema na entrega.
+- REPORTS_EXISTENTES: solicitações já registradas.
+- NOVO_RELATO: o relato do curador, incluindo metadados sobre o anexo.
+- ANEXO: imagem (via visão) ou texto extraído de documento.
 
 ═══════════════════════════
 PARTE 1 — DETECÇÃO DE DUPLICATA
 ═══════════════════════════
-Compare o NOVO_RELATO com os REPORTS_EXISTENTES pelo SIGNIFICADO, não pelas 
-palavras. Dois relatos descritos de formas diferentes podem ser o mesmo problema.
-- Se encontrar um report existente que trata do MESMO problema (alta 
-  probabilidade), retorne "possivel_duplicata": true, com o id e o status do 
-  report existente, para que o sistema pergunte ao curador se é o mesmo.
-- Se não houver correspondência clara, "possivel_duplicata": false.
-- Na dúvida entre ser o mesmo ou não, marque como possível duplicata (true) — 
-  é melhor perguntar ao curador do que criar um duplicado silencioso. O curador 
-  sempre confirma; você apenas sinaliza.
+Compare o NOVO_RELATO com os REPORTS_EXISTENTES pelo SIGNIFICADO.
+- "possivel_duplicata": true se houver correspondência clara.
 
 ═══════════════════════════
-PARTE 2 — CLASSIFICAÇÃO (suporte vs melhoria)
+PARTE 2 — ANÁLISE DO ANEXO
 ═══════════════════════════
-Identifique qual funcionalidade da BASELINE o relato menciona e compare:
-- SUPORTE: a funcionalidade existia na entrega (existia = sim) e parou de 
-  funcionar ou funciona errado. É correção.
-- MELHORIA: a funcionalidade não existia na entrega (existia = nao). É escopo novo.
-- REQUER_ANALISE_HUMANA: use quando (a) a funcionalidade existia mas com qualidade 
-  discutível e o pedido é aprimorá-la (zona cinza), (b) o relato toca em itens com 
-  estados diferentes na baseline (ex: existia em um contexto e não em outro), ou 
-  (c) você não encontra a funcionalidade na baseline com clareza. NUNCA seja 
-  categórico na zona cinza — recue para análise humana e explique os dois lados.
-
-Regras:
-- Justifique SEMPRE ancorando na baseline: cite a funcionalidade e o que ela diz 
-  (existia sim/não, em qual camada).
-- Se não achar a funcionalidade na baseline, diga isso — não invente.
-- A classificação do curador (no NOVO_RELATO) é a opinião dele; você classifica 
-  de forma independente. Se divergir, tudo bem — o super admin decide depois.
+Se houver anexo (imagem ou texto de documento):
+- Descreva o que o anexo mostra em relação ao relato.
+- Se for um exame, identifique marcadores ou padrões mencionados.
+- Esta análise irá para o campo "analise_anexo" e ajuda o super admin a entender o contexto sem abrir o arquivo.
 
 ═══════════════════════════
-PARTE 3 — DIREÇÃO TÉCNICA (apenas para o super admin)
+PARTE 3 — CLASSIFICAÇÃO (suporte vs melhoria)
 ═══════════════════════════
-Sugira onde e como resolver. Use a "camada" da baseline como pista:
-- camada "dify" → ajuste de PROMPT no agente, OU migração para KB. Decida: se é 
-  COMPORTAMENTO/instrução (como agir, o que não dizer, formato) → prompt. Se é 
-  CONHECIMENTO/dado que muda (protocolos, faixas, listas, doses) → KB.
-- camada "lovable" → ajuste de INTERFACE (frontend).
-- camada "banco" → ajuste no banco de dados.
-
-A direção técnica é SUGESTÃO para o super admin decidir, não certeza. Se houver 
-risco ou dúvida, sinalize no campo "verificar_antes".
+Identifique a funcionalidade da BASELINE e compare:
+- SUPORTE: existia na entrega e parou de funcionar ou funciona errado.
+- MELHORIA: não existia na entrega (escopo novo).
+- REQUER_ANALISE_HUMANA: zona cinza ou não encontrado na baseline.
 
 ═══════════════════════════
-FORMATO DE SAÍDA — responda APENAS com este JSON, sem texto antes ou depois:
+PARTE 4 — DIREÇÃO TÉCNICA (apenas para o super admin)
+═══════════════════════════
+Sugira onde resolver: camada (dify, lovable, banco) e tipo de ajuste.
+
+═══════════════════════════
+FORMATO DE SAÍDA — responda APENAS com este JSON:
 ═══════════════════════════
 {
   "possivel_duplicata": true | false,
   "duplicata_de": { "id": "...", "status": "..." } | null,
+  "analise_anexo": "descrição técnica do que foi identificado no anexo (máx 1000 caracteres)",
   "funcionalidade": "nome da funcionalidade identificada",
   "classificacao": "suporte" | "melhoria" | "requer_analise_humana",
   "confianca": "alta" | "media" | "baixa",
-  "justificativa": "explicação ancorada na baseline, em linguagem clara",
-  "item_baseline": "a funcionalidade da baseline usada como referência",
+  "justificativa": "explicação ancorada na baseline",
+  "item_baseline": "referência da baseline",
   "direcao_tecnica": {
     "camada": "dify" | "lovable" | "banco" | "multiplas",
     "tipo_ajuste": "prompt" | "kb" | "interface" | "banco" | "misto",
-    "sugestao": "o que fazer, concreto",
-    "verificar_antes": "o que o super admin deve confirmar",
-    "ideias_extras": "melhorias relacionadas que valem considerar (opcional)"
+    "sugestao": "o que fazer",
+    "verificar_antes": "confirmações necessárias"
   }
 }`;
 
@@ -110,6 +89,7 @@ export interface CuratorVisibleAnalysis {
 interface ClassifierRawResult {
   possivel_duplicata?: unknown;
   duplicata_de?: { id?: unknown; status?: unknown } | null;
+  analise_anexo?: unknown;
   funcionalidade?: unknown;
   classificacao?: unknown;
   confianca?: unknown;
@@ -147,6 +127,8 @@ interface ClassifyInput {
   curatorClassification: string | null;
   curatorDimension: string | null;
   imagePath: string | null;
+  attachmentBuffer?: Buffer | null;
+  attachmentMimeType?: string | null;
 }
 
 /**
@@ -212,9 +194,35 @@ export async function classifyCurationRequest(
       classificacao_curador: r.curator_classification,
     }));
 
-    // 3. Imagem anexada (URL assinada curta — a API de visão busca o arquivo).
+    // 3. Tratamento de Anexo (Imagem ou Documento)
     let imageUrl: string | null = null;
-    if (input.imagePath) {
+    let extractedText: string | null = null;
+
+    if (input.attachmentBuffer && input.attachmentMimeType) {
+      const isDocument = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(input.attachmentMimeType);
+      
+      if (isDocument) {
+        try {
+          // @ts-ignore - markitdown pode não ter tipos disponíveis
+          const { MarkItDown } = await import("markitdown");
+          const md = new MarkItDown();
+          const result = await md.convert(input.attachmentBuffer);
+          extractedText = result.text_content?.trim() || "";
+          
+          // Fallback: se PDF vier vazio (escaneado), tratamos como imagem se for PDF
+          if (!extractedText && input.attachmentMimeType === "application/pdf") {
+            // No sandbox, enviamos o buffer como base64 para o modelo com visão
+            imageUrl = `data:application/pdf;base64,${input.attachmentBuffer.toString("base64")}`;
+          }
+        } catch (err) {
+          console.error("[curadoria-ia] Falha na extração de texto:", err);
+          // Falha na extração não derruba o fluxo, apenas segue sem o texto
+        }
+      } else if (input.attachmentMimeType.startsWith("image/")) {
+        imageUrl = `data:${input.attachmentMimeType};base64,${input.attachmentBuffer.toString("base64")}`;
+      }
+    } else if (input.imagePath) {
+      // Legado / Fallback via Storage
       const { data: signed } = await supabaseAdmin.storage
         .from("curation-attachments")
         .createSignedUrl(input.imagePath, 600);
@@ -231,11 +239,16 @@ export async function classifyCurationRequest(
             descricao: input.description,
             classificacao_do_curador: input.curatorClassification,
             dimensao_do_curador: input.curatorDimension,
-            tem_imagem: !!imageUrl,
+            tem_anexo: !!(imageUrl || extractedText),
+            tipo_anexo: input.attachmentMimeType || "desconhecido",
+            texto_extraido: extractedText || null,
           })}`,
         ].join("\n\n"),
       },
     ];
+    
+    // OpenAI aceita PDFs em modo visão se o modelo suportar (gpt-4o-2024-08-06+ ou gpt-4-turbo)
+    // No gpt-5.2 (placeholder para o modelo de ponta aqui), mandamos via image_url
     if (imageUrl) {
       userContent.push({ type: "image_url", image_url: { url: imageUrl } });
     }
@@ -304,6 +317,7 @@ export async function classifyCurationRequest(
         ai_justification: justificativa,
         ai_functionality: asText(parsed.funcionalidade),
         ai_baseline_item: asText(parsed.item_baseline),
+        ai_content_analysis: asText(parsed.analise_anexo),
         ai_technical_direction: parsed.direcao_tecnica
           ? JSON.stringify(parsed.direcao_tecnica)
           : null,

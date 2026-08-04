@@ -1,0 +1,1 @@
+ALTER TABLE public.curation_requests ADD COLUMN IF NOT EXISTS ai_content_analysis TEXT;

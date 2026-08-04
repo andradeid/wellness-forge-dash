@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, Loader2, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { AlertTriangle, FileText, Loader2, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -44,10 +44,14 @@ export const DIMENSION_LABELS: Record<Dimension, string> = {
 };
 
 export const ATTACHMENT_BUCKET = "curation-attachments";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  "image/png", "image/jpeg", "image/jpg", "image/webp",
+  "application/pdf", 
+  "application/msword", 
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+];
 
-/** Contexto capturado automaticamente quando o report parte de uma mensagem do chat. */
 export interface CurationContext {
   chat_id?: string | null;
   message_id?: string | null;
@@ -56,12 +60,9 @@ export interface CurationContext {
 }
 
 interface CurationRequestFormProps {
-  /** Preenchido apenas quando o formulário é aberto a partir do chat. */
   context?: CurationContext;
-  /** Callback após criação bem-sucedida (ex.: fechar o modal). */
   onSuccess?: () => void;
   submitLabel?: string;
-  /** Prefixo dos ids dos campos — evita colisão quando página e modal coexistem. */
   idPrefix?: string;
 }
 
@@ -78,40 +79,55 @@ export function CurationRequestForm({
   const [description, setDescription] = useState("");
   const [classification, setClassification] = useState<Classification | "">("");
   const [dimension, setDimension] = useState<Dimension | "">("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  function clearImage() {
-    setImageFile(null);
-    setImagePreview((prev) => {
+  function clearFile() {
+    setFile(null);
+    setFilePreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleImageChange(file: File | null) {
-    if (!file) {
-      clearImage();
+  function handleFileChange(selectedFile: File | null) {
+    if (!selectedFile) {
+      clearFile();
       return;
     }
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Formato inválido. Envie uma imagem PNG, JPG ou WEBP.");
+    if (!ALLOWED_TYPES.includes(selectedFile.type)) {
+      toast.error("Formato não suportado. Envie imagem (PNG, JPG, WEBP) ou documento (PDF, DOC).");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error("A imagem excede o limite de 5 MB.");
+    if (selectedFile.size > MAX_FILE_BYTES) {
+      toast.error("O arquivo excede o limite de 10 MB.");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    setImageFile(file);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
+    setFile(selectedFile);
+    if (selectedFile.type.startsWith("image/")) {
+      setFilePreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(selectedFile);
+      });
+    } else {
+      setFilePreview(null);
+    }
   }
+
+  const handlePaste = (event: React.ClipboardEvent) => {
+    const items = event.clipboardData.items;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) handleFileChange(file);
+        break;
+      }
+    }
+  };
 
   const createFn = useServerFn(createCurationRequest);
   const duplicateFn = useServerFn(resolveCurationDuplicate);
@@ -129,29 +145,23 @@ export function CurationRequestForm({
       if (!dimension) throw new Error("Escolha a dimensão.");
 
       let imagePath: string | null = null;
-      if (imageFile) {
-        if (!ALLOWED_IMAGE_TYPES.includes(imageFile.type))
-          throw new Error("Formato inválido. Envie uma imagem PNG, JPG ou WEBP.");
-        if (imageFile.size > MAX_IMAGE_BYTES)
-          throw new Error("A imagem excede o limite de 5 MB.");
-
-        const extension = (imageFile.name.split(".").pop() ?? "png")
+      if (file) {
+        const extension = (file.name.split(".").pop() ?? "bin")
           .toLowerCase()
           .replace(/[^a-z0-9]/g, "")
           .slice(0, 5);
-        const path = `${user.id}/${crypto.randomUUID()}.${extension || "png"}`;
+        const path = `${user.id}/${crypto.randomUUID()}.${extension || "bin"}`;
         const { error: uploadError } = await supabase.storage
           .from(ATTACHMENT_BUCKET)
-          .upload(path, imageFile, {
-            contentType: imageFile.type,
+          .upload(path, file, {
+            contentType: file.type,
             upsert: false,
           });
-        if (uploadError) throw new Error("Não foi possível enviar a imagem. Tente novamente.");
+        if (uploadError) throw new Error("Não foi possível enviar o anexo. Tente novamente.");
         imagePath = path;
       }
 
       try {
-        // O servidor grava o report ANTES de chamar a IA — nada se perde.
         return await createFn({
           data: {
             title: cleanTitle,
@@ -159,6 +169,7 @@ export function CurationRequestForm({
             curatorClassification: classification,
             curatorDimension: dimension,
             imagePath,
+            attachmentMimeType: file?.type ?? null,
             chatId: context?.chat_id ?? null,
             messageId: context?.message_id ?? null,
             patientId: context?.patient_id ?? null,
@@ -178,7 +189,7 @@ export function CurationRequestForm({
       setDescription("");
       setClassification("");
       setDimension("");
-      clearImage();
+      clearFile();
       void queryClient.invalidateQueries({ queryKey: ["curation-requests", "mine", user?.id] });
 
       const analysis = result?.analysis;
@@ -196,7 +207,6 @@ export function CurationRequestForm({
     },
   });
 
-  /** Passo de revisão pós-IA (duplicata + concordância). Nunca mostra direção técnica. */
   const [review, setReview] = useState<{
     requestId: string;
     analysis: {
@@ -348,10 +358,10 @@ export function CurationRequestForm({
     );
   }
 
-
   return (
     <form
       className="space-y-4"
+      onPaste={handlePaste}
       onSubmit={(event) => {
         event.preventDefault();
         createMutation.mutate();
@@ -419,28 +429,37 @@ export function CurationRequestForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-image`}>Imagem (opcional)</Label>
+        <Label htmlFor={`${idPrefix}-attachment`}>Anexo (opcional)</Label>
         <Input
-          id={`${idPrefix}-image`}
+          id={`${idPrefix}-attachment`}
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => handleImageChange(event.target.files?.[0] ?? null)}
+          accept={ALLOWED_TYPES.join(",")}
+          onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)}
         />
         <p className="text-xs text-muted-foreground">
-          Anexe 1 print de tela em PNG, JPG ou WEBP (até 5 MB).
+          Envie um print (PNG, JPG) ou documento (PDF, DOC) de até 10 MB. Você também pode colar uma imagem (Ctrl+V).
         </p>
-        {imagePreview && (
+        {file && (
           <div className="flex items-center gap-3 rounded-md border p-2">
-            <img
-              src={imagePreview}
-              alt="Pré-visualização da imagem selecionada"
-              className="h-14 w-14 rounded object-cover"
-            />
-            <span className="flex-1 truncate text-xs text-muted-foreground">
-              {imageFile?.name}
-            </span>
-            <Button type="button" variant="ghost" size="sm" onClick={clearImage}>
+            {filePreview ? (
+              <img
+                src={filePreview}
+                alt="Pré-visualização"
+                className="h-14 w-14 rounded object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded bg-muted">
+                <FileText className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate text-xs font-medium">{file.name}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={clearFile}>
               <X className="h-4 w-4" />
               Remover
             </Button>
