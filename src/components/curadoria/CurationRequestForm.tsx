@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   createCurationRequest,
+  extractTextFromBuffer,
   resolveCurationDuplicate,
   setCuratorAgreement,
 } from "@/lib/curation.functions";
@@ -81,6 +82,8 @@ export function CurationRequestForm({
   const [dimension, setDimension] = useState<Dimension | "">("");
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function clearFile() {
@@ -89,10 +92,12 @@ export function CurationRequestForm({
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
+    setExtractedText(null);
+    setIsExtracting(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleFileChange(selectedFile: File | null) {
+  async function handleFileChange(selectedFile: File | null) {
     if (!selectedFile) {
       clearFile();
       return;
@@ -108,13 +113,39 @@ export function CurationRequestForm({
       return;
     }
     setFile(selectedFile);
+    
     if (selectedFile.type.startsWith("image/")) {
       setFilePreview((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return URL.createObjectURL(selectedFile);
       });
+      setExtractedText(null);
     } else {
       setFilePreview(null);
+      // Solicitar extração prévia para documentos
+      setIsExtracting(true);
+      try {
+        const reader = new FileReader();
+        const bufferPromise = new Promise<ArrayBuffer>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.onerror = reject;
+        });
+        reader.readAsArrayBuffer(selectedFile);
+        const buffer = await bufferPromise;
+        
+        const text = await extractFn({ 
+          data: {
+            buffer: Array.from(new Uint8Array(buffer)), 
+            mimeType: selectedFile.type 
+          }
+        });
+        setExtractedText(text);
+      } catch (error) {
+        console.error("Erro na extração prévia:", error);
+        setExtractedText("Falha na extração de texto ou arquivo binário complexo. A IA usará fallback visual se for PDF.");
+      } finally {
+        setIsExtracting(false);
+      }
     }
   }
 
@@ -132,6 +163,7 @@ export function CurationRequestForm({
   const createFn = useServerFn(createCurationRequest);
   const duplicateFn = useServerFn(resolveCurationDuplicate);
   const agreementFn = useServerFn(setCuratorAgreement);
+  const extractFn = useServerFn(extractTextFromBuffer);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -463,6 +495,29 @@ export function CurationRequestForm({
               <X className="h-4 w-4" />
               Remover
             </Button>
+          </div>
+        )}
+        {(isExtracting || extractedText) && (
+          <div className="mt-2 space-y-1.5 rounded-md border bg-muted/30 p-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Conteúdo identificado para análise
+              </span>
+              {isExtracting && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
+            <div className="max-h-32 overflow-y-auto rounded border bg-background p-2 text-[11px] leading-relaxed">
+              {isExtracting ? (
+                <span className="italic text-muted-foreground">Extraindo texto do documento...</span>
+              ) : extractedText ? (
+                <pre className="whitespace-pre-wrap font-sans">
+                  {extractedText.length > 1000 
+                    ? extractedText.slice(0, 1000) + "..." 
+                    : extractedText}
+                </pre>
+              ) : (
+                <span className="text-orange-600">Nenhum texto extraído. Fallback visual será acionado.</span>
+              )}
+            </div>
           </div>
         )}
       </div>
