@@ -472,6 +472,7 @@ export type Database = {
           ai_justification: string | null
           ai_status: string
           ai_technical_direction: string | null
+          attachment_mime_type: string | null
           chat_id: string | null
           created_at: string
           created_by: string
@@ -506,6 +507,7 @@ export type Database = {
           ai_justification?: string | null
           ai_status?: string
           ai_technical_direction?: string | null
+          attachment_mime_type?: string | null
           chat_id?: string | null
           created_at?: string
           created_by: string
@@ -540,6 +542,7 @@ export type Database = {
           ai_justification?: string | null
           ai_status?: string
           ai_technical_direction?: string | null
+          attachment_mime_type?: string | null
           chat_id?: string | null
           created_at?: string
           created_by?: string
