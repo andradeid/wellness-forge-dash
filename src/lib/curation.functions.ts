@@ -78,6 +78,7 @@ export const createCurationRequest = createServerFn({ method: "POST" })
         curator_dimension: data.curatorDimension,
         status: "registrado",
         image_url: data.imagePath,
+        attachment_mime_type: data.attachmentMimeType,
         ...(data.chatId ? { chat_id: data.chatId } : {}),
         ...(data.messageId ? { message_id: data.messageId } : {}),
         ...(data.patientId ? { patient_id: data.patientId } : {}),
