@@ -199,26 +199,34 @@ export async function classifyCurationRequest(
     let extractedText: string | null = null;
 
     if (input.attachmentBuffer && input.attachmentMimeType) {
-      const isDocument = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(input.attachmentMimeType);
+      const mime = input.attachmentMimeType;
       
-      if (isDocument) {
-        try {
-          // Extração best-effort de texto legível do buffer (documentos com texto embutido).
-          const raw = input.attachmentBuffer.toString("latin1");
-          const chunks = raw.match(/[ -~À-ÿ\n\r\t]{8,}/g) ?? [];
-          const candidate = chunks.join(" ").replace(/\s+/g, " ").trim();
-          extractedText = candidate.length > 200 ? candidate.slice(0, 20000) : "";
+      try {
+        if (mime === "application/pdf") {
+          const pdf = await import("pdf-parse/lib/pdf-parse.js");
+          const data = await pdf.default(input.attachmentBuffer);
+          extractedText = data.text?.trim() || null;
 
           // Fallback: PDF sem texto (escaneado) vai como conteúdo visual para o modelo.
-          if (!extractedText && input.attachmentMimeType === "application/pdf") {
+          // Nota: OpenAI gpt-4o e sucessores suportam arquivos PDF em "image_url" se forem imagens ou PDFs.
+          if (!extractedText) {
             imageUrl = `data:application/pdf;base64,${input.attachmentBuffer.toString("base64")}`;
           }
-        } catch (err) {
-          console.error("[curadoria-ia] Falha na extração de texto:", err);
-          // Falha na extração não derruba o fluxo, apenas segue sem o texto
+        } else if (mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+          const mammoth = await import("mammoth");
+          const result = await mammoth.extractRawText({ buffer: input.attachmentBuffer });
+          extractedText = result.value?.trim() || null;
+        } else if (mime === "application/msword") {
+          // .doc legado é binário complexo; mammoth não suporta. 
+          // Tentamos extrair strings básicas como último recurso.
+          const raw = input.attachmentBuffer.toString("utf8", 0, 10000);
+          extractedText = raw.replace(/[^\x20-\x7E\s]/g, "").replace(/\s+/g, " ").trim().slice(0, 5000);
+        } else if (mime.startsWith("image/")) {
+          imageUrl = `data:${mime};base64,${input.attachmentBuffer.toString("base64")}`;
         }
-      } else if (input.attachmentMimeType.startsWith("image/")) {
-        imageUrl = `data:${input.attachmentMimeType};base64,${input.attachmentBuffer.toString("base64")}`;
+      } catch (err) {
+        console.error("[curadoria-ia] Falha na extração de texto do anexo:", err);
+        // Falha na extração não derruba o fluxo, apenas segue sem o texto
       }
     } else if (input.imagePath) {
       // Legado / Fallback via Storage
