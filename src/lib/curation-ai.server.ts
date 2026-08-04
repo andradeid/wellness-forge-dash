@@ -203,7 +203,7 @@ export async function classifyCurationRequest(
       
       if (isDocument) {
         try {
-          // Tentativa de extração de texto via markitdown
+          // @ts-ignore - markitdown pode não ter tipos disponíveis
           const { MarkItDown } = await import("markitdown");
           const md = new MarkItDown();
           const result = await md.convert(input.attachmentBuffer);
