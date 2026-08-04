@@ -92,7 +92,7 @@ function CuradoriaAdminPage() {
       const { data, error } = await (supabase as any)
         .from("curation_requests")
         .select(
-          "id, created_at, title, description, status, agent_key, chat_id, message_id, patient_id, created_by, curator_classification, curator_dimension, image_url, ai_classification, ai_confidence, ai_justification, ai_technical_direction, ai_status, ai_confidence_label, ai_functionality, ai_baseline_item, ai_error, duplicate_of, curator_agreement, admin_final_classification, admin_notes",
+          "id, numero_sequencial, created_at, title, description, status, agent_key, chat_id, message_id, patient_id, created_by, curator_classification, curator_dimension, image_url, ai_classification, ai_confidence, ai_justification, ai_technical_direction, ai_status, ai_confidence_label, ai_functionality, ai_baseline_item, ai_error, duplicate_of, curator_agreement, admin_final_classification, admin_notes",
         )
         .order("created_at", { ascending: false })
         .limit(500);
@@ -294,6 +294,7 @@ function CuradoriaAdminPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">Nº</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Curador</TableHead>
                   <TableHead>Classificação</TableHead>
@@ -313,6 +314,9 @@ function CuradoriaAdminPage() {
                       setDrawerOpen(true);
                     }}
                   >
+                    <TableCell className="font-mono text-muted-foreground">
+                      #{row.numero_sequencial}
+                    </TableCell>
                     <TableCell className="max-w-[260px] truncate font-medium">
                       {row.title}
                     </TableCell>

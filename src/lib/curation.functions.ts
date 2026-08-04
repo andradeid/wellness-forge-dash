@@ -81,7 +81,7 @@ export const createCurationRequest = createServerFn({ method: "POST" })
         ...(data.patientId ? { patient_id: data.patientId } : {}),
         ...(data.agentKey ? { agent_key: data.agentKey } : {}),
       })
-      .select("id")
+      .select("id, numero_sequencial")
       .single();
 
     if (error || !inserted?.id) {
