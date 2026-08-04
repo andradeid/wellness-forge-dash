@@ -5,6 +5,8 @@ import getReportTool from "./tools/get-report";
 import getBaselineTool from "./tools/get-baseline";
 import getConversationTool from "./tools/get-conversation";
 import listChangelogTool from "./tools/list-changelog";
+import getChangelogTool from "./tools/get-changelog";
+
 
 
 // O issuer OAuth precisa ser o host direto do Supabase. VITE_SUPABASE_PROJECT_ID
@@ -29,6 +31,8 @@ export default defineMcp({
     getReportTool,
     getConversationTool,
     listChangelogTool,
+    getChangelogTool,
   ],
+
 
 });
