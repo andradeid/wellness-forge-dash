@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, FileText, Loader2, Paperclip, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { AlertTriangle, FileText, Loader2, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -44,7 +44,7 @@ export const DIMENSION_LABELS: Record<Dimension, string> = {
 };
 
 export const ATTACHMENT_BUCKET = "curation-attachments";
-const MAX_FILE_BYTES = 10 * 1024 * 1024; // Aumentado para 10MB para suportar documentos
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = [
   "image/png", "image/jpeg", "image/jpg", "image/webp",
   "application/pdf", 
@@ -52,7 +52,6 @@ const ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ];
 
-/** Contexto capturado automaticamente quando o report parte de uma mensagem do chat. */
 export interface CurationContext {
   chat_id?: string | null;
   message_id?: string | null;
@@ -61,12 +60,9 @@ export interface CurationContext {
 }
 
 interface CurationRequestFormProps {
-  /** Preenchido apenas quando o formulário é aberto a partir do chat. */
   context?: CurationContext;
-  /** Callback após criação bem-sucedida (ex.: fechar o modal). */
   onSuccess?: () => void;
   submitLabel?: string;
-  /** Prefixo dos ids dos campos — evita colisão quando página e modal coexistem. */
   idPrefix?: string;
 }
 
@@ -87,36 +83,51 @@ export function CurationRequestForm({
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  function clearImage() {
-    setImageFile(null);
-    setImagePreview((prev) => {
+  function clearFile() {
+    setFile(null);
+    setFilePreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleImageChange(file: File | null) {
-    if (!file) {
-      clearImage();
+  function handleFileChange(selectedFile: File | null) {
+    if (!selectedFile) {
+      clearFile();
       return;
     }
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Formato inválido. Envie uma imagem PNG, JPG ou WEBP.");
+    if (!ALLOWED_TYPES.includes(selectedFile.type)) {
+      toast.error("Formato não suportado. Envie imagem (PNG, JPG, WEBP) ou documento (PDF, DOC).");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error("A imagem excede o limite de 5 MB.");
+    if (selectedFile.size > MAX_FILE_BYTES) {
+      toast.error("O arquivo excede o limite de 10 MB.");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    setImageFile(file);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
+    setFile(selectedFile);
+    if (selectedFile.type.startsWith("image/")) {
+      setFilePreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(selectedFile);
+      });
+    } else {
+      setFilePreview(null);
+    }
   }
+
+  const handlePaste = (event: React.ClipboardEvent) => {
+    const items = event.clipboardData.items;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) handleFileChange(file);
+        break;
+      }
+    }
+  };
 
   const createFn = useServerFn(createCurationRequest);
   const duplicateFn = useServerFn(resolveCurationDuplicate);
@@ -135,11 +146,6 @@ export function CurationRequestForm({
 
       let imagePath: string | null = null;
       if (file) {
-        if (!ALLOWED_TYPES.includes(file.type))
-          throw new Error("Formato não suportado.");
-        if (file.size > MAX_FILE_BYTES)
-          throw new Error("O arquivo excede o limite de 10 MB.");
-
         const extension = (file.name.split(".").pop() ?? "bin")
           .toLowerCase()
           .replace(/[^a-z0-9]/g, "")
@@ -156,7 +162,6 @@ export function CurationRequestForm({
       }
 
       try {
-        // O servidor grava o report ANTES de chamar a IA — nada se perde.
         return await createFn({
           data: {
             title: cleanTitle,
@@ -202,7 +207,6 @@ export function CurationRequestForm({
     },
   });
 
-  /** Passo de revisão pós-IA (duplicata + concordância). Nunca mostra direção técnica. */
   const [review, setReview] = useState<{
     requestId: string;
     analysis: {
@@ -353,7 +357,6 @@ export function CurationRequestForm({
       </div>
     );
   }
-
 
   return (
     <form
