@@ -148,6 +148,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
     "hemograma",
     "perfil_glicidico",
     "perfil_lipidico",
+    "relacoes_clinicas",
     "perfil_tireoidiano",
     "perfil_hormonal",
     "funcao_hepatica",
