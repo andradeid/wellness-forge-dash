@@ -309,6 +309,7 @@ function ResetPasswordPage() {
               </Button>
               <Link
                 to="/login"
+                search={{ next: undefined }}
                 className="block w-full text-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
               >
                 Voltar para o login
