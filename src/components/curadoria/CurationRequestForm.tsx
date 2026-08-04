@@ -133,10 +133,11 @@ export function CurationRequestForm({
         reader.readAsArrayBuffer(selectedFile);
         const buffer = await bufferPromise;
         
-        const { extractTextFromBuffer } = await import("@/lib/curation.functions");
-        const text = await extractTextFromBuffer({ 
-          buffer: Array.from(new Uint8Array(buffer)), 
-          mimeType: selectedFile.type 
+        const text = await extractFn({ 
+          data: {
+            buffer: Array.from(new Uint8Array(buffer)), 
+            mimeType: selectedFile.type 
+          }
         });
         setExtractedText(text);
       } catch (error) {
