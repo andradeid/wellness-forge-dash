@@ -36,6 +36,8 @@ export interface ChangelogRoundView {
   rodada_data: string;
   titulo: string;
   itens: ChangelogItemView[];
+  notas_curador?: string | null;
+  notas_admin?: string | null;
 }
 
 interface RawItem {
@@ -63,11 +65,17 @@ export const getChangelogRounds = createServerFn({ method: "GET" })
 
     const { data: rounds, error: roundsError } = await supabase
       .from("changelog_rounds")
-      .select("id, rodada_data, titulo")
+      .select("id, rodada_data, titulo, notas_curador, notas_admin")
       .order("rodada_data", { ascending: false });
     if (roundsError) throw new Response(roundsError.message, { status: 400 });
 
-    const roundList = (rounds ?? []) as Array<{ id: string; rodada_data: string; titulo: string }>;
+    const roundList = (rounds ?? []) as Array<{ 
+      id: string; 
+      rodada_data: string; 
+      titulo: string;
+      notas_curador: string | null;
+      notas_admin: string | null;
+    }>;
     if (roundList.length === 0) return { isFull, rounds: [] };
 
     const { data: items, error: itemsError } = await supabase
@@ -112,6 +120,8 @@ export const getChangelogRounds = createServerFn({ method: "GET" })
         id: round.id,
         rodada_data: round.rodada_data,
         titulo: round.titulo,
+        notas_curador: round.notas_curador,
+        notas_admin: isFull ? round.notas_admin : null,
         itens: itemList
           .filter((item) => item.round_id === round.id)
           .map((item) => ({
