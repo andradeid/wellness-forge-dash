@@ -203,15 +203,14 @@ export async function classifyCurationRequest(
       
       if (isDocument) {
         try {
-          // @ts-ignore - markitdown pode não ter tipos disponíveis
-          const { MarkItDown } = await import("markitdown");
-          const md = new MarkItDown();
-          const result = await md.convert(input.attachmentBuffer);
-          extractedText = result.text_content?.trim() || "";
-          
-          // Fallback: se PDF vier vazio (escaneado), tratamos como imagem se for PDF
+          // Extração best-effort de texto legível do buffer (documentos com texto embutido).
+          const raw = input.attachmentBuffer.toString("latin1");
+          const chunks = raw.match(/[ -~À-ÿ\n\r\t]{8,}/g) ?? [];
+          const candidate = chunks.join(" ").replace(/\s+/g, " ").trim();
+          extractedText = candidate.length > 200 ? candidate.slice(0, 20000) : "";
+
+          // Fallback: PDF sem texto (escaneado) vai como conteúdo visual para o modelo.
           if (!extractedText && input.attachmentMimeType === "application/pdf") {
-            // No sandbox, enviamos o buffer como base64 para o modelo com visão
             imageUrl = `data:application/pdf;base64,${input.attachmentBuffer.toString("base64")}`;
           }
         } catch (err) {
