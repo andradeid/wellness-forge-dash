@@ -204,8 +204,8 @@ export async function classifyCurationRequest(
       try {
         if (mime === "application/pdf") {
           // @ts-ignore
-          const pdf = await import("pdf-parse");
-          const data = await pdf.default(input.attachmentBuffer);
+          const pdf = (await import("pdf-parse")).default;
+          const data = await pdf(input.attachmentBuffer);
           extractedText = data.text?.trim() || null;
 
           // Fallback: PDF sem texto (escaneado) vai como conteúdo visual para o modelo.
