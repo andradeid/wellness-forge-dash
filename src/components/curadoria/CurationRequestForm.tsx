@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   createCurationRequest,
+  extractTextFromBuffer,
   resolveCurationDuplicate,
   setCuratorAgreement,
 } from "@/lib/curation.functions";
@@ -161,6 +162,7 @@ export function CurationRequestForm({
   const createFn = useServerFn(createCurationRequest);
   const duplicateFn = useServerFn(resolveCurationDuplicate);
   const agreementFn = useServerFn(setCuratorAgreement);
+  const extractFn = useServerFn(extractTextFromBuffer);
 
   const createMutation = useMutation({
     mutationFn: async () => {
