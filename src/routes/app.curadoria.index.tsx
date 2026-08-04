@@ -77,6 +77,7 @@ const AI_CLASSIFICATION_LABELS: Record<string, string> = {
 
 interface CurationRow {
   id: string;
+  numero_sequencial: number;
   title: string;
   description: string | null;
   curator_classification: string | null;
@@ -243,7 +244,7 @@ function CuradoriaPage() {
       const { data, error } = await (supabase as any)
         .from("curation_requests")
         .select(
-          "id, title, description, curator_classification, curator_dimension, status, created_at, updated_at, image_url, chat_id, message_id, patient_id, agent_key, ai_classification, ai_justification, ai_status, curator_agreement, duplicate_of",
+          "id, numero_sequencial, title, description, curator_classification, curator_dimension, status, created_at, updated_at, image_url, chat_id, message_id, patient_id, agent_key, ai_classification, ai_justification, ai_status, curator_agreement, duplicate_of",
         )
         .eq("created_by", user!.id)
         .order("created_at", { ascending: false });
@@ -391,7 +392,12 @@ function CuradoriaPage() {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{row.title}</p>
+                      <p className="truncate text-sm font-medium">
+                        <span className="mr-1.5 font-mono text-muted-foreground">
+                          #{row.numero_sequencial}
+                        </span>
+                        {row.title}
+                      </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {classificationLabel(row.curator_classification)} ·{" "}
                         {dimensionLabel(row.curator_dimension)} · {formatDate(row.created_at)}
@@ -431,7 +437,12 @@ function CuradoriaPage() {
           {selected ? (
             <>
               <SheetHeader>
-                <SheetTitle className="pr-6 text-left">{selected.title}</SheetTitle>
+                <SheetTitle className="pr-6 text-left">
+                  <span className="mr-2 font-mono text-muted-foreground">
+                    #{selected.numero_sequencial}
+                  </span>
+                  {selected.title}
+                </SheetTitle>
                 <SheetDescription className="text-left">
                   Registrada em {formatDateTime(selected.created_at)}
                 </SheetDescription>

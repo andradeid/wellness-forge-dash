@@ -53,6 +53,7 @@ export const STATUS_ORDER: CurationStatus[] = [
 
 export interface CurationAdminRow {
   id: string;
+  numero_sequencial: number;
   created_at: string;
   title: string;
   description: string;
@@ -214,7 +215,12 @@ export function CurationDetailDrawer({
         {request && (
           <>
             <SheetHeader>
-              <SheetTitle className="pr-6 text-left">{request.title}</SheetTitle>
+              <SheetTitle className="pr-6 text-left">
+                <span className="mr-2 font-mono text-muted-foreground">
+                  #{request.numero_sequencial}
+                </span>
+                {request.title}
+              </SheetTitle>
               <SheetDescription className="text-left">
                 Solicitada por {curatorName} em {formatDateTime(request.created_at)}
               </SheetDescription>

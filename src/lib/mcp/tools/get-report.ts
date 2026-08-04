@@ -6,7 +6,7 @@ const UUID = z.string().uuid("Informe o UUID do report.");
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const BASE_FIELDS =
-  "id, title, description, curator_classification, curator_dimension, ai_classification, ai_confidence, ai_confidence_label, ai_justification, ai_status, ai_functionality, ai_baseline_item, ai_analyzed_at, ai_error, status, admin_notes, admin_final_classification, curator_agreement, duplicate_of, agent_key, chat_id, message_id, patient_id, image_url, created_at, updated_at";
+  "id, numero_sequencial, title, description, curator_classification, curator_dimension, ai_classification, ai_confidence, ai_confidence_label, ai_justification, ai_status, ai_functionality, ai_baseline_item, ai_analyzed_at, ai_error, status, admin_notes, admin_final_classification, curator_agreement, duplicate_of, agent_key, chat_id, message_id, patient_id, image_url, created_at, updated_at";
 
 function mimeFromPath(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();

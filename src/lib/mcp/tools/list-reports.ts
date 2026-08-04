@@ -13,7 +13,7 @@ const STATUS = [
 ] as const;
 
 const BASE_FIELDS =
-  "id, title, description, curator_classification, curator_dimension, ai_classification, ai_confidence, ai_confidence_label, ai_justification, ai_status, ai_functionality, ai_baseline_item, status, curator_agreement, duplicate_of, agent_key, chat_id, message_id, patient_id, image_url, created_at, updated_at";
+  "id, numero_sequencial, title, description, curator_classification, curator_dimension, ai_classification, ai_confidence, ai_confidence_label, ai_justification, ai_status, ai_functionality, ai_baseline_item, status, curator_agreement, duplicate_of, agent_key, chat_id, message_id, patient_id, image_url, created_at, updated_at";
 
 export default defineTool({
   name: "list_reports",

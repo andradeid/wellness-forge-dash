@@ -476,6 +476,7 @@ export type Database = {
           id: string
           image_url: string | null
           message_id: string | null
+          numero_sequencial: number
           patient_id: string | null
           priority: string
           request_type: string
@@ -508,6 +509,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           message_id?: string | null
+          numero_sequencial?: number
           patient_id?: string | null
           priority?: string
           request_type?: string
@@ -540,6 +542,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           message_id?: string | null
+          numero_sequencial?: number
           patient_id?: string | null
           priority?: string
           request_type?: string
