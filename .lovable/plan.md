@@ -1,46 +1,39 @@
-# Plano — Conformidade às 4 atualizações Dify
+# Número sequencial legível para solicitações de curadoria
 
-Diff vs. estado atual do código (já há base implementada das correções anteriores).
+## 1. Geração do número
 
-## Atualização 1 — Payload `inputs` do Dify
+Migração em `public.curation_requests`:
 
-**Status:** parcialmente conforme. Hoje `patient_profile` envia `"adulto"` ou `"gestante"`. A spec pede valores compostos: `"adulto_feminino" | "adulto_masculino" | "gestante"`.
+- Nova coluna `numero_sequencial INTEGER`.
+- Sequence dedicada `public.curation_requests_numero_seq` (global, um único contador para todo o sistema).
+- Coluna com `DEFAULT nextval(...)`, `NOT NULL` e índice `UNIQUE`.
+- Sem trigger: o `DEFAULT` da sequence já cobre todo insert (formulário avulso, report do chat, futuros inserts). Sequence é à prova de concorrência e nunca reaproveita número.
+- `ALTER SEQUENCE ... OWNED BY` para o número morrer junto com a coluna caso a tabela seja removida.
 
-**Ação em `src/routes/app.chat.$patientId.tsx`** (no `useEffect` que chama `setContext`):
-- Derivar `patient_profile`:
-  - `publico === "gestante"` → `"gestante"`
-  - `publico === "adulto" && sexo === "feminino"` → `"adulto_feminino"`
-  - `publico === "adulto" && sexo === "masculino"` → `"adulto_masculino"`
-  - caso contrário → `""`
-- Manter `patient_sex` em minúsculas, sem acento (`"feminino" | "masculino" | ""`) — já está correto.
-- `fase_ciclo` continua enviado só quando `patient_profile === "adulto_feminino"` (já garantido por `faseCicloToInput`).
-- Nada muda em `dify.chat.tsx` (já repassa todos os campos com `sanitize`, nunca `null`/`undefined`).
+## 2. Backfill dos 35 existentes
 
-## Atualização 2 — Seletor de Fase do Ciclo
+Na mesma migração, antes de tornar a coluna obrigatória:
 
-**Status:** parcialmente conforme. O bloco já aparece somente para `adulto + feminino`, com 4 opções. Falta: opção padrão `"Não informada"` e rótulos com faixa de dias.
+1. Numerar todas as linhas atuais por `ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC)` — ordem cronológica de criação, com o `id` só como desempate estável.
+2. `setval` da sequence para o maior número atribuído, de modo que o próximo report criado receba #36.
+3. Só então aplicar `NOT NULL` + `UNIQUE`.
 
-**Ação em `src/components/chat/ChatIntentPanel.tsx`:**
-- Adicionar Pill `"Não informada"` (ativa quando `faseCiclo === null`) que limpa o valor.
-- Atualizar rótulos das Pills:
-  - `Folicular (dias 1–13)`
-  - `Ovulatória (dias 14–16)`
-  - `Lútea (dias 17–28)`
-  - `Menopausa`
-- `FASE_CICLO_LABEL` (usado no contexto e em `faseCicloToInput`) **permanece** `"Fase Folicular"`, `"Fase Ovulatória"`, `"Fase Lútea"`, `"Menopausa"` — exatamente os strings que a API espera.
+Nada mais é tocado: `duplicate_of`, `changelog_item_reports`, MCP e o restante continuam usando o UUID.
 
-## Atualização 3 — Ocultar `[DESCONHECIDO]` e "Não indexado na BC IAPP"
+## 3. Onde aparece na interface
 
-**Status:** ✅ já implementado em `ExamResultCard.tsx` (`showBadge` oculta quando estado `desconhecido`; `showRef` oculta quando `reference` casa `/n[ãa]o\s+indexado/i`). Sem mudança.
+Formato adotado: **`#12`** como marcador curto ao lado do título nas listas, e **`Solicitação nº 12`** nos cabeçalhos de detalhe — o curto não polui a tabela, o longo deixa claro no detalhe o que se copia para o WhatsApp.
 
-## Atualização 4 — Persistência de `birth_date`
+- `/app/curadoria` (curador)
+  - Lista: `#12` em fonte monoespaçada discreta antes do título de cada card.
+  - Sheet de detalhe: `Solicitação nº 12` no título, com botão de copiar já existente no padrão da tela (ou texto selecionável, se não houver).
+  - Após criar um report: o toast/confirmação passa a citar o número recém-gerado.
+- `/app/admin/curadoria` (super admin)
+  - Tabela: nova primeira coluna `Nº` com `#12`.
+  - Drawer de detalhe: `Solicitação nº 12` no cabeçalho, junto ao status.
 
-**Status:** ✅ já implementado. `BirthDatePicker` retorna string `YYYY-MM-DD`, `handleCreate` valida e bloqueia submit vazio com toast, e o Supabase recebe a string no formato correto (coluna `date`). Sem mudança.
+## Detalhes técnicos
 
----
-
-## Resumo dos arquivos a tocar
-- `src/routes/app.chat.$patientId.tsx` — mapear `patient_profile` composto no `setContext`.
-- `src/components/chat/ChatIntentPanel.tsx` — Pill "Não informada" + rótulos com dias.
-
-Nenhuma mudança em sidebar, histórico, RLS, ou demais conexões de API.
+- Os `select(...)` do Supabase em `src/routes/app.curadoria.index.tsx` e `src/routes/app.admin.curadoria.tsx` ganham `numero_sequencial`; os tipos locais (`CurationRow`, `CurationAdminRow`) ganham o campo `number`.
+- `createCurationRequest` em `src/lib/curation.functions.ts` passa a retornar `numero_sequencial` no `.select("id, numero_sequencial")` para o toast de sucesso.
+- Nenhuma alteração em RLS, grants, MCP ou changelog.
