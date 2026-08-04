@@ -46,8 +46,11 @@ A baseline (\`get_baseline\`) é o retrato congelado do sistema na entrega do co
 - **curator_agreement**: se o curador concordou ou discordou da IA. Divergência = ponto que precisa de decisão humana.
 - **duplicate_of**: se preenchido, este report é duplicata de outro.
 - **status**: registrado | em_analise | aprovado_ajuste | classificado_melhoria | em_desenvolvimento | concluido.
-- **agent_key, chat_id, message_id, patient_id**: contexto de onde o report nasceu (qual agente, qual conversa). Use \`get_conversation\` para ver a conversa original.
-- **has_image / imagem**: reports podem ter print anexado (via \`get_report\`, vem embutido em base64).
+- **agent_key, chat_id, message_id, patient_id**: contexto de onde o report nasceu (qual agente, qual conversa). Use `get_conversation` para ver a conversa original.
+- **list_changelog**: Lista as rodadas semanais de ajustes (entregas) feitas em produção.
+- **get_changelog**: Obtém o detalhe completo de uma rodada de ajustes específica.
+- **has_image / imagem**: reports podem ter print anexado (via `get_report`, vem embutido em base64).
+
 
 ## Como você deve trabalhar (se for propor ajustes)
 
