@@ -202,3 +202,33 @@ export const setCuratorAgreement = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/** Extrai texto de um buffer no servidor (útil para visualização prévia no front) */
+export const extractTextFromBuffer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { buffer: number[]; mimeType: string }) => data)
+  .handler(async ({ data }) => {
+    const buffer = Buffer.from(data.buffer);
+    const mime = data.mimeType;
+    let extractedText: string | null = null;
+
+    try {
+      if (mime === "application/pdf") {
+        // @ts-ignore
+        const pdf = (await import("pdf-parse")).default;
+        const result = await pdf(buffer);
+        extractedText = result.text?.trim() || null;
+      } else if (mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const mammoth = await import("mammoth");
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || null;
+      } else if (mime === "application/msword") {
+        const raw = buffer.toString("utf8", 0, 10000);
+        extractedText = raw.replace(/[^\x20-\x7E\s]/g, "").replace(/\s+/g, " ").trim().slice(0, 5000);
+      }
+    } catch (err) {
+      console.error("[curadoria-preview] Falha na extração:", err);
+    }
+
+    return extractedText;
+  });
