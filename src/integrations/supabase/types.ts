@@ -254,6 +254,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          notas_admin: string | null
+          notas_curador: string | null
           rodada_data: string
           titulo: string
           updated_at: string
@@ -261,6 +263,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          notas_admin?: string | null
+          notas_curador?: string | null
           rodada_data: string
           titulo: string
           updated_at?: string
@@ -268,6 +272,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          notas_admin?: string | null
+          notas_curador?: string | null
           rodada_data?: string
           titulo?: string
           updated_at?: string
