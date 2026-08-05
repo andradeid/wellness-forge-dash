@@ -85,7 +85,7 @@ function sanitizeNext(value: unknown): string | undefined {
 }
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { next?: string } => ({
     next: sanitizeNext(search.next),
   }),
   head: () => ({

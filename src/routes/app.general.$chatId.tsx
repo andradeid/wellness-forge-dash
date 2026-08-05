@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/general/$chatId")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { module?: string } => ({
     module: typeof s.module === "string" ? s.module : "research",
   }),
   component: GeneralChatPage,
@@ -36,7 +36,8 @@ const PROFILE_LABEL: Record<string, string> = {
 
 function GeneralChatPage() {
   const { chatId } = useParams({ from: "/app/general/$chatId" });
-  const { module: agentType } = Route.useSearch();
+  const { module: agentTypeSearch } = Route.useSearch();
+  const agentType = agentTypeSearch ?? "research";
   const navigate = useNavigate();
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
   const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType, selectedTaskKey);
