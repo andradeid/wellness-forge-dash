@@ -188,60 +188,78 @@ function ItemGroup({
       </div>
 
       <div className="space-y-2">
-        {items.map((item) => (
-          <div key={item.id} className="rounded-lg border bg-card p-3 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="text-sm font-bold leading-relaxed text-foreground">
-                  {item.descricao_legivel.split('\n')[0]}
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                  {item.descricao_legivel.split('\n').slice(1).join('\n').trim()}
-                </p>
+        {items.map((item) => {
+          const parts = item.descricao_legivel.split('\n');
+          const title = parts[0];
+          const rest = parts.slice(1).join('\n').trim();
+
+          // Se o banco ainda tiver literais '\n', precisamos substituí-los.
+          // Mas como já usamos whitespace-pre-wrap, o split por \n real já funciona.
+          // Se o usuário vê literal \n no preview, é porque o dado no banco contém o caractere '\' seguido de 'n'.
+          const cleanTitle = title.replace(/\\n/g, '\n');
+          const cleanRest = rest.replace(/\\n/g, '\n');
+
+          return (
+            <div key={item.id} className="rounded-lg border bg-card p-3 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-sm font-bold leading-relaxed text-foreground whitespace-pre-wrap">
+                    {cleanTitle}
+                  </p>
+                  {cleanRest && (
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                      {cleanRest}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 text-[10px] font-medium text-muted-foreground uppercase">
+                  {formatDate(item.item_data)}
+                </span>
               </div>
-              <span className="shrink-0 text-[10px] font-medium text-muted-foreground uppercase">
-                {formatDate(item.item_data)}
-              </span>
+
+              {item.reports.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {item.reports.map((report, index) => (
+                    <span
+                      key={`${item.id}-${index}`}
+                      className={
+                        report.mine
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800"
+                          : "inline-flex items-center gap-1.5 rounded-full border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
+                      }
+                      title={report.title}
+                    >
+                      <Link2 className="h-3 w-3 shrink-0" />
+                      {report.mine
+                        ? "Sua solicitação foi resolvida nesta rodada"
+                        : `Solicitação: ${report.title}`}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {isFull && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
+                  {item.camada && (
+                    <Badge variant="secondary">{CAMADA_LABELS[item.camada] ?? item.camada}</Badge>
+                  )}
+                  <Badge variant="outline">
+                    {item.tipo === "suporte"
+                      ? "Suporte"
+                      : item.tipo === "melhoria"
+                        ? "Melhoria"
+                        : "Infra"}
+                  </Badge>
+                  {item.descricao_tecnica && (
+                    <span className="text-xs leading-relaxed text-muted-foreground">
+                      {item.descricao_tecnica}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-
-            {item.reports.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {item.reports.map((report, index) => (
-                  <span
-                    key={`${item.id}-${index}`}
-                    className={
-                      report.mine
-                        ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800"
-                        : "inline-flex items-center gap-1.5 rounded-full border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
-                    }
-                    title={report.title}
-                  >
-                    <Link2 className="h-3 w-3 shrink-0" />
-                    {report.mine
-                      ? "Sua solicitação foi resolvida nesta rodada"
-                      : `Solicitação: ${report.title}`}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {isFull && (
-              <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
-                {item.camada && (
-                  <Badge variant="secondary">{CAMADA_LABELS[item.camada] ?? item.camada}</Badge>
-                )}
-                <Badge variant="outline">
-                  {item.tipo === "suporte" ? "Suporte" : item.tipo === "melhoria" ? "Melhoria" : "Infra"}
-                </Badge>
-                {item.descricao_tecnica && (
-                  <span className="text-xs leading-relaxed text-muted-foreground">
-                    {item.descricao_tecnica}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
