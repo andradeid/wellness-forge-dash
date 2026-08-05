@@ -1844,6 +1844,10 @@ export type Database = {
         }
         Returns: number
       }
+      admin_dashboard_stats: {
+        Args: { p_prev_since: string; p_since: string }
+        Returns: Json
+      }
       aggregate_usage_hour: { Args: { p_hour: string }; Returns: undefined }
       consume_credits: {
         Args: {
