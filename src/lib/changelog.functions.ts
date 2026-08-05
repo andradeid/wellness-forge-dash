@@ -23,6 +23,7 @@ export interface ChangelogLinkedReport {
 export interface ChangelogItemView {
   id: string;
   descricao_legivel: string;
+  item_data: string;
   /** 'suporte' | 'melhoria' — usado para separar ✅ / 🆕. */
   tipo: "suporte" | "melhoria";
   reports: ChangelogLinkedReport[];
@@ -34,6 +35,7 @@ export interface ChangelogItemView {
 export interface ChangelogRoundView {
   id: string;
   rodada_data: string;
+  rodada_data_fim?: string | null;
   titulo: string;
   itens: ChangelogItemView[];
   notas_curador?: string | null;
@@ -44,6 +46,7 @@ interface RawItem {
   id: string;
   round_id: string;
   descricao_legivel: string;
+  item_data: string;
   classificacao: "suporte" | "melhoria";
   camada: string;
   descricao_tecnica: string | null;
@@ -65,13 +68,14 @@ export const getChangelogRounds = createServerFn({ method: "GET" })
 
     const { data: rounds, error: roundsError } = await supabase
       .from("changelog_rounds")
-      .select("id, rodada_data, titulo, notas_curador, notas_admin")
+      .select("id, rodada_data, rodada_data_fim, titulo, notas_curador, notas_admin")
       .order("rodada_data", { ascending: false });
     if (roundsError) throw new Response(roundsError.message, { status: 400 });
 
     const roundList = (rounds ?? []) as Array<{ 
       id: string; 
       rodada_data: string; 
+      rodada_data_fim: string | null; 
       titulo: string;
       notas_curador: string | null;
       notas_admin: string | null;
@@ -80,7 +84,7 @@ export const getChangelogRounds = createServerFn({ method: "GET" })
 
     const { data: items, error: itemsError } = await supabase
       .from("changelog_items")
-      .select("id, round_id, descricao_legivel, classificacao, camada, descricao_tecnica, sort_order")
+      .select("id, round_id, descricao_legivel, item_data, classificacao, camada, descricao_tecnica, sort_order")
       .in(
         "round_id",
         roundList.map((r) => r.id),
@@ -119,6 +123,7 @@ export const getChangelogRounds = createServerFn({ method: "GET" })
       rounds: roundList.map((round) => ({
         id: round.id,
         rodada_data: round.rodada_data,
+        rodada_data_fim: round.rodada_data_fim,
         titulo: round.titulo,
         notas_curador: round.notas_curador,
         notas_admin: isFull ? round.notas_admin : null,
@@ -127,6 +132,7 @@ export const getChangelogRounds = createServerFn({ method: "GET" })
           .map((item) => ({
             id: item.id,
             descricao_legivel: item.descricao_legivel,
+            item_data: item.item_data,
             tipo: item.classificacao,
             reports: linksByItem.get(item.id) ?? [],
             ...(isFull

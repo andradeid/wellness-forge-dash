@@ -104,7 +104,9 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <CardTitle className="text-base">{round.titulo}</CardTitle>
-            <CardDescription>Rodada de {formatDate(round.rodada_data)}</CardDescription>
+            <CardDescription>
+              Período: {formatDate(round.rodada_data)} {round.rodada_data_fim ? `a ${formatDate(round.rodada_data_fim)}` : ""}
+            </CardDescription>
           </div>
           <span className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] bg-clip-text text-xs font-semibold uppercase tracking-wide text-transparent">
             {round.itens.length} {round.itens.length === 1 ? "ajuste" : "ajustes"}
@@ -131,19 +133,6 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
           />
         )}
 
-        {round.notas_curador && (
-          <div className="space-y-2 border-t pt-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Clock className="h-4 w-4 text-blue-500" />
-              ⏳ Em análise
-            </div>
-            <div className="rounded-lg border bg-blue-50/30 p-3">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                {round.notas_curador}
-              </p>
-            </div>
-          </div>
-        )}
 
         {isFull && round.notas_admin && (
           <div className="space-y-2 border-t pt-4">
@@ -191,7 +180,12 @@ function ItemGroup({
       <div className="space-y-2">
         {items.map((item) => (
           <div key={item.id} className="rounded-lg border bg-card p-3 shadow-sm">
-            <p className="text-sm leading-relaxed text-foreground">{item.descricao_legivel}</p>
+            <div className="flex items-start justify-between gap-4">
+              <p className="text-sm leading-relaxed text-foreground">{item.descricao_legivel}</p>
+              <span className="shrink-0 text-[10px] font-medium text-muted-foreground uppercase">
+                {formatDate(item.item_data)}
+              </span>
+            </div>
 
             {item.reports.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
