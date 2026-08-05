@@ -217,44 +217,49 @@ function ItemGroup({
                 </span>
               </div>
 
-            {item.reports.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {item.reports.map((report, index) => (
-                  <span
-                    key={`${item.id}-${index}`}
-                    className={
-                      report.mine
-                        ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800"
-                        : "inline-flex items-center gap-1.5 rounded-full border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
-                    }
-                    title={report.title}
-                  >
-                    <Link2 className="h-3 w-3 shrink-0" />
-                    {report.mine
-                      ? "Sua solicitação foi resolvida nesta rodada"
-                      : `Solicitação: ${report.title}`}
-                  </span>
-                ))}
-              </div>
-            )}
+              {item.reports.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {item.reports.map((report, index) => (
+                    <span
+                      key={`${item.id}-${index}`}
+                      className={
+                        report.mine
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800"
+                          : "inline-flex items-center gap-1.5 rounded-full border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
+                      }
+                      title={report.title}
+                    >
+                      <Link2 className="h-3 w-3 shrink-0" />
+                      {report.mine
+                        ? "Sua solicitação foi resolvida nesta rodada"
+                        : `Solicitação: ${report.title}`}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-            {isFull && (
-              <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
-                {item.camada && (
-                  <Badge variant="secondary">{CAMADA_LABELS[item.camada] ?? item.camada}</Badge>
-                )}
-                <Badge variant="outline">
-                  {item.tipo === "suporte" ? "Suporte" : item.tipo === "melhoria" ? "Melhoria" : "Infra"}
-                </Badge>
-                {item.descricao_tecnica && (
-                  <span className="text-xs leading-relaxed text-muted-foreground">
-                    {item.descricao_tecnica}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+              {isFull && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
+                  {item.camada && (
+                    <Badge variant="secondary">{CAMADA_LABELS[item.camada] ?? item.camada}</Badge>
+                  )}
+                  <Badge variant="outline">
+                    {item.tipo === "suporte"
+                      ? "Suporte"
+                      : item.tipo === "melhoria"
+                        ? "Melhoria"
+                        : "Infra"}
+                  </Badge>
+                  {item.descricao_tecnica && (
+                    <span className="text-xs leading-relaxed text-muted-foreground">
+                      {item.descricao_tecnica}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
