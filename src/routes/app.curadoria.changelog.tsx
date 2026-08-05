@@ -181,7 +181,14 @@ function ItemGroup({
         {items.map((item) => (
           <div key={item.id} className="rounded-lg border bg-card p-3 shadow-sm">
             <div className="flex items-start justify-between gap-4">
-              <p className="text-sm leading-relaxed text-foreground">{item.descricao_legivel}</p>
+              <div className="flex-1">
+                <p className="text-sm font-bold leading-relaxed text-foreground">
+                  {item.descricao_legivel.split('\n')[0]}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                  {item.descricao_legivel.split('\n').slice(1).join('\n').trim()}
+                </p>
+              </div>
               <span className="shrink-0 text-[10px] font-medium text-muted-foreground uppercase">
                 {formatDate(item.item_data)}
               </span>
