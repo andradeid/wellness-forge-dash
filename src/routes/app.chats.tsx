@@ -259,7 +259,7 @@ function ChatsCentralPage() {
                 <Link
                   to={r.patient_id ? "/app/chat/$patientId" : "/app/general/$chatId"}
                   params={r.patient_id ? { patientId: r.patient_id } : { chatId: r.id }}
-                  search={r.patient_id ? {} : { module: r.agent_type }}
+                  search={r.patient_id ? {} : { module: r.agent_type ?? undefined }}
                   className="block"
                 >
                   <Card

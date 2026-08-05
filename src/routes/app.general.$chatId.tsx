@@ -36,7 +36,8 @@ const PROFILE_LABEL: Record<string, string> = {
 
 function GeneralChatPage() {
   const { chatId } = useParams({ from: "/app/general/$chatId" });
-  const { module: agentType } = Route.useSearch();
+  const { module: agentTypeSearch } = Route.useSearch();
+  const agentType = agentTypeSearch ?? "research";
   const navigate = useNavigate();
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
   const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType, selectedTaskKey);
