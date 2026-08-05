@@ -214,6 +214,7 @@ export type Database = {
           descricao_legivel: string
           descricao_tecnica: string | null
           id: string
+          item_data: string | null
           round_id: string
           sort_order: number
           updated_at: string
@@ -225,6 +226,7 @@ export type Database = {
           descricao_legivel: string
           descricao_tecnica?: string | null
           id?: string
+          item_data?: string | null
           round_id: string
           sort_order?: number
           updated_at?: string
@@ -236,6 +238,7 @@ export type Database = {
           descricao_legivel?: string
           descricao_tecnica?: string | null
           id?: string
+          item_data?: string | null
           round_id?: string
           sort_order?: number
           updated_at?: string
@@ -257,6 +260,7 @@ export type Database = {
           notas_admin: string | null
           notas_curador: string | null
           rodada_data: string
+          rodada_data_fim: string | null
           titulo: string
           updated_at: string
         }
@@ -266,6 +270,7 @@ export type Database = {
           notas_admin?: string | null
           notas_curador?: string | null
           rodada_data: string
+          rodada_data_fim?: string | null
           titulo: string
           updated_at?: string
         }
@@ -275,6 +280,7 @@ export type Database = {
           notas_admin?: string | null
           notas_curador?: string | null
           rodada_data?: string
+          rodada_data_fim?: string | null
           titulo?: string
           updated_at?: string
         }
