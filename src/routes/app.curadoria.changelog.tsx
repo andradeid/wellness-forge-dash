@@ -16,9 +16,9 @@ export const Route = createFileRoute("/app/curadoria/changelog")({
 });
 
 const CAMADA_LABELS: Record<string, string> = {
-  dify: "Dify",
-  lovable: "App",
-  banco: "Banco",
+  dify: "Agente",
+  lovable: "Interface",
+  banco: "Sistema",
 };
 
 function formatDate(value: string) {
@@ -97,6 +97,7 @@ function ChangelogPage() {
 function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boolean }) {
   const correcoes = round.itens.filter((i) => i.tipo === "suporte");
   const melhorias = round.itens.filter((i) => i.tipo === "melhoria");
+  const infra = round.itens.filter((i) => i.tipo === "infra");
 
   return (
     <Card>
@@ -129,6 +130,15 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             title="Melhorias"
             icon={<Sparkles className="h-4 w-4 text-orange-500" />}
             items={melhorias}
+            isFull={isFull}
+          />
+        )}
+
+        {infra.length > 0 && (
+          <ItemGroup
+            title="Infraestrutura"
+            icon={<CalendarDays className="h-4 w-4 text-blue-500" />}
+            items={infra}
             isFull={isFull}
           />
         )}
@@ -215,11 +225,13 @@ function ItemGroup({
               </div>
             )}
 
-            {isFull && item.camada && (
+            {isFull && (
               <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
-                <Badge variant="secondary">{CAMADA_LABELS[item.camada] ?? item.camada}</Badge>
+                {item.camada && (
+                  <Badge variant="secondary">{CAMADA_LABELS[item.camada] ?? item.camada}</Badge>
+                )}
                 <Badge variant="outline">
-                  {item.tipo === "suporte" ? "Suporte" : "Melhoria"}
+                  {item.tipo === "suporte" ? "Suporte" : item.tipo === "melhoria" ? "Melhoria" : "Infra"}
                 </Badge>
                 {item.descricao_tecnica && (
                   <span className="text-xs leading-relaxed text-muted-foreground">
@@ -255,6 +267,9 @@ function TechnicalTable({ items }: { items: ChangelogItemView[] }) {
         </Badge>
         <Badge variant="outline">
           Melhoria: {items.filter((i) => i.tipo === "melhoria").length}
+        </Badge>
+        <Badge variant="outline">
+          Infra: {items.filter((i) => i.tipo === "infra").length}
         </Badge>
         {Object.entries(porCamada).map(([camada, total]) => (
           <Badge key={camada} variant="secondary">

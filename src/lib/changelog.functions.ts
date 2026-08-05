@@ -25,7 +25,7 @@ export interface ChangelogItemView {
   descricao_legivel: string;
   item_data: string;
   /** 'suporte' | 'melhoria' — usado para separar ✅ / 🆕. */
-  tipo: "suporte" | "melhoria";
+  tipo: "suporte" | "melhoria" | "infra";
   reports: ChangelogLinkedReport[];
   /** Campos técnicos: somente super admin. */
   camada?: string;
@@ -47,7 +47,7 @@ interface RawItem {
   round_id: string;
   descricao_legivel: string;
   item_data: string;
-  classificacao: "suporte" | "melhoria";
+  classificacao: "suporte" | "melhoria" | "infra";
   camada: string;
   descricao_tecnica: string | null;
   sort_order: number;
