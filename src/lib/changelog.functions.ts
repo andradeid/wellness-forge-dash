@@ -23,6 +23,7 @@ export interface ChangelogLinkedReport {
 export interface ChangelogItemView {
   id: string;
   descricao_legivel: string;
+  item_data: string;
   /** 'suporte' | 'melhoria' — usado para separar ✅ / 🆕. */
   tipo: "suporte" | "melhoria";
   reports: ChangelogLinkedReport[];
@@ -34,6 +35,7 @@ export interface ChangelogItemView {
 export interface ChangelogRoundView {
   id: string;
   rodada_data: string;
+  rodada_data_fim?: string | null;
   titulo: string;
   itens: ChangelogItemView[];
   notas_curador?: string | null;
@@ -44,6 +46,7 @@ interface RawItem {
   id: string;
   round_id: string;
   descricao_legivel: string;
+  item_data: string;
   classificacao: "suporte" | "melhoria";
   camada: string;
   descricao_tecnica: string | null;

@@ -178,6 +178,7 @@ function ItemGroup({
       </div>
 
       <div className="space-y-2">
+        {items.map((item) => (
           <div key={item.id} className="rounded-lg border bg-card p-3 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <p className="text-sm leading-relaxed text-foreground">{item.descricao_legivel}</p>
