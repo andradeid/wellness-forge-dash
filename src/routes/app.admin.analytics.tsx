@@ -37,7 +37,7 @@ interface Row {
 const DAYS_PT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 function AnalyticsPage() {
-  const [range, setRange] = useState<RangeKey>("7d");
+  const [range, setRange] = useState<RangeKey>("24h");
   const fetchStats = useServerFn(getUsageStats);
 
   const { data, isLoading } = useQuery({
