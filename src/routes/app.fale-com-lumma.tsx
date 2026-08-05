@@ -23,7 +23,7 @@ import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
 
 export const Route = createFileRoute("/app/fale-com-lumma")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { module?: string } => ({
     module: typeof s.module === "string" ? s.module : undefined,
   }),
   component: FaleComLummaPage,

@@ -39,7 +39,15 @@ import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { getAgentIcon } from "@/lib/agent-icons";
 
 export const Route = createFileRoute("/app/chat/$patientId")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): {
+    chatId?: string;
+    messageId?: string;
+    module?: string;
+    agent?: string;
+    task?: string;
+  } => ({
     chatId: typeof s.chatId === "string" ? s.chatId : undefined,
     messageId: typeof s.messageId === "string" ? s.messageId : undefined,
     module: typeof s.module === "string" ? s.module : undefined,

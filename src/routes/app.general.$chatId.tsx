@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 
 export const Route = createFileRoute("/app/general/$chatId")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { module?: string } => ({
     module: typeof s.module === "string" ? s.module : "research",
   }),
   component: GeneralChatPage,
