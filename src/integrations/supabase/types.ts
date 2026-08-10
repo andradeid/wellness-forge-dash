@@ -73,6 +73,7 @@ export type Database = {
           id: string
           message_id: string
           rating: Database["public"]["Enums"]["ai_feedback_rating"]
+          reasons: string[] | null
           updated_at: string
         }
         Insert: {
@@ -82,6 +83,7 @@ export type Database = {
           id?: string
           message_id: string
           rating: Database["public"]["Enums"]["ai_feedback_rating"]
+          reasons?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -91,7 +93,32 @@ export type Database = {
           id?: string
           message_id?: string
           rating?: Database["public"]["Enums"]["ai_feedback_rating"]
+          reasons?: string[] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_feedback_metrics: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          event_type: string
+          id: string
+          message_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          event_type: string
+          id?: string
+          message_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          event_type?: string
+          id?: string
+          message_id?: string
         }
         Relationships: []
       }

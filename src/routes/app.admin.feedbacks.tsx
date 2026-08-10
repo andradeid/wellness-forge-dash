@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ interface FeedbackRow {
   created_at: string;
   rating: "positive" | "negative" | "suggestion";
   comment: string | null;
+  reasons: string[] | null;
   message_id: string;
   chat_id: string | null;
   patient_id: string | null;
@@ -75,7 +77,7 @@ function FeedbacksPage() {
       setLoading(true);
       const { data: feedbacks, error } = await (supabase as any)
         .from("ai_feedback")
-        .select("id, created_at, rating, comment, message_id, created_by")
+        .select("id, created_at, rating, comment, reasons, message_id, created_by")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -151,6 +153,7 @@ function FeedbacksPage() {
           created_at: f.created_at,
           rating: f.rating,
           comment: f.comment,
+          reasons: f.reasons ?? [],
           message_id: f.message_id,
           chat_id: chatId,
           patient_id: patientId,
@@ -174,7 +177,8 @@ function FeedbacksPage() {
         (r.patient_name ?? "").toLowerCase().includes(q) ||
         (r.nutri_name ?? "").toLowerCase().includes(q) ||
         (r.nutri_email ?? "").toLowerCase().includes(q) ||
-        (r.comment ?? "").toLowerCase().includes(q)
+        (r.comment ?? "").toLowerCase().includes(q) ||
+        (r.reasons ?? []).some(res => res.toLowerCase().includes(q))
       );
     });
   }, [rows, search, filter]);
@@ -253,7 +257,7 @@ function FeedbacksPage() {
   }, [rows]);
 
   const exportCsv = () => {
-    const headers = ["Data", "Paciente", "Nutricionista", "Rating", "Comentário"];
+    const headers = ["Data", "Paciente", "Nutricionista", "Rating", "Motivos", "Comentário"];
     const escape = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
     const lines = [headers.join(",")];
     for (const r of filtered) {
@@ -263,6 +267,7 @@ function FeedbacksPage() {
           r.patient_name ?? "",
           r.nutri_name ?? r.nutri_email ?? "",
           r.rating,
+          (r.reasons ?? []).join("; "),
           (r.comment ?? "").replace(/\n/g, " "),
         ]
           .map(escape)
@@ -385,7 +390,7 @@ function FeedbacksPage() {
                       Rating
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                      Comentário
+                      Motivos / Comentário
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-right">
                       Conversa
@@ -435,13 +440,24 @@ function FeedbacksPage() {
                             <RatingBadge rating={r.rating} />
                           </TableCell>
                           <TableCell className="py-4 text-sm text-foreground/80 max-w-md">
-                            {r.comment ? (
-                              <span className="line-clamp-3 whitespace-pre-wrap">
-                                {r.comment}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
+                            <div className="space-y-1.5">
+                              {r.reasons && r.reasons.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {r.reasons.map(res => (
+                                    <Badge key={res} variant="outline" className="text-[10px] py-0 h-4 bg-rose-50 text-rose-700 border-rose-200">
+                                      {res}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                              {r.comment ? (
+                                <span className="line-clamp-3 whitespace-pre-wrap block">
+                                  {r.comment}
+                                </span>
+                              ) : !r.reasons?.length ? (
+                                <span className="text-muted-foreground">—</span>
+                              ) : null}
+                            </div>
                           </TableCell>
                           <TableCell className="py-4 text-right">
                             {r.patient_id ? (
