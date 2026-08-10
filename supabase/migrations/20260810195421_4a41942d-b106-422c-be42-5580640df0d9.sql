@@ -1,0 +1,2 @@
+ALTER TABLE public.curation_requests ADD COLUMN IF NOT EXISTS grupo_tematico text;
+CREATE INDEX IF NOT EXISTS idx_curation_requests_grupo_tematico ON public.curation_requests (grupo_tematico) WHERE grupo_tematico IS NOT NULL;

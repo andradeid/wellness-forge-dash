@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -80,6 +81,7 @@ export interface CurationAdminRow {
   admin_final_classification: string | null;
   admin_notes: string | null;
   attachment_mime_type: string | null;
+  grupo_tematico?: string | null;
 }
 
 const TECHNICAL_LABELS: Record<string, string> = {
@@ -199,6 +201,7 @@ export function CurationDetailDrawer({
   const [status, setStatus] = useState<string>("registrado");
   const [adminNotes, setAdminNotes] = useState("");
   const [finalClassification, setFinalClassification] = useState<string>("");
+  const [grupoTematico, setGrupoTematico] = useState("");
   const [conversationOpen, setConversationOpen] = useState(false);
 
   useEffect(() => {
@@ -206,7 +209,9 @@ export function CurationDetailDrawer({
     setStatus(request.status);
     setAdminNotes(request.admin_notes ?? "");
     setFinalClassification(request.admin_final_classification ?? "");
+    setGrupoTematico(request.grupo_tematico ?? "");
   }, [request]);
+
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -217,6 +222,7 @@ export function CurationDetailDrawer({
           status,
           admin_notes: adminNotes.trim() || null,
           admin_final_classification: finalClassification || null,
+          grupo_tematico: grupoTematico.trim() || null,
         })
         .eq("id", request.id);
       if (error) throw error;
@@ -394,6 +400,22 @@ export function CurationDetailDrawer({
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="curation-grupo-tematico">Grupo temático</Label>
+                  <Input
+                    id="curation-grupo-tematico"
+                    value={grupoTematico}
+                    onChange={(event) => setGrupoTematico(event.target.value)}
+                    placeholder="Ex.: Urinálise, Raciocínio interno"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use o mesmo texto em reports que tratam do mesmo problema para agrupá-los na
+                    listagem.
+                  </p>
+                </div>
+
+
 
                 <div className="space-y-2">
                   <Label htmlFor="curation-admin-notes">Notas do admin</Label>
