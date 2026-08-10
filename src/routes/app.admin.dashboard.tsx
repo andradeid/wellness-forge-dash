@@ -209,6 +209,11 @@ function AdminDashboardPage() {
         />
       </div>
 
+      {/* Assinaturas e vencimentos (monitoramento) */}
+      <SubscriptionExpiryCard />
+
+
+
       {/* Bloco 2 — uso */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="col-span-2 p-6 rounded-2xl">
