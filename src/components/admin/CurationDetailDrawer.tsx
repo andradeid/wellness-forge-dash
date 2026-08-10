@@ -200,6 +200,7 @@ export function CurationDetailDrawer({
   const [status, setStatus] = useState<string>("registrado");
   const [adminNotes, setAdminNotes] = useState("");
   const [finalClassification, setFinalClassification] = useState<string>("");
+  const [grupoTematico, setGrupoTematico] = useState("");
   const [conversationOpen, setConversationOpen] = useState(false);
 
   useEffect(() => {
@@ -207,7 +208,9 @@ export function CurationDetailDrawer({
     setStatus(request.status);
     setAdminNotes(request.admin_notes ?? "");
     setFinalClassification(request.admin_final_classification ?? "");
+    setGrupoTematico(request.grupo_tematico ?? "");
   }, [request]);
+
 
   const saveMutation = useMutation({
     mutationFn: async () => {
