@@ -189,8 +189,10 @@ function CuradoriaAdminPage() {
       if (classificationFilter !== ALL && row.curator_classification !== classificationFilter)
         return false;
       if (curatorFilter !== ALL && row.created_by !== curatorFilter) return false;
-      if (camadaFilter !== ALL && (parseCamada(row.ai_technical_direction) ?? "") !== camadaFilter)
-        return false;
+      if (camadaFilter !== ALL) {
+        const camada = parseCamada(row.ai_technical_direction);
+        if (camadaFilter === "__none__" ? !!camada : camada !== camadaFilter) return false;
+      }
       if (grupoFilter !== ALL && (row.grupo_tematico?.trim() ?? "") !== grupoFilter) return false;
       if (onlyDecision && !decisionFlag(row).needsDecision) return false;
       return true;
@@ -361,7 +363,7 @@ function CuradoriaAdminPage() {
                       {camadaLabel(key)}
                     </SelectItem>
                   ))}
-                  <SelectItem value="">Sem camada definida</SelectItem>
+                  <SelectItem value="__none__">Sem camada definida</SelectItem>
                 </SelectContent>
               </Select>
 
