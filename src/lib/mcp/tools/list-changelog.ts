@@ -20,22 +20,26 @@ export default defineTool({
         .from("changelog_rounds")
         .select(`
           id,
-          title,
-          round_date,
+          titulo,
+          rodada_data,
+          rodada_data_fim,
           notas_curador,
           notas_admin,
           created_at,
           items:changelog_items(
             id,
-            title,
-            description,
-            type,
+            descricao_legivel,
+            descricao_tecnica,
+            classificacao,
+            camada,
+            item_data,
+            sort_order,
             reports:changelog_item_reports(
               report:curation_requests(id, numero_sequencial, title)
             )
           )
         `)
-        .order("round_date", { ascending: false })
+        .order("rodada_data", { ascending: false })
         .range(input.offset, input.offset + input.limit - 1);
 
       if (error) throw new Error(error.message);
