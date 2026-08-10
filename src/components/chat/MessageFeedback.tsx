@@ -58,7 +58,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
       if (rating === "negative") {
         // toggle off
         setSaving(true);
-        const { error } = await supabase.from("ai_feedback").delete().eq("id", ratingId);
+        const { error } = await supabase.from("ai_feedback").delete().eq("id", ratingId!);
         setSaving(false);
         if (error) return toast.error("Não foi possível atualizar.");
         setRatingId(null);
@@ -74,7 +74,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
     setSaving(true);
     if (ratingId) {
       if (rating === "positive") {
-        const { error } = await supabase.from("ai_feedback").delete().eq("id", ratingId);
+        const { error } = await supabase.from("ai_feedback").delete().eq("id", ratingId!);
         setSaving(false);
         if (error) return toast.error("Não foi possível atualizar.");
         setRatingId(null);
@@ -84,7 +84,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
       const { error } = await supabase
         .from("ai_feedback")
         .update({ rating: next, reasons: [] })
-        .eq("id", ratingId);
+        .eq("id", ratingId!);
       setSaving(false);
       if (error) return toast.error("Não foi possível atualizar.");
       setRating(next);
@@ -128,7 +128,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
       res = await supabase
         .from("ai_feedback")
         .update(payload)
-        .eq("id", ratingId)
+        .eq("id", ratingId!)
         .select("id")
         .single();
     } else {
@@ -160,7 +160,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
       const { error } = await supabase
         .from("ai_feedback")
         .update({ comment: text })
-        .eq("id", suggestionId);
+        .eq("id", suggestionId!);
       setSaving(false);
       if (error) return toast.error("Não foi possível atualizar a sugestão.");
       setSavedComment(text);
