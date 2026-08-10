@@ -221,6 +221,7 @@ export function CurationDetailDrawer({
           status,
           admin_notes: adminNotes.trim() || null,
           admin_final_classification: finalClassification || null,
+          grupo_tematico: grupoTematico.trim() || null,
         })
         .eq("id", request.id);
       if (error) throw error;
