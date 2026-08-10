@@ -1394,6 +1394,51 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_expiry_log: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          detectado_dia: string
+          detectado_em: string
+          dias_vencida: number
+          email: string | null
+          id: string
+          origem: string | null
+          plano: string | null
+          tem_gateway: boolean
+          tem_pagamento: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          detectado_dia?: string
+          detectado_em?: string
+          dias_vencida?: number
+          email?: string | null
+          id?: string
+          origem?: string | null
+          plano?: string | null
+          tem_gateway?: boolean
+          tem_pagamento?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          detectado_dia?: string
+          detectado_em?: string
+          dias_vencida?: number
+          email?: string | null
+          id?: string
+          origem?: string | null
+          plano?: string | null
+          tem_gateway?: boolean
+          tem_pagamento?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string
@@ -1456,6 +1501,7 @@ export type Database = {
           current_period_end: string
           id: string
           legacy_status: string | null
+          origin: string | null
           plan_type: Database["public"]["Enums"]["plan_type"]
           seats_override: number | null
           status: Database["public"]["Enums"]["subscription_status"]
@@ -1474,6 +1520,7 @@ export type Database = {
           current_period_end?: string
           id?: string
           legacy_status?: string | null
+          origin?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -1492,6 +1539,7 @@ export type Database = {
           current_period_end?: string
           id?: string
           legacy_status?: string | null
+          origin?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
           seats_override?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -1851,6 +1899,7 @@ export type Database = {
         Args: { p_prev_since: string; p_since: string }
         Returns: Json
       }
+      admin_subscription_expiry_overview: { Args: never; Returns: Json }
       aggregate_usage_hour: { Args: { p_hour: string }; Returns: undefined }
       consume_credits: {
         Args: {
@@ -1867,6 +1916,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_subscription_expiries: { Args: never; Returns: number }
       reconcile_subscription_blocks: { Args: never; Returns: number }
       refresh_recent_usage_stats: { Args: never; Returns: undefined }
       release_stream_slot: { Args: { p_user_id: string }; Returns: undefined }
