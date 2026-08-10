@@ -487,6 +487,7 @@ export type Database = {
           curator_dimension: string | null
           description: string
           duplicate_of: string | null
+          grupo_tematico: string | null
           id: string
           image_url: string | null
           message_id: string | null
@@ -522,6 +523,7 @@ export type Database = {
           curator_dimension?: string | null
           description: string
           duplicate_of?: string | null
+          grupo_tematico?: string | null
           id?: string
           image_url?: string | null
           message_id?: string | null
@@ -557,6 +559,7 @@ export type Database = {
           curator_dimension?: string | null
           description?: string
           duplicate_of?: string | null
+          grupo_tematico?: string | null
           id?: string
           image_url?: string | null
           message_id?: string | null
