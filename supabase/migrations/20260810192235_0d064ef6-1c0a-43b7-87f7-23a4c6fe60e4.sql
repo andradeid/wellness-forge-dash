@@ -1,0 +1,2 @@
+ALTER TABLE public.changelog_items DROP CONSTRAINT IF EXISTS changelog_items_camada_check;
+ALTER TABLE public.changelog_items ADD CONSTRAINT changelog_items_camada_check CHECK (camada IN ('dify','lovable','banco','kb'));
