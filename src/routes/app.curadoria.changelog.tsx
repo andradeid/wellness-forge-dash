@@ -19,6 +19,7 @@ const CAMADA_LABELS: Record<string, string> = {
   dify: "Agente",
   lovable: "Interface",
   banco: "Sistema",
+  kb: "Base de conhecimento",
 };
 
 function formatDate(value: string) {
