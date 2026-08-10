@@ -19,18 +19,20 @@ export default defineTool({
         .from("changelog_rounds")
         .select(`
           id,
-          title,
-          round_date,
+          titulo,
+          rodada_data,
+          rodada_data_fim,
           notas_curador,
           notas_admin,
           created_at,
           items:changelog_items(
             id,
-            title,
-            description,
-            type,
-            camada,
+            descricao_legivel,
             descricao_tecnica,
+            classificacao,
+            camada,
+            item_data,
+            sort_order,
             reports:changelog_item_reports(
               report:curation_requests(id, numero_sequencial, title, status)
             )
