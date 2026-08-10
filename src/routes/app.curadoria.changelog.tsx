@@ -178,11 +178,13 @@ function ItemGroup({
   icon,
   items,
   isFull,
+  fallbackDate,
 }: {
   title: string;
   icon: React.ReactNode;
   items: ChangelogItemView[];
   isFull: boolean;
+  fallbackDate?: string | null;
 }) {
   return (
     <div className="space-y-2">
