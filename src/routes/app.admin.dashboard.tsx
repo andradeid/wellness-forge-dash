@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
+import { SubscriptionExpiryCard } from "@/components/admin/SubscriptionExpiryCard";
+
 
 function InfoTip({ text }: { text: string }) {
   return (
