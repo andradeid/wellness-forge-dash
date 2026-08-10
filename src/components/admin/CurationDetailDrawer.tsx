@@ -80,6 +80,7 @@ export interface CurationAdminRow {
   admin_final_classification: string | null;
   admin_notes: string | null;
   attachment_mime_type: string | null;
+  grupo_tematico?: string | null;
 }
 
 const TECHNICAL_LABELS: Record<string, string> = {
