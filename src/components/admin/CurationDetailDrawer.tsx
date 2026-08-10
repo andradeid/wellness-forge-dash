@@ -401,6 +401,22 @@ export function CurationDetailDrawer({
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="curation-grupo-tematico">Grupo temático</Label>
+                  <Input
+                    id="curation-grupo-tematico"
+                    value={grupoTematico}
+                    onChange={(event) => setGrupoTematico(event.target.value)}
+                    placeholder="Ex.: Urinálise, Raciocínio interno"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use o mesmo texto em reports que tratam do mesmo problema para agrupá-los na
+                    listagem.
+                  </p>
+                </div>
+
+
+
+                <div className="space-y-2">
                   <Label htmlFor="curation-admin-notes">Notas do admin</Label>
                   <Textarea
                     id="curation-admin-notes"
