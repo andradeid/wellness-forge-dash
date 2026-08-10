@@ -1,4 +1,4 @@
-import { useState, type ReactNode, useEffect } from "react";
+import { useState, type ReactNode } from "react";
 import { ThumbsUp, ThumbsDown, MessageSquare, Loader2, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -56,53 +56,50 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
 
     if (next === "negative") {
       if (rating === "negative") {
-        // Toggle off
+        // toggle off
         setSaving(true);
         const { error } = await supabase.from("ai_feedback").delete().eq("id", ratingId);
         setSaving(false);
-        if (error) return toast.error("Não foi possível remover o feedback.");
+        if (error) return toast.error("Não foi possível atualizar.");
         setRatingId(null);
         setRating(null);
         return;
       }
-      // Abrir formulário negativo
       setShowNegativeForm(true);
       setShowSuggestion(false);
       trackMetric("negative_popup_open");
       return;
     }
 
-    // Fluxo positivo
     setSaving(true);
     if (ratingId) {
       if (rating === "positive") {
         const { error } = await supabase.from("ai_feedback").delete().eq("id", ratingId);
         setSaving(false);
-        if (error) return toast.error("Não foi possível remover.");
+        if (error) return toast.error("Não foi possível atualizar.");
         setRatingId(null);
         setRating(null);
         return;
       }
       const { error } = await supabase
         .from("ai_feedback")
-        .update({ rating: "positive", reasons: [] })
+        .update({ rating: next, reasons: [] })
         .eq("id", ratingId);
       setSaving(false);
       if (error) return toast.error("Não foi possível atualizar.");
-      setRating("positive");
+      setRating(next);
       toast.success("Obrigado pelo feedback!");
       return;
     }
-
     const { data, error } = await supabase
       .from("ai_feedback")
-      .insert({ message_id: messageId, rating: "positive", created_by: uid })
+      .insert({ message_id: messageId, rating: next, created_by: uid })
       .select("id")
       .single();
     setSaving(false);
     if (error || !data) return toast.error("Não foi possível registrar o feedback.");
     setRatingId(data.id);
-    setRating("positive");
+    setRating(next);
     toast.success("Obrigado pelo feedback!");
   }
 
@@ -150,7 +147,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
     setRatingId(res.data.id);
     setRating("negative");
     setShowNegativeForm(false);
-    toast.success("Feedback enviado. Obrigado por nos ajudar a melhorar!");
+    toast.success("Obrigado pelo feedback!");
   }
 
   async function handleSuggestion() {
@@ -283,7 +280,7 @@ export function MessageFeedback({ messageId, rightSlot }: { messageId: string; r
             onChange={(e) => setComment(e.target.value.slice(0, 1000))}
             placeholder={selectedReasons.includes("Outro") ? "Explique o que houve (obrigatório)..." : "Comentário adicional (opcional)..."}
             className={cn(
-              "min-h-[80px] text-xs bg-white/80 border-rose-100 focus-visible:ring-rose-200",
+              "min-h-[80px] text-xs bg-white/70 border-rose-100 focus-visible:ring-rose-200",
               selectedReasons.includes("Outro") && !comment.trim() && "border-rose-300"
             )}
             maxLength={1000}
