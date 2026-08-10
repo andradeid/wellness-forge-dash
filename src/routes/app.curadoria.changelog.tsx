@@ -124,6 +124,7 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
             items={correcoes}
             isFull={isFull}
+            fallbackDate={round.rodada_data}
           />
         )}
 
@@ -133,6 +134,7 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             icon={<Sparkles className="h-4 w-4 text-orange-500" />}
             items={melhorias}
             isFull={isFull}
+            fallbackDate={round.rodada_data}
           />
         )}
 
@@ -142,6 +144,7 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             icon={<CalendarDays className="h-4 w-4 text-blue-500" />}
             items={infra}
             isFull={isFull}
+            fallbackDate={round.rodada_data}
           />
         )}
 
