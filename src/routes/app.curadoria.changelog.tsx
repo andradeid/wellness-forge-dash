@@ -22,9 +22,10 @@ const CAMADA_LABELS: Record<string, string> = {
   kb: "Base de conhecimento",
 };
 
-function formatDate(value: string) {
-  const [y, m, d] = value.split("-");
-  return d && m && y ? `${d}/${m}/${y}` : value;
+function formatDate(value?: string | null) {
+  if (!value) return "";
+  const [y, m, d] = String(value).slice(0, 10).split("-");
+  return d && m && y ? `${d}/${m}/${y}` : String(value);
 }
 
 function ChangelogPage() {
@@ -123,6 +124,7 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
             items={correcoes}
             isFull={isFull}
+            fallbackDate={round.rodada_data}
           />
         )}
 
@@ -132,6 +134,7 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             icon={<Sparkles className="h-4 w-4 text-orange-500" />}
             items={melhorias}
             isFull={isFull}
+            fallbackDate={round.rodada_data}
           />
         )}
 
@@ -141,6 +144,7 @@ function RoundCard({ round, isFull }: { round: ChangelogRoundView; isFull: boole
             icon={<CalendarDays className="h-4 w-4 text-blue-500" />}
             items={infra}
             isFull={isFull}
+            fallbackDate={round.rodada_data}
           />
         )}
 
@@ -174,11 +178,13 @@ function ItemGroup({
   icon,
   items,
   isFull,
+  fallbackDate,
 }: {
   title: string;
   icon: React.ReactNode;
   items: ChangelogItemView[];
   isFull: boolean;
+  fallbackDate?: string | null;
 }) {
   return (
     <div className="space-y-2">
@@ -214,7 +220,7 @@ function ItemGroup({
                   )}
                 </div>
                 <span className="shrink-0 text-[10px] font-medium text-muted-foreground uppercase">
-                  {formatDate(item.item_data)}
+                  {formatDate(item.item_data ?? fallbackDate)}
                 </span>
               </div>
 
