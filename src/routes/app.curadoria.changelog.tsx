@@ -22,9 +22,10 @@ const CAMADA_LABELS: Record<string, string> = {
   kb: "Base de conhecimento",
 };
 
-function formatDate(value: string) {
-  const [y, m, d] = value.split("-");
-  return d && m && y ? `${d}/${m}/${y}` : value;
+function formatDate(value?: string | null) {
+  if (!value) return "";
+  const [y, m, d] = String(value).slice(0, 10).split("-");
+  return d && m && y ? `${d}/${m}/${y}` : String(value);
 }
 
 function ChangelogPage() {
