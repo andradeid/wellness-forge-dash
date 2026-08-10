@@ -220,7 +220,7 @@ function ItemGroup({
                   )}
                 </div>
                 <span className="shrink-0 text-[10px] font-medium text-muted-foreground uppercase">
-                  {formatDate(item.item_data)}
+                  {formatDate(item.item_data ?? fallbackDate)}
                 </span>
               </div>
 
