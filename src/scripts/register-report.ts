@@ -1,9 +1,15 @@
-import { supabaseAdmin } from "./integrations/supabase/client.server";
+import { supabaseAdmin } from "../integrations/supabase/client.server";
 
 async function main() {
   const email = 'curadoria@lumma.ia.br';
-  const { data: user } = await supabaseAdmin.auth.admin.listUsers();
-  const targetUser = user?.users.find(u => u.email === email);
+  const { data: userList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+  
+  if (listError) {
+    console.error("Erro ao listar usuários:", listError.message);
+    process.exit(1);
+  }
+
+  const targetUser = userList?.users.find((u: any) => u.email === email);
   
   if (!targetUser) {
     console.error("Usuário não encontrado:", email);
@@ -19,7 +25,7 @@ async function main() {
       curator_dimension: 'comportamento',
       status: 'registrado',
       created_by: targetUser.id
-    })
+    } as any)
     .select("numero_sequencial")
     .single();
 
