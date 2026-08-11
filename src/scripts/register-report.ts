@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../integrations/supabase/client.server";
+import { supabaseAdmin } from "../lib/../integrations/supabase/client.server";
 
 async function main() {
   const email = 'curadoria@lumma.ia.br';
