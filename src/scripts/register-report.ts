@@ -1,7 +1,7 @@
-import { supabaseAdmin } from "../lib/../integrations/supabase/client.server";
+import { supabaseAdmin } from "../integrations/supabase/client.server";
 
 async function main() {
-  const email = 'curadoria@lumma.ia.br';
+  const email = 'priscilla.nutri@yahoo.com.br';
   const { data: userList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
   
   if (listError) {
