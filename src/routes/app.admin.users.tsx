@@ -413,7 +413,7 @@ function UsersPage() {
     if (pageIds.length > 0) {
       const { data: subs, error: sErr } = await (supabase as any)
         .from("subscriptions")
-        .select("user_id, status, plan_type, current_period_end")
+        .select("user_id, status, plan_type, current_period_end, origin")
         .in("user_id", pageIds);
       if (sErr) toast.error(sErr.message);
       (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
