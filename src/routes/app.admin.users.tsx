@@ -1470,6 +1470,50 @@ function UsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* AlertDialog: Bloquear / Liberar acesso (motivo obrigatório) */}
+      <AlertDialog open={!!blockTarget} onOpenChange={(o) => { if (!o && !blockSaving) { setBlockTarget(null); setBlockReason(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {blockTarget && isLoginBlocked(blockTarget) ? "Liberar acesso da usuária" : "Bloquear acesso da usuária"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  {blockTarget?.full_name || blockTarget?.email}
+                  {blockTarget && expiredDays(blockTarget.current_period_end) > 0 && (
+                    <span className="block text-destructive">
+                      Atenção: plano vencido há {expiredDays(blockTarget.current_period_end)} dia(s).
+                    </span>
+                  )}
+                </p>
+                <p className="text-muted-foreground">
+                  O motivo fica registrado na auditoria com o seu usuário e a data.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="block-reason">Motivo (obrigatório)</Label>
+            <Textarea
+              id="block-reason"
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              placeholder="Ex.: contato via suporte, assinatura ativa confirmada, liberação autorizada."
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={blockSaving}>Cancelar</AlertDialogCancel>
+            <Button onClick={confirmToggleBlock} disabled={blockSaving || blockReason.trim().length < 5}>
+              {blockSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {blockTarget && isLoginBlocked(blockTarget) ? "Liberar acesso" : "Bloquear"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
 
       {/* Modal: Novo Nutricionista */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
