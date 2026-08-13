@@ -1922,6 +1922,15 @@ export type Database = {
         }
         Returns: number
       }
+      admin_auth_block_status: {
+        Args: { p_ids: string[] }
+        Returns: {
+          auth_banned: boolean
+          banned_until: string
+          last_sign_in_at: string
+          user_id: string
+        }[]
+      }
       admin_dashboard_stats: {
         Args: { p_prev_since: string; p_since: string }
         Returns: Json
