@@ -50,10 +50,8 @@ Deno.serve(async (req) => {
   if (callerRoles.length === 0) return json({ ok: false, error: "Acesso restrito" }, 403);
   const isSuperAdmin = callerRoles.includes("super_admin");
 
-  // Suporte (CS) não pode bloquear/desbloquear
-  if (req.method === "PATCH" && !isSuperAdmin) {
-    return json({ ok: false, error: "Ação restrita ao super admin" }, 403);
-  }
+  // Suporte (CS) pode apenas DESBLOQUEAR — a validação fina fica no handler PATCH
+
 
   try {
     if (req.method === "POST") {
