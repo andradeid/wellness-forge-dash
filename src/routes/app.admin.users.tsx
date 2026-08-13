@@ -907,7 +907,10 @@ function UsersPage() {
                 <SelectItem value="trial">Trial</SelectItem>
                 <SelectItem value="past_due">Inadimplente</SelectItem>
                 <SelectItem value="canceled">Cancelada</SelectItem>
-                <SelectItem value="blocked">Bloqueada</SelectItem>
+                <SelectItem value="expired">Vencida</SelectItem>
+                <SelectItem value="blocked">Bloqueada (perfil)</SelectItem>
+                <SelectItem value="auth_blocked">Bloqueada (login)</SelectItem>
+
               </SelectContent>
             </Select>
             <Select value={planFilter ?? ""} onValueChange={setPlanFilter}>
