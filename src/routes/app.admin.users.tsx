@@ -1162,7 +1162,14 @@ function UsersPage() {
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Plano & assinatura</p>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <DetailCell label="Plano" value={planLabel(detailUser.plan_type)} />
-                  <DetailCell label="Status" value={statusLabel(detailUser.status, detailUser.is_blocked)} />
+                  <DetailCell label="Status" value={statusLabel(detailUser)} />
+                  <DetailCell label="Origem" value={originLabel(detailUser.origin)} />
+                  <DetailCell label="Login bloqueado" value={detailUser.auth_banned ? "Sim (ban no Auth)" : detailUser.is_blocked ? "Sim (perfil)" : "Não"} />
+                  <DetailCell
+                    label="Último acesso"
+                    value={detailUser.last_sign_in_at ? new Date(detailUser.last_sign_in_at).toLocaleString("pt-BR") : "Nunca acessou"}
+                  />
+
                   <DetailCell
                     label="Validade"
                     value={detailExtra?.currentPeriodEnd ? new Date(detailExtra.currentPeriodEnd).toLocaleDateString("pt-BR") : "—"}
