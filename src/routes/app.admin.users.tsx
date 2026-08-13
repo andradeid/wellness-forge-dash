@@ -723,16 +723,24 @@ function UsersPage() {
     }
   };
 
-  const toggleBlock = async (u: UserRow) => {
-    const next = !u.is_blocked;
+  const confirmToggleBlock = async () => {
+    if (!blockTarget) return;
+    const next = !isLoginBlocked(blockTarget);
+    const reason = blockReason.trim();
+    if (reason.length < 5) { toast.error("Descreva o motivo (mínimo 5 caracteres)"); return; }
+    setBlockSaving(true);
     const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "PATCH",
-      body: { user_id: u.id, blocked: next },
+      body: { user_id: blockTarget.id, blocked: next, reason },
     });
+    setBlockSaving(false);
     if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao atualizar status"); return; }
-    toast.success(next ? "Usuária bloqueada (login impedido)" : "Usuária reativada");
+    toast.success(next ? "Usuária bloqueada (login impedido)" : "Acesso liberado com sucesso");
+    setBlockTarget(null);
+    setBlockReason("");
     refreshAll();
   };
+
 
   const confirmDelete = async () => {
     if (!deleteUser) return;
