@@ -323,15 +323,26 @@ function UsersPage() {
         : candidateIds.filter((id) => setNext.has(id));
     };
 
-    const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
+    // Filtro "Bloqueada no login" — ids banidos no Auth
+    if (statusFilter === "auth_blocked") {
+      const { data: banned, error } = await (supabase as any).rpc("admin_auth_banned_ids");
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      intersect((banned ?? []).map((r: any) => r.user_id));
+    }
+
+    const subStatusActive =
+      statusFilter !== "all" && statusFilter !== "blocked" && statusFilter !== "auth_blocked";
+    const expiredFilter = statusFilter === "expired";
     if (subStatusActive || planFilter !== "all") {
       const PAGE = 1000;
       const collected: string[] = [];
       for (let from = 0; ; from += PAGE) {
         let sq = (supabase as any).from("subscriptions").select("user_id");
-        if (subStatusActive) sq = sq.eq("status", statusFilter);
+        if (expiredFilter) sq = sq.lt("current_period_end", new Date().toISOString());
+        else if (subStatusActive) sq = sq.eq("status", statusFilter);
         if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
         const { data, error } = await sq.range(from, from + PAGE - 1);
+
         if (error) { toast.error(error.message); setLoading(false); return; }
         const rows = data ?? [];
         collected.push(...rows.map((r: any) => r.user_id));
