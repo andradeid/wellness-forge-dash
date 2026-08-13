@@ -50,10 +50,8 @@ Deno.serve(async (req) => {
   if (callerRoles.length === 0) return json({ ok: false, error: "Acesso restrito" }, 403);
   const isSuperAdmin = callerRoles.includes("super_admin");
 
-  // Suporte (CS) não pode bloquear/desbloquear
-  if (req.method === "PATCH" && !isSuperAdmin) {
-    return json({ ok: false, error: "Ação restrita ao super admin" }, 403);
-  }
+  // Suporte (CS) pode apenas DESBLOQUEAR — a validação fina fica no handler PATCH
+
 
   try {
     if (req.method === "POST") {
@@ -351,7 +349,16 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const userId = String(body.user_id ?? "");
       const blocked = !!body.blocked;
+      const reason = body.reason ? String(body.reason).trim() : "";
       if (!userId) return json({ ok: false, error: "user_id ausente" }, 400);
+
+      // Suporte (CS) pode apenas liberar acesso, nunca bloquear
+      if (blocked && !isSuperAdmin) {
+        return json({ ok: false, error: "Bloquear é restrito ao super admin" }, 403);
+      }
+      if (!reason || reason.length < 5 || reason.length > 500) {
+        return json({ ok: false, error: "Informe o motivo (5–500 caracteres)" }, 400);
+      }
 
       const { error: banErr } = await admin.auth.admin.updateUserById(userId, {
         ban_duration: blocked ? "876000h" : "none",
@@ -359,8 +366,25 @@ Deno.serve(async (req) => {
       if (banErr) return json({ ok: false, error: banErr.message }, 400);
 
       await admin.from("profiles").update({ is_blocked: blocked }).eq("id", userId);
+
+      // Auditoria
+      await admin.from("integration_logs").insert({
+        source: "admin-users",
+        event: "manual_user_block_toggle",
+        status: "success",
+        message: `${blocked ? "Bloqueio" : "Liberação de acesso"} manual por ${callerId}`,
+        payload: {
+          target_user_id: userId,
+          performed_by: callerId,
+          actor_role: isSuperAdmin ? "super_admin" : "support",
+          blocked,
+          reason,
+        },
+      });
+
       return json({ ok: true });
     }
+
 
     return json({ ok: false, error: "Método não suportado" }, 405);
   } catch (e) {

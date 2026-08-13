@@ -82,12 +82,29 @@ interface UserRow {
   status: SubStatus | null;
   plan_type: PlanType | null;
   current_period_end: string | null;
+  origin?: string | null;
+  auth_banned?: boolean;
+  last_sign_in_at?: string | null;
   exam_count?: number;
 }
 
-function statusVariant(status: string | null, blocked?: boolean): "default" | "secondary" | "destructive" | "outline" {
-  if (blocked) return "destructive";
-  switch (status) {
+/** Bloqueio real de login: ban no Auth OU flag no perfil. */
+function isLoginBlocked(r: Pick<UserRow, "is_blocked" | "auth_banned">) {
+  return !!r.auth_banned || !!r.is_blocked;
+}
+
+/** Dias vencidos da assinatura (0 quando vigente ou sem data). */
+function expiredDays(currentPeriodEnd: string | null | undefined): number {
+  if (!currentPeriodEnd) return 0;
+  const end = new Date(currentPeriodEnd).getTime();
+  if (isNaN(end) || end >= Date.now()) return 0;
+  return Math.floor((Date.now() - end) / 86400000);
+}
+
+function statusVariant(r: Pick<UserRow, "status" | "is_blocked" | "auth_banned" | "current_period_end">): "default" | "secondary" | "destructive" | "outline" {
+  if (isLoginBlocked(r)) return "destructive";
+  if (expiredDays(r.current_period_end) > 0) return "outline";
+  switch (r.status) {
     case "active": return "default";
     case "trial": return "secondary";
     case "past_due": return "destructive";
@@ -96,10 +113,16 @@ function statusVariant(status: string | null, blocked?: boolean): "default" | "s
   }
 }
 
-function statusLabel(status: string | null, blocked?: boolean) {
-  if (blocked) return "Bloqueada";
-  return ({ active: "Ativa", trial: "Trial", past_due: "Inadimplente", canceled: "Cancelada" } as Record<string, string>)[status ?? ""] ?? "Sem plano";
+function statusLabel(r: Pick<UserRow, "status" | "is_blocked" | "auth_banned" | "current_period_end">) {
+  if (isLoginBlocked(r)) return "Bloqueada";
+  if (expiredDays(r.current_period_end) > 0) return "Vencida";
+  return ({ active: "Ativa", trial: "Trial", past_due: "Inadimplente", canceled: "Cancelada" } as Record<string, string>)[r.status ?? ""] ?? "Sem plano";
 }
+
+function originLabel(origin: string | null | undefined) {
+  return ({ migracao: "Migração", kiwify: "Kiwify", stripe: "Stripe", manual: "Manual" } as Record<string, string>)[origin ?? ""] ?? (origin || "—");
+}
+
 
 function planLabel(plan: string | null) {
   return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica", legado_500: "Legado 500" } as Record<string, string>)[plan ?? ""] ?? "—";
@@ -300,15 +323,26 @@ function UsersPage() {
         : candidateIds.filter((id) => setNext.has(id));
     };
 
-    const subStatusActive = statusFilter !== "all" && statusFilter !== "blocked";
+    // Filtro "Bloqueada no login" — ids banidos no Auth
+    if (statusFilter === "auth_blocked") {
+      const { data: banned, error } = await (supabase as any).rpc("admin_auth_banned_ids");
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      intersect((banned ?? []).map((r: any) => r.user_id));
+    }
+
+    const subStatusActive =
+      statusFilter !== "all" && statusFilter !== "blocked" && statusFilter !== "auth_blocked";
+    const expiredFilter = statusFilter === "expired";
     if (subStatusActive || planFilter !== "all") {
       const PAGE = 1000;
       const collected: string[] = [];
       for (let from = 0; ; from += PAGE) {
         let sq = (supabase as any).from("subscriptions").select("user_id");
-        if (subStatusActive) sq = sq.eq("status", statusFilter);
+        if (expiredFilter) sq = sq.lt("current_period_end", new Date().toISOString());
+        else if (subStatusActive) sq = sq.eq("status", statusFilter);
         if (planFilter !== "all") sq = sq.eq("plan_type", planFilter);
         const { data, error } = await sq.range(from, from + PAGE - 1);
+
         if (error) { toast.error(error.message); setLoading(false); return; }
         const rows = data ?? [];
         collected.push(...rows.map((r: any) => r.user_id));
@@ -390,7 +424,7 @@ function UsersPage() {
     if (pageIds.length > 0) {
       const { data: subs, error: sErr } = await (supabase as any)
         .from("subscriptions")
-        .select("user_id, status, plan_type, current_period_end")
+        .select("user_id, status, plan_type, current_period_end, origin")
         .in("user_id", pageIds);
       if (sErr) toast.error(sErr.message);
       (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
@@ -423,6 +457,15 @@ function UsersPage() {
     }
     setRowPatients(patientsCountMap);
 
+    // Bloqueio real de login (ban no Auth) — via função segura
+    const banMap = new Map<string, { banned: boolean; lastSignIn: string | null }>();
+    if (pageIds.length > 0) {
+      const { data: banRows } = await (supabase as any).rpc("admin_auth_block_status", { p_ids: pageIds });
+      (banRows ?? []).forEach((b: any) =>
+        banMap.set(b.user_id, { banned: !!b.auth_banned, lastSignIn: b.last_sign_in_at ?? null }),
+      );
+    }
+
     const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
@@ -435,7 +478,11 @@ function UsersPage() {
       status: subMap.get(p.id)?.status ?? null,
       plan_type: subMap.get(p.id)?.plan_type ?? null,
       current_period_end: subMap.get(p.id)?.current_period_end ?? null,
+      origin: subMap.get(p.id)?.origin ?? null,
+      auth_banned: banMap.get(p.id)?.banned ?? false,
+      last_sign_in_at: banMap.get(p.id)?.lastSignIn ?? null,
     }));
+
 
     setRows(merged);
     setTotal(totalCount);
@@ -647,6 +694,10 @@ function UsersPage() {
 
   const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
   const [resetSending, setResetSending] = useState(false);
+  const [blockTarget, setBlockTarget] = useState<UserRow | null>(null);
+  const [blockReason, setBlockReason] = useState("");
+  const [blockSaving, setBlockSaving] = useState(false);
+
 
   const sendWelcome = (u: UserRow) => {
     setResetTarget(u);
@@ -676,16 +727,24 @@ function UsersPage() {
     }
   };
 
-  const toggleBlock = async (u: UserRow) => {
-    const next = !u.is_blocked;
+  const confirmToggleBlock = async () => {
+    if (!blockTarget) return;
+    const next = !isLoginBlocked(blockTarget);
+    const reason = blockReason.trim();
+    if (reason.length < 5) { toast.error("Descreva o motivo (mínimo 5 caracteres)"); return; }
+    setBlockSaving(true);
     const { data, error } = await supabase.functions.invoke("admin-users", {
       method: "PATCH",
-      body: { user_id: u.id, blocked: next },
+      body: { user_id: blockTarget.id, blocked: next, reason },
     });
+    setBlockSaving(false);
     if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao atualizar status"); return; }
-    toast.success(next ? "Usuária bloqueada (login impedido)" : "Usuária reativada");
+    toast.success(next ? "Usuária bloqueada (login impedido)" : "Acesso liberado com sucesso");
+    setBlockTarget(null);
+    setBlockReason("");
     refreshAll();
   };
+
 
   const confirmDelete = async () => {
     if (!deleteUser) return;
@@ -860,7 +919,10 @@ function UsersPage() {
                 <SelectItem value="trial">Trial</SelectItem>
                 <SelectItem value="past_due">Inadimplente</SelectItem>
                 <SelectItem value="canceled">Cancelada</SelectItem>
-                <SelectItem value="blocked">Bloqueada</SelectItem>
+                <SelectItem value="expired">Vencida</SelectItem>
+                <SelectItem value="blocked">Bloqueada (perfil)</SelectItem>
+                <SelectItem value="auth_blocked">Bloqueada (login)</SelectItem>
+
               </SelectContent>
             </Select>
             <Select value={planFilter ?? ""} onValueChange={setPlanFilter}>
@@ -928,7 +990,9 @@ function UsersPage() {
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pacientes</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Validade</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cadastro</TableHead>
+
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Etiquetas</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-right">Ações</TableHead>
                   </TableRow>
@@ -957,13 +1021,30 @@ function UsersPage() {
                       <TableCell>{planLabel(r.plan_type)}</TableCell>
                       <TableCell className="tabular-nums">{rowPatients[r.id] ?? 0}</TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant(r.status, r.is_blocked)} className="rounded-full">
-                          {statusLabel(r.status, r.is_blocked)}
+                        <Badge variant={statusVariant(r)} className="rounded-full">
+                          {statusLabel(r)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {r.current_period_end ? (
+                          <div className="leading-tight">
+                            <p className={expiredDays(r.current_period_end) > 0 ? "text-destructive font-medium" : ""}>
+                              {new Date(r.current_period_end).toLocaleDateString("pt-BR")}
+                            </p>
+                            {expiredDays(r.current_period_end) > 0 && (
+                              <p className="text-[11px] text-destructive">
+                                Vencido há {expiredDays(r.current_period_end)} dia(s)
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
+
                       <TableCell>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -1020,16 +1101,19 @@ function UsersPage() {
                           <Button size="icon" variant="ghost" onClick={() => sendWelcome(r)} title="Enviar boas-vindas / Reset">
                             <Mail className="h-4 w-4" />
                           </Button>
+                          {(isSuperAdmin || isLoginBlocked(r)) && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => { setBlockTarget(r); setBlockReason(""); }}
+                              title={isLoginBlocked(r) ? "Liberar acesso" : "Bloquear"}
+                            >
+                              {isLoginBlocked(r) ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Ban className="h-4 w-4" />}
+                            </Button>
+                          )}
                           {isSuperAdmin && (
                             <>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => toggleBlock(r)}
-                                title={r.is_blocked ? "Reativar" : "Bloquear"}
-                              >
-                                {r.is_blocked ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Ban className="h-4 w-4" />}
-                              </Button>
+
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -1122,7 +1206,14 @@ function UsersPage() {
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Plano & assinatura</p>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <DetailCell label="Plano" value={planLabel(detailUser.plan_type)} />
-                  <DetailCell label="Status" value={statusLabel(detailUser.status, detailUser.is_blocked)} />
+                  <DetailCell label="Status" value={statusLabel(detailUser)} />
+                  <DetailCell label="Origem" value={originLabel(detailUser.origin)} />
+                  <DetailCell label="Login bloqueado" value={detailUser.auth_banned ? "Sim (ban no Auth)" : detailUser.is_blocked ? "Sim (perfil)" : "Não"} />
+                  <DetailCell
+                    label="Último acesso"
+                    value={detailUser.last_sign_in_at ? new Date(detailUser.last_sign_in_at).toLocaleString("pt-BR") : "Nunca acessou"}
+                  />
+
                   <DetailCell
                     label="Validade"
                     value={detailExtra?.currentPeriodEnd ? new Date(detailExtra.currentPeriodEnd).toLocaleDateString("pt-BR") : "—"}
@@ -1378,6 +1469,50 @@ function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AlertDialog: Bloquear / Liberar acesso (motivo obrigatório) */}
+      <AlertDialog open={!!blockTarget} onOpenChange={(o) => { if (!o && !blockSaving) { setBlockTarget(null); setBlockReason(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {blockTarget && isLoginBlocked(blockTarget) ? "Liberar acesso da usuária" : "Bloquear acesso da usuária"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  {blockTarget?.full_name || blockTarget?.email}
+                  {blockTarget && expiredDays(blockTarget.current_period_end) > 0 && (
+                    <span className="block text-destructive">
+                      Atenção: plano vencido há {expiredDays(blockTarget.current_period_end)} dia(s).
+                    </span>
+                  )}
+                </p>
+                <p className="text-muted-foreground">
+                  O motivo fica registrado na auditoria com o seu usuário e a data.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="block-reason">Motivo (obrigatório)</Label>
+            <Textarea
+              id="block-reason"
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              placeholder="Ex.: contato via suporte, assinatura ativa confirmada, liberação autorizada."
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={blockSaving}>Cancelar</AlertDialogCancel>
+            <Button onClick={confirmToggleBlock} disabled={blockSaving || blockReason.trim().length < 5}>
+              {blockSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {blockTarget && isLoginBlocked(blockTarget) ? "Liberar acesso" : "Bloquear"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
 
       {/* Modal: Novo Nutricionista */}
