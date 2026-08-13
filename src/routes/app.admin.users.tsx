@@ -446,6 +446,15 @@ function UsersPage() {
     }
     setRowPatients(patientsCountMap);
 
+    // Bloqueio real de login (ban no Auth) — via função segura
+    const banMap = new Map<string, { banned: boolean; lastSignIn: string | null }>();
+    if (pageIds.length > 0) {
+      const { data: banRows } = await (supabase as any).rpc("admin_auth_block_status", { p_ids: pageIds });
+      (banRows ?? []).forEach((b: any) =>
+        banMap.set(b.user_id, { banned: !!b.auth_banned, lastSignIn: b.last_sign_in_at ?? null }),
+      );
+    }
+
     const merged: UserRow[] = (profiles ?? []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
@@ -458,7 +467,11 @@ function UsersPage() {
       status: subMap.get(p.id)?.status ?? null,
       plan_type: subMap.get(p.id)?.plan_type ?? null,
       current_period_end: subMap.get(p.id)?.current_period_end ?? null,
+      origin: subMap.get(p.id)?.origin ?? null,
+      auth_banned: banMap.get(p.id)?.banned ?? false,
+      last_sign_in_at: banMap.get(p.id)?.lastSignIn ?? null,
     }));
+
 
     setRows(merged);
     setTotal(totalCount);
