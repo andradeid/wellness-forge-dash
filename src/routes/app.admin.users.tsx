@@ -980,13 +980,30 @@ function UsersPage() {
                       <TableCell>{planLabel(r.plan_type)}</TableCell>
                       <TableCell className="tabular-nums">{rowPatients[r.id] ?? 0}</TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant(r.status, r.is_blocked)} className="rounded-full">
-                          {statusLabel(r.status, r.is_blocked)}
+                        <Badge variant={statusVariant(r)} className="rounded-full">
+                          {statusLabel(r)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {r.current_period_end ? (
+                          <div className="leading-tight">
+                            <p className={expiredDays(r.current_period_end) > 0 ? "text-destructive font-medium" : ""}>
+                              {new Date(r.current_period_end).toLocaleDateString("pt-BR")}
+                            </p>
+                            {expiredDays(r.current_period_end) > 0 && (
+                              <p className="text-[11px] text-destructive">
+                                Vencido há {expiredDays(r.current_period_end)} dia(s)
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
+
                       <TableCell>
                         <Popover>
                           <PopoverTrigger asChild>
