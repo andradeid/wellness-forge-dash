@@ -1101,16 +1101,19 @@ function UsersPage() {
                           <Button size="icon" variant="ghost" onClick={() => sendWelcome(r)} title="Enviar boas-vindas / Reset">
                             <Mail className="h-4 w-4" />
                           </Button>
+                          {(isSuperAdmin || isLoginBlocked(r)) && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => { setBlockTarget(r); setBlockReason(""); }}
+                              title={isLoginBlocked(r) ? "Liberar acesso" : "Bloquear"}
+                            >
+                              {isLoginBlocked(r) ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Ban className="h-4 w-4" />}
+                            </Button>
+                          )}
                           {isSuperAdmin && (
                             <>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => toggleBlock(r)}
-                                title={r.is_blocked ? "Reativar" : "Bloquear"}
-                              >
-                                {r.is_blocked ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Ban className="h-4 w-4" />}
-                              </Button>
+
                               <Button
                                 size="icon"
                                 variant="ghost"
