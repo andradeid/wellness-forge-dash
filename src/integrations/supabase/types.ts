@@ -1922,6 +1922,12 @@ export type Database = {
         }
         Returns: number
       }
+      admin_auth_banned_ids: {
+        Args: never
+        Returns: {
+          user_id: string
+        }[]
+      }
       admin_auth_block_status: {
         Args: { p_ids: string[] }
         Returns: {
