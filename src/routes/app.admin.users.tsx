@@ -694,6 +694,10 @@ function UsersPage() {
 
   const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
   const [resetSending, setResetSending] = useState(false);
+  const [blockTarget, setBlockTarget] = useState<UserRow | null>(null);
+  const [blockReason, setBlockReason] = useState("");
+  const [blockSaving, setBlockSaving] = useState(false);
+
 
   const sendWelcome = (u: UserRow) => {
     setResetTarget(u);
