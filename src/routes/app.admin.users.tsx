@@ -82,12 +82,29 @@ interface UserRow {
   status: SubStatus | null;
   plan_type: PlanType | null;
   current_period_end: string | null;
+  origin?: string | null;
+  auth_banned?: boolean;
+  last_sign_in_at?: string | null;
   exam_count?: number;
 }
 
-function statusVariant(status: string | null, blocked?: boolean): "default" | "secondary" | "destructive" | "outline" {
-  if (blocked) return "destructive";
-  switch (status) {
+/** Bloqueio real de login: ban no Auth OU flag no perfil. */
+function isLoginBlocked(r: Pick<UserRow, "is_blocked" | "auth_banned">) {
+  return !!r.auth_banned || !!r.is_blocked;
+}
+
+/** Dias vencidos da assinatura (0 quando vigente ou sem data). */
+function expiredDays(currentPeriodEnd: string | null | undefined): number {
+  if (!currentPeriodEnd) return 0;
+  const end = new Date(currentPeriodEnd).getTime();
+  if (isNaN(end) || end >= Date.now()) return 0;
+  return Math.floor((Date.now() - end) / 86400000);
+}
+
+function statusVariant(r: Pick<UserRow, "status" | "is_blocked" | "auth_banned" | "current_period_end">): "default" | "secondary" | "destructive" | "outline" {
+  if (isLoginBlocked(r)) return "destructive";
+  if (expiredDays(r.current_period_end) > 0) return "outline";
+  switch (r.status) {
     case "active": return "default";
     case "trial": return "secondary";
     case "past_due": return "destructive";
@@ -96,10 +113,16 @@ function statusVariant(status: string | null, blocked?: boolean): "default" | "s
   }
 }
 
-function statusLabel(status: string | null, blocked?: boolean) {
-  if (blocked) return "Bloqueada";
-  return ({ active: "Ativa", trial: "Trial", past_due: "Inadimplente", canceled: "Cancelada" } as Record<string, string>)[status ?? ""] ?? "Sem plano";
+function statusLabel(r: Pick<UserRow, "status" | "is_blocked" | "auth_banned" | "current_period_end">) {
+  if (isLoginBlocked(r)) return "Bloqueada";
+  if (expiredDays(r.current_period_end) > 0) return "Vencida";
+  return ({ active: "Ativa", trial: "Trial", past_due: "Inadimplente", canceled: "Cancelada" } as Record<string, string>)[r.status ?? ""] ?? "Sem plano";
 }
+
+function originLabel(origin: string | null | undefined) {
+  return ({ migracao: "Migração", kiwify: "Kiwify", stripe: "Stripe", manual: "Manual" } as Record<string, string>)[origin ?? ""] ?? (origin || "—");
+}
+
 
 function planLabel(plan: string | null) {
   return ({ free: "Free", starter: "Starter", pro: "Pro Individual", clinica: "Clínica", legado_500: "Legado 500" } as Record<string, string>)[plan ?? ""] ?? "—";
