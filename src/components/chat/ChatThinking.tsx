@@ -111,6 +111,30 @@ const CLINICAL_CASE_STEPS: Step[] = [
   { icon: Sparkles, text: "Organizando a conduta sugerida…" },
 ];
 
+const BIOIMPEDANCE_STEPS: Step[] = [
+  { icon: ScanLine, text: "Lendo o exame de bioimpedância…" },
+  { icon: Ruler, text: "Avaliando massa magra, gordura e hidratação…" },
+  { icon: Activity, text: "Analisando ângulo de fase e água corporal…" },
+  { icon: Brain, text: "Comparando com faixas de referência…" },
+  { icon: Sparkles, text: "Organizando a interpretação corporal…" },
+];
+
+const CALORIMETRY_STEPS: Step[] = [
+  { icon: FlaskConical, text: "Lendo os dados da calorimetria…" },
+  { icon: Activity, text: "Calculando gasto energético e TMB…" },
+  { icon: HeartPulse, text: "Avaliando quociente respiratório…" },
+  { icon: Brain, text: "Cruzando com o objetivo clínico…" },
+  { icon: Sparkles, text: "Organizando a leitura energética…" },
+];
+
+const MICROBIOME_STEPS: Step[] = [
+  { icon: FlaskConical, text: "Lendo o exame de microbioma…" },
+  { icon: Activity, text: "Avaliando diversidade bacteriana…" },
+  { icon: Stethoscope, text: "Identificando sinais de disbiose…" },
+  { icon: Brain, text: "Cruzando com o eixo intestino-cérebro…" },
+  { icon: Sparkles, text: "Organizando a interpretação intestinal…" },
+];
+
 const DEFAULT_STEPS: Step[] = [
   { icon: Brain, text: "Analisando com atenção…" },
   { icon: Activity, text: "Cruzando as informações…" },
@@ -124,7 +148,10 @@ function pickSteps(agentType?: string, taskType?: string | null): Step[] {
   if (key === "research" || key === "artigos_cientificos") return RESEARCH_STEPS;
   if (key === "composition") return COMPOSITION_STEPS;
   if (key === "metabolism") return METABOLISM_STEPS;
-  if (key === "genetics") return GENETICS_STEPS;
+  if (key === "genetics" || key === "genetica") return GENETICS_STEPS;
+  if (key === "bioimpedancia") return BIOIMPEDANCE_STEPS;
+  if (key === "calorimetria") return CALORIMETRY_STEPS;
+  if (key === "microbioma") return MICROBIOME_STEPS;
   if (key === "estimativa_refeicao_foto") return MEAL_PHOTO_STEPS;
   if (key === "composicao_corporal_foto") return BODY_PHOTO_STEPS;
   if (key === "production" || key === "plano_alimentar" || key === "receitas") return PRODUCTION_STEPS;
@@ -133,9 +160,10 @@ function pickSteps(agentType?: string, taskType?: string | null): Step[] {
   if (key === "formulacao_magistral") return FORMULATION_STEPS;
   if (key === "casos_clinicos" || key === "sintomas" || key === "caso_clinico") return CLINICAL_CASE_STEPS;
 
-  // Exames por perfil e genéricos
+  // Exames por perfil (exam, exam_masc, exam_fem, exam_gest_*)
   if (key.startsWith("exam")) return EXAM_STEPS;
-  if (key.startsWith("super")) return EXAM_STEPS;
+  // Super Agente sem tarefa definida: raciocínio clínico neutro (não é exame).
+  if (key.startsWith("super")) return REASONING_STEPS;
 
   return DEFAULT_STEPS;
 }

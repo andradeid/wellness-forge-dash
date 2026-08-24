@@ -297,6 +297,7 @@ function GeneralChatPage() {
             thinking={thinking} 
             isStreaming={thinking}
             agentType={agentType}
+            taskType={selectedTaskKey}
             chatId={chatId}
           />
         </main>
