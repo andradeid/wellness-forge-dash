@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, Paperclip, ArrowDown, Copy, Printer, Edit2, Check, FlaskConical, Eye, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { format, differenceInYears } from "date-fns";
@@ -581,6 +581,24 @@ export function ChatMessageList({
   const canCurate = role === "curator" || role === "super_admin";
   const lastUserIndex = messages.reduce((acc, msg, idx) => (msg.role === "user" ? idx : acc), -1);
 
+  /**
+   * Quando a tarefa é de exame mas a última pergunta não trouxe nenhum arquivo
+   * anexado, trata-se de uma pergunta clínica dentro do mesmo chat. Nesse caso
+   * as mensagens de processamento não devem falar em "ler exame" ou "comparar
+   * valores de referência" — usamos o raciocínio clínico neutro.
+   */
+  const effectiveTaskType = useMemo(() => {
+    const key = (taskType || agentType || "").toLowerCase();
+    const isExamLike =
+      key.startsWith("exam") ||
+      ["bioimpedancia", "calorimetria", "microbioma", "genetica", "genetics", "composition", "metabolism"].includes(key);
+    if (!isExamLike) return taskType;
+
+    const lastUser = lastUserIndex >= 0 ? messages[lastUserIndex] : null;
+    const hasAttachment = !!lastUser?.attachments && lastUser.attachments.length > 0;
+    return hasAttachment ? taskType : "reasoning";
+  }, [taskType, agentType, messages, lastUserIndex]);
+
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
   };
@@ -1006,7 +1024,7 @@ export function ChatMessageList({
           {thinking && (
             <div className="flex justify-start">
               <div className="rounded-2xl bg-white/60 backdrop-blur-md border border-white/60 shadow-sm px-2">
-                <ChatThinking mode={thinkingMode} agentType={agentType} taskType={taskType} />
+                <ChatThinking mode={thinkingMode} agentType={agentType} taskType={effectiveTaskType} />
               </div>
             </div>
           )}
