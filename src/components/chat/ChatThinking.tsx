@@ -160,9 +160,10 @@ function pickSteps(agentType?: string, taskType?: string | null): Step[] {
   if (key === "formulacao_magistral") return FORMULATION_STEPS;
   if (key === "casos_clinicos" || key === "sintomas" || key === "caso_clinico") return CLINICAL_CASE_STEPS;
 
-  // Exames por perfil e genéricos
+  // Exames por perfil (exam, exam_masc, exam_fem, exam_gest_*)
   if (key.startsWith("exam")) return EXAM_STEPS;
-  if (key.startsWith("super")) return EXAM_STEPS;
+  // Super Agente sem tarefa definida: raciocínio clínico neutro (não é exame).
+  if (key.startsWith("super")) return REASONING_STEPS;
 
   return DEFAULT_STEPS;
 }
