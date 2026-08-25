@@ -3,15 +3,17 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function assertAdmin(supabase: any, userId: string) {
+  // Suporte (CS) também pode resetar senha / reenviar boas-vindas.
   const { data } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "super_admin"]);
+    .in("role", ["admin", "super_admin", "support"]);
   if (!data || data.length === 0) {
     throw new Response("Forbidden", { status: 403 });
   }
 }
+
 
 /**
  * Reseta a senha do usuário para a temporária (`Lumma2@102030`), marca
