@@ -89,5 +89,17 @@ export const adminSendWelcomeReset = createServerFn({ method: "POST" })
       credits,
     });
 
+    await supabaseAdmin.from("integration_logs" as any).insert({
+      source: "admin-welcome",
+      event: "manual_password_reset",
+      status: "success",
+      message: `Reset de senha + boas-vindas por ${context.userId}`,
+      payload: {
+        target_user_id: data.user_id,
+        performed_by: context.userId,
+        email: (prof as any).email,
+      },
+    });
+
     return { ok: true, email: (prof as any).email as string };
   });
