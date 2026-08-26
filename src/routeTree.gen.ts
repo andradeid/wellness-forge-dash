@@ -51,6 +51,7 @@ import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.cre
 import { Route as AppAdminAnalyticsRouteImport } from './routes/app.admin.analytics'
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
+import { Route as ApiPublicSubscriptionExpiryEmailsRouteImport } from './routes/api/public/subscription-expiry-emails'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
@@ -276,6 +277,12 @@ const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
   path: '/admin/administrators',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicSubscriptionExpiryEmailsRoute =
+  ApiPublicSubscriptionExpiryEmailsRouteImport.update({
+    id: '/api/public/subscription-expiry-emails',
+    path: '/api/public/subscription-expiry-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   id: '/api/public/stripe-webhook',
   path: '/api/public/stripe-webhook',
@@ -369,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
@@ -424,6 +432,7 @@ export interface FileRoutesByTo {
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
@@ -481,6 +490,7 @@ export interface FileRoutesById {
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
   '/app/admin/analytics': typeof AppAdminAnalyticsRoute
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/api/dify/upload'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
+    | '/api/public/subscription-expiry-emails'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/analytics'
@@ -594,6 +605,7 @@ export interface FileRouteTypes {
     | '/api/dify/upload'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
+    | '/api/public/subscription-expiry-emails'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/analytics'
@@ -650,6 +662,7 @@ export interface FileRouteTypes {
     | '/api/dify/upload'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
+    | '/api/public/subscription-expiry-emails'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
     | '/app/admin/analytics'
@@ -698,6 +711,7 @@ export interface RootRouteChildren {
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
   ApiPublicKiwifyWebhookRoute: typeof ApiPublicKiwifyWebhookRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
+  ApiPublicSubscriptionExpiryEmailsRoute: typeof ApiPublicSubscriptionExpiryEmailsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -996,6 +1010,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdministratorsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/subscription-expiry-emails': {
+      id: '/api/public/subscription-expiry-emails'
+      path: '/api/public/subscription-expiry-emails'
+      fullPath: '/api/public/subscription-expiry-emails'
+      preLoaderRoute: typeof ApiPublicSubscriptionExpiryEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/stripe-webhook': {
       id: '/api/public/stripe-webhook'
       path: '/api/public/stripe-webhook'
@@ -1191,6 +1212,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDifyUploadRoute: ApiDifyUploadRoute,
   ApiPublicKiwifyWebhookRoute: ApiPublicKiwifyWebhookRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
+  ApiPublicSubscriptionExpiryEmailsRoute:
+    ApiPublicSubscriptionExpiryEmailsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
