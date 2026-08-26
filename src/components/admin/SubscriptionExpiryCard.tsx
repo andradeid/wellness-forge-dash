@@ -129,7 +129,12 @@ export function SubscriptionExpiryCard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <ExpiryTile label="Vencendo em 7 dias" value={d.counts.venc7} onClick={() => setOpen("venc7")} tone="warn" />
             <ExpiryTile label="Vencendo em 30 dias" value={d.counts.venc30} onClick={() => setOpen("venc30")} tone="neutral" />
-            <ExpiryTile label="Vencidas e ativas" value={d.counts.vencidas} onClick={() => setOpen("vencidas")} tone="danger" />
+            <ExpiryTile
+              label="Vencidas (somente leitura)"
+              value={d.counts.vencidas}
+              onClick={() => setOpen("vencidas")}
+              tone="danger"
+            />
             <ExpiryTile
               label="Vencidas com uso em 7d"
               value={d.counts.vencidasComUso}
@@ -137,6 +142,11 @@ export function SubscriptionExpiryCard() {
               tone="danger"
             />
           </div>
+
+          <p className="mt-3 text-xs text-muted-foreground">
+            Assinaturas vencidas mantêm login e histórico, mas não consomem agentes. O robô diário
+            também desliga os créditos ilimitados e dispara o aviso de renovação por e-mail.
+          </p>
 
           <div
             className={cn(

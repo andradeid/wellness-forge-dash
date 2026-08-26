@@ -1434,6 +1434,7 @@ export type Database = {
           plano: string | null
           tem_gateway: boolean
           tem_pagamento: boolean
+          unlimited_desligado: boolean
           user_id: string
         }
         Insert: {
@@ -1448,6 +1449,7 @@ export type Database = {
           plano?: string | null
           tem_gateway?: boolean
           tem_pagamento?: boolean
+          unlimited_desligado?: boolean
           user_id: string
         }
         Update: {
@@ -1462,6 +1464,7 @@ export type Database = {
           plano?: string | null
           tem_gateway?: boolean
           tem_pagamento?: boolean
+          unlimited_desligado?: boolean
           user_id?: string
         }
         Relationships: []
@@ -1526,6 +1529,7 @@ export type Database = {
           cancelled_at: string | null
           created_at: string
           current_period_end: string
+          expiry_email_sent_at: string | null
           id: string
           legacy_status: string | null
           origin: string | null
@@ -1545,6 +1549,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string
+          expiry_email_sent_at?: string | null
           id?: string
           legacy_status?: string | null
           origin?: string | null
@@ -1564,6 +1569,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string
+          expiry_email_sent_at?: string | null
           id?: string
           legacy_status?: string | null
           origin?: string | null
@@ -1949,7 +1955,7 @@ export type Database = {
           p_message_preview: string
           p_user_id: string
         }
-        Returns: boolean
+        Returns: Json
       }
       has_role: {
         Args: {
@@ -1962,6 +1968,7 @@ export type Database = {
       reconcile_subscription_blocks: { Args: never; Returns: number }
       refresh_recent_usage_stats: { Args: never; Returns: undefined }
       release_stream_slot: { Args: { p_user_id: string }; Returns: undefined }
+      subscription_is_active: { Args: { _user_id: string }; Returns: boolean }
       toggle_unlimited_credits: {
         Args: {
           p_admin_id: string

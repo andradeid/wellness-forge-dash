@@ -1032,9 +1032,14 @@ function UsersPage() {
                               {new Date(r.current_period_end).toLocaleDateString("pt-BR")}
                             </p>
                             {expiredDays(r.current_period_end) > 0 && (
-                              <p className="text-[11px] text-destructive">
-                                Vencido há {expiredDays(r.current_period_end)} dia(s)
-                              </p>
+                              <>
+                                <p className="text-[11px] text-destructive">
+                                  Vencido há {expiredDays(r.current_period_end)} dia(s)
+                                </p>
+                                <Badge variant="outline" className="mt-1 text-[10px] font-normal">
+                                  Somente leitura
+                                </Badge>
+                              </>
                             )}
                           </div>
                         ) : (

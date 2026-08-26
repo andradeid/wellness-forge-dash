@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Saldo do usuário autenticado. */
+/** Saldo + situação da assinatura do usuário autenticado. */
 export const getMyCredits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -13,15 +13,25 @@ export const getMyCredits = createServerFn({ method: "GET" })
       .maybeSingle();
     const { data: sub } = await context.supabase
       .from("subscriptions" as any)
-      .select("unlimited_credits")
+      .select("unlimited_credits, status, plan_type, current_period_end")
       .eq("user_id", context.userId)
       .maybeSingle();
+    const { data: active } = await context.supabase.rpc(
+      "subscription_is_active" as any,
+      { _user_id: context.userId },
+    );
+
     const row = (data as any) ?? null;
+    const s = (sub as any) ?? null;
     return {
       balance: row?.balance ?? 0,
       monthly_quota: row?.monthly_quota ?? 0,
       quota_reset_at: row?.quota_reset_at ?? null,
-      unlimited: !!(sub as any)?.unlimited_credits,
+      unlimited: !!s?.unlimited_credits,
+      /** Falso = assinatura vencida/cancelada: leitura liberada, consumo bloqueado. */
+      subscriptionActive: active === null || active === undefined ? true : Boolean(active),
+      currentPeriodEnd: (s?.current_period_end as string | null) ?? null,
+      planType: (s?.plan_type as string | null) ?? null,
     };
   });
 
@@ -50,11 +60,18 @@ export const consumeCredits = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: ok, error } = await context.supabase.rpc("consume_credits" as any, {
+    const { data: result, error } = await context.supabase.rpc("consume_credits" as any, {
       p_user_id: context.userId,
       p_agent_key: data.agentKey,
       p_message_preview: data.messagePreview ?? null,
     });
     if (error) throw new Response(error.message, { status: 500 });
-    return { ok: Boolean(ok) };
+    const r = (result as any) ?? null;
+    // Compatibilidade: versões antigas da RPC retornavam boolean puro.
+    if (typeof r === "boolean") return { ok: r, reason: r ? null : "insufficient" };
+    return {
+      ok: Boolean(r?.ok),
+      reason: (r?.reason as string | null) ?? null,
+      cost: (r?.cost as number | undefined) ?? 0,
+    };
   });
