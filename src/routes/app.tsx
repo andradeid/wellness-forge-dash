@@ -317,6 +317,8 @@ function AppLayout() {
           needed={paywall.needed}
           balance={paywall.balance}
           agentLabel={paywall.agentLabel}
+          reason={paywall.reason}
+          expiredAt={paywall.expiredAt}
         />
         <TopUpDialog
           open={topup.open}
