@@ -7,6 +7,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { PaywallDialog } from "@/components/PaywallDialog";
+import { SubscriptionExpiredBanner } from "@/components/SubscriptionExpiredBanner";
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
 import { TopUpDialog } from "@/components/TopUpDialog";
 import { useTopUpState, topUpStore } from "@/lib/topup-store";
@@ -265,6 +266,9 @@ function AppLayout() {
   return (
     <SidebarProvider>
       <div className="h-[100dvh] flex flex-col w-full bg-background overflow-hidden">
+        <div className="shrink-0">
+          <SubscriptionExpiredBanner />
+        </div>
         <div className="flex flex-1 min-h-0 w-full">
           {!immersive && <AppSidebar />}
           <div className="flex-1 flex flex-col min-w-0">
