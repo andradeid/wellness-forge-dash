@@ -200,3 +200,51 @@ export async function sendWelcomeNewPurchaseEmail(args: {
     html: renderTemplate(tpl.html, vars),
   });
 }
+
+/**
+ * Aviso de assinatura vencida: acesso de leitura mantido, consumo de agentes
+ * suspenso até a renovação.
+ */
+export async function sendSubscriptionExpiredEmail(args: {
+  userId: string;
+  email?: string | null;
+  fullName?: string | null;
+  planName: string;
+  expiredAtIso: string | null;
+}) {
+  let email = args.email ?? null;
+  let name = args.fullName ?? null;
+  if (!email) {
+    const resolved = await resolveUserEmail(args.userId);
+    email = resolved.email;
+    if (!name) name = resolved.name;
+  }
+  if (!email) return { ok: false, error: "email não encontrado" };
+
+  const tpl = await loadTemplate("subscription_expired");
+  if (!tpl)
+    return { ok: false, error: "template subscription_expired inativo ou não encontrado" };
+
+  const firstName = name?.split(" ")[0] ?? "";
+  const expiredAt = args.expiredAtIso
+    ? new Intl.DateTimeFormat("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(new Date(args.expiredAtIso))
+    : "—";
+
+  const vars: Record<string, string> = {
+    first_name_comma: firstName ? `, ${firstName}` : "",
+    plan_name: args.planName,
+    expired_at: expiredAt,
+    renew_url: `${DASHBOARD_URL}/planos`,
+    support_url: "https://wa.me/5519997285302",
+  };
+
+  return sendEmail({
+    to: email,
+    subject: renderTemplate(tpl.subject, vars),
+    html: renderTemplate(tpl.html, vars),
+  });
+}
