@@ -334,6 +334,12 @@ function UsersPage() {
       statusFilter !== "all" && statusFilter !== "blocked" && statusFilter !== "auth_blocked";
     const expiredFilter = statusFilter === "expired";
     if (subStatusActive || planFilter !== "all") {
+      let bannedIds = new Set<string>();
+      if (expiredFilter) {
+        const { data: banned, error } = await (supabase as any).rpc("admin_auth_banned_ids");
+        if (error) { toast.error(error.message); setLoading(false); return; }
+        bannedIds = new Set((banned ?? []).map((r: any) => r.user_id));
+      }
       const PAGE = 1000;
       const collected: string[] = [];
       for (let from = 0; ; from += PAGE) {
@@ -345,7 +351,7 @@ function UsersPage() {
 
         if (error) { toast.error(error.message); setLoading(false); return; }
         const rows = data ?? [];
-        collected.push(...rows.map((r: any) => r.user_id));
+        collected.push(...rows.map((r: any) => r.user_id).filter((id: string) => !bannedIds.has(id)));
         if (rows.length < PAGE) break;
       }
       intersect(collected);
@@ -919,7 +925,7 @@ function UsersPage() {
                 <SelectItem value="trial">Trial</SelectItem>
                 <SelectItem value="past_due">Inadimplente</SelectItem>
                 <SelectItem value="canceled">Cancelada</SelectItem>
-                <SelectItem value="expired">Vencida</SelectItem>
+                <SelectItem value="expired">Vencida (com acesso)</SelectItem>
                 <SelectItem value="blocked">Bloqueada (perfil)</SelectItem>
                 <SelectItem value="auth_blocked">Bloqueada (login)</SelectItem>
 
