@@ -96,6 +96,12 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
           const fresh = await refetchCredits();
           const balance = fresh.data?.balance ?? 0;
           const unlimited = (fresh.data as any)?.unlimited === true;
+          const subActive = (fresh.data as any)?.subscriptionActive !== false;
+          if (!subActive) {
+            paywallStore.openExpired((fresh.data as any)?.currentPeriodEnd ?? null, label);
+            abortSend();
+            return;
+          }
           if (!unlimited && balance < cost) {
             paywallStore.open(cost, balance, label);
             abortSend();
