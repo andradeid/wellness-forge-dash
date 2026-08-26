@@ -221,7 +221,8 @@ export function AppSidebar() {
   const credits = creditsQuery.data;
   const balance = credits?.balance ?? 0;
   const unlimited = !!(credits as any)?.unlimited;
-  const lowCredits = !unlimited && balance < LOW_CREDIT_THRESHOLD;
+  const subExpired = (credits as any)?.subscriptionActive === false;
+  const lowCredits = !unlimited && !subExpired && balance < LOW_CREDIT_THRESHOLD;
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -276,7 +277,7 @@ export function AppSidebar() {
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
             {role !== "super_admin" && role !== "support" && (
-              <CreditsBadge collapsed balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
+              <CreditsBadge collapsed balance={balance} unlimited={unlimited} expired={subExpired} isLoading={creditsQuery.isLoading} />
             )}
           </div>
         ) : (
@@ -292,7 +293,7 @@ export function AppSidebar() {
               </span>
             </div>
               {role !== "super_admin" && role !== "support" && (
-                <CreditsBadge balance={balance} unlimited={unlimited} isLoading={creditsQuery.isLoading} />
+                <CreditsBadge balance={balance} unlimited={unlimited} expired={subExpired} isLoading={creditsQuery.isLoading} />
               )}
           </div>
         )}
