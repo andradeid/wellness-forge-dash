@@ -26,6 +26,8 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OperationalAuditSection } from "@/components/admin/OperationalAuditSection";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/admin/credits-audit")({
@@ -243,7 +245,26 @@ function AuditPage() {
 
   return (
     <div className="p-6 space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold">Auditoria</h1>
+        <p className="text-sm text-muted-foreground">
+          Registro das ações administrativas sobre contas e do consumo de créditos.
+        </p>
+      </div>
+
+      <Tabs defaultValue="operacoes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="operacoes">Ações operacionais</TabsTrigger>
+          <TabsTrigger value="creditos">Créditos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="operacoes">
+          <OperationalAuditSection />
+        </TabsContent>
+
+        <TabsContent value="creditos" className="space-y-4">
       <Card>
+
         <CardHeader>
           <CardTitle>Auditoria de Créditos</CardTitle>
         </CardHeader>
@@ -495,6 +516,10 @@ function AuditPage() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+      </Tabs>
+
+
 
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
         <DialogContent>
