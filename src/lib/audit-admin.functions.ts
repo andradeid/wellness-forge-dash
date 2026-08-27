@@ -43,7 +43,8 @@ export type OperationalLog = {
   actor: { full_name: string | null; email: string } | null;
   target_id: string | null;
   target: { full_name: string | null; email: string } | null;
-  changes: Record<string, { from: unknown; to: unknown }> | null;
+  /** Mapa campo -> { from, to } vindo do payload; JSON livre, por isso `any`. */
+  changes: Record<string, { from: string | null; to: string | null }> | null;
   payload: any;
 };
 
