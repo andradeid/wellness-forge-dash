@@ -112,15 +112,15 @@ export const listOperationalLogs = createServerFn({ method: "POST" })
         const actorId = pick(r.payload, ACTOR_KEYS);
         const targetId = pick(r.payload, TARGET_KEYS);
         if ((actorId && matchedIds.has(actorId)) || (targetId && matchedIds.has(targetId))) return true;
-        const texto = [
-          r.message,
-          pick(r.payload, ["reason", "motivo"]),
-          pick(r.payload, ["email", "user_email", "target_email"]),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return texto.includes(term);
+        // Fallback: varre mensagem + payload inteiro (JSON livre pode conter
+        // e-mails em listas de alterações, motivos, etc.).
+        let texto = r.message ? String(r.message) : "";
+        try {
+          texto += " " + JSON.stringify(r.payload ?? {});
+        } catch {
+          /* payload não serializável — ignora */
+        }
+        return texto.toLowerCase().includes(term);
       });
 
       total = filtered.length;
