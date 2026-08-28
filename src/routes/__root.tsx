@@ -185,6 +185,53 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Após um novo deploy, os arquivos antigos deixam de existir e qualquer módulo
+  // carregado sob demanda (ex.: ações do admin) falha com "Failed to fetch
+  // dynamically imported module". Recarregamos a página uma única vez para
+  // buscar a versão nova, em vez de mostrar um erro técnico ao suporte.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const RELOAD_KEY = "lumma:chunk-reload-at";
+
+    const recoverFromStaleChunk = () => {
+      try {
+        const last = Number(window.sessionStorage.getItem(RELOAD_KEY) ?? "0");
+        if (Date.now() - last < 60_000) return; // evita loop de reload
+        window.sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+      } catch {
+        // storage bloqueado: ainda assim tentamos recarregar uma vez
+      }
+      window.location.reload();
+    };
+
+    const isStaleChunkMessage = (message?: string) =>
+      typeof message === "string" &&
+      (message.includes("Failed to fetch dynamically imported module") ||
+        message.includes("error loading dynamically imported module") ||
+        message.includes("Importing a module script failed"));
+
+    const onPreloadError = () => recoverFromStaleChunk();
+    const onRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason as { message?: string } | undefined;
+      if (isStaleChunkMessage(reason?.message)) recoverFromStaleChunk();
+    };
+    const onError = (event: ErrorEvent) => {
+      if (isStaleChunkMessage(event.message)) recoverFromStaleChunk();
+    };
+
+    window.addEventListener("vite:preloadError", onPreloadError);
+    window.addEventListener("unhandledrejection", onRejection);
+    window.addEventListener("error", onError);
+
+    return () => {
+      window.removeEventListener("vite:preloadError", onPreloadError);
+      window.removeEventListener("unhandledrejection", onRejection);
+      window.removeEventListener("error", onError);
+    };
+  }, []);
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
