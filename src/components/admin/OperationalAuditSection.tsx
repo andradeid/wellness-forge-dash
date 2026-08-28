@@ -29,6 +29,10 @@ const EVENT_META: Record<string, { label: string; icon: any; className: string }
   manual_role_change: { label: "Alteração de permissão", icon: ShieldAlert, className: "border-orange-500 text-orange-700" },
   manual_seats_change: { label: "Alteração de assentos", icon: UserCog, className: "border-sky-500 text-sky-700" },
   admin_view_conversation: { label: "Leitura de conversa", icon: Eye, className: "border-slate-400 text-slate-600" },
+  user_unblock: { label: "Desbloqueio manual", icon: Lock, className: "border-emerald-500 text-emerald-700" },
+  user_block: { label: "Bloqueio manual", icon: Lock, className: "border-red-500 text-red-700" },
+  conversation_reset: { label: "Reset de conversa", icon: Eye, className: "border-slate-400 text-slate-600" },
+  ajuste_manual_validade_hubla: { label: "Ajuste de validade (Hubla)", icon: UserCog, className: "border-amber-500 text-amber-700" },
 };
 
 /** Rótulos dos campos alterados em edições manuais. */
@@ -253,7 +257,7 @@ export function OperationalAuditSection() {
               <div className="flex items-center justify-between mt-4 text-sm">
                 <span className="text-muted-foreground">
                   Página {page} de {totalPages} — {total} registros
-                  {logsQuery.data?.filtered ? " (busca aplicada na página atual)" : ""}
+                  {logsQuery.data?.filtered ? " (resultado da busca)" : ""}
                 </span>
                 <div className="flex gap-2">
                   <Button

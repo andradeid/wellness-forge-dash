@@ -28,6 +28,10 @@ const OPERATIONAL_EVENTS = [
   "manual_role_change",
   "manual_seats_change",
   "admin_view_conversation",
+  "user_unblock",
+  "user_block",
+  "conversation_reset",
+  "ajuste_manual_validade_hubla",
 ] as const;
 
 export type OperationalLog = {
@@ -72,31 +76,79 @@ export const listOperationalLogs = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const from = (data.page - 1) * data.pageSize;
-    const to = from + data.pageSize - 1;
+    const term = data.q.toLowerCase();
+    const events = data.event ? [data.event] : (OPERATIONAL_EVENTS as unknown as string[]);
 
-    let query = context.supabase
-      .from("integration_logs")
-      .select("id, created_at, source, event, status, message, payload", { count: "exact" })
-      .in("event", data.event ? [data.event] : (OPERATIONAL_EVENTS as unknown as string[]))
-      .order("created_at", { ascending: false })
-      .range(from, to);
+    const ACTOR_KEYS = ["edited_by", "created_by", "actor_id", "admin_id", "performed_by"];
+    const TARGET_KEYS = ["edited_user_id", "user_id", "target_user_id", "created_user_id"];
 
-    const { data: rows, error, count } = await query;
-    if (error) throw new Response(error.message, { status: 500 });
+    // Perfis que batem com o termo — os logs guardam apenas IDs, então
+    // primeiro descobrimos quais usuários correspondem à busca.
+    let matchedIds = new Set<string>();
+    if (term) {
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id")
+        .or(`email.ilike.%${term}%,full_name.ilike.%${term}%`)
+        .limit(500);
+      for (const p of profs ?? []) matchedIds.add(p.id);
+    }
 
-    const list = (rows ?? []) as any[];
+    let list: any[] = [];
+    let total = 0;
+
+    if (term) {
+      // Busca global: varre uma janela ampla de logs operacionais e filtra
+      // em memória (payload é JSON livre, não dá para filtrar direto).
+      const { data: rows, error } = await context.supabase
+        .from("integration_logs")
+        .select("id, created_at, source, event, status, message, payload")
+        .in("event", events)
+        .order("created_at", { ascending: false })
+        .limit(5000);
+      if (error) throw new Response(error.message, { status: 500 });
+
+      const filtered = (rows ?? []).filter((r: any) => {
+        const actorId = pick(r.payload, ACTOR_KEYS);
+        const targetId = pick(r.payload, TARGET_KEYS);
+        if ((actorId && matchedIds.has(actorId)) || (targetId && matchedIds.has(targetId))) return true;
+        // Fallback: varre mensagem + payload inteiro (JSON livre pode conter
+        // e-mails em listas de alterações, motivos, etc.).
+        let texto = r.message ? String(r.message) : "";
+        try {
+          texto += " " + JSON.stringify(r.payload ?? {});
+        } catch {
+          /* payload não serializável — ignora */
+        }
+        return texto.toLowerCase().includes(term);
+      });
+
+      total = filtered.length;
+      const start = (data.page - 1) * data.pageSize;
+      list = filtered.slice(start, start + data.pageSize);
+    } else {
+      const from = (data.page - 1) * data.pageSize;
+      const { data: rows, error, count } = await context.supabase
+        .from("integration_logs")
+        .select("id, created_at, source, event, status, message, payload", { count: "exact" })
+        .in("event", events)
+        .order("created_at", { ascending: false })
+        .range(from, from + data.pageSize - 1);
+      if (error) throw new Response(error.message, { status: 500 });
+      list = rows ?? [];
+      total = count ?? 0;
+    }
 
     // Resolve nomes/e-mails de quem executou e de quem foi afetado.
     const ids = new Set<string>();
     for (const r of list) {
-      const actor = pick(r.payload, ["edited_by", "created_by", "actor_id", "admin_id", "performed_by"]);
-      const target = pick(r.payload, ["edited_user_id", "user_id", "target_user_id", "created_user_id"]);
+      const actor = pick(r.payload, ACTOR_KEYS);
+      const target = pick(r.payload, TARGET_KEYS);
       if (actor) ids.add(actor);
       if (target) ids.add(target);
     }
 
-    let profiles: Record<string, { full_name: string | null; email: string }> = {};
+    const profiles: Record<string, { full_name: string | null; email: string }> = {};
     if (ids.size > 0) {
       const { data: profs } = await context.supabase
         .from("profiles")
@@ -107,14 +159,9 @@ export const listOperationalLogs = createServerFn({ method: "POST" })
       }
     }
 
-    let mapped: OperationalLog[] = list.map((r) => {
-      const actorId = pick(r.payload, ["edited_by", "created_by", "actor_id", "admin_id", "performed_by"]);
-      const targetId = pick(r.payload, [
-        "edited_user_id",
-        "user_id",
-        "target_user_id",
-        "created_user_id",
-      ]);
+    const mapped: OperationalLog[] = list.map((r) => {
+      const actorId = pick(r.payload, ACTOR_KEYS);
+      const targetId = pick(r.payload, TARGET_KEYS);
       return {
         id: r.id,
         created_at: r.created_at,
@@ -136,25 +183,9 @@ export const listOperationalLogs = createServerFn({ method: "POST" })
       };
     });
 
-    // Busca textual aplicada após o enriquecimento (e-mail/nome não estão no log).
-    const term = data.q.toLowerCase();
-    if (term) {
-      mapped = mapped.filter((m) =>
-        [
-          m.target?.email,
-          m.target?.full_name,
-          m.actor?.email,
-          m.actor?.full_name,
-          m.reason,
-          m.message,
-        ]
-          .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(term)),
-      );
-    }
-
-    return { rows: mapped, total: count ?? 0, filtered: !!term };
+    return { rows: mapped, total, filtered: !!term };
   });
+
 
 export const getOperationalStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
