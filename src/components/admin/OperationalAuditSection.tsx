@@ -253,7 +253,7 @@ export function OperationalAuditSection() {
               <div className="flex items-center justify-between mt-4 text-sm">
                 <span className="text-muted-foreground">
                   Página {page} de {totalPages} — {total} registros
-                  {logsQuery.data?.filtered ? " (busca aplicada na página atual)" : ""}
+                  {logsQuery.data?.filtered ? " (resultado da busca)" : ""}
                 </span>
                 <div className="flex gap-2">
                   <Button
