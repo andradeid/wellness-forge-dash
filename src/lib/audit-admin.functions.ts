@@ -28,6 +28,10 @@ const OPERATIONAL_EVENTS = [
   "manual_role_change",
   "manual_seats_change",
   "admin_view_conversation",
+  "user_unblock",
+  "user_block",
+  "conversation_reset",
+  "ajuste_manual_validade_hubla",
 ] as const;
 
 export type OperationalLog = {
