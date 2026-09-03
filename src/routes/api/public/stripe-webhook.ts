@@ -537,15 +537,19 @@ async function handleInvoicePaid(
     });
   }
 
-  // Atualiza monthly_quota + quota_reset_at
-  const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
+  // Atualiza monthly_quota + quota_reset_at.
+  // A cota é MENSAL: a próxima reposição é sempre daqui a 1 mês,
+  // mesmo em planos anuais (o job diário repõe mês a mês).
+  const nextReset = new Date();
+  nextReset.setMonth(nextReset.getMonth() + 1);
   await supabaseAdmin
     .from("user_credits" as any)
     .update({
       monthly_quota: monthlyCredits,
-      quota_reset_at: periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null,
+      quota_reset_at: nextReset.toISOString(),
     })
     .eq("user_id", targetUserId);
+
 
   // Histórico de pagamento — resolve ciclo por metadata OU price_id
   let cycle = (sub.metadata?.billing_cycle ?? null) as "monthly" | "yearly" | null;

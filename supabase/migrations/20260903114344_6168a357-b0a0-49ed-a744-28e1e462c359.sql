@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.refill_monthly_credits() FROM PUBLIC, anon, authenticated;
