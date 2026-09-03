@@ -1966,6 +1966,7 @@ export type Database = {
       }
       log_subscription_expiries: { Args: never; Returns: number }
       reconcile_subscription_blocks: { Args: never; Returns: number }
+      refill_monthly_credits: { Args: never; Returns: number }
       refresh_recent_usage_stats: { Args: never; Returns: undefined }
       release_stream_slot: { Args: { p_user_id: string }; Returns: undefined }
       subscription_is_active: { Args: { _user_id: string }; Returns: boolean }
