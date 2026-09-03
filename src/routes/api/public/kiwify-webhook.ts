@@ -311,13 +311,17 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
       },
     });
 
+    // Cota é MENSAL mesmo em plano anual: próxima reposição em 1 mês.
+    const nextReset = new Date();
+    nextReset.setMonth(nextReset.getMonth() + 1);
     await supabaseAdmin
       .from("user_credits" as any)
       .update({
         monthly_quota: monthlyCredits,
-        quota_reset_at: periodEnd.toISOString(),
+        quota_reset_at: nextReset.toISOString(),
       })
       .eq("user_id", userId);
+
   }
 
   // Histórico
