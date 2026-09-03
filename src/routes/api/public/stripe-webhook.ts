@@ -538,6 +538,7 @@ async function handleInvoicePaid(
   }
 
   // Atualiza monthly_quota + quota_reset_at.
+  const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
   // A cota é MENSAL: a próxima reposição é sempre daqui a 1 mês,
   // mesmo em planos anuais (o job diário repõe mês a mês).
   const nextReset = new Date();
