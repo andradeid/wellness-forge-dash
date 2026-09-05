@@ -729,6 +729,10 @@ export function useDifyChat(
     researchSavedRef.current = false;
     assistantSavedRef.current = false;
     markersEmittedRef.current = false;
+    streamMarkersCursorRef.current = 0;
+    streamMarkersRef.current = [];
+    firstContentMsRef.current = null;
+
     currentFullTextRef.current = "";
     if (researchTimeoutRef.current) {
       clearTimeout(researchTimeoutRef.current);
