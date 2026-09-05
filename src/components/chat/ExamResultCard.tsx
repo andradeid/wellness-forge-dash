@@ -308,7 +308,14 @@ export function ExamResultCard({ markers, streaming = false }: { markers: Marker
             </div>
           ))}
         </div>
+        {streaming && (
+          <div className="flex items-center gap-2 border-t px-4 py-2.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
+            <span className="animate-pulse">Carregando mais marcadores…</span>
+          </div>
+        )}
       </CardContent>
+
     </Card>
   );
 }
