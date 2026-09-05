@@ -238,7 +238,7 @@ export function ExamResultCard({ markers, streaming = false }: { markers: Marker
                   const showBadge = !!m.classification && state !== "desconhecido";
 
                   return (
-                    <div key={mId} className="px-4 py-3 bg-white/40">
+                    <div key={mId} className="px-4 py-3 bg-white/40 animate-in fade-in slide-in-from-bottom-1 duration-300">
                       <button
                         type="button"
                         onClick={() => hasAnalysis && setOpenId(isOpen ? null : mId)}
