@@ -671,6 +671,9 @@ export function ChatMessageList({
           {messages.map((m, i) => {
             const isUser = m.role === "user";
             const isLastUserMessage = isUser && i === lastUserIndex;
+            // Última mensagem do assistente ainda em stream (painel progressivo).
+            const isStreamingMsg = !isUser && thinking && i === messages.length - 1;
+
 
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
