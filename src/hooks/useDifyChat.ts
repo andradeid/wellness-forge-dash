@@ -1290,20 +1290,41 @@ export function useDifyChat(
                 fullText += text;
                 currentFullTextRef.current = fullText;
 
-                // Emissão antecipada do painel de marcadores: assim que o bloco
-                // JSON {"markers":[...]} fechar (scanner balanceado retorna array),
-                // atualiza structured_data para o card renderizar antes do texto.
-                // Persistência, débito de créditos e reconciliação de id continuam
-                // exclusivamente no message_end. allowHeuristic:false garante zero
-                // falso positivo sobre prosa parcial.
-                let earlyMarkers: Marker[] | null = null;
-                if (!markersEmittedRef.current && fullText.indexOf('"markers"') !== -1) {
-                  earlyMarkers = tryExtractMarkers(fullText, { allowHeuristic: false });
-                  if (earlyMarkers && earlyMarkers.length > 0) {
-                    markersEmittedRef.current = true;
-                  } else {
-                    earlyMarkers = null;
+                // Renderização progressiva do painel: cada objeto do array
+                // "markers" é interpretado assim que FECHA, sem esperar o array
+                // inteiro. Só entram no parcial marcadores com name+value+category
+                // (nunca mudam de seção depois). Persistência, débito de créditos
+                // e extração definitiva continuam exclusivamente no message_end.
+                let progressiveMarkers: Marker[] | null = null;
+                if (fullText.indexOf('"markers"') !== -1) {
+                  const inc = parseIncrementalMarkers(fullText, streamMarkersCursorRef.current);
+                  streamMarkersCursorRef.current = inc.cursor;
+                  if (inc.markers.length) {
+                    const admitted = inc.markers
+                      .filter(isSafeForProgressiveRender)
+                      .map((raw) => {
+                        const n = normalizeMarker(raw);
+                        return {
+                          name: n.name,
+                          value: n.value,
+                          unit: n.unit,
+                          reference: n.reference,
+                          classification: n.classification,
+                          analysis: n.analysis,
+                          category: n.category,
+                        } as Marker;
+                      });
+                    if (admitted.length) {
+                      streamMarkersRef.current = [...streamMarkersRef.current, ...admitted];
+                      progressiveMarkers = streamMarkersRef.current;
+                      markersEmittedRef.current = true;
+                    }
                   }
+                }
+
+                // Tempo até o primeiro conteúdo visível (marcador ou prosa).
+                if (firstContentMsRef.current === null) {
+                  firstContentMsRef.current = Math.round(performance.now() - startedAt);
                 }
 
                 // Nunca renderizar JSON de erro cru enquanto o stream chega.
@@ -1315,13 +1336,20 @@ export function useDifyChat(
                       ? {
                           ...m,
                           content: displayText,
-                          ...(earlyMarkers
-                            ? { structured_data: { ...(m.structured_data ?? {}), markers: earlyMarkers } }
+                          ...(progressiveMarkers
+                            ? {
+                                structured_data: {
+                                  ...(m.structured_data ?? {}),
+                                  markers: progressiveMarkers,
+                                  streaming_markers: true,
+                                },
+                              }
                             : {}),
                         }
                       : m
                   )
                 );
+
 
                 // Lógica de salvamento por timeout para research
                 if (agentType === 'research') {
