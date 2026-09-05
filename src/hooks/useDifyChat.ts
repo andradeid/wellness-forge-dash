@@ -354,6 +354,13 @@ export function useDifyChat(
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
   const markersEmittedRef = useRef<boolean>(false);
+  // Renderização progressiva: cursor dentro do array "markers" e acumulador
+  // dos marcadores já admitidos no painel parcial.
+  const streamMarkersCursorRef = useRef<number>(0);
+  const streamMarkersRef = useRef<Marker[]>([]);
+  // Telemetria: ms até o primeiro conteúdo visível na tela.
+  const firstContentMsRef = useRef<number | null>(null);
+
   const currentFullTextRef = useRef<string>("");
   // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
   // encerra sem answer ou devolve erro técnico (503/timeout).
