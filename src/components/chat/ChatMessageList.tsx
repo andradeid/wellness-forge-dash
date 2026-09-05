@@ -19,7 +19,7 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel, getTaskLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
-import { stripBodyAssessmentJson, extractBodyAssessment } from "@/lib/body-assessment";
+import { stripBodyAssessmentJson, extractBodyAssessment, extractBodyAssessmentPartial } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
 import { BodyAssessmentCard } from "./BodyAssessmentCard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
@@ -55,6 +55,8 @@ export interface ChatMessage {
     indexed?: boolean;
     parse_error?: boolean;
     processing_ms?: number;
+    first_content_ms?: number;
+    streaming_markers?: boolean;
     not_a_lab_report_error?: string;
     agent_error?: { kind: "content" | "technical"; message: string };
     formulacoes_sugeridas?: FormulacoesPayload;
@@ -1024,6 +1026,14 @@ export function ChatMessageList({
                     {m.role === "assistant" && typeof m.structured_data?.processing_ms === "number" && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
                         ⏱ {(m.structured_data.processing_ms / 1000).toFixed(2)}s
+                      </span>
+                    )}
+                    {m.role === "assistant" && typeof m.structured_data?.first_content_ms === "number" && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-emerald-700"
+                        title="Tempo até o primeiro conteúdo aparecer na tela"
+                      >
+                        ⚡ {(m.structured_data.first_content_ms / 1000).toFixed(2)}s
                       </span>
                     )}
                   </div>
