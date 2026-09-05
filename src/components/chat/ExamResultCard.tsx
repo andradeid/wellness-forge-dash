@@ -202,7 +202,11 @@ export function ExamResultCard({ markers, streaming = false }: { markers: Marker
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
         <FlaskConical className="h-4 w-4 text-[#3d5a4a]" />
         <CardTitle className="text-base">Marcadores do exame</CardTitle>
+        <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
+          {markers.length} {markers.length === 1 ? "marcador" : "marcadores"}
+        </span>
       </CardHeader>
+
       <CardContent className="p-0">
         <div className="divide-y">
           {categories.map((cat) => (
