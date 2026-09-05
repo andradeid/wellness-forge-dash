@@ -1640,8 +1640,12 @@ export function useDifyChat(
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
+                  if (firstContentMsRef.current !== null) {
+                    structured.first_content_ms = firstContentMsRef.current;
+                  }
                   if (!agentError && formulacoes) structured.formulacoes_sugeridas = formulacoes;
                   if (!agentError && mealEstimation) structured.meal_estimation = mealEstimation;
+
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)
