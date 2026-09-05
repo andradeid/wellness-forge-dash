@@ -129,9 +129,10 @@ const CATEGORY_NAMES: Record<string, string> = {
   outros: "Outros",
 };
 
-export function ExamResultCard({ markers }: { markers: Marker[] }) {
+export function ExamResultCard({ markers, streaming = false }: { markers: Marker[]; streaming?: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (!markers?.length) return null;
+
 
   // Group markers by category (normalização defensiva: trim/lower/sem acento)
   const groups = markers.reduce((acc, m) => {
