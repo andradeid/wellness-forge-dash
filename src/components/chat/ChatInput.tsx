@@ -65,7 +65,11 @@ export function ChatInput({
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+    // Limita a ~6-8 linhas no desktop (~112-144px) e um pouco menos no mobile
+    const lineHeight = window.innerWidth < 640 ? 20 : 22;
+    const maxLines = window.innerWidth < 640 ? 5 : 7;
+    const maxHeight = lineHeight * maxLines;
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
   }, [text]);
 
   const addFiles = useCallback((picked: File[]) => {
