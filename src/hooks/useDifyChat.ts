@@ -1590,9 +1590,15 @@ export function useDifyChat(
                   // determinístico — extrai sempre que existir, independente do
                   // tipo de agente. Só o fallback heurístico (prosa) depende de
                   // isExamLike + não ser super agent, pra evitar falso positivo.
-                  const markers: Marker[] | null = tryExtractMarkers(fullText, {
+                  let markers: Marker[] | null = tryExtractMarkers(fullText, {
                     allowHeuristic: isExamLike && !isSuperAgent,
                   });
+                  // Rede de segurança: se a extração final falhar (array truncado
+                  // pelo provedor), preserva o que já foi renderizado no parcial.
+                  if ((!markers || markers.length === 0) && streamMarkersRef.current.length > 0) {
+                    markers = streamMarkersRef.current;
+                  }
+
 
                   const processingMs = Math.round(performance.now() - startedAt);
                   const agentError = detectAgentError(fullText, isExamLike);
