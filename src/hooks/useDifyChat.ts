@@ -8,8 +8,11 @@ import {
   processAndPersistMarkers,
   logStructuredAudit,
   classificationVisualState,
+  normalizeMarker,
   type RawMarker,
 } from "@/lib/exam-markers";
+import { parseIncrementalMarkers, isSafeForProgressiveRender } from "@/lib/streaming-markers";
+
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
@@ -351,6 +354,13 @@ export function useDifyChat(
   const researchSavedRef = useRef<boolean>(false);
   const assistantSavedRef = useRef<boolean>(false);
   const markersEmittedRef = useRef<boolean>(false);
+  // Renderização progressiva: cursor dentro do array "markers" e acumulador
+  // dos marcadores já admitidos no painel parcial.
+  const streamMarkersCursorRef = useRef<number>(0);
+  const streamMarkersRef = useRef<Marker[]>([]);
+  // Telemetria: ms até o primeiro conteúdo visível na tela.
+  const firstContentMsRef = useRef<number | null>(null);
+
   const currentFullTextRef = useRef<string>("");
   // Retry: guarda o último envio para permitir "Tentar novamente" quando o Dify
   // encerra sem answer ou devolve erro técnico (503/timeout).
@@ -719,6 +729,10 @@ export function useDifyChat(
     researchSavedRef.current = false;
     assistantSavedRef.current = false;
     markersEmittedRef.current = false;
+    streamMarkersCursorRef.current = 0;
+    streamMarkersRef.current = [];
+    firstContentMsRef.current = null;
+
     currentFullTextRef.current = "";
     if (researchTimeoutRef.current) {
       clearTimeout(researchTimeoutRef.current);
@@ -1290,20 +1304,41 @@ export function useDifyChat(
                 fullText += text;
                 currentFullTextRef.current = fullText;
 
-                // Emissão antecipada do painel de marcadores: assim que o bloco
-                // JSON {"markers":[...]} fechar (scanner balanceado retorna array),
-                // atualiza structured_data para o card renderizar antes do texto.
-                // Persistência, débito de créditos e reconciliação de id continuam
-                // exclusivamente no message_end. allowHeuristic:false garante zero
-                // falso positivo sobre prosa parcial.
-                let earlyMarkers: Marker[] | null = null;
-                if (!markersEmittedRef.current && fullText.indexOf('"markers"') !== -1) {
-                  earlyMarkers = tryExtractMarkers(fullText, { allowHeuristic: false });
-                  if (earlyMarkers && earlyMarkers.length > 0) {
-                    markersEmittedRef.current = true;
-                  } else {
-                    earlyMarkers = null;
+                // Renderização progressiva do painel: cada objeto do array
+                // "markers" é interpretado assim que FECHA, sem esperar o array
+                // inteiro. Só entram no parcial marcadores com name+value+category
+                // (nunca mudam de seção depois). Persistência, débito de créditos
+                // e extração definitiva continuam exclusivamente no message_end.
+                let progressiveMarkers: Marker[] | null = null;
+                if (fullText.indexOf('"markers"') !== -1) {
+                  const inc = parseIncrementalMarkers(fullText, streamMarkersCursorRef.current);
+                  streamMarkersCursorRef.current = inc.cursor;
+                  if (inc.markers.length) {
+                    const admitted = inc.markers
+                      .filter(isSafeForProgressiveRender)
+                      .map((raw) => {
+                        const n = normalizeMarker(raw);
+                        return {
+                          name: n.name,
+                          value: n.value,
+                          unit: n.unit,
+                          reference: n.reference,
+                          classification: n.classification,
+                          analysis: n.analysis,
+                          category: n.category,
+                        } as Marker;
+                      });
+                    if (admitted.length) {
+                      streamMarkersRef.current = [...streamMarkersRef.current, ...admitted];
+                      progressiveMarkers = streamMarkersRef.current;
+                      markersEmittedRef.current = true;
+                    }
                   }
+                }
+
+                // Tempo até o primeiro conteúdo visível (marcador ou prosa).
+                if (firstContentMsRef.current === null) {
+                  firstContentMsRef.current = Math.round(performance.now() - startedAt);
                 }
 
                 // Nunca renderizar JSON de erro cru enquanto o stream chega.
@@ -1315,13 +1350,20 @@ export function useDifyChat(
                       ? {
                           ...m,
                           content: displayText,
-                          ...(earlyMarkers
-                            ? { structured_data: { ...(m.structured_data ?? {}), markers: earlyMarkers } }
+                          ...(progressiveMarkers
+                            ? {
+                                structured_data: {
+                                  ...(m.structured_data ?? {}),
+                                  markers: progressiveMarkers,
+                                  streaming_markers: true,
+                                },
+                              }
                             : {}),
                         }
                       : m
                   )
                 );
+
 
                 // Lógica de salvamento por timeout para research
                 if (agentType === 'research') {
@@ -1548,9 +1590,15 @@ export function useDifyChat(
                   // determinístico — extrai sempre que existir, independente do
                   // tipo de agente. Só o fallback heurístico (prosa) depende de
                   // isExamLike + não ser super agent, pra evitar falso positivo.
-                  const markers: Marker[] | null = tryExtractMarkers(fullText, {
+                  let markers: Marker[] | null = tryExtractMarkers(fullText, {
                     allowHeuristic: isExamLike && !isSuperAgent,
                   });
+                  // Rede de segurança: se a extração final falhar (array truncado
+                  // pelo provedor), preserva o que já foi renderizado no parcial.
+                  if ((!markers || markers.length === 0) && streamMarkersRef.current.length > 0) {
+                    markers = streamMarkersRef.current;
+                  }
+
 
                   const processingMs = Math.round(performance.now() - startedAt);
                   const agentError = detectAgentError(fullText, isExamLike);
@@ -1592,8 +1640,12 @@ export function useDifyChat(
                     : (markers
                         ? { markers, processing_ms: processingMs }
                         : { processing_ms: processingMs });
+                  if (firstContentMsRef.current !== null) {
+                    structured.first_content_ms = firstContentMsRef.current;
+                  }
                   if (!agentError && formulacoes) structured.formulacoes_sugeridas = formulacoes;
                   if (!agentError && mealEstimation) structured.meal_estimation = mealEstimation;
+
 
                   // Save final assistant message
                   const { data: assistantInserted } = await (supabase as any)

@@ -18,7 +18,7 @@ function classificationCls(c?: string) {
   return "bg-slate-50 text-slate-700 border-slate-200";
 }
 
-export function BodyAssessmentCard({ data }: { data: BodyAssessment }) {
+export function BodyAssessmentCard({ data, streaming = false }: { data: BodyAssessment; streaming?: boolean }) {
   const badge = confidenceBadge(data.confidence);
   const indicators: BodyVisualIndicator[] = Array.isArray(data.visual_indicators) ? data.visual_indicators : [];
 
@@ -64,6 +64,13 @@ export function BodyAssessmentCard({ data }: { data: BodyAssessment }) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {streaming && (
+        <div className="flex items-center gap-2 border-t border-[#e8a04c]/20 px-4 py-2.5 text-xs text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
+          <span className="animate-pulse">Completando a análise…</span>
         </div>
       )}
     </div>

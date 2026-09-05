@@ -129,9 +129,10 @@ const CATEGORY_NAMES: Record<string, string> = {
   outros: "Outros",
 };
 
-export function ExamResultCard({ markers }: { markers: Marker[] }) {
+export function ExamResultCard({ markers, streaming = false }: { markers: Marker[]; streaming?: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (!markers?.length) return null;
+
 
   // Group markers by category (normalização defensiva: trim/lower/sem acento)
   const groups = markers.reduce((acc, m) => {
@@ -201,7 +202,11 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
         <FlaskConical className="h-4 w-4 text-[#3d5a4a]" />
         <CardTitle className="text-base">Marcadores do exame</CardTitle>
+        <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
+          {markers.length} {markers.length === 1 ? "marcador" : "marcadores"}
+        </span>
       </CardHeader>
+
       <CardContent className="p-0">
         <div className="divide-y">
           {categories.map((cat) => (
@@ -233,7 +238,7 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
                   const showBadge = !!m.classification && state !== "desconhecido";
 
                   return (
-                    <div key={mId} className="px-4 py-3 bg-white/40">
+                    <div key={mId} className="px-4 py-3 bg-white/40 animate-in fade-in slide-in-from-bottom-1 duration-300">
                       <button
                         type="button"
                         onClick={() => hasAnalysis && setOpenId(isOpen ? null : mId)}
@@ -303,7 +308,14 @@ export function ExamResultCard({ markers }: { markers: Marker[] }) {
             </div>
           ))}
         </div>
+        {streaming && (
+          <div className="flex items-center gap-2 border-t px-4 py-2.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
+            <span className="animate-pulse">Carregando mais marcadores…</span>
+          </div>
+        )}
       </CardContent>
+
     </Card>
   );
 }

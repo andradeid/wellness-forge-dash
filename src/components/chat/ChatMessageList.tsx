@@ -19,7 +19,7 @@ import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { normalizePrescription } from "@/lib/normalize-prescription";
 import { getAgentLabel, getTaskLabel } from "@/lib/agent-labels";
 import { stripMealEstimationJson, type MealEstimation } from "@/lib/meal-estimation";
-import { stripBodyAssessmentJson, extractBodyAssessment } from "@/lib/body-assessment";
+import { stripBodyAssessmentJson, extractBodyAssessment, extractBodyAssessmentPartial } from "@/lib/body-assessment";
 import { MealEstimationCard } from "./MealEstimationCard";
 import { BodyAssessmentCard } from "./BodyAssessmentCard";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
@@ -55,6 +55,8 @@ export interface ChatMessage {
     indexed?: boolean;
     parse_error?: boolean;
     processing_ms?: number;
+    first_content_ms?: number;
+    streaming_markers?: boolean;
     not_a_lab_report_error?: string;
     agent_error?: { kind: "content" | "technical"; message: string };
     formulacoes_sugeridas?: FormulacoesPayload;
@@ -671,6 +673,9 @@ export function ChatMessageList({
           {messages.map((m, i) => {
             const isUser = m.role === "user";
             const isLastUserMessage = isUser && i === lastUserIndex;
+            // Última mensagem do assistente ainda em stream (painel progressivo).
+            const isStreamingMsg = !isUser && thinking && i === messages.length - 1;
+
 
             const parts = isUser ? [{ type: "text" as const, value: m.content }] : splitJsonBlocks(m.content);
             const isHighlighted = highlightId === m.id;
@@ -767,6 +772,12 @@ export function ChatMessageList({
                       </div>
                     );
                   })()}
+                  {!isUser && isStreamingMsg && !m.content?.trim() && !m.structured_data?.markers?.length && (
+                    <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#e8a04c]/25 bg-gradient-to-r from-[#fff8ef] to-[#fdf1f8] px-3 py-2 text-xs text-foreground/70 animate-in fade-in duration-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
+                      Exame recebido — iniciando análise…
+                    </div>
+                  )}
                   {m.structured_data?.markers &&
                    m.structured_data.markers.length > 0 &&
                    (
@@ -775,7 +786,7 @@ export function ChatMessageList({
                      (!m.agent_type && (agentType?.startsWith('exam') || agentType?.startsWith('super')))
                    ) && (
                     <div className="mb-4">
-                      <ExamResultCard markers={m.structured_data.markers} />
+                      <ExamResultCard markers={m.structured_data.markers} streaming={isStreamingMsg} />
                     </div>
                   )}
                   {m.role === "assistant" && m.structured_data?.meal_estimation && (
@@ -784,13 +795,16 @@ export function ChatMessageList({
                     </div>
                   )}
                   {m.role === "assistant" && (() => {
-                    const ba = extractBodyAssessment(m.content);
+                    const ba = isStreamingMsg
+                      ? extractBodyAssessmentPartial(m.content)
+                      : extractBodyAssessment(m.content);
                     return ba ? (
                       <div className="mb-4">
-                        <BodyAssessmentCard data={ba} />
+                        <BodyAssessmentCard data={ba} streaming={isStreamingMsg} />
                       </div>
                     ) : null;
                   })()}
+
                   {m.role === "assistant" && m.structured_data?.formulacoes_sugeridas && onGenerateRecipe && (
                     <div className="mb-4 p-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white shadow-sm">
                       <div className="flex items-start gap-3">
@@ -1012,6 +1026,14 @@ export function ChatMessageList({
                     {m.role === "assistant" && typeof m.structured_data?.processing_ms === "number" && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
                         ⏱ {(m.structured_data.processing_ms / 1000).toFixed(2)}s
+                      </span>
+                    )}
+                    {m.role === "assistant" && typeof m.structured_data?.first_content_ms === "number" && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-emerald-700"
+                        title="Tempo até o primeiro conteúdo aparecer na tela"
+                      >
+                        ⚡ {(m.structured_data.first_content_ms / 1000).toFixed(2)}s
                       </span>
                     )}
                   </div>
