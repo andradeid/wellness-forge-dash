@@ -302,6 +302,28 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
                 researchTimeoutRef.current = null;
               }
               
+              // Fallback de roteamento do Super Agente (task não reconhecida
+              // pelo app Dify): não salva, não cobra e reenvia UMA vez.
+              if (isTaskRoutingFallback(fullAssistantText) && !routingRetryUsedRef.current) {
+                routingRetryUsedRef.current = true;
+                researchSavedRef.current = true;
+                console.warn("[dify] fallback de roteamento (chat geral)", {
+                  agent_type: agentType,
+                  selected_task: selectedTaskKey ?? null,
+                });
+                if (userInserted?.id) {
+                  try {
+                    await supabase.from("general_chat_messages").delete().eq("id", userInserted.id);
+                  } catch { /* duplicata é preferível a perder a mensagem */ }
+                }
+                setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsgId));
+                setStreamingContent("");
+                currentFullTextRef.current = "";
+                toast.info("Reenviando sua solicitação…", { duration: 4000 });
+                setTimeout(() => { sendMessageRef.current?.(text, { _isRetry: true }); }, 400);
+                return;
+              }
+
               if (agentType === "research") {
                 if (!researchSavedRef.current) {
                   researchSavedRef.current = true;
