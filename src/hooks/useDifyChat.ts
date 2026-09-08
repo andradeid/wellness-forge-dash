@@ -29,6 +29,7 @@ import {
   classifyAgentError,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  isTaskRoutingFallback,
   sanitizeStreamingText,
   type AgentErrorInfo,
 } from "@/lib/dify-error-messages";
