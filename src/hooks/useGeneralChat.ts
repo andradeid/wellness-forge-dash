@@ -312,7 +312,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
               }
 
               // Débito após resposta completa
-              if (billingKey && fullAssistantText.trim()) {
+              if (billingKey && fullAssistantText.trim() && !isTaskRoutingFallback(fullAssistantText)) {
                 try {
                   await consume(billingKey, text.slice(0, 200));
                 } catch (e) {
