@@ -66,9 +66,10 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
     };
   }, [chatId]);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, opts?: { _isRetry?: boolean }) => {
     if (!chatId || !user) return;
     if (sendingRef.current || thinkingRef.current) return;
+    if (!opts?._isRetry) routingRetryUsedRef.current = false;
     sendingRef.current = true;
     thinkingRef.current = true;
     setThinking(true);
