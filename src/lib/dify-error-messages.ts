@@ -198,3 +198,24 @@ export function sanitizeStreamingText(text: string): string {
   return text;
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Fallback de roteamento do Super Agente
+ *
+ * Quando o roteador interno do app Dify não reconhece o valor recebido
+ * em `selected_task`, ele devolve um texto genérico pedindo para o
+ * usuário escolher o card de novo. Isso NÃO é uma resposta clínica:
+ * não deve ser cobrada em créditos e merece uma única retentativa
+ * automática antes de aparecer para a nutricionista.
+ * ------------------------------------------------------------------ */
+
+const stripAccents = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+export function isTaskRoutingFallback(text: string | null | undefined): boolean {
+  const t = stripAccents((text ?? "").trim());
+  if (!t || t.length > 600) return false;
+  const mentionsTask = /identificar a tarefa/.test(t) || /tarefa (solicitada|nao reconhecida|desconhecida)/.test(t);
+  const asksCard = /selecion(e|ar) novamente/.test(t) || /escolha novamente/.test(t) || /card desejado/.test(t);
+  return mentionsTask && asksCard;
+}
