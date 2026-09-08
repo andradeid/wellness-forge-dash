@@ -13,6 +13,7 @@ import {
   CONCURRENCY_USER_MESSAGE,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  isTaskRoutingFallback,
 } from "@/lib/dify-error-messages";
 
 export function useGeneralChat(chatId: string, agentType: string, selectedTaskKey?: string | null) {
