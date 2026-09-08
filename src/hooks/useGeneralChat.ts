@@ -27,6 +27,9 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
   const currentFullTextRef = useRef<string>("");
   const sendingRef = useRef(false);
   const thinkingRef = useRef(false);
+  /** Uma única retentativa automática por envio quando o Dify devolve o fallback de roteamento. */
+  const routingRetryUsedRef = useRef(false);
+  const sendMessageRef = useRef<((text: string, opts?: { _isRetry?: boolean }) => void) | null>(null);
   useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
   const { getCost, consume } = useCreditsActions();
   const { refetch: refetchCredits } = useMyCredits();
