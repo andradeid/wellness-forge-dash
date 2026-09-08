@@ -13,6 +13,7 @@ import {
   CONCURRENCY_USER_MESSAGE,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  isTaskRoutingFallback,
 } from "@/lib/dify-error-messages";
 
 export function useGeneralChat(chatId: string, agentType: string, selectedTaskKey?: string | null) {
@@ -26,6 +27,9 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
   const currentFullTextRef = useRef<string>("");
   const sendingRef = useRef(false);
   const thinkingRef = useRef(false);
+  /** Uma única retentativa automática por envio quando o Dify devolve o fallback de roteamento. */
+  const routingRetryUsedRef = useRef(false);
+  const sendMessageRef = useRef<((text: string, opts?: { _isRetry?: boolean }) => void) | null>(null);
   useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
   const { getCost, consume } = useCreditsActions();
   const { refetch: refetchCredits } = useMyCredits();
@@ -62,9 +66,10 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
     };
   }, [chatId]);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, opts?: { _isRetry?: boolean }) => {
     if (!chatId || !user) return;
     if (sendingRef.current || thinkingRef.current) return;
+    if (!opts?._isRetry) routingRetryUsedRef.current = false;
     sendingRef.current = true;
     thinkingRef.current = true;
     setThinking(true);
@@ -302,6 +307,28 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
                 researchTimeoutRef.current = null;
               }
               
+              // Fallback de roteamento do Super Agente (task não reconhecida
+              // pelo app Dify): não salva, não cobra e reenvia UMA vez.
+              if (isTaskRoutingFallback(fullAssistantText) && !routingRetryUsedRef.current) {
+                routingRetryUsedRef.current = true;
+                researchSavedRef.current = true;
+                console.warn("[dify] fallback de roteamento (chat geral)", {
+                  agent_type: agentType,
+                  selected_task: selectedTaskKey ?? null,
+                });
+                if (userInserted?.id) {
+                  try {
+                    await supabase.from("general_chat_messages").delete().eq("id", userInserted.id);
+                  } catch { /* duplicata é preferível a perder a mensagem */ }
+                }
+                setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsgId));
+                setStreamingContent("");
+                currentFullTextRef.current = "";
+                toast.info("Reenviando sua solicitação…", { duration: 4000 });
+                setTimeout(() => { sendMessageRef.current?.(text, { _isRetry: true }); }, 400);
+                return;
+              }
+
               if (agentType === "research") {
                 if (!researchSavedRef.current) {
                   researchSavedRef.current = true;
@@ -312,7 +339,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
               }
 
               // Débito após resposta completa
-              if (billingKey && fullAssistantText.trim()) {
+              if (billingKey && fullAssistantText.trim() && !isTaskRoutingFallback(fullAssistantText)) {
                 try {
                   await consume(billingKey, text.slice(0, 200));
                 } catch (e) {
@@ -415,6 +442,8 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
       sendingRef.current = false;
     }
   }, [chatId, user, agentType, selectedTaskKey, getCost, consume, refetchCredits]);
+
+  useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
 
   return { messages, sendMessage, thinking };
 }

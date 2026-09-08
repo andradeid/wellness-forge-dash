@@ -29,6 +29,7 @@ import {
   classifyAgentError,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  isTaskRoutingFallback,
   sanitizeStreamingText,
   type AgentErrorInfo,
 } from "@/lib/dify-error-messages";
@@ -1621,6 +1622,35 @@ export function useDifyChat(
 
                   // Estimativa de refeição por foto (Super Agente): bloco { "foods": [...] }
                   const mealEstimation = extractMealEstimation(fullText);
+
+                  // Fallback de roteamento do Super Agente: o app Dify não
+                  // reconheceu o `selected_task`. Não é resposta clínica →
+                  // não cobra crédito e reenvia UMA única vez.
+                  if (!agentError && isTaskRoutingFallback(fullText)) {
+                    console.warn("[dify] fallback de roteamento", {
+                      agent_type: agentType,
+                      selected_task: selectedTask ?? null,
+                      retry_used: retryUsedRef.current,
+                    });
+                    if (!retryUsedRef.current && lastRequestRef.current) {
+                      retryUsedRef.current = true;
+                      assistantSavedRef.current = true;
+                      const req = lastRequestRef.current;
+                      setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsg.id));
+                      if (userInserted?.id) {
+                        try {
+                          await (supabase as any).from("chat_messages").delete().eq("id", userInserted.id);
+                        } catch { /* duplicata é preferível a perder a mensagem */ }
+                      }
+                      setThinking(false);
+                      thinkingRef.current = false;
+                      toast.info("Reenviando sua solicitação…", { duration: 4000 });
+                      setTimeout(() => {
+                        sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+                      }, 400);
+                      return;
+                    }
+                  }
 
                   // O JSON cru nunca aparece para a nutricionista: a bolha passa
                   // a conter apenas a mensagem amigável (renderizada uma única
