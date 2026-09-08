@@ -443,5 +443,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
     }
   }, [chatId, user, agentType, selectedTaskKey, getCost, consume, refetchCredits]);
 
+  useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
+
   return { messages, sendMessage, thinking };
 }
