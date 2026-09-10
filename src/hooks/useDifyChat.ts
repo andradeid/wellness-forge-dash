@@ -673,8 +673,12 @@ export function useDifyChat(
     // idêntico ao de hoje (billingKey resolve pelo agent_id).
     // Fallback: se opts.selectedTask não veio, usa o task pendente setado
     // externamente (por ex.: clique num super_agent_card na home).
-    const selectedTask =
-      opts?.selectedTask?.trim() || selectedTaskRef.current?.trim() || undefined;
+    // Em retentativa, o card atualmente selecionado tem prioridade: a usuária
+    // pode ter trocado de tarefa entre a falha e o reenvio. Fora de retentativa
+    // mantém o comportamento original (opts primeiro).
+    const selectedTask = opts?._isRetry
+      ? (selectedTaskRef.current?.trim() || opts?.selectedTask?.trim() || undefined)
+      : (opts?.selectedTask?.trim() || selectedTaskRef.current?.trim() || undefined);
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
