@@ -333,7 +333,23 @@ function ChatPage() {
 
 
 
-  const wrappedSend = useCallback(
+  // Aviso (não bloqueio) ao reenviar um arquivo já analisado nesta conversa.
+  const [duplicateWarning, setDuplicateWarning] = useState<
+    { text: string; files: File[]; names: string[] } | null
+  >(null);
+
+  const alreadySentFileNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of messages) {
+      if (m.role !== "user") continue;
+      for (const a of (m.attachments ?? []) as Array<{ name?: string }>) {
+        if (a?.name) set.add(a.name.trim().toLowerCase());
+      }
+    }
+    return set;
+  }, [messages]);
+
+  const doSend = useCallback(
     async (text: string, files: File[]) => {
       // Garante que o painel de módulos não esconda a animação "Lumma está pensando…"
       setShowModuleSelector(false);
