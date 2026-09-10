@@ -1230,6 +1230,36 @@ function ChatPage() {
         </div>
       </div>
 
+      <AlertDialog
+        open={!!duplicateWarning}
+        onOpenChange={(open) => { if (!open) setDuplicateWarning(null); }}
+      >
+        <AlertDialogContent className="max-w-md rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Este arquivo já foi analisado nesta conversa</AlertDialogTitle>
+            <AlertDialogDescription className="leading-relaxed">
+              {duplicateWarning?.names.length === 1
+                ? `O arquivo "${duplicateWarning?.names[0]}" já foi enviado aqui.`
+                : `Os arquivos ${duplicateWarning?.names.map((n) => `"${n}"`).join(", ")} já foram enviados aqui.`}
+              {" "}Reanalisar consome créditos novamente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white"
+              onClick={() => {
+                const pending = duplicateWarning;
+                setDuplicateWarning(null);
+                if (pending) void doSend(pending.text, pending.files);
+              }}
+            >
+              Analisar novamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={newChatPickerOpen} onOpenChange={setNewChatPickerOpen}>
         <AlertDialogContent className="max-w-lg border-0 shadow-xl rounded-2xl overflow-hidden p-0">
           <div className="h-1 w-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf]" />
