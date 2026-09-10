@@ -237,6 +237,46 @@ export const Route = createFileRoute("/api/dify/chat")({
           }
         };
 
+        /**
+         * Fim do stream: registra erro emitido no meio da resposta e também
+         * respostas que voltaram rápido demais para a tarefa (nem sempre a
+         * falha chega como erro — às vezes volta "pronta" em 12 segundos).
+         */
+        const onStreamFinished = async (
+          outcome: { streamError: string | null; bytes: number },
+          wasRetry = false,
+        ) => {
+          const durationMs = Date.now() - startedAt;
+          if (outcome.streamError) {
+            await logDify({
+              rawError: outcome.streamError,
+              durationMs,
+              metadata: { bytes: outcome.bytes, was_retry: wasRetry, phase: "stream" },
+            });
+            return;
+          }
+          try {
+            const { fastResponseThresholdMs } = await import("@/lib/dify-error-log.server");
+            const limit = fastResponseThresholdMs(logCtx.selectedTask, logCtx.attachmentCount > 0);
+            if (durationMs < limit) {
+              await logDify({
+                errorKind: outcome.bytes < 400 ? "empty_answer" : "suspicious_fast",
+                rawError: null,
+                durationMs,
+                metadata: {
+                  bytes: outcome.bytes,
+                  threshold_ms: limit,
+                  was_retry: wasRetry,
+                  phase: "stream",
+                  note: "Resposta concluída sem erro, porém em tempo abaixo do esperado para a tarefa.",
+                },
+              });
+            }
+          } catch {
+            /* registro é best-effort */
+          }
+        };
+
 
         // ============================================================
         // Rate limit: acquire ANTES de gastar recurso com Dify config
