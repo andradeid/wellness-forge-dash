@@ -258,6 +258,31 @@ async function handleCheckoutCompleted(
         : session.subscription.id;
       const sub = await stripe.subscriptions.retrieve(subId);
       await syncSubscription(supabaseAdmin, sub, stripe);
+
+      // Rede de segurança contra corrida: se o invoice.payment_succeeded chegou
+      // ANTES da conta existir, ele não creditou nada. Agora que o usuário está
+      // provisionado, conferimos a fatura da assinatura e creditamos se faltou.
+      // A trava é o payment_history pago da própria fatura — nunca credita duas vezes.
+      const latestInvoiceId = typeof (sub as any).latest_invoice === "string"
+        ? ((sub as any).latest_invoice as string)
+        : ((sub as any).latest_invoice?.id as string | undefined) ?? null;
+
+      if (latestInvoiceId) {
+        const { data: alreadyPaid } = await supabaseAdmin
+          .from("payment_history" as any)
+          .select("id")
+          .eq("stripe_invoice_id", latestInvoiceId)
+          .eq("status", "paid")
+          .maybeSingle();
+
+        if (!alreadyPaid) {
+          const invoice = await stripe.invoices.retrieve(latestInvoiceId);
+          if (invoice.status === "paid" && (invoice.amount_paid ?? 0) > 0) {
+            console.log("[stripe-webhook] fatura sem crédito no checkout — creditando agora", latestInvoiceId);
+            await handleInvoicePaid(supabaseAdmin, stripe, invoice, eventId);
+          }
+        }
+      }
     } catch (err: any) {
       console.error("[stripe-webhook] falha ao sincronizar sub do checkout:", err?.message);
     }
@@ -490,7 +515,14 @@ async function handleInvoicePaid(
     invoiceProvision = await resolveOrInviteUserByCustomer(supabaseAdmin, stripe, customerId);
     targetUserId = invoiceProvision.userId;
   }
-  if (!targetUserId) return;
+  // Não conseguimos resolver o usuário (ex.: corrida com o checkout.session.completed,
+  // que ainda está criando a conta). Falha de propósito: devolvemos 500 e o Stripe
+  // reenvia o evento — creditar depois é melhor do que engolir a fatura em silêncio.
+  if (!targetUserId) {
+    throw new Error(
+      `invoice ${invoice.id}: usuário do customer ${customerId} ainda não existe — forçando retry do Stripe`,
+    );
+  }
 
   await syncCustomerContactToProfile(supabaseAdmin, stripe, customerId, targetUserId);
 
