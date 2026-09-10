@@ -345,6 +345,11 @@ export const Route = createFileRoute("/api/dify/chat")({
         } catch (e: any) {
           clearTimeout(timeout);
           console.error('[PROXY FETCH ERROR]', e);
+          void logDify({
+            errorKind: e?.name === "AbortError" ? "timeout" : "connection",
+            httpStatus: 504,
+            rawError: String(e?.stack || e?.message || e),
+          });
           return releaseAnd(new Response(JSON.stringify({ error: e.message || "Timeout or connection error" }), {
             status: 504,
             headers: { "Content-Type": "application/json" }
