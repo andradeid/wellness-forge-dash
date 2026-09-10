@@ -366,6 +366,9 @@ export const Route = createFileRoute("/api/dify/chat")({
             body: text
           });
 
+          void logDify({ httpStatus: upstream.status, rawError: text });
+
+
           if (
             (upstream.status === 403 || upstream.status === 401) &&
             /workspace.*archived|status is archived|invalid/i.test(text)
