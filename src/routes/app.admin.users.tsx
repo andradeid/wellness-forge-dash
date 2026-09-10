@@ -687,15 +687,28 @@ function UsersPage() {
   const savePlan = async () => {
     if (!planUser) return;
     setSavingPlan(true);
-    const { error } = await (supabase as any)
-      .from("subscriptions")
-      .update({ plan_type: planForm.plan_type, status: planForm.status })
-      .eq("user_id", planUser.id);
-    setSavingPlan(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Plano atualizado com sucesso");
-    setPlanUser(null);
-    refreshAll();
+    try {
+      // Troca o plano e já provisiona a cota/saldo do plano escolhido.
+      const { setUserPlan } = await import("@/lib/credits-admin.functions");
+      const res = await setUserPlan({
+        data: {
+          userId: planUser.id,
+          planType: planForm.plan_type as any,
+          status: planForm.status as any,
+        },
+      });
+      toast.success(
+        res.credited > 0
+          ? `Plano atualizado e ${res.credited} créditos liberados`
+          : "Plano atualizado com sucesso",
+      );
+      setPlanUser(null);
+      refreshAll();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao atualizar o plano");
+    } finally {
+      setSavingPlan(false);
+    }
   };
 
   const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
