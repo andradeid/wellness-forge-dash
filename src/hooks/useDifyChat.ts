@@ -1618,6 +1618,24 @@ export function useDifyChat(
                       selected_task: selectedTask ?? null,
                       raw: agentError.raw,
                     });
+                    // Preserva o erro bruto para a tela de Erros da IA.
+                    void logDifyFailure({
+                      data: {
+                        chatId,
+                        conversationId: conversationIdRef.current || null,
+                        patientId: metaRef.current?.patient_id ?? null,
+                        patientProfile: (metaRef.current as any)?.patient_profile ?? null,
+                        selectedTask: selectedTask ?? null,
+                        agentType: agentType ?? null,
+                        errorKind: agentError.kind === "technical" ? "upstream_error" : "content_error",
+                        rawError: agentError.raw ?? agentError.message,
+                        durationMs: processingMs,
+                        attachmentCount: attachments.length,
+                        attachmentName: attachments[0]?.name ?? null,
+                        attachmentMime: attachments[0]?.mime_type ?? null,
+                        billed: false,
+                      },
+                    }).catch(() => {});
                   }
                   // Erro técnico é transitório → habilita "Tentar novamente".
                   if (agentError?.kind === "technical" && !retryUsedRef.current && lastRequestRef.current) {
