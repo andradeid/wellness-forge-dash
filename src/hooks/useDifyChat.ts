@@ -1658,6 +1658,24 @@ export function useDifyChat(
                       selected_task: selectedTask ?? null,
                       retry_used: retryUsedRef.current,
                     });
+                    void logDifyFailure({
+                      data: {
+                        chatId,
+                        conversationId: conversationIdRef.current || null,
+                        patientId: metaRef.current?.patient_id ?? null,
+                        patientProfile: (metaRef.current as any)?.patient_profile ?? null,
+                        selectedTask: selectedTask ?? null,
+                        agentType: agentType ?? null,
+                        errorKind: "task_routing",
+                        rawError: fullText.slice(0, 4000),
+                        durationMs: processingMs,
+                        attachmentCount: attachments.length,
+                        attachmentName: attachments[0]?.name ?? null,
+                        attachmentMime: attachments[0]?.mime_type ?? null,
+                        wasRetry: retryUsedRef.current,
+                        billed: false,
+                      },
+                    }).catch(() => {});
                     if (!retryUsedRef.current && lastRequestRef.current) {
                       retryUsedRef.current = true;
                       assistantSavedRef.current = true;
