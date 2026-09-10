@@ -237,3 +237,87 @@ export const setUnlimited = createServerFn({ method: "POST" })
     return { unlimited_credits: data.unlimited };
   });
 
+/**
+ * Troca o plano de um usuário pelo painel admin E provisiona os créditos do plano.
+ *
+ * Antes, a tela só atualizava `subscriptions.plan_type` — o saldo continuava zerado,
+ * obrigando o suporte a trocar de plano e voltar. Aqui, além do plano:
+ *  - grava a cota mensal do plano em `user_credits.monthly_quota`
+ *  - completa o saldo até a cota quando estiver abaixo (nunca reduz saldo existente)
+ *  - registra a diferença em `credit_transactions` para o extrato do usuário
+ * Planos sem crédito (free) ou assinaturas inativas não recebem carga.
+ */
+export const setUserPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      userId: z.string().uuid(),
+      planType: z.enum(["free", "starter", "pro", "clinica", "legado_500"]),
+      status: z.enum(["trial", "active", "past_due", "canceled"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+
+    const { error: subErr } = await context.supabase
+      .from("subscriptions")
+      .update({ plan_type: data.planType, status: data.status })
+      .eq("user_id", data.userId);
+    if (subErr) throw new Response(subErr.message, { status: 400 });
+
+    // Cota do plano escolhido
+    const { data: plan } = await context.supabase
+      .from("subscription_plans")
+      .select("monthly_credits, name")
+      .eq("slug", data.planType)
+      .maybeSingle();
+
+    const monthlyCredits = (plan as any)?.monthly_credits ?? 0;
+    const planActive = data.status === "active" || data.status === "trial";
+
+    if (!planActive || monthlyCredits <= 0) {
+      return { plan_type: data.planType, status: data.status, credited: 0, balance: null };
+    }
+
+    const { data: creditsRow } = await context.supabase
+      .from("user_credits")
+      .select("balance, quota_reset_at")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+
+    const balanceBefore = (creditsRow as any)?.balance ?? 0;
+    const balanceAfter = Math.max(balanceBefore, monthlyCredits);
+    const credited = balanceAfter - balanceBefore;
+
+    const nextReset = new Date();
+    nextReset.setMonth(nextReset.getMonth() + 1);
+
+    const { error: upErr } = await context.supabase
+      .from("user_credits")
+      .upsert(
+        {
+          user_id: data.userId,
+          balance: balanceAfter,
+          monthly_quota: monthlyCredits,
+          quota_reset_at: (creditsRow as any)?.quota_reset_at ?? nextReset.toISOString(),
+        },
+        { onConflict: "user_id" },
+      );
+    if (upErr) throw new Response(upErr.message, { status: 400 });
+
+    if (credited > 0) {
+      await context.supabase.from("credit_transactions").insert({
+        user_id: data.userId,
+        type: "grant",
+        amount: credited,
+        balance_after: balanceAfter,
+        agent_key: null,
+        agent_label: `plano:${data.planType}`,
+        message_preview: `Créditos do plano ${(plan as any)?.name ?? data.planType} liberados pelo suporte`,
+        metadata: { source: "admin_set_plan", plan: data.planType, admin_id: context.userId },
+      } as any);
+    }
+
+    return { plan_type: data.planType, status: data.status, credited, balance: balanceAfter };
+  });
+
