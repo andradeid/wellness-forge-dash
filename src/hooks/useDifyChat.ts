@@ -1180,7 +1180,9 @@ export function useDifyChat(
             query: difyQuery,
             conversation_id: convId,
             files: difyFiles,
-            meta: metaRef.current,
+            // Nome/tipo dos anexos: usado só no registro de falhas da IA.
+            file_meta: attachments.map((a) => ({ name: a.name, type: a.mime_type ?? "" })),
+            meta: { ...metaRef.current, chat_id: chatId },
             agent_type: agentType,
             ...(selectedTask ? { selected_task: selectedTask } : {}),
             ...(opts?.extraInputs ? { inputs: opts.extraInputs } : {}),
