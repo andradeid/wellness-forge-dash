@@ -22,6 +22,7 @@ import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
 import { extractMealEstimation } from "@/lib/meal-estimation";
+import { logDifyFailure } from "@/lib/dify-errors.functions";
 import {
   CONCURRENCY_TOAST_DESCRIPTION,
   CONCURRENCY_TOAST_TITLE,
