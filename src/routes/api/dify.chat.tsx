@@ -65,12 +65,21 @@ async function releaseStreamSlot(userId: string) {
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
  * seja sucesso, erro, desconexão do cliente ou timeout de segurança.
  */
+export interface StreamOutcome {
+  /** Trecho bruto do evento SSE `error` emitido pelo Dify, se houver. */
+  streamError: string | null;
+  /** Bytes entregues ao cliente — resposta muito curta indica falha silenciosa. */
+  bytes: number;
+}
+
 function wrapStreamWithRelease(
   upstreamBody: ReadableStream<Uint8Array>,
-  onDone: () => void,
+  onDone: (outcome: StreamOutcome) => void,
   maxDurationMs = 360000,
 ): ReadableStream<Uint8Array> {
   let released = false;
+  let streamError: string | null = null;
+  let bytes = 0;
   let safetyTimer: ReturnType<typeof setTimeout> | null = null;
   const release = () => {
     if (released) return;
