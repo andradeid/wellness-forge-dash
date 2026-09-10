@@ -656,6 +656,78 @@ export type Database = {
         }
         Relationships: []
       }
+      dify_error_logs: {
+        Row: {
+          agent_type: string | null
+          attachment_count: number
+          attachment_mime: string | null
+          attachment_name: string | null
+          billed: boolean
+          chat_id: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_ms: number | null
+          error_kind: string
+          had_attachment: boolean
+          http_status: number | null
+          id: string
+          metadata: Json
+          patient_id: string | null
+          patient_profile: string | null
+          raw_error: string | null
+          selected_task: string | null
+          source: string
+          user_id: string | null
+          was_retry: boolean
+        }
+        Insert: {
+          agent_type?: string | null
+          attachment_count?: number
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          billed?: boolean
+          chat_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_kind?: string
+          had_attachment?: boolean
+          http_status?: number | null
+          id?: string
+          metadata?: Json
+          patient_id?: string | null
+          patient_profile?: string | null
+          raw_error?: string | null
+          selected_task?: string | null
+          source?: string
+          user_id?: string | null
+          was_retry?: boolean
+        }
+        Update: {
+          agent_type?: string | null
+          attachment_count?: number
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          billed?: boolean
+          chat_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_kind?: string
+          had_attachment?: boolean
+          http_status?: number | null
+          id?: string
+          metadata?: Json
+          patient_id?: string | null
+          patient_profile?: string | null
+          raw_error?: string | null
+          selected_task?: string | null
+          source?: string
+          user_id?: string | null
+          was_retry?: boolean
+        }
+        Relationships: []
+      }
       email_campaign_recipients: {
         Row: {
           campaign_id: string
