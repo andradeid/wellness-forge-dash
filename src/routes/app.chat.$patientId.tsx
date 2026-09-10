@@ -333,7 +333,23 @@ function ChatPage() {
 
 
 
-  const wrappedSend = useCallback(
+  // Aviso (não bloqueio) ao reenviar um arquivo já analisado nesta conversa.
+  const [duplicateWarning, setDuplicateWarning] = useState<
+    { text: string; files: File[]; names: string[] } | null
+  >(null);
+
+  const alreadySentFileNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of messages) {
+      if (m.role !== "user") continue;
+      for (const a of (m.attachments ?? []) as Array<{ name?: string }>) {
+        if (a?.name) set.add(a.name.trim().toLowerCase());
+      }
+    }
+    return set;
+  }, [messages]);
+
+  const doSend = useCallback(
     async (text: string, files: File[]) => {
       // Garante que o painel de módulos não esconda a animação "Lumma está pensando…"
       setShowModuleSelector(false);
@@ -357,6 +373,21 @@ function ChatPage() {
     },
     [sendMessage, agents, agentType, selectedTask],
   );
+
+  const wrappedSend = useCallback(
+    async (text: string, files: File[]) => {
+      const repeated = files
+        .map((f) => f.name)
+        .filter((n) => alreadySentFileNames.has(n.trim().toLowerCase()));
+      if (repeated.length > 0) {
+        setDuplicateWarning({ text, files, names: repeated });
+        return;
+      }
+      await doSend(text, files);
+    },
+    [doSend, alreadySentFileNames],
+  );
+
 
   const handleGenerateRecipe = useCallback(
     (payload: NonNullable<NonNullable<typeof messages[number]["structured_data"]>["formulacoes_sugeridas"]>) => {
@@ -1198,6 +1229,36 @@ function ChatPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!duplicateWarning}
+        onOpenChange={(open) => { if (!open) setDuplicateWarning(null); }}
+      >
+        <AlertDialogContent className="max-w-md rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Este arquivo já foi analisado nesta conversa</AlertDialogTitle>
+            <AlertDialogDescription className="leading-relaxed">
+              {duplicateWarning?.names.length === 1
+                ? `O arquivo "${duplicateWarning?.names[0]}" já foi enviado aqui.`
+                : `Os arquivos ${duplicateWarning?.names.map((n) => `"${n}"`).join(", ")} já foram enviados aqui.`}
+              {" "}Reanalisar consome créditos novamente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white"
+              onClick={() => {
+                const pending = duplicateWarning;
+                setDuplicateWarning(null);
+                if (pending) void doSend(pending.text, pending.files);
+              }}
+            >
+              Analisar novamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={newChatPickerOpen} onOpenChange={setNewChatPickerOpen}>
         <AlertDialogContent className="max-w-lg border-0 shadow-xl rounded-2xl overflow-hidden p-0">
