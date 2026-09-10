@@ -141,8 +141,10 @@ Deno.serve(async (req) => {
           { onConflict: "user_id" },
         );
 
-        if (isLegado) {
-          const credits = plan?.monthly_credits ?? 500;
+        // Provisiona os créditos de QUALQUER plano com cota (antes só o legado
+        // recebia — contas Starter/Pro criadas manualmente nasciam zeradas).
+        const credits = plan?.monthly_credits ?? (isLegado ? 500 : 0);
+        if (credits > 0) {
           const quotaReset = new Date(now);
           quotaReset.setDate(quotaReset.getDate() + 30);
           await admin.from("user_credits").upsert(
@@ -154,7 +156,18 @@ Deno.serve(async (req) => {
             },
             { onConflict: "user_id" },
           );
+          await admin.from("credit_transactions").insert({
+            user_id: newUserId,
+            type: "grant",
+            amount: credits,
+            balance_after: credits,
+            agent_key: null,
+            agent_label: `plano:${plan_slug}`,
+            message_preview: `Créditos iniciais do plano ${plan_slug} (criação manual)`,
+            metadata: { source: "admin_create_user", plan: plan_slug, admin_id: callerId },
+          });
         }
+
 
         if (!isLegado) {
           const amountCents =
