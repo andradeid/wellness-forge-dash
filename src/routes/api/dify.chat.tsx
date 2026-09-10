@@ -65,12 +65,21 @@ async function releaseStreamSlot(userId: string) {
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
  * seja sucesso, erro, desconexão do cliente ou timeout de segurança.
  */
+export interface StreamOutcome {
+  /** Trecho bruto do evento SSE `error` emitido pelo Dify, se houver. */
+  streamError: string | null;
+  /** Bytes entregues ao cliente — resposta muito curta indica falha silenciosa. */
+  bytes: number;
+}
+
 function wrapStreamWithRelease(
   upstreamBody: ReadableStream<Uint8Array>,
-  onDone: () => void,
+  onDone: (outcome: StreamOutcome) => void,
   maxDurationMs = 360000,
 ): ReadableStream<Uint8Array> {
   let released = false;
+  let streamError: string | null = null;
+  let bytes = 0;
   let safetyTimer: ReturnType<typeof setTimeout> | null = null;
   const release = () => {
     if (released) return;
@@ -80,7 +89,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone();
+      onDone({ streamError, bytes });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -99,10 +108,14 @@ function wrapStreamWithRelease(
   const FINAL_EVENTS = /"event"\s*:\s*"(message_end|error|tts_message_end|workflow_finished)"/;
   const scanForFinal = (chunk: Uint8Array) => {
     if (released) return;
+    bytes += chunk.byteLength;
     sniffBuf += decoder.decode(chunk, { stream: true });
     // Log observabilidade: sinaliza quando o Dify emite `error` no meio do stream.
-    if (/"event"\s*:\s*"error"/.test(sniffBuf)) {
+    if (!streamError && /"event"\s*:\s*"error"/.test(sniffBuf)) {
       console.warn("[dify-proxy] upstream event:error detected in stream");
+      // Guarda o trecho bruto do evento para o registro de erros da IA.
+      const idx = sniffBuf.search(/\{[^{}]*"event"\s*:\s*"error"/);
+      streamError = (idx >= 0 ? sniffBuf.slice(idx) : sniffBuf).slice(0, 4000);
     }
     if (FINAL_EVENTS.test(sniffBuf)) {
       release();
@@ -172,6 +185,98 @@ export const Route = createFileRoute("/api/dify/chat")({
 
         const body = await request.json();
         const agentType = resolveAgentType(body);
+
+        // ------------------------------------------------------------
+        // Contexto do registro de falhas da IA (tabela dify_error_logs).
+        // Gravar nunca pode interromper o fluxo — helpers engolem erro.
+        // ------------------------------------------------------------
+        const startedAt = Date.now();
+        const attachmentsMeta: Array<{ name?: string; type?: string }> = Array.isArray(body?.file_meta)
+          ? body.file_meta
+          : [];
+        const logCtx = {
+          userId,
+          chatId: typeof body?.meta?.chat_id === "string" ? body.meta.chat_id : null,
+          conversationId: typeof body?.conversation_id === "string" ? body.conversation_id : null,
+          patientId: typeof body?.meta?.patient_id === "string" ? body.meta.patient_id : null,
+          patientProfile:
+            (typeof body?.meta?.patient_profile === "string" && body.meta.patient_profile) ||
+            (typeof body?.meta?.patient_sex === "string" ? body.meta.patient_sex : null),
+          selectedTask:
+            (typeof body?.selected_task === "string" && body.selected_task) ||
+            (typeof body?.meta?.selected_task === "string" ? body.meta.selected_task : null),
+          agentType,
+          attachmentCount: Array.isArray(body?.files) ? body.files.length : 0,
+          attachmentName: attachmentsMeta[0]?.name ?? null,
+          attachmentMime: attachmentsMeta[0]?.type ?? null,
+        };
+
+        const logDify = async (extra: {
+          errorKind?: any;
+          httpStatus?: number | null;
+          rawError?: string | null;
+          durationMs?: number | null;
+          metadata?: Record<string, unknown>;
+        }) => {
+          try {
+            const { recordDifyErrorLog, classifyRawDifyError } = await import(
+              "@/lib/dify-error-log.server"
+            );
+            await recordDifyErrorLog({
+              ...logCtx,
+              source: "server",
+              durationMs: extra.durationMs ?? Date.now() - startedAt,
+              errorKind:
+                extra.errorKind ?? classifyRawDifyError(extra.rawError ?? null, extra.httpStatus ?? null),
+              httpStatus: extra.httpStatus ?? null,
+              rawError: extra.rawError ?? null,
+              metadata: extra.metadata ?? {},
+            });
+          } catch {
+            /* registro é best-effort */
+          }
+        };
+
+        /**
+         * Fim do stream: registra erro emitido no meio da resposta e também
+         * respostas que voltaram rápido demais para a tarefa (nem sempre a
+         * falha chega como erro — às vezes volta "pronta" em 12 segundos).
+         */
+        const onStreamFinished = async (
+          outcome: { streamError: string | null; bytes: number },
+          wasRetry = false,
+        ) => {
+          const durationMs = Date.now() - startedAt;
+          if (outcome.streamError) {
+            await logDify({
+              rawError: outcome.streamError,
+              durationMs,
+              metadata: { bytes: outcome.bytes, was_retry: wasRetry, phase: "stream" },
+            });
+            return;
+          }
+          try {
+            const { fastResponseThresholdMs } = await import("@/lib/dify-error-log.server");
+            const limit = fastResponseThresholdMs(logCtx.selectedTask, logCtx.attachmentCount > 0);
+            if (durationMs < limit) {
+              await logDify({
+                errorKind: outcome.bytes < 400 ? "empty_answer" : "suspicious_fast",
+                rawError: null,
+                durationMs,
+                metadata: {
+                  bytes: outcome.bytes,
+                  threshold_ms: limit,
+                  was_retry: wasRetry,
+                  phase: "stream",
+                  note: "Resposta concluída sem erro, porém em tempo abaixo do esperado para a tarefa.",
+                },
+              });
+            }
+          } catch {
+            /* registro é best-effort */
+          }
+        };
+
 
         // ============================================================
         // Rate limit: acquire ANTES de gastar recurso com Dify config
@@ -280,6 +385,11 @@ export const Route = createFileRoute("/api/dify/chat")({
         } catch (e: any) {
           clearTimeout(timeout);
           console.error('[PROXY FETCH ERROR]', e);
+          void logDify({
+            errorKind: e?.name === "AbortError" ? "timeout" : "connection",
+            httpStatus: 504,
+            rawError: String(e?.stack || e?.message || e),
+          });
           return releaseAnd(new Response(JSON.stringify({ error: e.message || "Timeout or connection error" }), {
             status: 504,
             headers: { "Content-Type": "application/json" }
@@ -295,6 +405,9 @@ export const Route = createFileRoute("/api/dify/chat")({
             agent: agentType,
             body: text
           });
+
+          void logDify({ httpStatus: upstream.status, rawError: text });
+
 
           if (
             (upstream.status === 403 || upstream.status === 401) &&
@@ -336,8 +449,9 @@ export const Route = createFileRoute("/api/dify/chat")({
 
             if (upstream.ok && upstream.body) {
               // Sucesso no retry: envolve stream com release.
-              const wrapped = wrapStreamWithRelease(upstream.body, () => {
+              const wrapped = wrapStreamWithRelease(upstream.body, (outcome) => {
                 releaseStreamSlot(userId).catch(() => {});
+                void onStreamFinished(outcome, true);
               });
               return new Response(wrapped, {
                 status: 200,
@@ -380,9 +494,10 @@ export const Route = createFileRoute("/api/dify/chat")({
           conversation_id: conversation_id ?? null,
           files: Array.isArray(files) ? files.length : 0,
         });
-        const wrapped = wrapStreamWithRelease(upstream.body, () => {
+        const wrapped = wrapStreamWithRelease(upstream.body, (outcome) => {
           console.info("[dify-proxy] stream_end", { agent: agentType });
           releaseStreamSlot(userId).catch(() => {});
+          void onStreamFinished(outcome);
         });
 
         return new Response(wrapped, {

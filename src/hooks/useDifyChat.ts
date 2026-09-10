@@ -22,6 +22,7 @@ import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
 import { buildAgentContextPrefix } from "@/lib/agent-context-builders";
 import { extractMealEstimation } from "@/lib/meal-estimation";
+import { logDifyFailure } from "@/lib/dify-errors.functions";
 import {
   CONCURRENCY_TOAST_DESCRIPTION,
   CONCURRENCY_TOAST_TITLE,
@@ -1180,7 +1181,9 @@ export function useDifyChat(
             query: difyQuery,
             conversation_id: convId,
             files: difyFiles,
-            meta: metaRef.current,
+            // Nome/tipo dos anexos: usado só no registro de falhas da IA.
+            file_meta: attachments.map((a) => ({ name: a.name, type: a.mime_type ?? "" })),
+            meta: { ...metaRef.current, chat_id: chatId },
             agent_type: agentType,
             ...(selectedTask ? { selected_task: selectedTask } : {}),
             ...(opts?.extraInputs ? { inputs: opts.extraInputs } : {}),
@@ -1616,6 +1619,24 @@ export function useDifyChat(
                       selected_task: selectedTask ?? null,
                       raw: agentError.raw,
                     });
+                    // Preserva o erro bruto para a tela de Erros da IA.
+                    void logDifyFailure({
+                      data: {
+                        chatId,
+                        conversationId: conversationIdRef.current || null,
+                        patientId: metaRef.current?.patient_id ?? null,
+                        patientProfile: (metaRef.current as any)?.patient_profile ?? null,
+                        selectedTask: selectedTask ?? null,
+                        agentType: agentType ?? null,
+                        errorKind: agentError.kind === "technical" ? "upstream_error" : "content_error",
+                        rawError: agentError.raw ?? agentError.message,
+                        durationMs: processingMs,
+                        attachmentCount: attachments.length,
+                        attachmentName: attachments[0]?.name ?? null,
+                        attachmentMime: attachments[0]?.mime_type ?? null,
+                        billed: false,
+                      },
+                    }).catch(() => {});
                   }
                   // Erro técnico é transitório → habilita "Tentar novamente".
                   if (agentError?.kind === "technical" && !retryUsedRef.current && lastRequestRef.current) {
@@ -1638,6 +1659,24 @@ export function useDifyChat(
                       selected_task: selectedTask ?? null,
                       retry_used: retryUsedRef.current,
                     });
+                    void logDifyFailure({
+                      data: {
+                        chatId,
+                        conversationId: conversationIdRef.current || null,
+                        patientId: metaRef.current?.patient_id ?? null,
+                        patientProfile: (metaRef.current as any)?.patient_profile ?? null,
+                        selectedTask: selectedTask ?? null,
+                        agentType: agentType ?? null,
+                        errorKind: "task_routing",
+                        rawError: fullText.slice(0, 4000),
+                        durationMs: processingMs,
+                        attachmentCount: attachments.length,
+                        attachmentName: attachments[0]?.name ?? null,
+                        attachmentMime: attachments[0]?.mime_type ?? null,
+                        wasRetry: retryUsedRef.current,
+                        billed: false,
+                      },
+                    }).catch(() => {});
                     if (!retryUsedRef.current && lastRequestRef.current) {
                       retryUsedRef.current = true;
                       assistantSavedRef.current = true;
