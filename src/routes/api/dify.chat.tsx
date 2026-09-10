@@ -89,7 +89,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone();
+      onDone({ streamError, bytes });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -108,10 +108,14 @@ function wrapStreamWithRelease(
   const FINAL_EVENTS = /"event"\s*:\s*"(message_end|error|tts_message_end|workflow_finished)"/;
   const scanForFinal = (chunk: Uint8Array) => {
     if (released) return;
+    bytes += chunk.byteLength;
     sniffBuf += decoder.decode(chunk, { stream: true });
     // Log observabilidade: sinaliza quando o Dify emite `error` no meio do stream.
-    if (/"event"\s*:\s*"error"/.test(sniffBuf)) {
+    if (!streamError && /"event"\s*:\s*"error"/.test(sniffBuf)) {
       console.warn("[dify-proxy] upstream event:error detected in stream");
+      // Guarda o trecho bruto do evento para o registro de erros da IA.
+      const idx = sniffBuf.search(/\{[^{}]*"event"\s*:\s*"error"/);
+      streamError = (idx >= 0 ? sniffBuf.slice(idx) : sniffBuf).slice(0, 4000);
     }
     if (FINAL_EVENTS.test(sniffBuf)) {
       release();
