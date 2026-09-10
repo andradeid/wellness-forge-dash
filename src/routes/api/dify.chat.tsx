@@ -409,8 +409,9 @@ export const Route = createFileRoute("/api/dify/chat")({
 
             if (upstream.ok && upstream.body) {
               // Sucesso no retry: envolve stream com release.
-              const wrapped = wrapStreamWithRelease(upstream.body, () => {
+              const wrapped = wrapStreamWithRelease(upstream.body, (outcome) => {
                 releaseStreamSlot(userId).catch(() => {});
+                void onStreamFinished(outcome, true);
               });
               return new Response(wrapped, {
                 status: 200,
@@ -453,9 +454,10 @@ export const Route = createFileRoute("/api/dify/chat")({
           conversation_id: conversation_id ?? null,
           files: Array.isArray(files) ? files.length : 0,
         });
-        const wrapped = wrapStreamWithRelease(upstream.body, () => {
+        const wrapped = wrapStreamWithRelease(upstream.body, (outcome) => {
           console.info("[dify-proxy] stream_end", { agent: agentType });
           releaseStreamSlot(userId).catch(() => {});
+          void onStreamFinished(outcome);
         });
 
         return new Response(wrapped, {
