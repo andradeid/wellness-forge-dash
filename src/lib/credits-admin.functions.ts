@@ -257,7 +257,15 @@ export const setUserPlan = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertSuperAdmin(context.supabase, context.userId);
+    // Suporte (CS) também troca plano pela edge function admin-users; manter os
+    // dois caminhos com a mesma permissão evita 403 confuso na tela.
+    const { data: allowed } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["super_admin", "admin", "support"]);
+    if (!allowed || allowed.length === 0) throw new Response("Forbidden", { status: 403 });
+
 
     const { error: subErr } = await context.supabase
       .from("subscriptions")
