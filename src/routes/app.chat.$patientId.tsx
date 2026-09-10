@@ -374,6 +374,21 @@ function ChatPage() {
     [sendMessage, agents, agentType, selectedTask],
   );
 
+  const wrappedSend = useCallback(
+    async (text: string, files: File[]) => {
+      const repeated = files
+        .map((f) => f.name)
+        .filter((n) => alreadySentFileNames.has(n.trim().toLowerCase()));
+      if (repeated.length > 0) {
+        setDuplicateWarning({ text, files, names: repeated });
+        return;
+      }
+      await doSend(text, files);
+    },
+    [doSend, alreadySentFileNames],
+  );
+
+
   const handleGenerateRecipe = useCallback(
     (payload: NonNullable<NonNullable<typeof messages[number]["structured_data"]>["formulacoes_sugeridas"]>) => {
       // Se o agente atual é um Super Agente, permanece nele e apenas troca a
