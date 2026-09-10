@@ -310,29 +310,53 @@ Deno.serve(async (req) => {
           .upsert(payload, { onConflict: "user_id" });
         if (sErr) return json({ ok: false, error: `Falha ao atualizar assinatura: ${sErr.message}` }, 400);
 
-        // Se mudou o plano, ajusta cota de créditos conforme monthly_credits do novo plano
-        if (subPatch.plan_type) {
+        // Ajusta a cota conforme o plano vigente — mesmo quando o plano NÃO mudou
+        // (antes só reagia à troca de plano, por isso o suporte precisava trocar
+        // de plano e voltar). Nunca reduz saldo já existente: só completa até a cota.
+        const effectivePlan = (subPatch.plan_type ?? (beforeSub as any)?.plan_type) as string | undefined;
+        if (effectivePlan) {
           const { data: newPlan } = await admin
             .from("subscription_plans")
-            .select("monthly_credits")
-            .eq("slug", subPatch.plan_type)
+            .select("monthly_credits, name")
+            .eq("slug", effectivePlan)
             .maybeSingle();
           const credits = (newPlan as any)?.monthly_credits ?? 0;
           if (credits > 0) {
+            const { data: currentCredits } = await admin
+              .from("user_credits")
+              .select("balance, quota_reset_at")
+              .eq("user_id", userId)
+              .maybeSingle();
+            const balanceBefore = (currentCredits as any)?.balance ?? 0;
+            const balanceAfter = Math.max(balanceBefore, credits);
             const quotaReset = new Date();
             quotaReset.setDate(quotaReset.getDate() + 30);
             await admin.from("user_credits").upsert(
               {
                 user_id: userId,
-                balance: credits,
+                balance: balanceAfter,
                 monthly_quota: credits,
-                quota_reset_at: quotaReset.toISOString(),
+                quota_reset_at:
+                  (currentCredits as any)?.quota_reset_at ?? quotaReset.toISOString(),
               },
               { onConflict: "user_id" },
             );
-            changes.credits_reset = { from: null, to: credits };
+            if (balanceAfter > balanceBefore) {
+              await admin.from("credit_transactions").insert({
+                user_id: userId,
+                type: "grant",
+                amount: balanceAfter - balanceBefore,
+                balance_after: balanceAfter,
+                agent_key: null,
+                agent_label: `plano:${effectivePlan}`,
+                message_preview: `Créditos do plano ${(newPlan as any)?.name ?? effectivePlan} liberados pelo suporte`,
+                metadata: { source: "admin_edit_user", plan: effectivePlan, admin_id: callerId },
+              });
+              changes.credits_topup = { from: balanceBefore, to: balanceAfter };
+            }
           }
         }
+
       }
 
 
