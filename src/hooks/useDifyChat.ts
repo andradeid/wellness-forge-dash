@@ -667,7 +667,9 @@ export function useDifyChat(
     setCanRetry(false);
     // Permite forçar o agente alvo (usado pelo handoff "Gerar receita") sem
     // depender do flush do setState do React.
-    const agentType = opts?.overrideAgent ?? agentTypeState;
+    const agentType = opts?._isRetry
+      ? (agentTypeState ?? opts?.overrideAgent)
+      : (opts?.overrideAgent ?? agentTypeState);
     // Super Agentes: `selectedTask` roteia a esteira interna do app Dify e
     // define a chave financeira. Ausente para agentes comuns → comportamento
     // idêntico ao de hoje (billingKey resolve pelo agent_id).
