@@ -186,6 +186,58 @@ export const Route = createFileRoute("/api/dify/chat")({
         const body = await request.json();
         const agentType = resolveAgentType(body);
 
+        // ------------------------------------------------------------
+        // Contexto do registro de falhas da IA (tabela dify_error_logs).
+        // Gravar nunca pode interromper o fluxo — helpers engolem erro.
+        // ------------------------------------------------------------
+        const startedAt = Date.now();
+        const attachmentsMeta: Array<{ name?: string; type?: string }> = Array.isArray(body?.file_meta)
+          ? body.file_meta
+          : [];
+        const logCtx = {
+          userId,
+          chatId: typeof body?.meta?.chat_id === "string" ? body.meta.chat_id : null,
+          conversationId: typeof body?.conversation_id === "string" ? body.conversation_id : null,
+          patientId: typeof body?.meta?.patient_id === "string" ? body.meta.patient_id : null,
+          patientProfile:
+            (typeof body?.meta?.patient_profile === "string" && body.meta.patient_profile) ||
+            (typeof body?.meta?.patient_sex === "string" ? body.meta.patient_sex : null),
+          selectedTask:
+            (typeof body?.selected_task === "string" && body.selected_task) ||
+            (typeof body?.meta?.selected_task === "string" ? body.meta.selected_task : null),
+          agentType,
+          attachmentCount: Array.isArray(body?.files) ? body.files.length : 0,
+          attachmentName: attachmentsMeta[0]?.name ?? null,
+          attachmentMime: attachmentsMeta[0]?.type ?? null,
+        };
+
+        const logDify = async (extra: {
+          errorKind?: any;
+          httpStatus?: number | null;
+          rawError?: string | null;
+          durationMs?: number | null;
+          metadata?: Record<string, unknown>;
+        }) => {
+          try {
+            const { recordDifyErrorLog, classifyRawDifyError } = await import(
+              "@/lib/dify-error-log.server"
+            );
+            await recordDifyErrorLog({
+              ...logCtx,
+              source: "server",
+              durationMs: extra.durationMs ?? Date.now() - startedAt,
+              errorKind:
+                extra.errorKind ?? classifyRawDifyError(extra.rawError ?? null, extra.httpStatus ?? null),
+              httpStatus: extra.httpStatus ?? null,
+              rawError: extra.rawError ?? null,
+              metadata: extra.metadata ?? {},
+            });
+          } catch {
+            /* registro é best-effort */
+          }
+        };
+
+
         // ============================================================
         // Rate limit: acquire ANTES de gastar recurso com Dify config
         // ou fetch upstream. Bloqueio server-side → aba nova não contorna.
