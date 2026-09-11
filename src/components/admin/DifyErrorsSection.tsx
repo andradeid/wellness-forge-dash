@@ -101,6 +101,28 @@ export function DifyErrorsSection() {
 
   const listFn = useServerFn(listDifyErrors);
   const statsFn = useServerFn(getDifyErrorStats);
+  const exportFn = useServerFn(exportDifyErrors);
+  const [exporting, setExporting] = useState(false);
+
+  /** Baixa o CSV do período/filtros atuais, com message_id e conversation_id. */
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await exportFn({ data: filters });
+      const url = URL.createObjectURL(new Blob([res.csv], { type: "text/csv;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `erros-ia-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exportação concluída: ${res.rows} ocorrências.`);
+    } catch {
+      toast.error("Não foi possível exportar agora. Tente novamente.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   const filters = {
     hours,
