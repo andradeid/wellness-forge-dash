@@ -292,8 +292,10 @@ export const Route = createFileRoute("/api/dify/chat")({
             was_retry: wasRetry,
             phase: "stream",
           };
+          const mod = await import("@/lib/dify-error-log.server").catch(() => null);
+          if (!mod) return; // registro é best-effort
           const { fastResponseThresholdMs, expectsMarkers, NO_EXECUTION_MS, EMPTY_ANSWER_MAX_BYTES } =
-            await import("@/lib/dify-error-log.server");
+            mod;
 
           // 0. Resposta vazia: vale SEMPRE — sem olhar tarefa, anexo ou duração.
           //    Inclui o caso em que o stream terminou com evento de erro.
@@ -370,10 +372,6 @@ export const Route = createFileRoute("/api/dify/chat")({
                 },
               });
             }
-          } catch {
-            /* registro é best-effort */
-          }
-        };
           } catch {
             /* registro é best-effort */
           }

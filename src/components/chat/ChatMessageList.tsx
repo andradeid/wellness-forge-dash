@@ -79,6 +79,12 @@ function splitJsonBlocks(text: string): Array<{ type: "text" | "json"; value: st
       parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
     }
     const raw = (m[1] ?? m[2] ?? "").trim();
+    // Blocos estruturais (marcadores, bioimpedância, refeição por foto) já são
+    // exibidos em cartão próprio — nunca devem aparecer como JSON cru na tela.
+    if (/"(markers|body_assessment|foods)"\s*:/.test(raw)) {
+      lastIndex = regex.lastIndex;
+      continue;
+    }
     let pretty = raw;
     try {
       pretty = JSON.stringify(JSON.parse(raw), null, 2);
