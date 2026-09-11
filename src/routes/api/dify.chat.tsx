@@ -284,6 +284,9 @@ export const Route = createFileRoute("/api/dify/chat")({
           const wallMs = Date.now() - startedAt;
           const durationMs = outcome.providerLatencyMs ?? wallMs;
           const base = {
+            // Carimbo de versão: permite conferir, olhando um registro recente,
+            // qual versão das regras de classificação está em execução.
+            rules_version: RULES_VERSION,
             provider_latency_ms: outcome.providerLatencyMs,
             wall_ms: wallMs,
             bytes: outcome.bytes,
