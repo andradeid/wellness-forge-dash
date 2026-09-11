@@ -270,37 +270,75 @@ export const Route = createFileRoute("/api/dify/chat")({
         };
 
         /**
-         * Fim do stream: registra erro emitido no meio da resposta e também
-         * respostas que voltaram rápido demais para a tarefa (nem sempre a
-         * falha chega como erro — às vezes volta "pronta" em 12 segundos).
+         * Fim do stream. Regras de classificação:
+         *  - erro no meio do stream → registra bruto;
+         *  - abaixo de 5s → "execução inexistente" (não houve execução no Dify);
+         *  - duração só é critério em mensagem COM ANEXO, com limiar por tarefa,
+         *    medida pela latência real do Dify quando disponível;
+         *  - mensagem com anexo cuja resposta não traz o array de marcadores
+         *    é falha estrutural, independente de duração.
          */
-        const onStreamFinished = async (
-          outcome: { streamError: string | null; bytes: number },
-          wasRetry = false,
-        ) => {
-          const durationMs = Date.now() - startedAt;
+        const onStreamFinished = async (outcome: StreamOutcome, wasRetry = false) => {
+          const wallMs = Date.now() - startedAt;
+          const durationMs = outcome.providerLatencyMs ?? wallMs;
+          const base = {
+            provider_latency_ms: outcome.providerLatencyMs,
+            wall_ms: wallMs,
+            bytes: outcome.bytes,
+            message_id: outcome.messageId,
+            conversation_id: outcome.conversationId,
+            was_retry: wasRetry,
+            phase: "stream",
+          };
           if (outcome.streamError) {
-            await logDify({
-              rawError: outcome.streamError,
-              durationMs,
-              metadata: { bytes: outcome.bytes, was_retry: wasRetry, phase: "stream" },
-            });
+            await logDify({ rawError: outcome.streamError, durationMs, metadata: base });
             return;
           }
           try {
-            const { fastResponseThresholdMs } = await import("@/lib/dify-error-log.server");
-            const limit = fastResponseThresholdMs(logCtx.selectedTask, logCtx.attachmentCount > 0);
-            if (durationMs < limit) {
+            const { fastResponseThresholdMs, expectsMarkers, NO_EXECUTION_MS } = await import(
+              "@/lib/dify-error-log.server"
+            );
+            const hasFile = logCtx.attachmentCount > 0;
+
+            // 1. Execução inexistente: nem chegou a despachar no Dify.
+            if (wallMs < NO_EXECUTION_MS && outcome.providerLatencyMs == null) {
+              await logDify({
+                errorKind: "no_execution",
+                rawError: outcome.streamError ?? null,
+                durationMs: wallMs,
+                metadata: {
+                  ...base,
+                  note: "Resposta concluída em menos de 5s e sem latência de execução do Dify.",
+                },
+              });
+              return;
+            }
+
+            // 2. Detector estrutural: anexo sem array de marcadores.
+            if (hasFile && expectsMarkers(logCtx.selectedTask) && !outcome.sawMarkers) {
+              await logDify({
+                errorKind: "missing_markers",
+                rawError: null,
+                durationMs,
+                metadata: {
+                  ...base,
+                  note: "Mensagem com anexo cuja resposta não trouxe o array de marcadores.",
+                },
+              });
+              return;
+            }
+
+            // 3. Duração, apenas com anexo e com limiar definido para a tarefa.
+            const limit = fastResponseThresholdMs(logCtx.selectedTask, hasFile);
+            if (limit != null && durationMs < limit) {
               await logDify({
                 errorKind: outcome.bytes < 400 ? "empty_answer" : "suspicious_fast",
                 rawError: null,
                 durationMs,
                 metadata: {
-                  bytes: outcome.bytes,
+                  ...base,
                   threshold_ms: limit,
-                  was_retry: wasRetry,
-                  phase: "stream",
-                  note: "Resposta concluída sem erro, porém em tempo abaixo do esperado para a tarefa.",
+                  note: "Execução concluída sem erro, porém abaixo do tempo esperado para a tarefa.",
                 },
               });
             }
@@ -308,6 +346,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             /* registro é best-effort */
           }
         };
+
 
 
         // ============================================================
