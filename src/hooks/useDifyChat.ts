@@ -1285,6 +1285,8 @@ export function useDifyChat(
       const decoder = new TextDecoder();
       let fullText = "";
       let sseBuffer = "";
+      // message_id do Dify (evento message_end) — usado só no registro de falhas.
+      let difyMessageId: string | null = null;
       
       while (true) {
         const { done, value } = await reader.read();
@@ -1301,6 +1303,7 @@ export function useDifyChat(
 
           try {
             const data = JSON.parse(jsonStr);
+            if (!difyMessageId && typeof data.message_id === "string") difyMessageId = data.message_id;
             
             if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
               let text = "";
@@ -1628,6 +1631,7 @@ export function useDifyChat(
                         patientProfile: (metaRef.current as any)?.patient_profile ?? null,
                         selectedTask: selectedTask ?? null,
                         agentType: agentType ?? null,
+                        messageId: difyMessageId,
                         errorKind: agentError.kind === "technical" ? "upstream_error" : "content_error",
                         rawError: agentError.raw ?? agentError.message,
                         durationMs: processingMs,
@@ -1667,6 +1671,7 @@ export function useDifyChat(
                         patientProfile: (metaRef.current as any)?.patient_profile ?? null,
                         selectedTask: selectedTask ?? null,
                         agentType: agentType ?? null,
+                        messageId: difyMessageId,
                         errorKind: "task_routing",
                         rawError: fullText.slice(0, 4000),
                         durationMs: processingMs,
