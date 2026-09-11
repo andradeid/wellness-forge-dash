@@ -374,10 +374,6 @@ export const Route = createFileRoute("/api/dify/chat")({
             /* registro é best-effort */
           }
         };
-          } catch {
-            /* registro é best-effort */
-          }
-        };
 
 
 
