@@ -263,6 +263,7 @@ export const Route = createFileRoute("/api/dify/chat")({
                 extra.errorKind ?? classifyRawDifyError(extra.rawError ?? null, extra.httpStatus ?? null),
               httpStatus: extra.httpStatus ?? null,
               rawError: extra.rawError ?? null,
+              messageId: extra.messageId ?? null,
               metadata: extra.metadata ?? {},
             });
           } catch {
