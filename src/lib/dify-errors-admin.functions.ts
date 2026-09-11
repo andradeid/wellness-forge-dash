@@ -204,3 +204,85 @@ export const getDifyErrorStats = createServerFn({ method: "POST" })
       kinds: uniq((allRows ?? []).map((r: any) => r.error_kind)),
     };
   });
+
+/** Escapa um campo para CSV (aspas duplas + separador seguro). */
+function csvCell(v: unknown): string {
+  const s = v == null ? "" : String(v);
+  return `"${s.replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+}
+
+/**
+ * Exporta o registro filtrado em CSV, com `message_id` e `conversation_id`
+ * para cruzamento com a análise no Dify. Somente leitura, super admin.
+ */
+export const exportDifyErrors = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => filtersSchema.parse(d ?? {}))
+  .handler(async ({ data, context }): Promise<{ csv: string; rows: number }> => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows, error } = await applyFilters(
+      (supabaseAdmin as any).from("dify_error_logs").select("*"),
+      data,
+    )
+      .order("created_at", { ascending: false })
+      .limit(20_000);
+    if (error) throw new Response(error.message, { status: 500 });
+
+    const list = (rows ?? []) as DifyErrorRow[];
+    const header = [
+      "created_at",
+      "message_id",
+      "conversation_id",
+      "chat_id",
+      "user_id",
+      "patient_profile",
+      "selected_task",
+      "agent_type",
+      "error_kind",
+      "http_status",
+      "duration_ms",
+      "provider_latency_ms",
+      "wall_ms",
+      "had_attachment",
+      "attachment_name",
+      "attachment_mime",
+      "was_retry",
+      "billed",
+      "source",
+      "raw_error",
+    ];
+    const lines = [header.join(",")];
+    for (const r of list) {
+      const m = r.metadata ?? {};
+      lines.push(
+        [
+          r.created_at,
+          m.message_id ?? "",
+          r.conversation_id ?? m.conversation_id ?? "",
+          r.chat_id ?? "",
+          r.user_id ?? "",
+          r.patient_profile ?? "",
+          r.selected_task ?? "",
+          r.agent_type ?? "",
+          r.error_kind,
+          r.http_status ?? "",
+          r.duration_ms ?? "",
+          m.provider_latency_ms ?? "",
+          m.wall_ms ?? "",
+          r.had_attachment ? "sim" : "não",
+          r.attachment_name ?? "",
+          r.attachment_mime ?? "",
+          r.was_retry ? "sim" : "não",
+          r.billed ? "sim" : "não",
+          r.source,
+          r.raw_error ?? "",
+        ]
+          .map(csvCell)
+          .join(","),
+      );
+    }
+    return { csv: lines.join("\n"), rows: list.length };
+  });
+
