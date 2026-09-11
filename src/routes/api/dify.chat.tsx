@@ -62,6 +62,12 @@ async function releaseStreamSlot(userId: string) {
 }
 
 /**
+ * Versão das regras de classificação de falhas do Dify.
+ * Gravada em `metadata.rules_version` de todo registro novo.
+ */
+export const RULES_VERSION = "2026-09-11.v3";
+
+/**
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
  * seja sucesso, erro, desconexão do cliente ou timeout de segurança.
  */
