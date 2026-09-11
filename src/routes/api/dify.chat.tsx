@@ -216,6 +216,14 @@ function resolveAgentType(body: any): string {
 export const Route = createFileRoute("/api/dify/chat")({
   server: {
     handlers: {
+      GET: () =>
+        Response.json(
+          {
+            rules_version: RULES_VERSION,
+            telemetry_fields: ["provider_latency_ms", "wall_ms"],
+          },
+          { headers: { "Cache-Control": "no-store" } },
+        ),
       POST: async ({ request }) => {
         const auth = await authUser(request);
         if (!auth) return new Response("Unauthorized", { status: 401 });
