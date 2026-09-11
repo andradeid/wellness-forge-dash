@@ -259,7 +259,7 @@ export const exportDifyErrors = createServerFn({ method: "POST" })
       lines.push(
         [
           r.created_at,
-          m.message_id ?? "",
+          (r as any).message_id ?? m.message_id ?? "",
           r.conversation_id ?? m.conversation_id ?? "",
           r.chat_id ?? "",
           r.user_id ?? "",

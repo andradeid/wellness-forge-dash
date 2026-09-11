@@ -671,6 +671,7 @@ export type Database = {
           had_attachment: boolean
           http_status: number | null
           id: string
+          message_id: string | null
           metadata: Json
           patient_id: string | null
           patient_profile: string | null
@@ -694,6 +695,7 @@ export type Database = {
           had_attachment?: boolean
           http_status?: number | null
           id?: string
+          message_id?: string | null
           metadata?: Json
           patient_id?: string | null
           patient_profile?: string | null
@@ -717,6 +719,7 @@ export type Database = {
           had_attachment?: boolean
           http_status?: number | null
           id?: string
+          message_id?: string | null
           metadata?: Json
           patient_id?: string | null
           patient_profile?: string | null

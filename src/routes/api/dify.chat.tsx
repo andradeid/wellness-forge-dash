@@ -248,6 +248,7 @@ export const Route = createFileRoute("/api/dify/chat")({
           httpStatus?: number | null;
           rawError?: string | null;
           durationMs?: number | null;
+          messageId?: string | null;
           metadata?: Record<string, unknown>;
         }) => {
           try {
@@ -262,6 +263,7 @@ export const Route = createFileRoute("/api/dify/chat")({
                 extra.errorKind ?? classifyRawDifyError(extra.rawError ?? null, extra.httpStatus ?? null),
               httpStatus: extra.httpStatus ?? null,
               rawError: extra.rawError ?? null,
+              messageId: extra.messageId ?? null,
               metadata: extra.metadata ?? {},
             });
           } catch {
@@ -290,14 +292,36 @@ export const Route = createFileRoute("/api/dify/chat")({
             was_retry: wasRetry,
             phase: "stream",
           };
+          const { fastResponseThresholdMs, expectsMarkers, NO_EXECUTION_MS, EMPTY_ANSWER_MAX_BYTES } =
+            await import("@/lib/dify-error-log.server");
+
+          // 0. Resposta vazia: vale SEMPRE — sem olhar tarefa, anexo ou duração.
+          //    Inclui o caso em que o stream terminou com evento de erro.
+          if (outcome.bytes < EMPTY_ANSWER_MAX_BYTES) {
+            await logDify({
+              errorKind: "empty_answer",
+              rawError: outcome.streamError ?? null,
+              durationMs,
+              messageId: outcome.messageId,
+              metadata: {
+                ...base,
+                had_stream_error: Boolean(outcome.streamError),
+                note: "Stream encerrado sem conteúdo útil para a usuária.",
+              },
+            });
+            return;
+          }
+
           if (outcome.streamError) {
-            await logDify({ rawError: outcome.streamError, durationMs, metadata: base });
+            await logDify({
+              rawError: outcome.streamError,
+              durationMs,
+              messageId: outcome.messageId,
+              metadata: base,
+            });
             return;
           }
           try {
-            const { fastResponseThresholdMs, expectsMarkers, NO_EXECUTION_MS } = await import(
-              "@/lib/dify-error-log.server"
-            );
             const hasFile = logCtx.attachmentCount > 0;
 
             // 1. Execução inexistente: nem chegou a despachar no Dify.
@@ -306,6 +330,7 @@ export const Route = createFileRoute("/api/dify/chat")({
                 errorKind: "no_execution",
                 rawError: outcome.streamError ?? null,
                 durationMs: wallMs,
+                messageId: outcome.messageId,
                 metadata: {
                   ...base,
                   note: "Resposta concluída em menos de 5s e sem latência de execução do Dify.",
@@ -314,12 +339,14 @@ export const Route = createFileRoute("/api/dify/chat")({
               return;
             }
 
-            // 2. Detector estrutural: anexo sem array de marcadores.
+            // 2. Detector estrutural: SÓ com anexo. Sem anexo há conversa
+            //    legítima que começa com {"markers":[]} — seria falso positivo.
             if (hasFile && expectsMarkers(logCtx.selectedTask) && !outcome.sawMarkers) {
               await logDify({
                 errorKind: "missing_markers",
                 rawError: null,
                 durationMs,
+                messageId: outcome.messageId,
                 metadata: {
                   ...base,
                   note: "Mensagem com anexo cuja resposta não trouxe o array de marcadores.",
@@ -332,9 +359,10 @@ export const Route = createFileRoute("/api/dify/chat")({
             const limit = fastResponseThresholdMs(logCtx.selectedTask, hasFile);
             if (limit != null && durationMs < limit) {
               await logDify({
-                errorKind: outcome.bytes < 400 ? "empty_answer" : "suspicious_fast",
+                errorKind: "suspicious_fast",
                 rawError: null,
                 durationMs,
+                messageId: outcome.messageId,
                 metadata: {
                   ...base,
                   threshold_ms: limit,
@@ -342,6 +370,10 @@ export const Route = createFileRoute("/api/dify/chat")({
                 },
               });
             }
+          } catch {
+            /* registro é best-effort */
+          }
+        };
           } catch {
             /* registro é best-effort */
           }
