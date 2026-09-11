@@ -21,7 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { listDifyErrors, getDifyErrorStats } from "@/lib/dify-errors-admin.functions";
+import {
+  listDifyErrors,
+  getDifyErrorStats,
+  exportDifyErrors,
+} from "@/lib/dify-errors-admin.functions";
+
 
 /** Rótulos em pt-BR para as famílias de erro registradas. */
 const KIND_LABEL: Record<string, string> = {
@@ -35,8 +40,11 @@ const KIND_LABEL: Record<string, string> = {
   content_error: "Erro dentro da resposta",
   empty_answer: "Resposta vazia",
   suspicious_fast: "Resposta rápida demais",
+  no_execution: "Execução inexistente",
+  missing_markers: "Sem marcadores na resposta",
   unknown: "Não classificado",
 };
+
 
 const PERIODS = [
   { label: "24 horas", hours: 24 },
@@ -93,6 +101,28 @@ export function DifyErrorsSection() {
 
   const listFn = useServerFn(listDifyErrors);
   const statsFn = useServerFn(getDifyErrorStats);
+  const exportFn = useServerFn(exportDifyErrors);
+  const [exporting, setExporting] = useState(false);
+
+  /** Baixa o CSV do período/filtros atuais, com message_id e conversation_id. */
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await exportFn({ data: filters });
+      const url = URL.createObjectURL(new Blob([res.csv], { type: "text/csv;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `erros-ia-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exportação concluída: ${res.rows} ocorrências.`);
+    } catch {
+      toast.error("Não foi possível exportar agora. Tente novamente.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   const filters = {
     hours,
@@ -289,7 +319,14 @@ export function DifyErrorsSection() {
             Ocorrências
             <Badge variant="secondary">{total}</Badge>
           </CardTitle>
-          {listQuery.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <div className="flex items-center gap-2">
+            {listQuery.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <Button size="sm" variant="outline" disabled={exporting} onClick={handleExport}>
+              {exporting ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
+              Exportar CSV
+            </Button>
+          </div>
+
         </CardHeader>
         <CardContent className="space-y-2">
           {listQuery.isLoading ? (

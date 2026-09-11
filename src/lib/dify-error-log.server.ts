@@ -22,7 +22,10 @@ export type DifyErrorKind =
   | "content_error"
   | "empty_answer"
   | "suspicious_fast"
+  | "no_execution"
+  | "missing_markers"
   | "unknown";
+
 
 export interface DifyErrorLogInput {
   userId?: string | null;
@@ -77,20 +80,42 @@ export function classifyRawDifyError(
   return msg ? "unknown" : "unknown";
 }
 
+/** Abaixo disso não houve execução no Dify — a chamada falhou antes de despachar. */
+export const NO_EXECUTION_MS = 5_000;
+
 /**
  * Limiar de duração abaixo do qual uma resposta "de sucesso" é suspeita.
- * Análises de exame levam de 60 a 105 segundos; voltar em 12s indica que o
- * agente não processou o arquivo de verdade.
+ * Só faz sentido em mensagem COM ANEXO: turno de conversa (pergunta de
+ * acompanhamento, recusa, follow-up) viaja com o mesmo `selected_task` e
+ * responde rápido por natureza. Retorna null quando duração não é critério.
  */
-export function fastResponseThresholdMs(selectedTask: string | null | undefined, hasFile: boolean): number {
+export function fastResponseThresholdMs(
+  selectedTask: string | null | undefined,
+  hasFile: boolean,
+): number | null {
+  if (!hasFile) return null;
   const task = (selectedTask ?? "").toLowerCase();
-  if (task.startsWith("exam") || task === "bioimpedancia" || task === "calorimetria") return 30_000;
-  if (task === "genetica" || task === "microbioma") return 30_000;
-  if (task === "estimativa_refeicao_foto" || task === "composicao_corporal_foto") return 20_000;
-  if (hasFile) return 20_000;
-  // Conversa sem anexo responde rápido por natureza — limiar baixo.
-  return 4_000;
+  if (task.startsWith("exam")) return 30_000;
+  if (task === "bioimpedancia") return 15_000;
+  if (task === "calorimetria" || task === "genetica" || task === "microbioma") return 15_000;
+  if (task === "estimativa_refeicao_foto" || task === "composicao_corporal_foto") return 15_000;
+  // Formulações (production) e raciocínio (reasoning): duração não serve.
+  return null;
 }
+
+/** Tarefas em que a resposta com anexo deve trazer o array de marcadores. */
+export function expectsMarkers(selectedTask: string | null | undefined): boolean {
+  const task = (selectedTask ?? "").toLowerCase();
+  return (
+    task.startsWith("exam") ||
+    task === "bioimpedancia" ||
+    task === "calorimetria" ||
+    task === "genetica" ||
+    task === "microbioma" ||
+    task === "composicao_corporal_foto"
+  );
+}
+
 
 /** Grava o registro. Nunca lança. */
 export async function recordDifyErrorLog(input: DifyErrorLogInput): Promise<void> {

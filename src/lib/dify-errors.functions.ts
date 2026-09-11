@@ -27,10 +27,13 @@ const schema = z.object({
       "content_error",
       "empty_answer",
       "suspicious_fast",
+      "no_execution",
+      "missing_markers",
       "unknown",
     ])
     .optional()
     .default("unknown"),
+
   httpStatus: z.number().int().optional().nullable(),
   rawError: z.string().max(40_000).optional().nullable(),
   durationMs: z.number().optional().nullable(),
