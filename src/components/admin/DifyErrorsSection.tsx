@@ -21,7 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { listDifyErrors, getDifyErrorStats } from "@/lib/dify-errors-admin.functions";
+import {
+  listDifyErrors,
+  getDifyErrorStats,
+  exportDifyErrors,
+} from "@/lib/dify-errors-admin.functions";
+
 
 /** Rótulos em pt-BR para as famílias de erro registradas. */
 const KIND_LABEL: Record<string, string> = {
