@@ -22,7 +22,10 @@ export type DifyErrorKind =
   | "content_error"
   | "empty_answer"
   | "suspicious_fast"
+  | "no_execution"
+  | "missing_markers"
   | "unknown";
+
 
 export interface DifyErrorLogInput {
   userId?: string | null;
