@@ -35,8 +35,11 @@ const KIND_LABEL: Record<string, string> = {
   content_error: "Erro dentro da resposta",
   empty_answer: "Resposta vazia",
   suspicious_fast: "Resposta rápida demais",
+  no_execution: "Execução inexistente",
+  missing_markers: "Sem marcadores na resposta",
   unknown: "Não classificado",
 };
+
 
 const PERIODS = [
   { label: "24 horas", hours: 24 },
