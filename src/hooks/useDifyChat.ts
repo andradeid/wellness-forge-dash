@@ -874,12 +874,12 @@ export function useDifyChat(
 
       // 1b) Primário: local_file via /api/dify/upload.
       updateFileProgress(file, "processando", 45, "Enviando exame para a Lumma");
-      const difyFileId = await uploadToDify(file);
+      const difyFileId = await uploadToDify(uploadFile);
 
       let fileRef: DifyFileRef;
       if (difyFileId) {
         fileRef = {
-          type: file.type.startsWith("image/") ? "image" : "document",
+          type: uploadFile.type.startsWith("image/") ? "image" : "document",
           transfer_method: "local_file",
           upload_file_id: difyFileId,
         };
@@ -906,7 +906,7 @@ export function useDifyChat(
           return;
         }
         fileRef = {
-          type: file.type.startsWith("image/") ? "image" : "document",
+          type: uploadFile.type.startsWith("image/") ? "image" : "document",
           transfer_method: "remote_url",
           url: signed.signedUrl,
         };
@@ -918,15 +918,15 @@ export function useDifyChat(
         chat_id: chatId,
         uploaded_by: user.id,
         file_path: path,
-        file_name: file.name,
-        mime_type: file.type,
-        size_bytes: file.size,
+        file_name: uploadFile.name,
+        mime_type: uploadFile.type,
+        size_bytes: uploadFile.size,
         dify_file_id: difyFileId,
       }).select("id").single();
       if (examIns?.id) lastExamId = examIns.id as string;
 
       difyFiles.push(fileRef);
-      attachments.push({ name: file.name, path, mime_type: file.type });
+      attachments.push({ name: uploadFile.name, path, mime_type: uploadFile.type });
       updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
