@@ -248,6 +248,7 @@ export const Route = createFileRoute("/api/dify/chat")({
           httpStatus?: number | null;
           rawError?: string | null;
           durationMs?: number | null;
+          messageId?: string | null;
           metadata?: Record<string, unknown>;
         }) => {
           try {
