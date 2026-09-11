@@ -62,6 +62,12 @@ async function releaseStreamSlot(userId: string) {
 }
 
 /**
+ * Versão das regras de classificação de falhas do Dify.
+ * Gravada em `metadata.rules_version` de todo registro novo.
+ */
+export const RULES_VERSION = "2026-09-11.v3";
+
+/**
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
  * seja sucesso, erro, desconexão do cliente ou timeout de segurança.
  */
@@ -284,6 +290,9 @@ export const Route = createFileRoute("/api/dify/chat")({
           const wallMs = Date.now() - startedAt;
           const durationMs = outcome.providerLatencyMs ?? wallMs;
           const base = {
+            // Carimbo de versão: permite conferir, olhando um registro recente,
+            // qual versão das regras de classificação está em execução.
+            rules_version: RULES_VERSION,
             provider_latency_ms: outcome.providerLatencyMs,
             wall_ms: wallMs,
             bytes: outcome.bytes,
