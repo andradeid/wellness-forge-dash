@@ -34,6 +34,7 @@ const schema = z.object({
     .optional()
     .default("unknown"),
 
+  messageId: z.string().max(120).optional().nullable(),
   httpStatus: z.number().int().optional().nullable(),
   rawError: z.string().max(40_000).optional().nullable(),
   durationMs: z.number().optional().nullable(),

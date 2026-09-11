@@ -31,6 +31,8 @@ export interface DifyErrorLogInput {
   userId?: string | null;
   chatId?: string | null;
   conversationId?: string | null;
+  /** message_id devolvido pelo Dify (evento message_end), para cruzamento. */
+  messageId?: string | null;
   patientId?: string | null;
   patientProfile?: string | null;
   selectedTask?: string | null;
@@ -80,6 +82,12 @@ export function classifyRawDifyError(
   return msg ? "unknown" : "unknown";
 }
 
+/**
+ * Resposta entregue ao cliente abaixo deste tamanho é considerada vazia.
+ * Vale SEMPRE, independente de tarefa, anexo ou duração.
+ */
+export const EMPTY_ANSWER_MAX_BYTES = 400;
+
 /** Abaixo disso não houve execução no Dify — a chamada falhou antes de despachar. */
 export const NO_EXECUTION_MS = 5_000;
 
@@ -128,6 +136,7 @@ export async function recordDifyErrorLog(input: DifyErrorLogInput): Promise<void
       user_id: asUuid(input.userId),
       chat_id: asUuid(input.chatId),
       conversation_id: trim(input.conversationId, 120),
+      message_id: trim(input.messageId, 120),
       patient_id: asUuid(input.patientId),
       patient_profile: trim(input.patientProfile, 60),
       selected_task: trim(input.selectedTask, 60),
