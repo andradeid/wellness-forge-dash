@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
+import { downscaleImageFile } from "@/lib/image-downscale";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { processAndPersistMarkers, type RawMarker } from "@/lib/exam-markers";

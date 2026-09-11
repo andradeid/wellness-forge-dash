@@ -17,6 +17,8 @@ import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
+import { downscaleImageFile, formatBytes } from "@/lib/image-downscale";
+import { examFileExists } from "@/lib/exam-file-exists";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
