@@ -319,7 +319,14 @@ export function DifyErrorsSection() {
             Ocorrências
             <Badge variant="secondary">{total}</Badge>
           </CardTitle>
-          {listQuery.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <div className="flex items-center gap-2">
+            {listQuery.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <Button size="sm" variant="outline" disabled={exporting} onClick={handleExport}>
+              {exporting ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
+              Exportar CSV
+            </Button>
+          </div>
+
         </CardHeader>
         <CardContent className="space-y-2">
           {listQuery.isLoading ? (
