@@ -47,11 +47,14 @@ const KIND_LABEL: Record<string, string> = {
 
 
 const PERIODS = [
+  { label: "1 hora", hours: 1 },
+  { label: "6 horas", hours: 6 },
   { label: "24 horas", hours: 24 },
   { label: "7 dias", hours: 24 * 7 },
   { label: "30 dias", hours: 24 * 30 },
   { label: "90 dias", hours: 24 * 90 },
 ];
+
 
 const ALL = "__all__";
 
