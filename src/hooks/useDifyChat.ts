@@ -17,6 +17,8 @@ import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
+import { downscaleImageFile, formatBytes } from "@/lib/image-downscale";
+import { examFileExists } from "@/lib/exam-file-exists";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
@@ -834,14 +836,28 @@ export function useDifyChat(
 
     for (const file of reusedAttachments ? [] : files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
-      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
+      updateFileProgress(file, "enviando", 10, "Preparando imagem");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
 
+      // 1a-0) Reamostragem: foto de 10 MB não acrescenta nada à análise e
+      //       encarece upload, storage e download pelo Dify.
+      const { file: uploadFile, changed: wasDownscaled, originalSize, finalSize } =
+        await downscaleImageFile(file);
+      if (wasDownscaled) {
+        console.info("[dify.upload] imagem reamostrada", {
+          name: file.name,
+          from: formatBytes(originalSize),
+          to: formatBytes(finalSize),
+        });
+      }
+
+      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
+
       // 1a) Storage (upload direto do browser → Supabase, sem passar pelo Worker).
-      const safeName = sanitizeFilename(file.name);
+      const safeName = sanitizeFilename(uploadFile.name);
       const path = `${user.id}/${patientId}/${Date.now()}-${safeName}`;
-      const { error: upErr } = await supabase.storage.from("exams").upload(path, file, {
-        contentType: file.type || undefined,
+      const { error: upErr } = await supabase.storage.from("exams").upload(path, uploadFile, {
+        contentType: uploadFile.type || undefined,
         upsert: false,
       });
       if (upErr) {
@@ -860,12 +876,12 @@ export function useDifyChat(
 
       // 1b) Primário: local_file via /api/dify/upload.
       updateFileProgress(file, "processando", 45, "Enviando exame para a Lumma");
-      const difyFileId = await uploadToDify(file);
+      const difyFileId = await uploadToDify(uploadFile);
 
       let fileRef: DifyFileRef;
       if (difyFileId) {
         fileRef = {
-          type: file.type.startsWith("image/") ? "image" : "document",
+          type: uploadFile.type.startsWith("image/") ? "image" : "document",
           transfer_method: "local_file",
           upload_file_id: difyFileId,
         };
@@ -892,7 +908,7 @@ export function useDifyChat(
           return;
         }
         fileRef = {
-          type: file.type.startsWith("image/") ? "image" : "document",
+          type: uploadFile.type.startsWith("image/") ? "image" : "document",
           transfer_method: "remote_url",
           url: signed.signedUrl,
         };
@@ -904,15 +920,15 @@ export function useDifyChat(
         chat_id: chatId,
         uploaded_by: user.id,
         file_path: path,
-        file_name: file.name,
-        mime_type: file.type,
-        size_bytes: file.size,
+        file_name: uploadFile.name,
+        mime_type: uploadFile.type,
+        size_bytes: uploadFile.size,
         dify_file_id: difyFileId,
       }).select("id").single();
       if (examIns?.id) lastExamId = examIns.id as string;
 
       difyFiles.push(fileRef);
-      attachments.push({ name: file.name, path, mime_type: file.type });
+      attachments.push({ name: uploadFile.name, path, mime_type: uploadFile.type });
       updateFileProgress(file, "concluido", 100, "Upload concluído; aguardando análise");
       toast.success(`${file.name} enviado`, { id: toastId, duration: 2500 });
     }
@@ -933,17 +949,47 @@ export function useDifyChat(
     //     Sem essa regeneração, uma URL antiga que o Dify guardou no histórico
     //     expira em ~1h e o workflow aborta com InvalidJWT em qualquer
     //     follow-up horas/dias depois.
-    if (files.length === 0 && chatId) {
+    //
+    //     TRÊS GUARDAS (causa raiz das falhas de 09-11/09):
+    //     a) só tarefas que realmente consomem arquivo — raciocínio clínico e
+    //        formulações não devem receber a foto de composição corporal de
+    //        uma semana atrás;
+    //     b) janela de recência: arquivo com mais de 48h não é arrastado;
+    //     c) HEAD/list no bucket antes de assinar — se o objeto não existe
+    //        mais (exame apagado, upload interrompido), a URL assinada seria
+    //        válida mas devolveria 400 no download e mataria a execução.
+    const FILE_CONSUMING_TASKS = new Set([
+      "exam_masc", "exam_fem", "exam_gest_mono", "exam_gest_gem",
+      "bioimpedancia", "calorimetria", "genetica", "microbioma",
+      "estimativa_refeicao_foto", "composicao_corporal_foto",
+      // legados
+      "exam", "composition", "genetics",
+    ]);
+    const LEGACY_REUSE_MAX_AGE_MS = 48 * 3600 * 1000;
+
+    if (files.length === 0 && chatId && (!selectedTask || FILE_CONSUMING_TASKS.has(selectedTask))) {
       try {
         const { data: legacyExams } = await (supabase as any)
           .from("patient_exams")
-          .select("id, file_path, file_name, mime_type")
+          .select("id, file_path, file_name, mime_type, created_at")
           .eq("chat_id", chatId)
           .is("dify_file_id", null)
           .not("file_path", "is", null)
           .order("created_at", { ascending: true });
         if (Array.isArray(legacyExams) && legacyExams.length > 0) {
-          for (const ex of legacyExams as Array<{ id: string; file_path: string; file_name?: string | null; mime_type?: string | null }>) {
+          let missingCount = 0;
+          for (const ex of legacyExams as Array<{ id: string; file_path: string; file_name?: string | null; mime_type?: string | null; created_at?: string | null }>) {
+            const ageMs = ex.created_at ? Date.now() - new Date(ex.created_at).getTime() : 0;
+            if (ageMs > LEGACY_REUSE_MAX_AGE_MS) {
+              console.info("[dify.followup] exame antigo não reaproveitado", { exam_id: ex.id, age_h: Math.round(ageMs / 3600000) });
+              continue;
+            }
+            const exists = await examFileExists(ex.file_path);
+            if (!exists) {
+              missingCount += 1;
+              console.warn("[dify.followup] arquivo não existe mais no bucket", { exam_id: ex.id, path: ex.file_path });
+              continue;
+            }
             const { data: signed, error: signErr } = await supabase.storage
               .from("exams")
               .createSignedUrl(ex.file_path, FALLBACK_SIGNED_URL_TTL_SECONDS);
@@ -958,11 +1004,20 @@ export function useDifyChat(
               url: signed.signedUrl,
             });
           }
+          if (missingCount > 0) {
+            toast.warning(
+              missingCount === 1
+                ? "Um arquivo desta conversa não está mais disponível e não foi reenviado para análise."
+                : `${missingCount} arquivos desta conversa não estão mais disponíveis e não foram reenviados para análise.`,
+              { description: "Se precisar dele na análise, anexe o arquivo novamente.", duration: 8000 },
+            );
+          }
         }
       } catch (e) {
         console.warn("[dify.followup] regeneração legacy falhou (segue sem):", e);
       }
     }
+
 
     // 2) Persist user message — usa displayText (texto amigável) quando o
     // chamador quer esconder o prompt técnico enviado ao Dify (ex: handoff).

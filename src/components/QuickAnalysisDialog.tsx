@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
+import { downscaleImageFile } from "@/lib/image-downscale";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { processAndPersistMarkers, type RawMarker } from "@/lib/exam-markers";
@@ -276,14 +277,18 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
 
       // 2) Storage upload (provisional path under user's "_quick" folder).
       //    Supabase Storage rejeita colchetes/acentos na key → sanitizar filename.
-      const path = `${user.id}/_quick/${Date.now()}-${sanitizeFilename(file.name)}`;
-      const { error: upErr } = await supabase.storage.from("exams").upload(path, file);
+      //    Imagens grandes são reamostradas (máx. 1500px, JPEG) antes de subir.
+      const { file: uploadFile } = await downscaleImageFile(file);
+      const path = `${user.id}/_quick/${Date.now()}-${sanitizeFilename(uploadFile.name)}`;
+      const { error: upErr } = await supabase.storage.from("exams").upload(path, uploadFile, {
+        contentType: uploadFile.type || undefined,
+      });
       if (upErr) throw new Error(upErr.message);
       storagePathRef.current = path;
 
       // 3) Dify upload
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", uploadFile);
       const upRes = await fetch("/api/dify/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
