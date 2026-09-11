@@ -834,14 +834,28 @@ export function useDifyChat(
 
     for (const file of reusedAttachments ? [] : files) {
       const toastId = `upload-${file.name}-${Date.now()}`;
-      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
+      updateFileProgress(file, "enviando", 10, "Preparando imagem");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
 
+      // 1a-0) Reamostragem: foto de 10 MB não acrescenta nada à análise e
+      //       encarece upload, storage e download pelo Dify.
+      const { file: uploadFile, changed: wasDownscaled, originalSize, finalSize } =
+        await downscaleImageFile(file);
+      if (wasDownscaled) {
+        console.info("[dify.upload] imagem reamostrada", {
+          name: file.name,
+          from: formatBytes(originalSize),
+          to: formatBytes(finalSize),
+        });
+      }
+
+      updateFileProgress(file, "enviando", 15, "Salvando exame no histórico");
+
       // 1a) Storage (upload direto do browser → Supabase, sem passar pelo Worker).
-      const safeName = sanitizeFilename(file.name);
+      const safeName = sanitizeFilename(uploadFile.name);
       const path = `${user.id}/${patientId}/${Date.now()}-${safeName}`;
-      const { error: upErr } = await supabase.storage.from("exams").upload(path, file, {
-        contentType: file.type || undefined,
+      const { error: upErr } = await supabase.storage.from("exams").upload(path, uploadFile, {
+        contentType: uploadFile.type || undefined,
         upsert: false,
       });
       if (upErr) {
