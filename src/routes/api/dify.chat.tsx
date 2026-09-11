@@ -70,6 +70,14 @@ export interface StreamOutcome {
   streamError: string | null;
   /** Bytes entregues ao cliente — resposta muito curta indica falha silenciosa. */
   bytes: number;
+  /** message_id devolvido pelo Dify (para cruzar com a análise). */
+  messageId: string | null;
+  /** conversation_id devolvido pelo Dify. */
+  conversationId: string | null;
+  /** Latência real da execução informada pelo Dify (ms), quando disponível. */
+  providerLatencyMs: number | null;
+  /** A resposta trouxe o array `markers` com ao menos um objeto. */
+  sawMarkers: boolean;
 }
 
 function wrapStreamWithRelease(
@@ -80,6 +88,10 @@ function wrapStreamWithRelease(
   let released = false;
   let streamError: string | null = null;
   let bytes = 0;
+  let messageId: string | null = null;
+  let conversationId: string | null = null;
+  let providerLatencyMs: number | null = null;
+  let sawMarkers = false;
   let safetyTimer: ReturnType<typeof setTimeout> | null = null;
   const release = () => {
     if (released) return;
@@ -89,7 +101,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone({ streamError, bytes });
+      onDone({ streamError, bytes, messageId, conversationId, providerLatencyMs, sawMarkers });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -117,6 +129,25 @@ function wrapStreamWithRelease(
       const idx = sniffBuf.search(/\{[^{}]*"event"\s*:\s*"error"/);
       streamError = (idx >= 0 ? sniffBuf.slice(idx) : sniffBuf).slice(0, 4000);
     }
+    // Identificadores e latência real da execução (message_end).
+    if (!messageId) {
+      const m = sniffBuf.match(/"message_id"\s*:\s*"([^"]+)"/);
+      if (m?.[1]) messageId = m[1];
+    }
+    if (!conversationId) {
+      const c = sniffBuf.match(/"conversation_id"\s*:\s*"([^"]+)"/);
+      if (c?.[1]) conversationId = c[1];
+    }
+    if (providerLatencyMs == null) {
+      const l = sniffBuf.match(/"provider_response_latency"\s*:\s*([0-9.]+)/);
+      if (l?.[1]) {
+        const secs = Number(l[1]);
+        // Dify devolve em segundos (float); valores grandes já vêm em ms.
+        if (Number.isFinite(secs)) providerLatencyMs = Math.round(secs > 1000 ? secs : secs * 1000);
+      }
+    }
+    // Detector estrutural: resposta trouxe o array de marcadores preenchido.
+    if (!sawMarkers && /markers\\?"\s*:\s*\\?\[\s*\\?\{/.test(sniffBuf)) sawMarkers = true;
     if (FINAL_EVENTS.test(sniffBuf)) {
       release();
       sniffBuf = "";
@@ -125,6 +156,7 @@ function wrapStreamWithRelease(
     // Evita crescimento ilimitado do buffer: mantém apenas a cauda.
     if (sniffBuf.length > 8192) sniffBuf = sniffBuf.slice(-2048);
   };
+
 
   const reader = upstreamBody.getReader();
   return new ReadableStream<Uint8Array>({
