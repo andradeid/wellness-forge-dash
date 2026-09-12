@@ -18,7 +18,8 @@ import { paywallStore } from "@/lib/paywall-store";
 import { resolveAgentKey } from "@/lib/agent-key-map";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
 import { downscaleImageFile, formatBytes } from "@/lib/image-downscale";
-import { examFileExists } from "@/lib/exam-file-exists";
+import { examFileExists, signedExamUrlResponds } from "@/lib/exam-file-exists";
+import { taskConsumesFiles } from "@/lib/dify-file-policy";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
@@ -684,6 +685,14 @@ export function useDifyChat(
     const selectedTask = opts?._isRetry
       ? (selectedTaskRef.current?.trim() || opts?.selectedTask?.trim() || undefined)
       : (opts?.selectedTask?.trim() || selectedTaskRef.current?.trim() || undefined);
+    const acceptsFiles = taskConsumesFiles(selectedTask);
+    const filesForTask = acceptsFiles ? files : [];
+    if (!acceptsFiles && files.length > 0) {
+      toast.info("O anexo não foi enviado nesta tarefa", {
+        description: "A tarefa selecionada não usa arquivos. A mensagem seguirá somente com o texto.",
+        duration: 7000,
+      });
+    }
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -748,8 +757,8 @@ export function useDifyChat(
       clearTimeout(researchTimeoutRef.current);
       researchTimeoutRef.current = null;
     }
-    if (files.length > 0) {
-      setUploadProgress(files.map((file) => ({
+    if (filesForTask.length > 0) {
+      setUploadProgress(filesForTask.map((file) => ({
         id: `${file.name}-${file.size}-${file.lastModified}`,
         name: file.name,
         size: file.size,
@@ -827,14 +836,16 @@ export function useDifyChat(
     // Retry: reaproveita os anexos já processados (dify_file_id) — a
     // nutricionista não precisa reanexar o exame.
     const reusedAttachments =
-      opts?._isRetry && lastRequestRef.current?.resolved ? lastRequestRef.current.resolved : null;
+      acceptsFiles && opts?._isRetry && lastRequestRef.current?.resolved
+        ? lastRequestRef.current.resolved
+        : null;
     if (reusedAttachments) {
       difyFiles.push(...reusedAttachments.difyFiles);
       attachments.push(...reusedAttachments.attachments);
       lastExamId = reusedAttachments.lastExamId;
     }
 
-    for (const file of reusedAttachments ? [] : files) {
+    for (const file of reusedAttachments ? [] : filesForTask) {
       const toastId = `upload-${file.name}-${Date.now()}`;
       updateFileProgress(file, "enviando", 10, "Preparando imagem");
       toast.loading(`Enviando ${file.name}...`, { id: toastId });
@@ -888,6 +899,16 @@ export function useDifyChat(
       } else {
         // 1c) Fallback: signed URL 7 dias como remote_url fresh.
         updateFileProgress(file, "processando", 65, "Gerando link seguro para a Lumma");
+        const objectAvailable = await examFileExists(path);
+        if (!objectAvailable) {
+          const friendly = "O arquivo foi salvo, mas o Storage não respondeu à conferência. Tente enviar novamente em instantes.";
+          updateFileProgress(file, "erro", 100, "Arquivo temporariamente indisponível");
+          toast.error("Não consegui confirmar o arquivo", { description: friendly, duration: 9000 });
+          setError(friendly);
+          setThinking(false);
+          resetUploadUI();
+          return;
+        }
         const { data: signed, error: signErr } = await supabase.storage
           .from("exams")
           .createSignedUrl(path, FALLBACK_SIGNED_URL_TTL_SECONDS);
@@ -902,6 +923,16 @@ export function useDifyChat(
             description: "O arquivo foi salvo, mas não consegui liberar para análise. Tente enviar de novo.",
             duration: 8000,
           });
+          setError(friendly);
+          setThinking(false);
+          resetUploadUI();
+          return;
+        }
+        const signedUrlAvailable = await signedExamUrlResponds(signed.signedUrl);
+        if (!signedUrlAvailable) {
+          const friendly = "O arquivo está temporariamente indisponível para análise. Aguarde alguns instantes e envie novamente.";
+          updateFileProgress(file, "erro", 100, "Arquivo temporariamente indisponível");
+          toast.error("Não enviei o arquivo para a Lumma", { description: friendly, duration: 9000 });
           setError(friendly);
           setThinking(false);
           resetUploadUI();
@@ -958,16 +989,9 @@ export function useDifyChat(
     //     c) HEAD/list no bucket antes de assinar — se o objeto não existe
     //        mais (exame apagado, upload interrompido), a URL assinada seria
     //        válida mas devolveria 400 no download e mataria a execução.
-    const FILE_CONSUMING_TASKS = new Set([
-      "exam_masc", "exam_fem", "exam_gest_mono", "exam_gest_gem",
-      "bioimpedancia", "calorimetria", "genetica", "microbioma",
-      "estimativa_refeicao_foto", "composicao_corporal_foto",
-      // legados
-      "exam", "composition", "genetics",
-    ]);
     const LEGACY_REUSE_MAX_AGE_MS = 48 * 3600 * 1000;
 
-    if (files.length === 0 && chatId && (!selectedTask || FILE_CONSUMING_TASKS.has(selectedTask))) {
+    if (filesForTask.length === 0 && chatId && acceptsFiles) {
       try {
         const { data: legacyExams } = await (supabase as any)
           .from("patient_exams")
@@ -995,6 +1019,12 @@ export function useDifyChat(
               .createSignedUrl(ex.file_path, FALLBACK_SIGNED_URL_TTL_SECONDS);
             if (signErr || !signed?.signedUrl) {
               console.warn("[dify.followup] não gerou signed URL fresh", { exam_id: ex.id, err: signErr?.message });
+              continue;
+            }
+            const signedUrlAvailable = await signedExamUrlResponds(signed.signedUrl);
+            if (!signedUrlAvailable) {
+              missingCount += 1;
+              console.warn("[dify.followup] URL assinada não respondeu ao HEAD", { exam_id: ex.id });
               continue;
             }
             const mime = ex.mime_type || "";

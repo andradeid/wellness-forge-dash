@@ -7,28 +7,39 @@
  * devolve HTTP 400 na hora do download — e a execução do Dify morre em menos
  * de 1 segundo, sem mensagem útil.
  *
- * Conferimos ANTES de assinar. `list` com `search` é suficiente e respeita RLS.
+ * Conferimos ANTES de assinar pela API de metadados do próprio objeto. Falhas
+ * de rede/permissão são tratadas como indisponibilidade: é mais seguro pedir
+ * um novo envio do que entregar ao Dify uma referência que pode abortar tudo.
  */
 
 import { supabase } from "@/integrations/supabase/client";
 
 export async function examFileExists(filePath: string): Promise<boolean> {
   if (!filePath) return false;
-  const idx = filePath.lastIndexOf("/");
-  const dir = idx >= 0 ? filePath.slice(0, idx) : "";
-  const name = idx >= 0 ? filePath.slice(idx + 1) : filePath;
   try {
-    const { data, error } = await supabase.storage
-      .from("exams")
-      .list(dir, { limit: 100, search: name });
+    const { data, error } = await supabase.storage.from("exams").info(filePath);
     if (error) {
-      // Falha de rede/permissão não deve bloquear o envio: assumimos que existe.
-      console.warn("[exams.exists] list falhou, seguindo:", error.message);
-      return true;
+      console.warn("[exams.exists] info falhou; anexo bloqueado:", error.message);
+      return false;
     }
-    return Array.isArray(data) && data.some((o) => o.name === name);
+    return Boolean(data);
   } catch (e) {
-    console.warn("[exams.exists] threw, seguindo:", e);
-    return true;
+    console.warn("[exams.exists] info lançou erro; anexo bloqueado:", e);
+    return false;
+  }
+}
+
+/** Confirma que a URL assinada responde antes de entregá-la ao Dify. */
+export async function signedExamUrlResponds(signedUrl: string): Promise<boolean> {
+  if (!signedUrl) return false;
+  try {
+    const response = await fetch(signedUrl, {
+      method: "HEAD",
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch (error) {
+    console.warn("[exams.exists] HEAD da URL assinada falhou; anexo bloqueado:", error);
+    return false;
   }
 }
