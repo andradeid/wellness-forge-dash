@@ -12,11 +12,18 @@ const FILE_CONSUMING_TASKS = new Set([
   "composicao_corporal_foto",
   // Identificadores legados ainda presentes em conversas antigas.
   "exam",
+  "exam_masculino",
+  "exam_feminino",
+  "exam_adulto",
+  "exam_gestante",
+  "exam_gestante_mono",
+  "exam_gestante_gem",
   "composition",
+  "metabolism",
   "genetics",
 ]);
 
-export function taskConsumesFiles(selectedTask: string | null | undefined): boolean {
-  if (!selectedTask) return true;
-  return FILE_CONSUMING_TASKS.has(selectedTask.trim());
+export function taskConsumesFiles(taskOrAgent: string | null | undefined): boolean {
+  if (!taskOrAgent) return false;
+  return FILE_CONSUMING_TASKS.has(taskOrAgent.trim());
 }

@@ -685,7 +685,9 @@ export function useDifyChat(
     const selectedTask = opts?._isRetry
       ? (selectedTaskRef.current?.trim() || opts?.selectedTask?.trim() || undefined)
       : (opts?.selectedTask?.trim() || selectedTaskRef.current?.trim() || undefined);
-    const acceptsFiles = taskConsumesFiles(selectedTask);
+    // Em agentes comuns não há selected_task; nesse caso a decisão usa o
+    // agent_type. Nunca presumimos que ausência de task autoriza anexos.
+    const acceptsFiles = taskConsumesFiles(selectedTask ?? agentType);
     const filesForTask = acceptsFiles ? files : [];
     if (!acceptsFiles && files.length > 0) {
       toast.info("O anexo não foi enviado nesta tarefa", {
@@ -986,7 +988,7 @@ export function useDifyChat(
     //        formulações não devem receber a foto de composição corporal de
     //        uma semana atrás;
     //     b) janela de recência: arquivo com mais de 48h não é arrastado;
-    //     c) HEAD/list no bucket antes de assinar — se o objeto não existe
+    //     c) metadata + HEAD no bucket antes de enviar — se o objeto não existe
     //        mais (exame apagado, upload interrompido), a URL assinada seria
     //        válida mas devolveria 400 no download e mataria a execução.
     const LEGACY_REUSE_MAX_AGE_MS = 48 * 3600 * 1000;
