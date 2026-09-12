@@ -11,5 +11,5 @@
 ## Proteção de anexos do Dify
 - [x] Não enviar anexos para tarefas que não consomem arquivos
 - [x] Conferir o objeto e executar HEAD na URL assinada antes do envio
-- [ ] Validar no preview e confirmar o build
-- [ ] Concluir diagnóstico dos logs do Storage em 11/09, 18:39–18:42 UTC
+- [x] Validar no preview e confirmar o build
+- [ ] Logs do Storage de 11/09, 18:39–18:42 UTC indisponíveis na retenção consultável
