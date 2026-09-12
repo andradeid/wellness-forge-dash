@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
+import { taskConsumesFiles } from "@/lib/dify-file-policy";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -231,6 +232,15 @@ export const Route = createFileRoute("/api/dify/chat")({
 
         const body = await request.json();
         const agentType = resolveAgentType(body);
+        const requestedTask =
+          (typeof body?.selected_task === "string" && body.selected_task.trim()) ||
+          (typeof body?.meta?.selected_task === "string" && body.meta.selected_task.trim()) ||
+          null;
+        // Defesa final: mesmo que algum fluxo de tela erre, tarefas sem suporte
+        // a arquivo nunca entregam `files` ao Dify.
+        const safeFiles = taskConsumesFiles(requestedTask ?? agentType) && Array.isArray(body?.files)
+          ? body.files
+          : [];
 
         // ------------------------------------------------------------
         // Contexto do registro de falhas da IA (tabela dify_error_logs).
@@ -252,7 +262,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             (typeof body?.selected_task === "string" && body.selected_task) ||
             (typeof body?.meta?.selected_task === "string" ? body.meta.selected_task : null),
           agentType,
-          attachmentCount: Array.isArray(body?.files) ? body.files.length : 0,
+          attachmentCount: safeFiles.length,
           attachmentName: attachmentsMeta[0]?.name ?? null,
           attachmentMime: attachmentsMeta[0]?.type ?? null,
         };
@@ -436,7 +446,7 @@ export const Route = createFileRoute("/api/dify/chat")({
           }));
         }
 
-        const { query, conversation_id, inputs, files, meta } = body ?? {};
+        const { query, conversation_id, inputs, meta } = body ?? {};
 
         const sanitize = (s: unknown) =>
           String(s ?? "").replace(/[\r\n\t]+/g, " ").trim();
@@ -492,7 +502,7 @@ export const Route = createFileRoute("/api/dify/chat")({
               inputs: mergedInputs,
               response_mode: "streaming",
               user: displayUser,
-              files: files ?? [],
+              files: safeFiles,
               ...(conversation_id ? { conversation_id } : {}),
             }),
           });
@@ -555,7 +565,7 @@ export const Route = createFileRoute("/api/dify/chat")({
                   inputs: mergedInputs,
                   response_mode: "streaming",
                   user: displayUser,
-                  files: files ?? [],
+                  files: safeFiles,
                   ...(conversation_id ? { conversation_id } : {}),
                 }),
               });
@@ -610,7 +620,7 @@ export const Route = createFileRoute("/api/dify/chat")({
         console.info("[dify-proxy] stream_start", {
           agent: agentType,
           conversation_id: conversation_id ?? null,
-          files: Array.isArray(files) ? files.length : 0,
+          files: safeFiles.length,
         });
         const wrapped = wrapStreamWithRelease(upstream.body, (outcome) => {
           console.info("[dify-proxy] stream_end", { agent: agentType });
