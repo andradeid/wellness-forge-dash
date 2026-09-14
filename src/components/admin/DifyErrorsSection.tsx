@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, Copy, Loader2, Search } from "lucide-react";
+import { AlertTriangle, Copy, Eye, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -297,7 +297,7 @@ export function DifyErrorsSection() {
             }}
           >
             <SelectTrigger className="w-full lg:w-52">
-              <SelectValue placeholder="Tipo de erro" />
+              <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Todos os tipos</SelectItem>
@@ -315,7 +315,7 @@ export function DifyErrorsSection() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="rounded-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Tipo de erro</CardTitle>
+            <CardTitle className="text-sm">Tipo de ocorrência</CardTitle>
           </CardHeader>
           <CardContent>
             {statsQuery.isLoading ? <Skeleton className="h-24 w-full" /> : <Bars data={stats?.byKind ?? []} />}
@@ -324,7 +324,7 @@ export function DifyErrorsSection() {
 
         <Card className="rounded-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Duração até falhar</CardTitle>
+            <CardTitle className="text-sm">Duração</CardTitle>
           </CardHeader>
           <CardContent>
             {statsQuery.isLoading ? (
@@ -379,7 +379,7 @@ export function DifyErrorsSection() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-[#e8a04c]" />
-            Ocorrências
+            {copy.title}
             <Badge variant="secondary">{total}</Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -400,7 +400,7 @@ export function DifyErrorsSection() {
             </div>
           ) : rows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhuma ocorrência registrada com esses filtros.
+              {copy.empty}
             </p>
           ) : (
             rows.map((r: any) => (
