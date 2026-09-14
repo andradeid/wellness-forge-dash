@@ -13,3 +13,6 @@
 - [x] Conferir o objeto e executar HEAD na URL assinada antes do envio
 - [x] Validar no preview e confirmar o build
 - [ ] Logs do Storage de 11/09, 18:39–18:42 UTC indisponíveis na retenção consultável
+
+- [x] Separar tela de erros da IA em Erros e Observações (contadores independentes)
+- [ ] Reestruturar rota /api/dify/chat em horário de baixo uso, se ainda valer a pena
