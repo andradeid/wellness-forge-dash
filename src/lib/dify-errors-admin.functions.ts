@@ -242,7 +242,7 @@ export const getDifyErrorStats = createServerFn({ method: "POST" })
       ),
       profiles: uniq((allRows ?? []).map((r: any) => r.patient_profile)),
       tasks: uniq((allRows ?? []).map((r: any) => r.selected_task)),
-      kinds: uniq((allRows ?? []).map((r: any) => r.error_kind)),
+      kinds: kindsInCategory,
     };
   });
 
