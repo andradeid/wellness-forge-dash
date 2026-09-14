@@ -131,6 +131,10 @@ export const listDifyErrors = createServerFn({ method: "POST" })
 
 export interface DifyErrorStats {
   total: number;
+  /** Falhas reais no período (independente da aba escolhida). */
+  errorTotal: number;
+  /** Sinais para observar no período (independente da aba escolhida). */
+  observationTotal: number;
   byKind: Array<{ key: string; count: number }>;
   byHour: Array<{ hour: number; count: number }>;
   byProfile: Array<{ key: string; count: number }>;
