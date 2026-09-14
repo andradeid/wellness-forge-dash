@@ -92,7 +92,23 @@ function Bars({ data, max }: { data: Array<{ key: string; count: number }>; max?
   );
 }
 
+type Category = "error" | "observation";
+
+const CATEGORY_COPY: Record<Category, { title: string; hint: string; empty: string }> = {
+  error: {
+    title: "Erros",
+    hint: "Falhas reais: resposta vazia, erro do Dify, execução inexistente.",
+    empty: "Nenhuma falha registrada com esses filtros.",
+  },
+  observation: {
+    title: "Observações",
+    hint: "Sinais para acompanhar: duração fora do padrão, resposta sem marcadores. Não são falhas.",
+    empty: "Nenhuma observação registrada com esses filtros.",
+  },
+};
+
 export function DifyErrorsSection() {
+  const [category, setCategory] = useState<Category>("error");
   const [hours, setHours] = useState(24 * 7);
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
