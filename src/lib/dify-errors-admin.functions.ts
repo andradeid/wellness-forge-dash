@@ -213,8 +213,25 @@ export const getDifyErrorStats = createServerFn({ method: "POST" })
     const uniq = (vals: Array<string | null>) =>
       Array.from(new Set(vals.filter((v): v is string => Boolean(v && v.trim())))).sort();
 
+    // Contadores por categoria: sempre do período, para os dois cartões da tela.
+    const periodKinds = ((allRows ?? []) as Array<{ error_kind: string }>).map((r) => r.error_kind);
+    const observationTotal = periodKinds.filter((k) => isObservationKind(k)).length;
+
+    // O seletor de tipo só oferece os tipos que existem na categoria aberta.
+    const kindsInCategory = uniq(
+      periodKinds.filter((k) =>
+        data.category === "observation"
+          ? isObservationKind(k)
+          : data.category === "error"
+            ? !isObservationKind(k)
+            : true,
+      ),
+    );
+
     return {
       total: list.length,
+      errorTotal: periodKinds.length - observationTotal,
+      observationTotal,
       byKind: tally(list.map((r) => r.error_kind)),
       byHour: hourMap.map((count, hour) => ({ hour, count })),
       byProfile: tally(list.map((r) => r.patient_profile)),
