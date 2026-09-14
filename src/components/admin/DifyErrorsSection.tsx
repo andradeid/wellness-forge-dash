@@ -149,6 +149,7 @@ export function DifyErrorsSection() {
     profile: profile === ALL ? "" : profile,
     task: task === ALL ? "" : task,
     kind: kind === ALL ? "" : kind,
+    category,
   };
 
   const listQuery = useQuery({
