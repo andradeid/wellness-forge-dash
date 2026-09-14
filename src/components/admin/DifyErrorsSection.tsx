@@ -169,8 +169,51 @@ export function DifyErrorsSection() {
 
   const resetPage = () => setPage(1);
 
+  /** Troca de aba: zera tipo e página, porque os tipos mudam por categoria. */
+  const switchCategory = (next: Category) => {
+    setCategory(next);
+    setKind(ALL);
+    resetPage();
+  };
+
+  const copy = CATEGORY_COPY[category];
+
   return (
     <div className="space-y-6">
+      {/* Categorias: erro é falha real; observação é sinal para acompanhar. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {(["error", "observation"] as Category[]).map((c) => {
+          const active = category === c;
+          const count = c === "error" ? stats?.errorTotal ?? 0 : stats?.observationTotal ?? 0;
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => switchCategory(c)}
+              aria-pressed={active}
+              className={`rounded-lg border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                active ? "border-transparent bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15" : "border-border bg-card hover:bg-muted/50"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  {c === "error" ? (
+                    <AlertTriangle className="h-4 w-4 text-[#e8a04c]" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  {CATEGORY_COPY[c].title}
+                </span>
+                <span className="text-2xl font-semibold text-foreground">
+                  {statsQuery.isLoading ? "—" : count}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{CATEGORY_COPY[c].hint}</p>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filtros */}
       <Card className="rounded-lg">
         <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
