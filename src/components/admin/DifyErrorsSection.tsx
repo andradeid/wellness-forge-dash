@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, Copy, Loader2, Search } from "lucide-react";
+import { AlertTriangle, Copy, Eye, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -92,7 +92,23 @@ function Bars({ data, max }: { data: Array<{ key: string; count: number }>; max?
   );
 }
 
+type Category = "error" | "observation";
+
+const CATEGORY_COPY: Record<Category, { title: string; hint: string; empty: string }> = {
+  error: {
+    title: "Erros",
+    hint: "Falhas reais: resposta vazia, erro do Dify, execução inexistente.",
+    empty: "Nenhuma falha registrada com esses filtros.",
+  },
+  observation: {
+    title: "Observações",
+    hint: "Sinais para acompanhar: duração fora do padrão, resposta sem marcadores. Não são falhas.",
+    empty: "Nenhuma observação registrada com esses filtros.",
+  },
+};
+
 export function DifyErrorsSection() {
+  const [category, setCategory] = useState<Category>("error");
   const [hours, setHours] = useState(24 * 7);
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
@@ -133,6 +149,7 @@ export function DifyErrorsSection() {
     profile: profile === ALL ? "" : profile,
     task: task === ALL ? "" : task,
     kind: kind === ALL ? "" : kind,
+    category,
   };
 
   const listQuery = useQuery({
@@ -152,8 +169,51 @@ export function DifyErrorsSection() {
 
   const resetPage = () => setPage(1);
 
+  /** Troca de aba: zera tipo e página, porque os tipos mudam por categoria. */
+  const switchCategory = (next: Category) => {
+    setCategory(next);
+    setKind(ALL);
+    resetPage();
+  };
+
+  const copy = CATEGORY_COPY[category];
+
   return (
     <div className="space-y-6">
+      {/* Categorias: erro é falha real; observação é sinal para acompanhar. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {(["error", "observation"] as Category[]).map((c) => {
+          const active = category === c;
+          const count = c === "error" ? stats?.errorTotal ?? 0 : stats?.observationTotal ?? 0;
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => switchCategory(c)}
+              aria-pressed={active}
+              className={`rounded-lg border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                active ? "border-transparent bg-gradient-to-r from-[#e8a04c]/15 to-[#e89bcf]/15" : "border-border bg-card hover:bg-muted/50"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  {c === "error" ? (
+                    <AlertTriangle className="h-4 w-4 text-[#e8a04c]" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  {CATEGORY_COPY[c].title}
+                </span>
+                <span className="text-2xl font-semibold text-foreground">
+                  {statsQuery.isLoading ? "—" : count}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{CATEGORY_COPY[c].hint}</p>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filtros */}
       <Card className="rounded-lg">
         <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
@@ -237,7 +297,7 @@ export function DifyErrorsSection() {
             }}
           >
             <SelectTrigger className="w-full lg:w-52">
-              <SelectValue placeholder="Tipo de erro" />
+              <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Todos os tipos</SelectItem>
@@ -255,7 +315,7 @@ export function DifyErrorsSection() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="rounded-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Tipo de erro</CardTitle>
+            <CardTitle className="text-sm">Tipo de ocorrência</CardTitle>
           </CardHeader>
           <CardContent>
             {statsQuery.isLoading ? <Skeleton className="h-24 w-full" /> : <Bars data={stats?.byKind ?? []} />}
@@ -264,7 +324,7 @@ export function DifyErrorsSection() {
 
         <Card className="rounded-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Duração até falhar</CardTitle>
+            <CardTitle className="text-sm">Duração</CardTitle>
           </CardHeader>
           <CardContent>
             {statsQuery.isLoading ? (
@@ -319,7 +379,7 @@ export function DifyErrorsSection() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-[#e8a04c]" />
-            Ocorrências
+            {copy.title}
             <Badge variant="secondary">{total}</Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -340,7 +400,7 @@ export function DifyErrorsSection() {
             </div>
           ) : rows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhuma ocorrência registrada com esses filtros.
+              {copy.empty}
             </p>
           ) : (
             rows.map((r: any) => (

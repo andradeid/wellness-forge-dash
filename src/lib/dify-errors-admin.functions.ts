@@ -41,22 +41,42 @@ export interface DifyErrorRow {
   user: { full_name: string | null; email: string } | null;
 }
 
+/**
+ * Observações não são falhas: são sinais que merecem um olhar, mas na maior
+ * parte das vezes não representam problema. Mantê-las fora da contagem de
+ * erros evita alarme falso na tela do admin.
+ */
+export const OBSERVATION_KINDS = ["suspicious_fast", "missing_markers"] as const;
+
+/** Falha de verdade: a usuária não recebeu o que pediu. */
+export function isObservationKind(kind: string | null | undefined): boolean {
+  return (OBSERVATION_KINDS as readonly string[]).includes((kind ?? "").trim());
+}
+
 const filtersSchema = z.object({
   hours: z.number().int().min(1).max(24 * 400).optional().default(24 * 7),
   q: z.string().trim().max(200).optional().default(""),
   profile: z.string().trim().max(60).optional().default(""),
   task: z.string().trim().max(60).optional().default(""),
   kind: z.string().trim().max(40).optional().default(""),
+  /** "error" = só falhas reais; "observation" = só sinais; "" = tudo. */
+  category: z.enum(["error", "observation", ""]).optional().default("error"),
   page: z.number().int().min(1).optional().default(1),
   pageSize: z.number().int().min(5).max(100).optional().default(25),
 });
 
-function applyFilters(query: any, f: { hours: number; profile: string; task: string; kind: string }) {
+function applyFilters(
+  query: any,
+  f: { hours: number; profile: string; task: string; kind: string; category?: string },
+) {
   const since = new Date(Date.now() - f.hours * 3600_000).toISOString();
   let q = query.gte("created_at", since);
   if (f.profile) q = q.eq("patient_profile", f.profile);
   if (f.task) q = q.eq("selected_task", f.task);
   if (f.kind) q = q.eq("error_kind", f.kind);
+  const list = OBSERVATION_KINDS as readonly string[];
+  if (f.category === "observation") q = q.in("error_kind", list);
+  else if (f.category === "error") q = q.not("error_kind", "in", `(${list.join(",")})`);
   return q;
 }
 
@@ -111,6 +131,10 @@ export const listDifyErrors = createServerFn({ method: "POST" })
 
 export interface DifyErrorStats {
   total: number;
+  /** Falhas reais no período (independente da aba escolhida). */
+  errorTotal: number;
+  /** Sinais para observar no período (independente da aba escolhida). */
+  observationTotal: number;
   byKind: Array<{ key: string; count: number }>;
   byHour: Array<{ hour: number; count: number }>;
   byProfile: Array<{ key: string; count: number }>;
@@ -189,8 +213,25 @@ export const getDifyErrorStats = createServerFn({ method: "POST" })
     const uniq = (vals: Array<string | null>) =>
       Array.from(new Set(vals.filter((v): v is string => Boolean(v && v.trim())))).sort();
 
+    // Contadores por categoria: sempre do período, para os dois cartões da tela.
+    const periodKinds = ((allRows ?? []) as Array<{ error_kind: string }>).map((r) => r.error_kind);
+    const observationTotal = periodKinds.filter((k) => isObservationKind(k)).length;
+
+    // O seletor de tipo só oferece os tipos que existem na categoria aberta.
+    const kindsInCategory = uniq(
+      periodKinds.filter((k) =>
+        data.category === "observation"
+          ? isObservationKind(k)
+          : data.category === "error"
+            ? !isObservationKind(k)
+            : true,
+      ),
+    );
+
     return {
       total: list.length,
+      errorTotal: periodKinds.length - observationTotal,
+      observationTotal,
       byKind: tally(list.map((r) => r.error_kind)),
       byHour: hourMap.map((count, hour) => ({ hour, count })),
       byProfile: tally(list.map((r) => r.patient_profile)),
@@ -201,7 +242,7 @@ export const getDifyErrorStats = createServerFn({ method: "POST" })
       ),
       profiles: uniq((allRows ?? []).map((r: any) => r.patient_profile)),
       tasks: uniq((allRows ?? []).map((r: any) => r.selected_task)),
-      kinds: uniq((allRows ?? []).map((r: any) => r.error_kind)),
+      kinds: kindsInCategory,
     };
   });
 
