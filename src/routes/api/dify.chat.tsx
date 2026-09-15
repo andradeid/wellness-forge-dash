@@ -66,7 +66,14 @@ async function releaseStreamSlot(userId: string) {
  * Versão das regras de classificação de falhas do Dify.
  * Gravada em `metadata.rules_version` de todo registro novo.
  */
-export const RULES_VERSION = "2026-09-11.v3";
+export const RULES_VERSION = "2026-09-15.v4";
+
+/**
+ * Tempo máximo de espera pela execução do Dify.
+ * A mediana das tarefas com anexo fica entre 12s e 29s; esperar 6 minutos
+ * apenas prolonga uma tela parada. Falhar em 2 minutos é menos ruim.
+ */
+export const UPSTREAM_TIMEOUT_MS = 120_000;
 
 /**
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
