@@ -88,6 +88,8 @@ export interface StreamOutcome {
   messageId: string | null;
   /** conversation_id devolvido pelo Dify. */
   conversationId: string | null;
+  /** workflow_run_id da execução no Dify (quando o evento traz). */
+  workflowRunId: string | null;
   /** Latência real da execução informada pelo Dify (ms), quando disponível. */
   providerLatencyMs: number | null;
   /** A resposta trouxe o array `markers` com ao menos um objeto. */
@@ -97,13 +99,14 @@ export interface StreamOutcome {
 function wrapStreamWithRelease(
   upstreamBody: ReadableStream<Uint8Array>,
   onDone: (outcome: StreamOutcome) => void,
-  maxDurationMs = 360000,
+  maxDurationMs = UPSTREAM_TIMEOUT_MS,
 ): ReadableStream<Uint8Array> {
   let released = false;
   let streamError: string | null = null;
   let bytes = 0;
   let messageId: string | null = null;
   let conversationId: string | null = null;
+  let workflowRunId: string | null = null;
   let providerLatencyMs: number | null = null;
   let sawMarkers = false;
   let safetyTimer: ReturnType<typeof setTimeout> | null = null;
@@ -115,7 +118,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone({ streamError, bytes, messageId, conversationId, providerLatencyMs, sawMarkers });
+      onDone({ streamError, bytes, messageId, conversationId, workflowRunId, providerLatencyMs, sawMarkers });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -151,6 +154,10 @@ function wrapStreamWithRelease(
     if (!conversationId) {
       const c = sniffBuf.match(/"conversation_id"\s*:\s*"([^"]+)"/);
       if (c?.[1]) conversationId = c[1];
+    }
+    if (!workflowRunId) {
+      const w = sniffBuf.match(/"workflow_run_id"\s*:\s*"([^"]+)"/);
+      if (w?.[1]) workflowRunId = w[1];
     }
     if (providerLatencyMs == null) {
       const l = sniffBuf.match(/"provider_response_latency"\s*:\s*([0-9.]+)/);
@@ -323,6 +330,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             bytes: outcome.bytes,
             message_id: outcome.messageId,
             conversation_id: outcome.conversationId,
+            workflow_run_id: outcome.workflowRunId,
             was_retry: wasRetry,
             phase: "stream",
           };
@@ -494,7 +502,7 @@ export const Route = createFileRoute("/api/dify/chat")({
         };
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 360000);
+        const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
         const sendToDify = () =>
           fetch(`${baseUrl}/chat-messages`, {
@@ -557,7 +565,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             }
 
             const retryController = new AbortController();
-            const retryTimeout = setTimeout(() => retryController.abort(), 360000);
+            const retryTimeout = setTimeout(() => retryController.abort(), UPSTREAM_TIMEOUT_MS);
 
             try {
               upstream = await fetch(`${baseUrl}/chat-messages`, {
