@@ -19,7 +19,7 @@ import { resolveAgentKey } from "@/lib/agent-key-map";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
 import { downscaleImageFile, formatBytes } from "@/lib/image-downscale";
 import { examFileExists, signedExamUrlResponds } from "@/lib/exam-file-exists";
-import { taskConsumesFiles } from "@/lib/dify-file-policy";
+import { taskConsumesFiles, taskRequiresImage, isVisionSafeFile } from "@/lib/dify-file-policy";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
@@ -710,8 +710,7 @@ export function useDifyChat(
             : "Envie a imagem em JPG, PNG ou WEBP — PDF e documentos não funcionam nesta análise.",
           duration: 10000,
         });
-        setThinking(false);
-        setUploadProgress([]);
+        abortSend();
         return;
       }
     }
