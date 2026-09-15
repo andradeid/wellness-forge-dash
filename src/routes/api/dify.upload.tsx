@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
-import { RULES_VERSION } from "./dify.chat";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -21,6 +20,8 @@ async function authUser(request: Request): Promise<{ userId: string; token: stri
   return { userId: data.claims.sub, token };
 }
 
+
+const RULES_VERSION = "2026-09-15.v4";
 
 /** Registra a falha bruta do upload — hoje esse erro evapora. */
 async function logUploadFailure(args: {
