@@ -696,6 +696,26 @@ export function useDifyChat(
       });
     }
 
+    // Tarefas de foto vão para um nó de VISÃO: PDF, DOCX e HEIC não são
+    // decodificados e a execução morre antes de começar (sem conversa, sem
+    // registro). Barramos aqui, com instrução clara, em vez de deixar a
+    // usuária esperar minutos por uma mensagem genérica.
+    if (taskRequiresImage(selectedTask ?? agentType)) {
+      const invalid = filesForTask.filter((f) => !isVisionSafeFile(f.type, f.name));
+      if (invalid.length > 0) {
+        const isHeic = invalid.some((f) => /heic|heif/i.test(f.type) || /\.hei[cf]$/i.test(f.name));
+        toast.error("Esta análise só aceita foto", {
+          description: isHeic
+            ? "Fotos do iPhone em HEIC não são lidas. No iPhone, ajuste a câmera para “Mais compatível” ou compartilhe a foto como JPG."
+            : "Envie a imagem em JPG, PNG ou WEBP — PDF e documentos não funcionam nesta análise.",
+          duration: 10000,
+        });
+        setThinking(false);
+        setUploadProgress([]);
+        return;
+      }
+    }
+
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) { abortSend(); return; }
