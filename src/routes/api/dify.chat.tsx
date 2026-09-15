@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
-import { taskConsumesFiles } from "@/lib/dify-file-policy";
+import { taskConsumesFiles, taskRequiresImage } from "@/lib/dify-file-policy";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -252,9 +252,13 @@ export const Route = createFileRoute("/api/dify/chat")({
           null;
         // Defesa final: mesmo que algum fluxo de tela erre, tarefas sem suporte
         // a arquivo nunca entregam `files` ao Dify.
-        const safeFiles = taskConsumesFiles(requestedTask ?? agentType) && Array.isArray(body?.files)
+        const allowedFiles = taskConsumesFiles(requestedTask ?? agentType) && Array.isArray(body?.files)
           ? body.files
           : [];
+        // Tarefas de foto vão para nó de visão: só `type: "image"` passa.
+        const safeFiles = taskRequiresImage(requestedTask ?? agentType)
+          ? allowedFiles.filter((f: any) => f?.type === "image")
+          : allowedFiles;
 
         // ------------------------------------------------------------
         // Contexto do registro de falhas da IA (tabela dify_error_logs).
