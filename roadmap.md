@@ -16,3 +16,10 @@
 
 - [x] Separar tela de erros da IA em Erros e Observações (contadores independentes)
 - [ ] Reestruturar rota /api/dify/chat em horário de baixo uso, se ainda valer a pena
+
+## Falha na composição por foto (15/09)
+- [x] Confirmar redução de imagem ativa (máximo diário caiu de 3,6 MB para 0,56 MB)
+- [x] Registrar erro bruto do envio de arquivo (status, corpo, tamanho, tipo)
+- [x] Gravar workflow_run_id junto com message_id
+- [x] Espera máxima de 120s (antes 360s)
+- [x] Tarefas de foto só aceitam JPG/PNG/WEBP (PDF, DOCX e HEIC barrados com aviso)

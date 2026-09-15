@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
-import { taskConsumesFiles } from "@/lib/dify-file-policy";
+import { taskConsumesFiles, taskRequiresImage } from "@/lib/dify-file-policy";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -66,7 +66,14 @@ async function releaseStreamSlot(userId: string) {
  * Versão das regras de classificação de falhas do Dify.
  * Gravada em `metadata.rules_version` de todo registro novo.
  */
-export const RULES_VERSION = "2026-09-11.v3";
+export const RULES_VERSION = "2026-09-15.v4";
+
+/**
+ * Tempo máximo de espera pela execução do Dify.
+ * A mediana das tarefas com anexo fica entre 12s e 29s; esperar 6 minutos
+ * apenas prolonga uma tela parada. Falhar em 2 minutos é menos ruim.
+ */
+export const UPSTREAM_TIMEOUT_MS = 120_000;
 
 /**
  * Envolve um stream do upstream (SSE do Dify) para chamar release() ao final,
@@ -81,6 +88,8 @@ export interface StreamOutcome {
   messageId: string | null;
   /** conversation_id devolvido pelo Dify. */
   conversationId: string | null;
+  /** workflow_run_id da execução no Dify (quando o evento traz). */
+  workflowRunId: string | null;
   /** Latência real da execução informada pelo Dify (ms), quando disponível. */
   providerLatencyMs: number | null;
   /** A resposta trouxe o array `markers` com ao menos um objeto. */
@@ -90,13 +99,14 @@ export interface StreamOutcome {
 function wrapStreamWithRelease(
   upstreamBody: ReadableStream<Uint8Array>,
   onDone: (outcome: StreamOutcome) => void,
-  maxDurationMs = 360000,
+  maxDurationMs = UPSTREAM_TIMEOUT_MS,
 ): ReadableStream<Uint8Array> {
   let released = false;
   let streamError: string | null = null;
   let bytes = 0;
   let messageId: string | null = null;
   let conversationId: string | null = null;
+  let workflowRunId: string | null = null;
   let providerLatencyMs: number | null = null;
   let sawMarkers = false;
   let safetyTimer: ReturnType<typeof setTimeout> | null = null;
@@ -108,7 +118,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone({ streamError, bytes, messageId, conversationId, providerLatencyMs, sawMarkers });
+      onDone({ streamError, bytes, messageId, conversationId, workflowRunId, providerLatencyMs, sawMarkers });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -144,6 +154,10 @@ function wrapStreamWithRelease(
     if (!conversationId) {
       const c = sniffBuf.match(/"conversation_id"\s*:\s*"([^"]+)"/);
       if (c?.[1]) conversationId = c[1];
+    }
+    if (!workflowRunId) {
+      const w = sniffBuf.match(/"workflow_run_id"\s*:\s*"([^"]+)"/);
+      if (w?.[1]) workflowRunId = w[1];
     }
     if (providerLatencyMs == null) {
       const l = sniffBuf.match(/"provider_response_latency"\s*:\s*([0-9.]+)/);
@@ -238,9 +252,13 @@ export const Route = createFileRoute("/api/dify/chat")({
           null;
         // Defesa final: mesmo que algum fluxo de tela erre, tarefas sem suporte
         // a arquivo nunca entregam `files` ao Dify.
-        const safeFiles = taskConsumesFiles(requestedTask ?? agentType) && Array.isArray(body?.files)
+        const allowedFiles = taskConsumesFiles(requestedTask ?? agentType) && Array.isArray(body?.files)
           ? body.files
           : [];
+        // Tarefas de foto vão para nó de visão: só `type: "image"` passa.
+        const safeFiles = taskRequiresImage(requestedTask ?? agentType)
+          ? allowedFiles.filter((f: any) => f?.type === "image")
+          : allowedFiles;
 
         // ------------------------------------------------------------
         // Contexto do registro de falhas da IA (tabela dify_error_logs).
@@ -316,6 +334,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             bytes: outcome.bytes,
             message_id: outcome.messageId,
             conversation_id: outcome.conversationId,
+            workflow_run_id: outcome.workflowRunId,
             was_retry: wasRetry,
             phase: "stream",
           };
@@ -487,7 +506,7 @@ export const Route = createFileRoute("/api/dify/chat")({
         };
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 360000);
+        const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
         const sendToDify = () =>
           fetch(`${baseUrl}/chat-messages`, {
@@ -550,7 +569,7 @@ export const Route = createFileRoute("/api/dify/chat")({
             }
 
             const retryController = new AbortController();
-            const retryTimeout = setTimeout(() => retryController.abort(), 360000);
+            const retryTimeout = setTimeout(() => retryController.abort(), UPSTREAM_TIMEOUT_MS);
 
             try {
               upstream = await fetch(`${baseUrl}/chat-messages`, {

@@ -19,7 +19,7 @@ import { resolveAgentKey } from "@/lib/agent-key-map";
 import { sanitizeFilename } from "@/lib/sanitize-filename";
 import { downscaleImageFile, formatBytes } from "@/lib/image-downscale";
 import { examFileExists, signedExamUrlResponds } from "@/lib/exam-file-exists";
-import { taskConsumesFiles } from "@/lib/dify-file-policy";
+import { taskConsumesFiles, taskRequiresImage, isVisionSafeFile } from "@/lib/dify-file-policy";
 import { enforceSessionGuard } from "@/lib/session-guard";
 import { extractFormulacoes } from "@/lib/formulation-marker";
 import { stripAgentScaffolding } from "@/lib/agent-scaffolding";
@@ -694,6 +694,25 @@ export function useDifyChat(
         description: "A tarefa selecionada não usa arquivos. A mensagem seguirá somente com o texto.",
         duration: 7000,
       });
+    }
+
+    // Tarefas de foto vão para um nó de VISÃO: PDF, DOCX e HEIC não são
+    // decodificados e a execução morre antes de começar (sem conversa, sem
+    // registro). Barramos aqui, com instrução clara, em vez de deixar a
+    // usuária esperar minutos por uma mensagem genérica.
+    if (taskRequiresImage(selectedTask ?? agentType)) {
+      const invalid = filesForTask.filter((f) => !isVisionSafeFile(f.type, f.name));
+      if (invalid.length > 0) {
+        const isHeic = invalid.some((f) => /heic|heif/i.test(f.type) || /\.hei[cf]$/i.test(f.name));
+        toast.error("Esta análise só aceita foto", {
+          description: isHeic
+            ? "Fotos do iPhone em HEIC não são lidas. No iPhone, ajuste a câmera para “Mais compatível” ou compartilhe a foto como JPG."
+            : "Envie a imagem em JPG, PNG ou WEBP — PDF e documentos não funcionam nesta análise.",
+          duration: 10000,
+        });
+        abortSend();
+        return;
+      }
     }
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
