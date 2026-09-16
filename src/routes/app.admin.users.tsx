@@ -186,6 +186,9 @@ function UsersPage() {
   const canAccess = role === "super_admin" || role === "support";
   const isSuperAdmin = role === "super_admin";
   const isForbidden = role !== null && !canAccess;
+  const runExport = useServerFn(exportUsers);
+  const [exporting, setExporting] = useState(false);
+
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
