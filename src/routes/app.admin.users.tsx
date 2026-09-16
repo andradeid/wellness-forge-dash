@@ -1057,6 +1057,7 @@ function UsersPage() {
                 <SelectItem value="starter">Starter</SelectItem>
                 <SelectItem value="pro">Pro Individual</SelectItem>
                 <SelectItem value="clinica">Clínica</SelectItem>
+                <SelectItem value="legado_500">Legado 500</SelectItem>
               </SelectContent>
             </Select>
             <Select value={tagFilter} onValueChange={setTagFilter}>
