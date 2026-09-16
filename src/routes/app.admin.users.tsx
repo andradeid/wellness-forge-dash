@@ -20,6 +20,8 @@ import {
   Check,
   Copy,
   Pencil,
+  Download,
+
 } from "lucide-react";
 
 const TEMP_PASSWORD_DISPLAY = "Lumma2@102030";
@@ -909,9 +911,23 @@ function UsersPage() {
               </CardTitle>
             </div>
             <div className="flex gap-2">
+              {isSuperAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="rounded-full"
+                >
+                  {exporting
+                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    : <Download className="h-4 w-4 mr-2" />}
+                  Exportar
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setManageTagsOpen(true)} className="rounded-full">
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
+
               <Button
                 onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "", expires_at: "", creation_reason: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
