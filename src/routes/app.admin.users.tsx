@@ -20,6 +20,8 @@ import {
   Check,
   Copy,
   Pencil,
+  Download,
+
 } from "lucide-react";
 
 const TEMP_PASSWORD_DISPLAY = "Lumma2@102030";
@@ -47,7 +49,58 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { useServerFn } from "@tanstack/react-start";
+import { exportUsers, type UserExportRow } from "@/lib/users-export.functions";
 import { toast } from "sonner";
+
+const EXPORT_COLUMNS: Array<{ key: keyof UserExportRow; label: string; kind?: "date" }> = [
+  { key: "nome", label: "Nome" },
+  { key: "email", label: "E-mail" },
+  { key: "telefone", label: "Telefone" },
+  { key: "registro_profissional", label: "Registro profissional" },
+  { key: "plano", label: "Plano" },
+  { key: "situacao", label: "Situação" },
+  { key: "validade", label: "Validade", kind: "date" },
+  { key: "origem", label: "Origem" },
+  { key: "migrada", label: "Migrada" },
+  { key: "criado_em", label: "Criada em", kind: "date" },
+  { key: "ultimo_acesso", label: "Último acesso", kind: "date" },
+  { key: "saldo_creditos", label: "Saldo de créditos" },
+  { key: "cota_mensal", label: "Cota mensal" },
+  { key: "creditos_ilimitados", label: "Créditos ilimitados" },
+  { key: "proxima_reposicao", label: "Próxima reposição", kind: "date" },
+  { key: "analises_realizadas", label: "Análises realizadas" },
+  { key: "exames_enviados", label: "Exames enviados" },
+  { key: "pacientes", label: "Pacientes" },
+  { key: "bloqueada", label: "Bloqueada" },
+  { key: "etiquetas", label: "Etiquetas" },
+];
+
+function csvCell(value: unknown, kind?: "date") {
+  if (value === null || value === undefined) return "";
+  let text = String(value);
+  if (kind === "date" && text) {
+    const d = new Date(text);
+    text = isNaN(d.getTime()) ? text : d.toLocaleString("pt-BR");
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+/** CSV com BOM e ponto e vírgula — abre corretamente no Excel pt-BR. */
+function downloadCsv(rows: UserExportRow[]) {
+  const header = EXPORT_COLUMNS.map((c) => csvCell(c.label)).join(";");
+  const body = rows
+    .map((r) => EXPORT_COLUMNS.map((c) => csvCell(r[c.key], c.kind)).join(";"))
+    .join("\n");
+  const blob = new Blob(["\uFEFF" + header + "\n" + body], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `usuarios-lumma-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 
 
 export const Route = createFileRoute("/app/admin/users")({
@@ -133,6 +186,9 @@ function UsersPage() {
   const canAccess = role === "super_admin" || role === "support";
   const isSuperAdmin = role === "super_admin";
   const isForbidden = role !== null && !canAccess;
+  const runExport = useServerFn(exportUsers);
+  const [exporting, setExporting] = useState(false);
+
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -501,6 +557,41 @@ function UsersPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const refreshAll = async () => { await Promise.all([load(), loadStats()]); };
+
+  // Exportação (somente super admin — validado também no servidor)
+  const handleExport = async () => {
+    if (!isSuperAdmin || exporting) return;
+    setExporting(true);
+    try {
+      const tagLabel = tags.find((t) => t.id === tagFilter)?.label ?? "";
+      const res = await runExport({
+        data: {
+          search: debouncedSearch,
+          status: statusFilter,
+          plan: planFilter,
+          tagId: tagFilter,
+          tagLabel,
+        },
+      });
+      const list = res.rows ?? [];
+      if (list.length === 0) { toast.info("Nenhum registro para exportar."); return; }
+      downloadCsv(list);
+      toast.success(
+        res.truncated
+          ? `Exportados os primeiros ${list.length} registros (limite de segurança).`
+          : `${list.length} registro(s) exportado(s).`,
+      );
+    } catch (e: any) {
+      toast.error(
+        typeof e?.message === "string" && e.message.includes("403")
+          ? "Somente o super admin pode exportar."
+          : "Não foi possível exportar agora. Tente novamente.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   // CRUD de etiquetas
   const createTag = async () => {
@@ -909,9 +1000,23 @@ function UsersPage() {
               </CardTitle>
             </div>
             <div className="flex gap-2">
+              {isSuperAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="rounded-full"
+                >
+                  {exporting
+                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    : <Download className="h-4 w-4 mr-2" />}
+                  Exportar
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setManageTagsOpen(true)} className="rounded-full">
                 <TagIcon className="h-4 w-4 mr-2" /> Etiquetas
               </Button>
+
               <Button
                 onClick={() => { setCreateForm({ full_name: "", email: "", phone: "", professional_id: "", plan_slug: "", cycle: "", payment_method: "", payment_note: "", expires_at: "", creation_reason: "" }); setCreateOpen(true); }}
                 className="bg-gradient-brand text-white rounded-full"
