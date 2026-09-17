@@ -1557,6 +1557,8 @@ export type Database = {
           price_yearly_cents: number | null
           slug: string
           sort_order: number
+          stripe_extra_price_ids: string[]
+          stripe_extra_product_ids: string[]
           stripe_price_monthly_id: string | null
           stripe_price_yearly_id: string | null
           stripe_product_id: string | null
@@ -1574,6 +1576,8 @@ export type Database = {
           price_yearly_cents?: number | null
           slug: string
           sort_order?: number
+          stripe_extra_price_ids?: string[]
+          stripe_extra_product_ids?: string[]
           stripe_price_monthly_id?: string | null
           stripe_price_yearly_id?: string | null
           stripe_product_id?: string | null
@@ -1591,6 +1595,8 @@ export type Database = {
           price_yearly_cents?: number | null
           slug?: string
           sort_order?: number
+          stripe_extra_price_ids?: string[]
+          stripe_extra_product_ids?: string[]
           stripe_price_monthly_id?: string | null
           stripe_price_yearly_id?: string | null
           stripe_product_id?: string | null
