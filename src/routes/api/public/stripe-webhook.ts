@@ -897,3 +897,54 @@ async function addCreditsToUser(
     metadata,
   });
 }
+
+/** Extrai o product id do primeiro item da assinatura (string ou objeto expandido). */
+function extractProductId(sub: Stripe.Subscription): string | null {
+  const product = sub.items.data[0]?.price?.product as any;
+  if (!product) return null;
+  return typeof product === "string" ? product : (product.id ?? null);
+}
+
+/** Deduz o ciclo pelo intervalo do preço quando o price_id não está cadastrado. */
+function inferCycleFromSub(sub: Stripe.Subscription): "monthly" | "yearly" {
+  return sub.items.data[0]?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
+}
+
+/**
+ * Resolve o plano de um preço do Stripe.
+ * 1) casa pelo price_id cadastrado (mensal/anual);
+ * 2) se não achar (oferta/preço novo criado no Stripe e ainda não cadastrado),
+ *    cai para o `stripe_product_id` do plano — assim uma nova oferta do mesmo
+ *    produto continua entrando no plano certo com os créditos certos.
+ */
+async function resolvePlanForPrice(
+  supabaseAdmin: Admin,
+  priceId: string | null,
+  productId: string | null,
+): Promise<any | null> {
+  if (priceId) {
+    const { data } = await supabaseAdmin
+      .from("subscription_plans" as any)
+      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id")
+      .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (productId) {
+    const { data } = await supabaseAdmin
+      .from("subscription_plans" as any)
+      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id")
+      .eq("stripe_product_id", productId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (data) {
+      console.warn("[stripe-webhook] plano resolvido pelo produto (price_id não cadastrado)", {
+        price_id: priceId,
+        product_id: productId,
+        slug: (data as any).slug,
+      });
+      return data;
+    }
+  }
+  return null;
+}
