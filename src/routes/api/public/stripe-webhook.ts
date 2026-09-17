@@ -405,16 +405,15 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   let planCredits: number | null = null;
 
   // Payment Links não carregam metadata → resolve plano/ciclo pelo price_id
+  // (com fallback pelo produto, para ofertas/preços novos ainda não cadastrados)
   if (priceId) {
-    const { data: planRow } = await supabaseAdmin
-      .from("subscription_plans" as any)
-      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
-      .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
-      .maybeSingle();
+    const planRow = await resolvePlanForPrice(supabaseAdmin, priceId, extractProductId(sub));
     if (planRow) {
       if (!planSlug) planSlug = (planRow as any).slug as any;
       if (!cycle) {
-        cycle = (planRow as any).stripe_price_yearly_id === priceId ? "yearly" : "monthly";
+        cycle = (planRow as any).stripe_price_yearly_id === priceId
+          ? "yearly"
+          : inferCycleFromSub(sub);
       }
       planName = (planRow as any).name ?? null;
       planCredits = (planRow as any).monthly_credits ?? null;
@@ -484,15 +483,14 @@ async function handleInvoicePaid(
   const priceId = sub.items.data[0]?.price.id ?? null;
   if (!priceId) return;
 
-  // Descobre plano + créditos mensais pelo price_id
-  const { data: plan } = await supabaseAdmin
-    .from("subscription_plans" as any)
-    .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
-    .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
-    .maybeSingle();
+  // Descobre plano + créditos mensais pelo price_id (fallback pelo produto)
+  const plan = await resolvePlanForPrice(supabaseAdmin, priceId, extractProductId(sub));
 
   if (!plan) {
-    console.warn("[stripe-webhook] invoice.paid sem plano correspondente", { price_id: priceId });
+    console.warn("[stripe-webhook] invoice.paid sem plano correspondente", {
+      price_id: priceId,
+      product_id: extractProductId(sub),
+    });
     return;
   }
 
@@ -898,4 +896,55 @@ async function addCreditsToUser(
     reason,
     metadata,
   });
+}
+
+/** Extrai o product id do primeiro item da assinatura (string ou objeto expandido). */
+function extractProductId(sub: Stripe.Subscription): string | null {
+  const product = sub.items.data[0]?.price?.product as any;
+  if (!product) return null;
+  return typeof product === "string" ? product : (product.id ?? null);
+}
+
+/** Deduz o ciclo pelo intervalo do preço quando o price_id não está cadastrado. */
+function inferCycleFromSub(sub: Stripe.Subscription): "monthly" | "yearly" {
+  return sub.items.data[0]?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
+}
+
+/**
+ * Resolve o plano de um preço do Stripe.
+ * 1) casa pelo price_id cadastrado (mensal/anual);
+ * 2) se não achar (oferta/preço novo criado no Stripe e ainda não cadastrado),
+ *    cai para o `stripe_product_id` do plano — assim uma nova oferta do mesmo
+ *    produto continua entrando no plano certo com os créditos certos.
+ */
+async function resolvePlanForPrice(
+  supabaseAdmin: Admin,
+  priceId: string | null,
+  productId: string | null,
+): Promise<any | null> {
+  if (priceId) {
+    const { data } = await supabaseAdmin
+      .from("subscription_plans" as any)
+      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id")
+      .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (productId) {
+    const { data } = await supabaseAdmin
+      .from("subscription_plans" as any)
+      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id")
+      .eq("stripe_product_id", productId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (data) {
+      console.warn("[stripe-webhook] plano resolvido pelo produto (price_id não cadastrado)", {
+        price_id: priceId,
+        product_id: productId,
+        slug: (data as any).slug,
+      });
+      return data;
+    }
+  }
+  return null;
 }
