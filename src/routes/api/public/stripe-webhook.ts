@@ -483,15 +483,14 @@ async function handleInvoicePaid(
   const priceId = sub.items.data[0]?.price.id ?? null;
   if (!priceId) return;
 
-  // Descobre plano + créditos mensais pelo price_id
-  const { data: plan } = await supabaseAdmin
-    .from("subscription_plans" as any)
-    .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
-    .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
-    .maybeSingle();
+  // Descobre plano + créditos mensais pelo price_id (fallback pelo produto)
+  const plan = await resolvePlanForPrice(supabaseAdmin, priceId, extractProductId(sub));
 
   if (!plan) {
-    console.warn("[stripe-webhook] invoice.paid sem plano correspondente", { price_id: priceId });
+    console.warn("[stripe-webhook] invoice.paid sem plano correspondente", {
+      price_id: priceId,
+      product_id: extractProductId(sub),
+    });
     return;
   }
 
