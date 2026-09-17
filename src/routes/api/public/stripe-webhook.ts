@@ -405,16 +405,15 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   let planCredits: number | null = null;
 
   // Payment Links não carregam metadata → resolve plano/ciclo pelo price_id
+  // (com fallback pelo produto, para ofertas/preços novos ainda não cadastrados)
   if (priceId) {
-    const { data: planRow } = await supabaseAdmin
-      .from("subscription_plans" as any)
-      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id")
-      .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
-      .maybeSingle();
+    const planRow = await resolvePlanForPrice(supabaseAdmin, priceId, extractProductId(sub));
     if (planRow) {
       if (!planSlug) planSlug = (planRow as any).slug as any;
       if (!cycle) {
-        cycle = (planRow as any).stripe_price_yearly_id === priceId ? "yearly" : "monthly";
+        cycle = (planRow as any).stripe_price_yearly_id === priceId
+          ? "yearly"
+          : inferCycleFromSub(sub);
       }
       planName = (planRow as any).name ?? null;
       planCredits = (planRow as any).monthly_credits ?? null;
