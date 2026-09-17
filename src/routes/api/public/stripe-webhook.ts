@@ -922,29 +922,45 @@ async function resolvePlanForPrice(
   priceId: string | null,
   productId: string | null,
 ): Promise<any | null> {
+  const cols =
+    "slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id, stripe_extra_price_ids, stripe_extra_product_ids";
+
   if (priceId) {
     const { data } = await supabaseAdmin
       .from("subscription_plans" as any)
-      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id")
+      .select(cols)
       .or(`stripe_price_monthly_id.eq.${priceId},stripe_price_yearly_id.eq.${priceId}`)
       .maybeSingle();
     if (data) return data;
   }
-  if (productId) {
-    const { data } = await supabaseAdmin
-      .from("subscription_plans" as any)
-      .select("slug, name, monthly_credits, stripe_price_monthly_id, stripe_price_yearly_id, stripe_product_id")
-      .eq("stripe_product_id", productId)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (data) {
-      console.warn("[stripe-webhook] plano resolvido pelo produto (price_id não cadastrado)", {
-        price_id: priceId,
-        product_id: productId,
-        slug: (data as any).slug,
-      });
-      return data;
+
+  // Ofertas adicionais (novos price_id/product_id cadastrados nas colunas extras)
+  const { data: plans } = await supabaseAdmin
+    .from("subscription_plans" as any)
+    .select(cols)
+    .eq("is_active", true);
+
+  if (plans) {
+    for (const plan of plans as any[]) {
+      const extraPrices: string[] = plan.stripe_extra_price_ids ?? [];
+      if (priceId && extraPrices.includes(priceId)) {
+        console.warn("[stripe-webhook] plano resolvido por oferta extra", { price_id: priceId, slug: plan.slug });
+        return plan;
+      }
+    }
+    for (const plan of plans as any[]) {
+      const extraProducts: string[] = plan.stripe_extra_product_ids ?? [];
+      if (productId && (plan.stripe_product_id === productId || extraProducts.includes(productId))) {
+        console.warn("[stripe-webhook] plano resolvido pelo produto (price_id não cadastrado)", {
+          price_id: priceId,
+          product_id: productId,
+          slug: plan.slug,
+        });
+        return plan;
+      }
     }
   }
+
   return null;
 }
+
