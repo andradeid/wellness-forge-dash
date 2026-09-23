@@ -2033,6 +2033,15 @@ export type Database = {
       }
       admin_subscription_expiry_overview: { Args: never; Returns: Json }
       aggregate_usage_hour: { Args: { p_hour: string }; Returns: undefined }
+      apply_plan_renewal: {
+        Args: {
+          p_metadata?: Json
+          p_quota: number
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       consume_credits: {
         Args: {
           p_agent_key: string

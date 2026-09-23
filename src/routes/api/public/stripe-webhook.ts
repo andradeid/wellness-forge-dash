@@ -553,11 +553,13 @@ async function handleInvoicePaid(
   }
 
   if (!alreadyCredited) {
-    await addCreditsToUser(supabaseAdmin, {
-      userId: targetUserId,
-      credits: monthlyCredits,
-      reason: `plan:${(plan as any).slug}:renewal`,
-      metadata: {
+    // Renovação REPÕE (cota do plano + pacotes avulsos não usados), igual à
+    // reposição mensal — nunca soma ao saldo anterior.
+    const { error: renewErr } = await (supabaseAdmin as any).rpc("apply_plan_renewal", {
+      p_user_id: targetUserId,
+      p_quota: monthlyCredits,
+      p_reason: `plan:${(plan as any).slug}:renewal`,
+      p_metadata: {
         stripe_invoice_id: invoice.id,
         stripe_subscription_id: sub.id,
         stripe_price_id: priceId,
@@ -565,6 +567,7 @@ async function handleInvoicePaid(
         source: "stripe_invoice",
       },
     });
+    if (renewErr) throw new Error(`apply_plan_renewal falhou: ${renewErr.message}`);
   }
 
   // Atualiza monthly_quota + quota_reset_at.
