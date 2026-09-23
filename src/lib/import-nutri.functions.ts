@@ -22,6 +22,22 @@ type StagingRow = {
   expires_at: string | null;
 };
 
+/** Cota mensal do plano (0 se o plano não existir ou não tiver cota). */
+const quotaCache = new Map<string, number>();
+async function getPlanQuota(supabaseAdmin: any, slug: string): Promise<number> {
+  if (quotaCache.has(slug)) return quotaCache.get(slug)!;
+  const { data } = await supabaseAdmin
+    .from("subscription_plans")
+    .select("monthly_credits")
+    .eq("slug", slug)
+    .maybeSingle();
+  const quota = Number((data as any)?.monthly_credits ?? 0);
+  quotaCache.set(slug, quota);
+  return quota;
+}
+
+
+
 export const runNutriImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -81,6 +97,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
     let profileUpdates = 0;
     let subsUpserts = 0;
     let tagsInserts = 0;
+    let creditsProvisioned = 0;
     const updateErrors: Array<{ email: string; error: string }> = [];
 
     for (const row of rows) {
@@ -118,6 +135,41 @@ export const runNutriImport = createServerFn({ method: "POST" })
       if (subErr) updateErrors.push({ email, error: `subscription: ${subErr.message}` });
       else subsUpserts++;
 
+      // créditos: toda conta importada precisa de saldo + cota mensal do plano,
+      // caso contrário nunca recebe reposição e trava quando o saldo acaba.
+      const quota = await getPlanQuota(supabaseAdmin, planType);
+      if (quota > 0) {
+        const { data: uc } = await supabaseAdmin
+          .from("user_credits")
+          .select("balance, monthly_quota")
+          .eq("user_id", userId)
+          .maybeSingle();
+        const nextReset = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+        if (!uc) {
+          const { error: cErr } = await supabaseAdmin.from("user_credits").insert({
+            user_id: userId,
+            balance: quota,
+            monthly_quota: quota,
+            quota_reset_at: nextReset,
+          });
+          if (cErr) updateErrors.push({ email, error: `credits: ${cErr.message}` });
+          else creditsProvisioned++;
+        } else if (Number((uc as any).monthly_quota ?? 0) < quota) {
+          // idempotente: só completa a cota (e o saldo até a cota), nunca reduz
+          const { error: cErr } = await supabaseAdmin
+            .from("user_credits")
+            .update({
+              monthly_quota: quota,
+              balance: Math.max(Number((uc as any).balance ?? 0), quota),
+              quota_reset_at: nextReset,
+            })
+            .eq("user_id", userId);
+          if (cErr) updateErrors.push({ email, error: `credits: ${cErr.message}` });
+          else creditsProvisioned++;
+        }
+      }
+
+
       // tags (idempotent)
       const { error: tagErr } = await supabaseAdmin
         .from("profile_tags")
@@ -139,6 +191,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
       profileUpdates,
       subsUpserts,
       tagsInserts,
+      creditsProvisioned,
       updateErrors: updateErrors.slice(0, 50),
       updateErrorsTotal: updateErrors.length,
     };

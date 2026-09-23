@@ -461,9 +461,30 @@ async function addCreditsToUser(
       .update({ balance: balanceAfter })
       .eq("user_id", userId);
   } else {
-    await supabaseAdmin
-      .from("user_credits" as any)
-      .insert({ user_id: userId, balance: balanceAfter, monthly_quota: 0 });
+    // Primeira linha de créditos deste usuário: nunca gravar cota zerada,
+    // senão a conta fica sem reposição mensal. Herda a cota do plano vigente.
+    let monthlyQuota = 0;
+    const { data: sub } = await supabaseAdmin
+      .from("subscriptions" as any)
+      .select("plan_type")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if ((sub as any)?.plan_type) {
+      const { data: plan } = await supabaseAdmin
+        .from("subscription_plans" as any)
+        .select("monthly_credits")
+        .eq("slug", (sub as any).plan_type)
+        .maybeSingle();
+      monthlyQuota = Number((plan as any)?.monthly_credits ?? 0);
+    }
+    await supabaseAdmin.from("user_credits" as any).insert({
+      user_id: userId,
+      balance: balanceAfter,
+      monthly_quota: monthlyQuota,
+      quota_reset_at: monthlyQuota > 0
+        ? new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
+        : null,
+    });
   }
 
   await supabaseAdmin.from("credit_transactions" as any).insert({
