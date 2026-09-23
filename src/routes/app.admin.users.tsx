@@ -1030,6 +1030,11 @@ function UsersPage() {
               </CardTitle>
             </div>
             <div className="flex gap-2">
+              {selectedIds.size > 0 && (
+                <Button variant="outline" onClick={() => setBulkOpen(true)} className="rounded-full">
+                  <Send className="h-4 w-4 mr-2" /> Reenviar acesso ({selectedIds.size})
+                </Button>
+              )}
               {isSuperAdmin && (
                 <Button
                   variant="outline"
@@ -1141,6 +1146,19 @@ function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-8">
+                      <input
+                        type="checkbox"
+                        aria-label="Selecionar todas desta página"
+                        checked={rows.length > 0 && rows.every((r) => selectedIds.has(r.id))}
+                        onChange={(e) => setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          rows.forEach((r) => (e.target.checked ? next.add(r.id) : next.delete(r.id)));
+                          return next;
+                        })}
+                        className="h-4 w-4 accent-primary"
+                      />
+                    </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Usuária</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Plano</TableHead>
                     <TableHead className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pacientes</TableHead>
@@ -1158,6 +1176,15 @@ function UsersPage() {
                     const rtIds = new Set(rt.map((t) => t.id));
                     return (
                     <TableRow key={r.id} className="border-b last:border-0">
+                      <TableCell className="w-8">
+                        <input
+                          type="checkbox"
+                          aria-label={`Selecionar ${r.email}`}
+                          checked={selectedIds.has(r.id)}
+                          onChange={() => toggleSelected(r.id)}
+                          className="h-4 w-4 accent-primary"
+                        />
+                      </TableCell>
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-full bg-gradient-brand flex items-center justify-center text-white text-xs font-semibold uppercase overflow-hidden">
@@ -1562,6 +1589,26 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog: Reenviar acesso em lote */}
+      <AlertDialog open={bulkOpen} onOpenChange={(o) => { if (!bulkSending) setBulkOpen(o); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reenviar acesso para {selectedIds.size} conta(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A senha de cada conta volta para a temporária e um e-mail de boas-vindas é enviado.
+              Quem já usa a conta precisará entrar com a senha temporária.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkSending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmBulkResend(); }} disabled={bulkSending}>
+              {bulkSending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Reenviar acesso
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* AlertDialog: Excluir */}
       <AlertDialog open={!!deleteUser} onOpenChange={(o) => { if (!o) { setDeleteUser(null); setDeleteConfirm(""); } }}>
