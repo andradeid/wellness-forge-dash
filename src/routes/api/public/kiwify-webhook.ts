@@ -297,6 +297,12 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
       { onConflict: "user_id" },
     );
 
+  // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
+  await (supabaseAdmin as any).rpc("disable_unlimited_on_purchase", {
+    p_user_id: userId,
+    p_source: "compra Kiwify",
+  });
+
   // Créditos
   if (monthlyCredits > 0) {
     await addCreditsToUser(supabaseAdmin, {

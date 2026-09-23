@@ -441,6 +441,14 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
     .upsert({ user_id: targetUserId, ...patch }, { onConflict: "user_id" });
   if (error) throw error;
 
+  // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
+  if (status === "active" || status === "trial") {
+    await (supabaseAdmin as any).rpc("disable_unlimited_on_purchase", {
+      p_user_id: targetUserId,
+      p_source: "compra Stripe",
+    });
+  }
+
   // Boas-vindas com senha temporária — só quando acabamos de criar/resetar a conta.
   if (provision?.welcomeNeeded) {
     try {
