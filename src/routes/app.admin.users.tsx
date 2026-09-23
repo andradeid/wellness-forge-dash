@@ -889,7 +889,13 @@ function UsersPage() {
     });
     setCreating(false);
     if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao criar usuário"); return; }
-    toast.success("Nutricionista criada com sucesso");
+    try {
+      const { adminSendWelcomeReset } = await import("@/lib/admin-welcome.functions");
+      await adminSendWelcomeReset({ data: { user_id: data.user_id, trigger: "admin_manual" } });
+      toast.success("Nutricionista criada e e-mail de acesso enviado");
+    } catch (e: any) {
+      toast.warning(`Conta criada, mas o e-mail falhou: ${e?.message ?? "erro"}. Use "Reenviar acesso".`);
+    }
     excludeIdsRef.current = null;
     setCreateOpen(false);
     refreshAll();

@@ -85,19 +85,20 @@ Deno.serve(async (req) => {
       if (plan_slug && plan_slug !== "legado_500" && !cycle)
         return json({ ok: false, error: "Informe o ciclo (mensal/anual) do plano" }, 400);
 
-      // Mesmo fluxo do webhook Stripe: convite via email → user define a própria senha
-      const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(
+      // Mesmo fluxo das compras: conta com senha temporária. O e-mail de
+      // boas-vindas (com a senha) é enviado pelo app logo após a criação.
+      const { data: invited, error: inviteErr } = await admin.auth.admin.createUser({
         email,
-        {
-          redirectTo: "https://lumma.ia.br/reset-password",
-          data: { full_name, name: full_name },
-        },
-      );
+        password: "Lumma2@102030",
+        email_confirm: true,
+        user_metadata: { full_name, name: full_name },
+      });
       if (inviteErr || !invited?.user) {
-        return json({ ok: false, error: inviteErr?.message ?? "Falha ao convidar usuário" }, 400);
+        return json({ ok: false, error: inviteErr?.message ?? "Falha ao criar usuário" }, 400);
       }
 
       const newUserId = invited.user.id;
+      await admin.from("profiles").update({ must_change_password: true }).eq("id", newUserId);
 
       const profilePatch: Record<string, unknown> = {};
       if (professional_id) profilePatch.professional_id = professional_id;

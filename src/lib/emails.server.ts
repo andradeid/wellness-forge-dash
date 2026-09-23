@@ -170,7 +170,47 @@ export async function sendWelcomeNewPurchaseEmail(args: {
   tempPassword: string;
   planName: string;
   credits: number;
+  /** Caminho que disparou: stripe, kiwify, admin_manual, admin_resend... */
+  trigger?: string;
+  actorId?: string | null;
 }) {
+  const result = await sendWelcomeInner(args);
+  await logWelcome(args, result);
+  return result;
+}
+
+/** Grava todo envio de boas-vindas (sucesso, falha ou pulado) em integration_logs. */
+async function logWelcome(
+  args: { userId: string; email?: string | null; trigger?: string; actorId?: string | null },
+  result: { ok: boolean; error?: string; skipped?: boolean; email?: string | null },
+) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("integration_logs" as any).insert({
+      source: "email",
+      event: "welcome_sent",
+      status: result.ok ? "success" : result.skipped ? "skipped" : "error",
+      message: result.ok ? null : String(result.error ?? "falha").slice(0, 500),
+      payload: {
+        user_id: args.userId,
+        email: result.email ?? args.email ?? null,
+        trigger: args.trigger ?? "desconhecido",
+        actor_id: args.actorId ?? null,
+      },
+    });
+  } catch (e: any) {
+    console.error("[emails] falha ao registrar envio", e?.message);
+  }
+}
+
+async function sendWelcomeInner(args: {
+  userId: string;
+  email?: string | null;
+  fullName?: string | null;
+  tempPassword: string;
+  planName: string;
+  credits: number;
+}): Promise<{ ok: boolean; error?: string; skipped?: boolean; email?: string | null }> {
   let email = args.email ?? null;
   let name = args.fullName ?? null;
   if (!email) {
@@ -182,7 +222,7 @@ export async function sendWelcomeNewPurchaseEmail(args: {
 
   const tpl = await loadTemplate("welcome_new_purchase");
   if (!tpl)
-    return { ok: false, error: "template welcome_new_purchase inativo ou não encontrado" };
+    return { ok: false, email, error: "template welcome_new_purchase inativo ou não encontrado" };
 
   const firstName = name?.split(" ")[0] ?? "";
   const vars: Record<string, string> = {
@@ -194,11 +234,12 @@ export async function sendWelcomeNewPurchaseEmail(args: {
     dashboard_url: DASHBOARD_URL,
   };
 
-  return sendEmail({
+  const r = await sendEmail({
     to: email,
     subject: renderTemplate(tpl.subject, vars),
     html: renderTemplate(tpl.html, vars),
   });
+  return { ...r, email };
 }
 
 /**
