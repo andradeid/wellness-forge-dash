@@ -188,6 +188,30 @@ function UsersPage() {
   const isForbidden = role !== null && !canAccess;
   const runExport = useServerFn(exportUsers);
   const [exporting, setExporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkSending, setBulkSending] = useState(false);
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const confirmBulkResend = async () => {
+    setBulkSending(true);
+    try {
+      const { adminResendAccessBatch } = await import("@/lib/admin-welcome.functions");
+      const r = await adminResendAccessBatch({ data: { user_ids: Array.from(selectedIds) } });
+      if (r.failed.length === 0) toast.success(`Acesso reenviado para ${r.sent} conta(s)`);
+      else toast.warning(`${r.sent} enviados, ${r.failed.length} falharam: ${r.failed.map((f) => f.email ?? f.user_id).join(", ")}`);
+      setSelectedIds(new Set());
+      setBulkOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao reenviar acesso");
+    } finally {
+      setBulkSending(false);
+    }
+  };
 
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);

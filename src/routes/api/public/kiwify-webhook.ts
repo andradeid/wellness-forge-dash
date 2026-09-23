@@ -349,7 +349,7 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
   if (provision.welcomeNeeded) {
     try {
       const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
-      await sendWelcomeNewPurchaseEmail({
+      await sendWelcomeNewPurchaseEmail({ trigger: "kiwify",
         userId,
         email: customer.email,
         fullName: customer.name,
