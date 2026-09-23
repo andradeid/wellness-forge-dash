@@ -2089,6 +2089,10 @@ export type Database = {
         }
         Returns: Json
       }
+      disable_unlimited_on_purchase: {
+        Args: { p_source: string; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
