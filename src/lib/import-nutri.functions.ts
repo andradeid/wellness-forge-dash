@@ -97,6 +97,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
     let profileUpdates = 0;
     let subsUpserts = 0;
     let tagsInserts = 0;
+    let creditsProvisioned = 0;
     const updateErrors: Array<{ email: string; error: string }> = [];
 
     for (const row of rows) {
@@ -190,6 +191,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
       profileUpdates,
       subsUpserts,
       tagsInserts,
+      creditsProvisioned,
       updateErrors: updateErrors.slice(0, 50),
       updateErrorsTotal: updateErrors.length,
     };
