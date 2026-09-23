@@ -420,7 +420,34 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
     }
   }
 
-  const status = mapSubscriptionStatus(sub.status);
+  let status = mapSubscriptionStatus(sub.status);
+
+  // Pagamento após cancelamento: se a cliente pagou depois do cancelamento
+  // e a validade local ainda está no futuro, NÃO rebaixa para "canceled".
+  let keepLocalPeriod = false;
+  if (status === "canceled") {
+    const { data: cur } = await supabaseAdmin
+      .from("subscriptions" as any)
+      .select("current_period_end")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+    const curEnd = (cur as any)?.current_period_end as string | null;
+    const canceledIso = sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null;
+    if (curEnd && new Date(curEnd) > new Date() && canceledIso) {
+      const { data: laterPay } = await supabaseAdmin
+        .from("payment_history" as any)
+        .select("id")
+        .eq("user_id", targetUserId)
+        .eq("kind", "subscription")
+        .eq("status", "paid")
+        .gt("created_at", canceledIso)
+        .limit(1);
+      if (laterPay && (laterPay as any[]).length > 0) {
+        status = "active";
+        keepLocalPeriod = true;
+      }
+    }
+  }
   const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
   const trialEndTs = sub.trial_end as number | null;
 
