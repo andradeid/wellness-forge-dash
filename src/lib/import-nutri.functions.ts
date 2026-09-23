@@ -22,6 +22,22 @@ type StagingRow = {
   expires_at: string | null;
 };
 
+/** Cota mensal do plano (0 se o plano não existir ou não tiver cota). */
+const quotaCache = new Map<string, number>();
+async function getPlanQuota(supabaseAdmin: any, slug: string): Promise<number> {
+  if (quotaCache.has(slug)) return quotaCache.get(slug)!;
+  const { data } = await supabaseAdmin
+    .from("subscription_plans")
+    .select("monthly_credits")
+    .eq("slug", slug)
+    .maybeSingle();
+  const quota = Number((data as any)?.monthly_credits ?? 0);
+  quotaCache.set(slug, quota);
+  return quota;
+}
+
+
+
 export const runNutriImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
