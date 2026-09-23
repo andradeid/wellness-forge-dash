@@ -445,7 +445,7 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   if (provision?.welcomeNeeded) {
     try {
       const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
-      await sendWelcomeNewPurchaseEmail({
+      await sendWelcomeNewPurchaseEmail({ trigger: "stripe",
         userId: targetUserId,
         email: provision.email,
         fullName: provision.fullName,
@@ -625,7 +625,7 @@ async function handleInvoicePaid(
   if (invoiceProvision?.welcomeNeeded) {
     try {
       const { sendWelcomeNewPurchaseEmail } = await import("@/lib/emails.server");
-      await sendWelcomeNewPurchaseEmail({
+      await sendWelcomeNewPurchaseEmail({ trigger: "stripe",
         userId: targetUserId,
         email: invoiceProvision.email,
         fullName: invoiceProvision.fullName,
