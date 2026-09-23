@@ -118,6 +118,41 @@ export const runNutriImport = createServerFn({ method: "POST" })
       if (subErr) updateErrors.push({ email, error: `subscription: ${subErr.message}` });
       else subsUpserts++;
 
+      // créditos: toda conta importada precisa de saldo + cota mensal do plano,
+      // caso contrário nunca recebe reposição e trava quando o saldo acaba.
+      const quota = await getPlanQuota(supabaseAdmin, planType);
+      if (quota > 0) {
+        const { data: uc } = await supabaseAdmin
+          .from("user_credits")
+          .select("balance, monthly_quota")
+          .eq("user_id", userId)
+          .maybeSingle();
+        const nextReset = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+        if (!uc) {
+          const { error: cErr } = await supabaseAdmin.from("user_credits").insert({
+            user_id: userId,
+            balance: quota,
+            monthly_quota: quota,
+            quota_reset_at: nextReset,
+          });
+          if (cErr) updateErrors.push({ email, error: `credits: ${cErr.message}` });
+          else creditsProvisioned++;
+        } else if (Number((uc as any).monthly_quota ?? 0) < quota) {
+          // idempotente: só completa a cota (e o saldo até a cota), nunca reduz
+          const { error: cErr } = await supabaseAdmin
+            .from("user_credits")
+            .update({
+              monthly_quota: quota,
+              balance: Math.max(Number((uc as any).balance ?? 0), quota),
+              quota_reset_at: nextReset,
+            })
+            .eq("user_id", userId);
+          if (cErr) updateErrors.push({ email, error: `credits: ${cErr.message}` });
+          else creditsProvisioned++;
+        }
+      }
+
+
       // tags (idempotent)
       const { error: tagErr } = await supabaseAdmin
         .from("profile_tags")
