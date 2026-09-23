@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OperationalAuditSection } from "@/components/admin/OperationalAuditSection";
 import { DifyErrorsSection } from "@/components/admin/DifyErrorsSection";
+import { UnlimitedHistorySection } from "@/components/admin/UnlimitedHistorySection";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/admin/credits-audit")({
@@ -259,6 +260,7 @@ function AuditPage() {
           <TabsTrigger value="creditos">Créditos</TabsTrigger>
           {/* Erro bruto do Dify é dado sensível de operação — só super admin. */}
           {isSuperAdmin && <TabsTrigger value="erros-ia">Erros da IA</TabsTrigger>}
+          {isSuperAdmin && <TabsTrigger value="ilimitado">Ilimitado</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="operacoes">
@@ -268,6 +270,12 @@ function AuditPage() {
         {isSuperAdmin && (
           <TabsContent value="erros-ia">
             <DifyErrorsSection />
+          </TabsContent>
+        )}
+
+        {isSuperAdmin && (
+          <TabsContent value="ilimitado">
+            <UnlimitedHistorySection />
           </TabsContent>
         )}
 
