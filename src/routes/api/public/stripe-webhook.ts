@@ -459,9 +459,11 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   };
   if (planSlug) patch.plan_type = planSlug;
   if (cycle) patch.billing_cycle = cycle;
-  if (periodEndTs) patch.current_period_end = new Date(periodEndTs * 1000).toISOString();
+  if (periodEndTs && !keepLocalPeriod) patch.current_period_end = new Date(periodEndTs * 1000).toISOString();
   if (trialEndTs) patch.trial_ends_at = new Date(trialEndTs * 1000).toISOString();
-  patch.cancelled_at = sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null;
+  patch.cancelled_at = keepLocalPeriod
+    ? null
+    : sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null;
 
   const { error } = await supabaseAdmin
     .from("subscriptions" as any)
@@ -638,6 +640,27 @@ async function handleInvoicePaid(
     hostedInvoiceUrl: (invoice as any).hosted_invoice_url ?? null,
     metadata: { plan_slug: (plan as any).slug, billing_cycle: cycle, stripe_subscription_id: sub.id },
   });
+
+  // Pagamento após cancelamento (ex.: fatura em atraso quitada depois que o Stripe
+  // cancelou por falha de cobrança): reativa a conta por um ciclo a partir do pagamento.
+  if (mapSubscriptionStatus(sub.status) === "canceled") {
+    const until = new Date();
+    if (cycle === "yearly") until.setFullYear(until.getFullYear() + 1);
+    else until.setMonth(until.getMonth() + 1);
+    const { data: cur } = await supabaseAdmin
+      .from("subscriptions" as any)
+      .select("current_period_end")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+    const curEnd = (cur as any)?.current_period_end ? new Date((cur as any).current_period_end) : null;
+    const finalEnd = curEnd && curEnd > until ? curEnd : until;
+    const { error: reErr } = await supabaseAdmin
+      .from("subscriptions" as any)
+      .update({ status: "active", cancelled_at: null, current_period_end: finalEnd.toISOString() })
+      .eq("user_id", targetUserId);
+    if (reErr) console.error("[stripe-webhook] falha ao reativar após pagamento:", reErr.message);
+    else console.log("[stripe-webhook] assinatura reativada após pagamento pós-cancelamento", { user: targetUserId, invoice: invoice.id });
+  }
 
   // Email de ativação — apenas na primeira fatura da assinatura (não em renovações
   // nem em reprocessamentos idempotentes)
