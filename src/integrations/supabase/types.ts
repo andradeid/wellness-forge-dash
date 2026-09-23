@@ -1819,6 +1819,45 @@ export type Database = {
         }
         Relationships: []
       }
+      unlimited_change_log: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          db_role: string
+          id: string
+          new_value: boolean
+          old_value: boolean | null
+          reason: string | null
+          source: string
+          subscription_status: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          db_role: string
+          id?: string
+          new_value: boolean
+          old_value?: boolean | null
+          reason?: string | null
+          source: string
+          subscription_status?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          db_role?: string
+          id?: string
+          new_value?: boolean
+          old_value?: boolean | null
+          reason?: string | null
+          source?: string
+          subscription_status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_hourly_stats: {
         Row: {
           active_users: number
