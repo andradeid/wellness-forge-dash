@@ -1852,6 +1852,7 @@ export type Database = {
           created_at: string
           id: string
           monthly_quota: number
+          pack_balance: number
           quota_reset_at: string | null
           updated_at: string
           user_id: string
@@ -1861,6 +1862,7 @@ export type Database = {
           created_at?: string
           id?: string
           monthly_quota?: number
+          pack_balance?: number
           quota_reset_at?: string | null
           updated_at?: string
           user_id: string
@@ -1870,6 +1872,7 @@ export type Database = {
           created_at?: string
           id?: string
           monthly_quota?: number
+          pack_balance?: number
           quota_reset_at?: string | null
           updated_at?: string
           user_id?: string
