@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { SubscriptionExpiryCard } from "@/components/admin/SubscriptionExpiryCard";
+import { RefillJobAlert } from "@/components/admin/RefillJobAlert";
 
 
 function InfoTip({ text }: { text: string }) {
@@ -185,6 +186,7 @@ function AdminDashboardPage() {
 
   return (
     <div className="space-y-8 max-w-7xl">
+      <RefillJobAlert />
       {/* Header + filtros */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
