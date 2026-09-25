@@ -118,10 +118,6 @@ function Teaser() {
       {/* Hero */}
       <main className="relative z-10 max-w-6xl mx-auto px-6">
         <section className="pt-24 md:pt-32 pb-20 text-center">
-          <div className="inline-flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] uppercase text-white/70 backdrop-blur-md bg-white/5 border border-white/10 px-4 py-1.5 rounded-full mb-8">
-            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
-            Em breve
-          </div>
 
           <div className="relative">
             {/* Glow */}
