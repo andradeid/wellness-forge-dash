@@ -1,0 +1,1 @@
+ALTER TABLE public.hubla_pending_payments ADD COLUMN IF NOT EXISTS reason text;
