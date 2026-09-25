@@ -781,7 +781,15 @@ export function ChatMessageList({
                   {!isUser && isStreamingMsg && !m.content?.trim() && !m.structured_data?.markers?.length && (
                     <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#e8a04c]/25 bg-gradient-to-r from-[#fff8ef] to-[#fdf1f8] px-3 py-2 text-xs text-foreground/70 animate-in fade-in duration-300">
                       <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] animate-pulse" />
-                      Exame recebido — iniciando análise…
+                      {(() => {
+                        // Texto coerente com a tarefa: "Exame recebido" só em análise de exames.
+                        const key = (m.selected_task || m.agent_type || agentType || "").toLowerCase();
+                        if (key.includes("exam") || key.includes("exame")) return "Exame recebido — iniciando análise…";
+                        if (key === "plano_alimentar" || key === "production") return "Pedido recebido — estruturando o plano alimentar…";
+                        if (key === "receitas") return "Pedido recebido — preparando as receitas…";
+                        if (key.includes("foto")) return "Foto recebida — iniciando a avaliação…";
+                        return "Pedido recebido — preparando a resposta…";
+                      })()}
                     </div>
                   )}
                   {m.structured_data?.markers &&
