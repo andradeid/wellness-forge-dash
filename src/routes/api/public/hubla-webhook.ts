@@ -82,6 +82,13 @@ export const Route = createFileRoute("/api/public/hubla-webhook")({
             ev.subscription?.billingCycleMonths ?? ev.subscriptions?.[0]?.billingCycleMonths ?? 1,
           ) || 1;
           const offer = ev.products?.[0]?.offers?.[0] ?? {};
+          const paidStatusAt = Array.isArray(invoice.statusHistory)
+            ? invoice.statusHistory.find((s: any) => s?.status === "paid")?.statusAt
+            : invoice.status === "paid" ? invoice.statusAt : null;
+          const saleRaw = invoice.saleDate ?? paidStatusAt ?? null;
+          const saleDate = saleRaw && !isNaN(new Date(saleRaw).getTime())
+            ? new Date(saleRaw).toISOString()
+            : new Date().toISOString();
           const info: HublaInvoiceInfo = {
             invoiceId,
             subscriptionId: invoice.subscriptionId ?? ev.subscription?.id ?? null,
@@ -89,15 +96,11 @@ export const Route = createFileRoute("/api/public/hubla-webhook")({
             billingCycleMonths: cycleMonths,
             offerId: offer.id ?? null,
             offerName: offer.name ?? null,
+            saleDate,
           };
 
-          const { data: prof } = email
-            ? await sb.from("profiles").select("id").ilike("email", email).limit(1)
-            : { data: [] };
-          const userId = prof?.[0]?.id as string | undefined;
-
-          if (!userId) {
-            await sb.from("hubla_pending_payments").upsert(
+          const savePending = (reason: string) =>
+            sb.from("hubla_pending_payments").upsert(
               {
                 email: email || "(sem e-mail)",
                 name,
@@ -105,19 +108,41 @@ export const Route = createFileRoute("/api/public/hubla-webhook")({
                 offer_id: info.offerId,
                 offer_name: info.offerName,
                 amount_cents: info.amountCents,
-                sale_date: invoice.saleDate ?? null,
+                sale_date: saleDate,
                 payload: body,
+                reason,
               },
               { onConflict: "invoice_id" },
             );
-            await log(sb, type, "pending", `Aluna não encontrada: ${email}`, { invoiceId, email });
+
+          const { data: prof } = email
+            ? await sb.from("profiles").select("id").ilike("email", email).limit(1)
+            : { data: [] };
+          const userId = prof?.[0]?.id as string | undefined;
+
+          if (!userId) {
+            await savePending("aluna não encontrada");
+            await log(sb, type, "pending", `Aluna não encontrada: ${email}`, { invoiceId, email, sale_date: saleDate });
             return new Response("ok", { status: 200 });
           }
 
           const { applyHublaRenewal } = await import("@/lib/hubla-renewal.server");
           const res = await applyHublaRenewal(sb, userId, info);
-          await log(sb, type, "ok", `${res.status} ${email} plano=${res.planType} créditos=${res.creditsAdded}`, {
-            invoiceId, userId, ...res,
+          if (res.status === "no_plan") {
+            await savePending("sem plano no Lumma");
+            await log(sb, type, "pending", `Sem plano no Lumma: ${email}`, { invoiceId, userId, sale_date: saleDate });
+            return new Response("ok", { status: 200 });
+          }
+          await log(sb, type, "ok", `${res.status} ${email} plano=${res.planType} créditos=${res.creditsStatus}`, {
+            invoiceId,
+            userId,
+            sale_date: res.saleDate,
+            period_end_old: res.oldPeriodEnd,
+            period_end_new: res.periodEnd,
+            credits: res.creditsStatus,
+            credits_added: res.creditsAdded,
+            status: res.status,
+            plan_type: res.planType,
           });
           return new Response("ok", { status: 200 });
         } catch (err: any) {

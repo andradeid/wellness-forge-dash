@@ -13,7 +13,16 @@ const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR") :
 const fmtBRL = (c: number | null) =>
   ((c ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const PLANS = [
+  { v: "", l: "Manter plano atual" },
+  { v: "starter", l: "Starter" },
+  { v: "pro", l: "Pro" },
+  { v: "legado_500", l: "Legado 500" },
+  { v: "clinica", l: "Clínica" },
+] as const;
+
 function LinkRow({ pendingId, onDone }: { pendingId: string; onDone: () => void }) {
+  const [plan, setPlan] = useState<string>("");
   const search = useServerFn(searchHublaUsers);
   const link = useServerFn(linkHublaPending);
   const [q, setQ] = useState("");
@@ -30,7 +39,7 @@ function LinkRow({ pendingId, onDone }: { pendingId: string; onDone: () => void 
     if (!confirm(`Vincular este pagamento a ${email} e renovar a assinatura?`)) return;
     setBusy(true);
     try {
-      const r = await link({ data: { pendingId, userId } });
+      const r = await link({ data: { pendingId, userId, planType: (plan || undefined) as any } });
       toast.success(r.status === "renewed" ? `Renovado: ${r.creditsAdded} créditos.` : "Fatura já processada; pendência encerrada.");
       onDone();
     } catch (e: any) { toast.error(e?.message ?? "Falha ao vincular."); }
@@ -46,6 +55,10 @@ function LinkRow({ pendingId, onDone }: { pendingId: string; onDone: () => void 
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         </Button>
       </div>
+      <select value={plan} onChange={(e) => setPlan(e.target.value)} aria-label="Plano"
+        className="h-9 w-full rounded-lg border bg-background px-2 text-sm">
+        {PLANS.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+      </select>
       {results.map((u) => (
         <div key={u.id} className="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
           <span>{u.full_name ?? "—"} · {u.email}</span>
@@ -90,7 +103,7 @@ export function HublaSection() {
                       <div>
                         <p className="font-medium">{p.name ?? "—"} · {p.email}</p>
                         <p className="text-xs text-muted-foreground">
-                          {p.offer_name ?? "Oferta"} · {fmtBRL(p.amount_cents)} · venda {fmtDate(p.sale_date)}
+                          {p.reason ? `${p.reason} · ` : ""}{p.offer_name ?? "Oferta"} · {fmtBRL(p.amount_cents)} · venda {fmtDate(p.sale_date)}
                         </p>
                       </div>
                       <Button size="sm" variant="outline" className="rounded-full"

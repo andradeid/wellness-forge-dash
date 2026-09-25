@@ -967,6 +967,7 @@ export type Database = {
           offer_id: string | null
           offer_name: string | null
           payload: Json
+          reason: string | null
           received_at: string
           resolved: boolean
           resolved_at: string | null
@@ -983,6 +984,7 @@ export type Database = {
           offer_id?: string | null
           offer_name?: string | null
           payload?: Json
+          reason?: string | null
           received_at?: string
           resolved?: boolean
           resolved_at?: string | null
@@ -999,6 +1001,7 @@ export type Database = {
           offer_id?: string | null
           offer_name?: string | null
           payload?: Json
+          reason?: string | null
           received_at?: string
           resolved?: boolean
           resolved_at?: string | null
