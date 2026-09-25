@@ -519,6 +519,10 @@ function IntegrationsPage() {
         })}
       </div>
 
+      <div className="mt-8">
+        <HublaSection />
+      </div>
+
       {/* Cards */}
       {loading ? (
         <div className="mt-8 py-16 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
