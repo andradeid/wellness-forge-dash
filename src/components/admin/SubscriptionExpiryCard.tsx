@@ -58,6 +58,8 @@ const LIST_LABEL: Record<ListKey, string> = {
 const ORIGEM_LABEL: Record<string, string> = {
   stripe: "Stripe",
   kiwify: "Kiwify",
+  hubla: "Hubla",
+  ajuste_manual_hubla: "Ajuste manual (Hubla)",
   migracao_lumma1: "Migração Lumma 1",
   interno: "Interno",
   manual: "Manual",
