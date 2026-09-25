@@ -54,6 +54,7 @@ import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.a
 import { Route as ApiPublicSubscriptionExpiryEmailsRouteImport } from './routes/api/public/subscription-expiry-emails'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
+import { Route as ApiPublicHublaWebhookRouteImport } from './routes/api/public/hubla-webhook'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
@@ -293,6 +294,11 @@ const ApiPublicKiwifyWebhookRoute = ApiPublicKiwifyWebhookRouteImport.update({
   path: '/api/public/kiwify-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHublaWebhookRoute = ApiPublicHublaWebhookRouteImport.update({
+  id: '/api/public/hubla-webhook',
+  path: '/api/public/hubla-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
   id: '/api/dify/upload',
   path: '/api/dify/upload',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
@@ -430,6 +437,7 @@ export interface FileRoutesByTo {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
@@ -488,6 +496,7 @@ export interface FileRoutesById {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
@@ -603,6 +613,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
@@ -660,6 +671,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
@@ -709,6 +721,7 @@ export interface RootRouteChildren {
   ApiDifyResetConversationsRoute: typeof ApiDifyResetConversationsRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
+  ApiPublicHublaWebhookRoute: typeof ApiPublicHublaWebhookRoute
   ApiPublicKiwifyWebhookRoute: typeof ApiPublicKiwifyWebhookRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicSubscriptionExpiryEmailsRoute: typeof ApiPublicSubscriptionExpiryEmailsRoute
@@ -1031,6 +1044,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKiwifyWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hubla-webhook': {
+      id: '/api/public/hubla-webhook'
+      path: '/api/public/hubla-webhook'
+      fullPath: '/api/public/hubla-webhook'
+      preLoaderRoute: typeof ApiPublicHublaWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dify/upload': {
       id: '/api/dify/upload'
       path: '/api/dify/upload'
@@ -1210,6 +1230,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDifyResetConversationsRoute: ApiDifyResetConversationsRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
+  ApiPublicHublaWebhookRoute: ApiPublicHublaWebhookRoute,
   ApiPublicKiwifyWebhookRoute: ApiPublicKiwifyWebhookRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicSubscriptionExpiryEmailsRoute:

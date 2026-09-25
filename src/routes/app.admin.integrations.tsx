@@ -1,3 +1,4 @@
+import { HublaSection } from "@/components/admin/HublaSection";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -516,6 +517,10 @@ function IntegrationsPage() {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-8">
+        <HublaSection />
       </div>
 
       {/* Cards */}
