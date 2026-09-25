@@ -957,6 +957,57 @@ export type Database = {
         }
         Relationships: []
       }
+      hubla_pending_payments: {
+        Row: {
+          amount_cents: number | null
+          email: string
+          id: string
+          invoice_id: string
+          name: string | null
+          offer_id: string | null
+          offer_name: string | null
+          payload: Json
+          received_at: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_user_id: string | null
+          sale_date: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          email: string
+          id?: string
+          invoice_id: string
+          name?: string | null
+          offer_id?: string | null
+          offer_name?: string | null
+          payload?: Json
+          received_at?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_user_id?: string | null
+          sale_date?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          email?: string
+          id?: string
+          invoice_id?: string
+          name?: string | null
+          offer_id?: string | null
+          offer_name?: string | null
+          payload?: Json
+          received_at?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_user_id?: string | null
+          sale_date?: string | null
+        }
+        Relationships: []
+      }
       import_errors: {
         Row: {
           created_at: string
