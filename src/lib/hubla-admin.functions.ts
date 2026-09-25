@@ -21,7 +21,7 @@ export const getHublaOverview = createServerFn({ method: "GET" })
       sb.from("integration_logs").select("created_at, event, status, message")
         .eq("source", "hubla").order("created_at", { ascending: false }).limit(1),
       sb.from("hubla_pending_payments")
-        .select("id, email, name, invoice_id, offer_name, amount_cents, sale_date, received_at")
+        .select("id, email, name, invoice_id, offer_name, reason, amount_cents, sale_date, received_at")
         .eq("resolved", false).order("received_at", { ascending: false }).limit(200),
     ]);
     return {
@@ -30,7 +30,7 @@ export const getHublaOverview = createServerFn({ method: "GET" })
         | null,
       pending: (pending ?? []) as Array<{
         id: string; email: string; name: string | null; invoice_id: string;
-        offer_name: string | null; amount_cents: number | null;
+        offer_name: string | null; reason: string | null; amount_cents: number | null;
         sale_date: string | null; received_at: string;
       }>,
     };
@@ -52,7 +52,11 @@ export const searchHublaUsers = createServerFn({ method: "POST" })
 export const linkHublaPending = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ pendingId: z.string().uuid(), userId: z.string().uuid() }).parse(d),
+    z.object({
+      pendingId: z.string().uuid(),
+      userId: z.string().uuid(),
+      planType: z.enum(["free", "starter", "pro", "clinica", "legado_500"]).optional(),
+    }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
@@ -73,7 +77,11 @@ export const linkHublaPending = createServerFn({ method: "POST" })
       ) || 1,
       offerId: p.offer_id,
       offerName: p.offer_name,
-    });
+      saleDate: p.sale_date ? new Date(p.sale_date).toISOString() : new Date().toISOString(),
+    }, { planOverride: data.planType });
+    if (res.status === "no_plan") {
+      throw new Error("Esta aluna não tem plano no Lumma. Escolha o plano antes de vincular.");
+    }
     await sb.from("hubla_pending_payments").update({
       resolved: true, resolved_user_id: data.userId,
       resolved_by: context.userId, resolved_at: new Date().toISOString(),
