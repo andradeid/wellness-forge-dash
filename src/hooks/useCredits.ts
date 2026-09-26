@@ -5,15 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 
 export function useMyCredits() {
   const { user } = useAuth();
-  const fn = useServerFn(getMyCredits);
   return useQuery({
     queryKey: ["credits", user?.id],
     queryFn: async () => {
-      // Server fn pode lançar Response (401) durante logout/troca de sessão
-      // ou enquanto o bearer ainda não foi anexado. Engolimos QUALQUER erro
-      // para não derrubar a árvore — a UI cai no fallback de saldo.
+      // Chamada direta (sem useServerFn): o wrapper do router repassa o
+      // Response 401 (logout/troca de sessão) como erro global e derrubava a
+      // tela. Aqui qualquer falha vira `null` e a UI usa o fallback de saldo.
       try {
-        return await fn();
+        return await getMyCredits();
       } catch {
         return null;
       }
