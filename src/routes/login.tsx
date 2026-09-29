@@ -305,7 +305,14 @@ function LoginPage() {
       setSubmitting(false);
     } catch (err: any) {
       loginInProgressRef.current = false;
-      const friendly = translateAuthError(err?.message ?? "");
+      const rawMsg = String(err?.message ?? "").trim();
+      const code = String(err?.code ?? "");
+      const friendly =
+        code === "user_banned"
+          ? translateAuthError("user is banned")
+          : !rawMsg || rawMsg === "{}"
+            ? "Sua conta está bloqueada ou indisponível. Entre em contato com o suporte pelo WhatsApp."
+            : translateAuthError(rawMsg);
       setSignInError(friendly);
       toast.error(friendly);
       setSubmitting(false);
