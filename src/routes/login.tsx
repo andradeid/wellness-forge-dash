@@ -311,7 +311,7 @@ function LoginPage() {
         code === "user_banned"
           ? translateAuthError("user is banned")
           : !rawMsg || rawMsg === "{}"
-            ? "Sua conta está bloqueada ou indisponível. Entre em contato com o suporte pelo WhatsApp."
+            ? "Não foi possível entrar agora. Fale com o suporte pelo WhatsApp para retomar o acesso."
             : translateAuthError(rawMsg);
       setSignInError(friendly);
       toast.error(friendly);
