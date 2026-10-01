@@ -35,7 +35,9 @@ import loginBg from "@/assets/login-bg.png";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import lummaLockup from "@/assets/lumma-lockup-dark.svg";
 
-function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+function LoginErrorFallback(props: import("@tanstack/react-router").ErrorComponentProps) {
+  const error = props.error as Error;
+  const reset = props.reset;
   if (typeof console !== "undefined") {
     console.error("[login] errorComponent capturou falha, renderizando fallback", error);
   }
