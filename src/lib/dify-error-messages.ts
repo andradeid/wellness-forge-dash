@@ -52,6 +52,10 @@ export const TECHNICAL_TEMPORARY_MESSAGE =
 export const NOT_A_COMPOSITION_REPORT_MESSAGE =
   "Não reconhecemos o documento como laudo de bioimpedância. Envie um PDF ou uma foto nítida do relatório.";
 
+/** Não foi possível extrair conteúdo legível do documento. */
+export const MISSING_DOCUMENT_CONTENT_MESSAGE =
+  "Não conseguimos ler o conteúdo do documento. Verifique se o arquivo não está protegido por senha e envie novamente.";
+
 export type AgentErrorKind = "content" | "technical";
 
 export interface AgentErrorInfo {
@@ -166,17 +170,21 @@ export function classifyAgentError(text: string | undefined | null): AgentErrorI
       typeof parsed.error === "string";
     if (!isErrorPayload) continue;
 
-    // Erro de conteúdo explícito do agente de composição corporal: nunca é alta demanda.
+    // Erros de conteúdo explícitos dos agentes: nunca são alta demanda,
+    // mesmo que o payload traga sinais técnicos junto.
     if (errorType === "not_a_composition_report") {
       return { kind: "content", message: NOT_A_COMPOSITION_REPORT_MESSAGE, raw: candidate.slice(0, 500) };
+    }
+    if (errorType === "not_a_lab_report") {
+      return { kind: "content", message: NOT_A_LAB_REPORT_MESSAGE, raw: candidate.slice(0, 500) };
+    }
+    if (errorType === "missing_document_content") {
+      return { kind: "content", message: MISSING_DOCUMENT_CONTENT_MESSAGE, raw: candidate.slice(0, 500) };
     }
 
     const signal = [errorType, message, innerCode, innerStatus, candidate].join(" ");
     if (isTechnicalAgentError(signal)) {
       return { kind: "technical", message: TECHNICAL_TEMPORARY_MESSAGE, raw: candidate.slice(0, 500) };
-    }
-    if (errorType === "not_a_lab_report") {
-      return { kind: "content", message: NOT_A_LAB_REPORT_MESSAGE, raw: candidate.slice(0, 500) };
     }
     // Erro estruturado desconhecido: nunca culpar o exame.
     return { kind: "technical", message: TECHNICAL_TEMPORARY_MESSAGE, raw: candidate.slice(0, 500) };
