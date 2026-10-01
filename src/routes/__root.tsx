@@ -66,7 +66,7 @@ function isRecoverableRouteLoadError(error: Error): boolean {
   return /failed to fetch dynamically imported module|importing a module script failed|failed to load module script|loading chunk|chunkloaderror|fetchmodule|transport was disconnected/.test(text);
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   const errorMessage = error?.message?.trim();
