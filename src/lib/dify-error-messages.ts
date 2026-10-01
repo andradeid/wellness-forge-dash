@@ -48,6 +48,10 @@ export const NOT_A_LAB_REPORT_MESSAGE =
 export const TECHNICAL_TEMPORARY_MESSAGE =
   "O serviço está com alta demanda no momento. Aguarde alguns instantes e tente novamente. Não é problema com o seu exame.";
 
+/** Documento enviado não é laudo de bioimpedância/calorimetria. */
+export const NOT_A_COMPOSITION_REPORT_MESSAGE =
+  "Não reconhecemos o documento como laudo de bioimpedância. Envie um PDF ou uma foto nítida do relatório.";
+
 export type AgentErrorKind = "content" | "technical";
 
 export interface AgentErrorInfo {
@@ -161,6 +165,11 @@ export function classifyAgentError(text: string | undefined | null): AgentErrorI
       !!errorType ||
       typeof parsed.error === "string";
     if (!isErrorPayload) continue;
+
+    // Erro de conteúdo explícito do agente de composição corporal: nunca é alta demanda.
+    if (errorType === "not_a_composition_report") {
+      return { kind: "content", message: NOT_A_COMPOSITION_REPORT_MESSAGE, raw: candidate.slice(0, 500) };
+    }
 
     const signal = [errorType, message, innerCode, innerStatus, candidate].join(" ");
     if (isTechnicalAgentError(signal)) {
