@@ -9,91 +9,66 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as ManutencaoRouteImport } from './routes/manutencao'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppTrocarSenhaRouteImport } from './routes/app.trocar-senha'
-import { Route as AppSettingsRouteImport } from './routes/app.settings'
-import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
-import { Route as AppPlanosRouteImport } from './routes/app.planos'
-import { Route as AppPatientsRouteImport } from './routes/app.patients'
-import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
-import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
-import { Route as AppChatsRouteImport } from './routes/app.chats'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ManutencaoRouteImport } from './routes/manutencao'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as AppCuradoriaIndexRouteImport } from './routes/app.curadoria.index'
-import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
-import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
-import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
-import { Route as AppCuradoriaChangelogRouteImport } from './routes/app.curadoria.changelog'
-import { Route as AppCuradoriaBaselineRouteImport } from './routes/app.curadoria.baseline'
-import { Route as AppCheckoutSucessoRouteImport } from './routes/app.checkout.sucesso'
-import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
-import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
-import { Route as AppAdminSystemRouteImport } from './routes/app.admin.system'
-import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
-import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
-import { Route as AppAdminPlansRouteImport } from './routes/app.admin.plans'
-import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
-import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
-import { Route as AppAdminImportNutriRouteImport } from './routes/app.admin.import-nutri'
-import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
-import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashboard'
-import { Route as AppAdminCuradoriaRouteImport } from './routes/app.admin.curadoria'
-import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
-import { Route as AppAdminAnalyticsRouteImport } from './routes/app.admin.analytics'
-import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
-import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
-import { Route as ApiPublicSubscriptionExpiryEmailsRouteImport } from './routes/api/public/subscription-expiry-emails'
-import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
-import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
-import { Route as ApiPublicHublaWebhookRouteImport } from './routes/api/public/hubla-webhook'
-import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
-import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
-import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
-import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
-import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
-import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppChatsRouteImport } from './routes/app.chats'
+import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
+import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
+import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppPlanosRouteImport } from './routes/app.planos'
+import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppTrocarSenhaRouteImport } from './routes/app.trocar-senha'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
+import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
+import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
+import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
+import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
+import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
+import { Route as ApiPublicHublaWebhookRouteImport } from './routes/api/public/hubla-webhook'
+import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
+import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
+import { Route as ApiPublicSubscriptionExpiryEmailsRouteImport } from './routes/api/public/subscription-expiry-emails'
+import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
+import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
+import { Route as AppAdminAnalyticsRouteImport } from './routes/app.admin.analytics'
+import { Route as AppAdminCreditsAuditRouteImport } from './routes/app.admin.credits-audit'
+import { Route as AppAdminCuradoriaRouteImport } from './routes/app.admin.curadoria'
+import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashboard'
+import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
+import { Route as AppAdminImportNutriRouteImport } from './routes/app.admin.import-nutri'
+import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
+import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
+import { Route as AppAdminPlansRouteImport } from './routes/app.admin.plans'
+import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
+import { Route as AppAdminRankingRouteImport } from './routes/app.admin.ranking'
+import { Route as AppAdminSystemRouteImport } from './routes/app.admin.system'
+import { Route as AppAdminUsersRouteImport } from './routes/app.admin.users'
+import { Route as AppChatPatientIdRouteImport } from './routes/app.chat.$patientId'
+import { Route as AppCheckoutSucessoRouteImport } from './routes/app.checkout.sucesso'
+import { Route as AppCuradoriaIndexRouteImport } from './routes/app.curadoria.index'
+import { Route as AppCuradoriaBaselineRouteImport } from './routes/app.curadoria.baseline'
+import { Route as AppCuradoriaChangelogRouteImport } from './routes/app.curadoria.changelog'
+import { Route as AppEvolutionPatientIdRouteImport } from './routes/app.evolution.$patientId'
+import { Route as AppGeneralChatIdRouteImport } from './routes/app.general.$chatId'
+import { Route as AppPlanosHistoricoRouteImport } from './routes/app.planos.historico'
 import { Route as AppAdminEmailsIndexRouteImport } from './routes/app.admin.emails.index'
 import { Route as AppAdminEmailsCampanhasRouteImport } from './routes/app.admin.emails.campanhas'
 
-const UnauthorizedRoute = UnauthorizedRouteImport.update({
-  id: '/unauthorized',
-  path: '/unauthorized',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ManutencaoRoute = ManutencaoRouteImport.update({
-  id: '/manutencao',
-  path: '/manutencao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -101,49 +76,51 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManutencaoRoute = ManutencaoRouteImport.update({
+  id: '/manutencao',
+  path: '/manutencao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnauthorizedRoute = UnauthorizedRouteImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTrocarSenhaRoute = AppTrocarSenhaRouteImport.update({
-  id: '/trocar-senha',
-  path: '/trocar-senha',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPoliticasRoute = AppPoliticasRouteImport.update({
-  id: '/politicas',
-  path: '/politicas',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPlanosRoute = AppPlanosRouteImport.update({
-  id: '/planos',
-  path: '/planos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPatientsRoute = AppPatientsRouteImport.update({
-  id: '/patients',
-  path: '/patients',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFaleComLummaRoute = AppFaleComLummaRouteImport.update({
-  id: '/fale-com-lumma',
-  path: '/fale-com-lumma',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatsRoute = AppChatsRouteImport.update({
@@ -151,183 +128,44 @@ const AppChatsRoute = AppChatsRouteImport.update({
   path: '/chats',
   getParentRoute: () => AppRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AppCuradoriaIndexRoute = AppCuradoriaIndexRouteImport.update({
-  id: '/curadoria/',
-  path: '/curadoria/',
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPlanosHistoricoRoute = AppPlanosHistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
-  getParentRoute: () => AppPlanosRoute,
-} as any)
-const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
-  id: '/general/$chatId',
-  path: '/general/$chatId',
+const AppFaleComLummaRoute = AppFaleComLummaRouteImport.update({
+  id: '/fale-com-lumma',
+  path: '/fale-com-lumma',
   getParentRoute: () => AppRoute,
 } as any)
-const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
-  id: '/evolution/$patientId',
-  path: '/evolution/$patientId',
+const AppPatientsRoute = AppPatientsRouteImport.update({
+  id: '/patients',
+  path: '/patients',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCuradoriaChangelogRoute = AppCuradoriaChangelogRouteImport.update({
-  id: '/curadoria/changelog',
-  path: '/curadoria/changelog',
+const AppPlanosRoute = AppPlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCuradoriaBaselineRoute = AppCuradoriaBaselineRouteImport.update({
-  id: '/curadoria/baseline',
-  path: '/curadoria/baseline',
+const AppPoliticasRoute = AppPoliticasRouteImport.update({
+  id: '/politicas',
+  path: '/politicas',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCheckoutSucessoRoute = AppCheckoutSucessoRouteImport.update({
-  id: '/checkout/sucesso',
-  path: '/checkout/sucesso',
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
-  id: '/chat/$patientId',
-  path: '/chat/$patientId',
+const AppTrocarSenhaRoute = AppTrocarSenhaRouteImport.update({
+  id: '/trocar-senha',
+  path: '/trocar-senha',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminSystemRoute = AppAdminSystemRouteImport.update({
-  id: '/admin/system',
-  path: '/admin/system',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminRankingRoute = AppAdminRankingRouteImport.update({
-  id: '/admin/ranking',
-  path: '/admin/ranking',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminPlaygroundRoute = AppAdminPlaygroundRouteImport.update({
-  id: '/admin/playground',
-  path: '/admin/playground',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminPlansRoute = AppAdminPlansRouteImport.update({
-  id: '/admin/plans',
-  path: '/admin/plans',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
-  id: '/admin/nutritionists',
-  path: '/admin/nutritionists',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminIntegrationsRoute = AppAdminIntegrationsRouteImport.update({
-  id: '/admin/integrations',
-  path: '/admin/integrations',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminImportNutriRoute = AppAdminImportNutriRouteImport.update({
-  id: '/admin/import-nutri',
-  path: '/admin/import-nutri',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminFeedbacksRoute = AppAdminFeedbacksRouteImport.update({
-  id: '/admin/feedbacks',
-  path: '/admin/feedbacks',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
-  id: '/admin/dashboard',
-  path: '/admin/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminCuradoriaRoute = AppAdminCuradoriaRouteImport.update({
-  id: '/admin/curadoria',
-  path: '/admin/curadoria',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminCreditsAuditRoute = AppAdminCreditsAuditRouteImport.update({
-  id: '/admin/credits-audit',
-  path: '/admin/credits-audit',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminAnalyticsRoute = AppAdminAnalyticsRouteImport.update({
-  id: '/admin/analytics',
-  path: '/admin/analytics',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminAgentCostsRoute = AppAdminAgentCostsRouteImport.update({
-  id: '/admin/agent-costs',
-  path: '/admin/agent-costs',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
-  id: '/admin/administrators',
-  path: '/admin/administrators',
-  getParentRoute: () => AppRoute,
-} as any)
-const ApiPublicSubscriptionExpiryEmailsRoute =
-  ApiPublicSubscriptionExpiryEmailsRouteImport.update({
-    id: '/api/public/subscription-expiry-emails',
-    path: '/api/public/subscription-expiry-emails',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
-  id: '/api/public/stripe-webhook',
-  path: '/api/public/stripe-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicKiwifyWebhookRoute = ApiPublicKiwifyWebhookRouteImport.update({
-  id: '/api/public/kiwify-webhook',
-  path: '/api/public/kiwify-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHublaWebhookRoute = ApiPublicHublaWebhookRouteImport.update({
-  id: '/api/public/hubla-webhook',
-  path: '/api/public/hubla-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
-  id: '/api/dify/upload',
-  path: '/api/dify/upload',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDifyTestRoute = ApiDifyTestRouteImport.update({
-  id: '/api/dify/test',
-  path: '/api/dify/test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDifyResetConversationsRoute =
-  ApiDifyResetConversationsRouteImport.update({
-    id: '/api/dify/reset-conversations',
-    path: '/api/dify/reset-conversations',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
-  id: '/api/dify/chat',
-  path: '/api/dify/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDifyAgentTestRoute = ApiDifyAgentTestRouteImport.update({
-  id: '/api/dify/agent-test',
-  path: '/api/dify/agent-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
-  id: '/api/audit/structured',
-  path: '/api/audit/structured',
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -336,10 +174,172 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
+const ApiAuditStructuredRoute = ApiAuditStructuredRouteImport.update({
+  id: '/api/audit/structured',
+  path: '/api/audit/structured',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDifyAgentTestRoute = ApiDifyAgentTestRouteImport.update({
+  id: '/api/dify/agent-test',
+  path: '/api/dify/agent-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDifyChatRoute = ApiDifyChatRouteImport.update({
+  id: '/api/dify/chat',
+  path: '/api/dify/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDifyResetConversationsRoute =
+  ApiDifyResetConversationsRouteImport.update({
+    id: '/api/dify/reset-conversations',
+    path: '/api/dify/reset-conversations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiDifyTestRoute = ApiDifyTestRouteImport.update({
+  id: '/api/dify/test',
+  path: '/api/dify/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
+  id: '/api/dify/upload',
+  path: '/api/dify/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHublaWebhookRoute = ApiPublicHublaWebhookRouteImport.update({
+  id: '/api/public/hubla-webhook',
+  path: '/api/public/hubla-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicKiwifyWebhookRoute = ApiPublicKiwifyWebhookRouteImport.update({
+  id: '/api/public/kiwify-webhook',
+  path: '/api/public/kiwify-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
+  id: '/api/public/stripe-webhook',
+  path: '/api/public/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSubscriptionExpiryEmailsRoute =
+  ApiPublicSubscriptionExpiryEmailsRouteImport.update({
+    id: '/api/public/subscription-expiry-emails',
+    path: '/api/public/subscription-expiry-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppAdminAdministratorsRoute = AppAdminAdministratorsRouteImport.update({
+  id: '/admin/administrators',
+  path: '/admin/administrators',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminAgentCostsRoute = AppAdminAgentCostsRouteImport.update({
+  id: '/admin/agent-costs',
+  path: '/admin/agent-costs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminAnalyticsRoute = AppAdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminCreditsAuditRoute = AppAdminCreditsAuditRouteImport.update({
+  id: '/admin/credits-audit',
+  path: '/admin/credits-audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminCuradoriaRoute = AppAdminCuradoriaRouteImport.update({
+  id: '/admin/curadoria',
+  path: '/admin/curadoria',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminFeedbacksRoute = AppAdminFeedbacksRouteImport.update({
+  id: '/admin/feedbacks',
+  path: '/admin/feedbacks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminImportNutriRoute = AppAdminImportNutriRouteImport.update({
+  id: '/admin/import-nutri',
+  path: '/admin/import-nutri',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminIntegrationsRoute = AppAdminIntegrationsRouteImport.update({
+  id: '/admin/integrations',
+  path: '/admin/integrations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
+  id: '/admin/nutritionists',
+  path: '/admin/nutritionists',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminPlansRoute = AppAdminPlansRouteImport.update({
+  id: '/admin/plans',
+  path: '/admin/plans',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminPlaygroundRoute = AppAdminPlaygroundRouteImport.update({
+  id: '/admin/playground',
+  path: '/admin/playground',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRankingRoute = AppAdminRankingRouteImport.update({
+  id: '/admin/ranking',
+  path: '/admin/ranking',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminSystemRoute = AppAdminSystemRouteImport.update({
+  id: '/admin/system',
+  path: '/admin/system',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatPatientIdRoute = AppChatPatientIdRouteImport.update({
+  id: '/chat/$patientId',
+  path: '/chat/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCheckoutSucessoRoute = AppCheckoutSucessoRouteImport.update({
+  id: '/checkout/sucesso',
+  path: '/checkout/sucesso',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaIndexRoute = AppCuradoriaIndexRouteImport.update({
+  id: '/curadoria/',
+  path: '/curadoria/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaBaselineRoute = AppCuradoriaBaselineRouteImport.update({
+  id: '/curadoria/baseline',
+  path: '/curadoria/baseline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCuradoriaChangelogRoute = AppCuradoriaChangelogRouteImport.update({
+  id: '/curadoria/changelog',
+  path: '/curadoria/changelog',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEvolutionPatientIdRoute = AppEvolutionPatientIdRouteImport.update({
+  id: '/evolution/$patientId',
+  path: '/evolution/$patientId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGeneralChatIdRoute = AppGeneralChatIdRouteImport.update({
+  id: '/general/$chatId',
+  path: '/general/$chatId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlanosHistoricoRoute = AppPlanosHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AppPlanosRoute,
 } as any)
 const AppAdminEmailsIndexRoute = AppAdminEmailsIndexRouteImport.update({
   id: '/admin/emails/',
@@ -729,46 +729,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unauthorized': {
-      id: '/unauthorized'
-      path: '/unauthorized'
-      fullPath: '/unauthorized'
-      preLoaderRoute: typeof UnauthorizedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/manutencao': {
-      id: '/manutencao'
-      path: '/manutencao'
-      fullPath: '/manutencao'
-      preLoaderRoute: typeof ManutencaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -778,81 +743,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/': {
-      id: '/app/'
-      path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
+    '/manutencao': {
+      id: '/manutencao'
+      path: '/manutencao'
+      fullPath: '/manutencao'
+      preLoaderRoute: typeof ManutencaoRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/trocar-senha': {
-      id: '/app/trocar-senha'
-      path: '/trocar-senha'
-      fullPath: '/app/trocar-senha'
-      preLoaderRoute: typeof AppTrocarSenhaRouteImport
-      parentRoute: typeof AppRoute
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/settings': {
-      id: '/app/settings'
-      path: '/settings'
-      fullPath: '/app/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/politicas': {
-      id: '/app/politicas'
-      path: '/politicas'
-      fullPath: '/app/politicas'
-      preLoaderRoute: typeof AppPoliticasRouteImport
-      parentRoute: typeof AppRoute
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/planos': {
-      id: '/app/planos'
-      path: '/planos'
-      fullPath: '/app/planos'
-      preLoaderRoute: typeof AppPlanosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/patients': {
-      id: '/app/patients'
-      path: '/patients'
-      fullPath: '/app/patients'
-      preLoaderRoute: typeof AppPatientsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/fale-com-lumma': {
-      id: '/app/fale-com-lumma'
-      path: '/fale-com-lumma'
-      fullPath: '/app/fale-com-lumma'
-      preLoaderRoute: typeof AppFaleComLummaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dashboard': {
-      id: '/app/dashboard'
-      path: '/dashboard'
-      fullPath: '/app/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/chats': {
-      id: '/app/chats'
-      path: '/chats'
-      fullPath: '/app/chats'
-      preLoaderRoute: typeof AppChatsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -862,235 +792,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/curadoria/': {
-      id: '/app/curadoria/'
-      path: '/curadoria'
-      fullPath: '/app/curadoria/'
-      preLoaderRoute: typeof AppCuradoriaIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/planos/historico': {
-      id: '/app/planos/historico'
-      path: '/historico'
-      fullPath: '/app/planos/historico'
-      preLoaderRoute: typeof AppPlanosHistoricoRouteImport
-      parentRoute: typeof AppPlanosRoute
-    }
-    '/app/general/$chatId': {
-      id: '/app/general/$chatId'
-      path: '/general/$chatId'
-      fullPath: '/app/general/$chatId'
-      preLoaderRoute: typeof AppGeneralChatIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/evolution/$patientId': {
-      id: '/app/evolution/$patientId'
-      path: '/evolution/$patientId'
-      fullPath: '/app/evolution/$patientId'
-      preLoaderRoute: typeof AppEvolutionPatientIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/curadoria/changelog': {
-      id: '/app/curadoria/changelog'
-      path: '/curadoria/changelog'
-      fullPath: '/app/curadoria/changelog'
-      preLoaderRoute: typeof AppCuradoriaChangelogRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/curadoria/baseline': {
-      id: '/app/curadoria/baseline'
-      path: '/curadoria/baseline'
-      fullPath: '/app/curadoria/baseline'
-      preLoaderRoute: typeof AppCuradoriaBaselineRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/checkout/sucesso': {
-      id: '/app/checkout/sucesso'
-      path: '/checkout/sucesso'
-      fullPath: '/app/checkout/sucesso'
-      preLoaderRoute: typeof AppCheckoutSucessoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/chat/$patientId': {
-      id: '/app/chat/$patientId'
-      path: '/chat/$patientId'
-      fullPath: '/app/chat/$patientId'
-      preLoaderRoute: typeof AppChatPatientIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/users': {
-      id: '/app/admin/users'
-      path: '/admin/users'
-      fullPath: '/app/admin/users'
-      preLoaderRoute: typeof AppAdminUsersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/system': {
-      id: '/app/admin/system'
-      path: '/admin/system'
-      fullPath: '/app/admin/system'
-      preLoaderRoute: typeof AppAdminSystemRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/ranking': {
-      id: '/app/admin/ranking'
-      path: '/admin/ranking'
-      fullPath: '/app/admin/ranking'
-      preLoaderRoute: typeof AppAdminRankingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/playground': {
-      id: '/app/admin/playground'
-      path: '/admin/playground'
-      fullPath: '/app/admin/playground'
-      preLoaderRoute: typeof AppAdminPlaygroundRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/plans': {
-      id: '/app/admin/plans'
-      path: '/admin/plans'
-      fullPath: '/app/admin/plans'
-      preLoaderRoute: typeof AppAdminPlansRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/nutritionists': {
-      id: '/app/admin/nutritionists'
-      path: '/admin/nutritionists'
-      fullPath: '/app/admin/nutritionists'
-      preLoaderRoute: typeof AppAdminNutritionistsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/integrations': {
-      id: '/app/admin/integrations'
-      path: '/admin/integrations'
-      fullPath: '/app/admin/integrations'
-      preLoaderRoute: typeof AppAdminIntegrationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/import-nutri': {
-      id: '/app/admin/import-nutri'
-      path: '/admin/import-nutri'
-      fullPath: '/app/admin/import-nutri'
-      preLoaderRoute: typeof AppAdminImportNutriRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/feedbacks': {
-      id: '/app/admin/feedbacks'
-      path: '/admin/feedbacks'
-      fullPath: '/app/admin/feedbacks'
-      preLoaderRoute: typeof AppAdminFeedbacksRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/dashboard': {
-      id: '/app/admin/dashboard'
-      path: '/admin/dashboard'
-      fullPath: '/app/admin/dashboard'
-      preLoaderRoute: typeof AppAdminDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/curadoria': {
-      id: '/app/admin/curadoria'
-      path: '/admin/curadoria'
-      fullPath: '/app/admin/curadoria'
-      preLoaderRoute: typeof AppAdminCuradoriaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/credits-audit': {
-      id: '/app/admin/credits-audit'
-      path: '/admin/credits-audit'
-      fullPath: '/app/admin/credits-audit'
-      preLoaderRoute: typeof AppAdminCreditsAuditRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/analytics': {
-      id: '/app/admin/analytics'
-      path: '/admin/analytics'
-      fullPath: '/app/admin/analytics'
-      preLoaderRoute: typeof AppAdminAnalyticsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/agent-costs': {
-      id: '/app/admin/agent-costs'
-      path: '/admin/agent-costs'
-      fullPath: '/app/admin/agent-costs'
-      preLoaderRoute: typeof AppAdminAgentCostsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/admin/administrators': {
-      id: '/app/admin/administrators'
-      path: '/admin/administrators'
-      fullPath: '/app/admin/administrators'
-      preLoaderRoute: typeof AppAdminAdministratorsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/api/public/subscription-expiry-emails': {
-      id: '/api/public/subscription-expiry-emails'
-      path: '/api/public/subscription-expiry-emails'
-      fullPath: '/api/public/subscription-expiry-emails'
-      preLoaderRoute: typeof ApiPublicSubscriptionExpiryEmailsRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/stripe-webhook': {
-      id: '/api/public/stripe-webhook'
-      path: '/api/public/stripe-webhook'
-      fullPath: '/api/public/stripe-webhook'
-      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/public/kiwify-webhook': {
-      id: '/api/public/kiwify-webhook'
-      path: '/api/public/kiwify-webhook'
-      fullPath: '/api/public/kiwify-webhook'
-      preLoaderRoute: typeof ApiPublicKiwifyWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/chats': {
+      id: '/app/chats'
+      path: '/chats'
+      fullPath: '/app/chats'
+      preLoaderRoute: typeof AppChatsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/public/hubla-webhook': {
-      id: '/api/public/hubla-webhook'
-      path: '/api/public/hubla-webhook'
-      fullPath: '/api/public/hubla-webhook'
-      preLoaderRoute: typeof ApiPublicHublaWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/dify/upload': {
-      id: '/api/dify/upload'
-      path: '/api/dify/upload'
-      fullPath: '/api/dify/upload'
-      preLoaderRoute: typeof ApiDifyUploadRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/fale-com-lumma': {
+      id: '/app/fale-com-lumma'
+      path: '/fale-com-lumma'
+      fullPath: '/app/fale-com-lumma'
+      preLoaderRoute: typeof AppFaleComLummaRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/dify/test': {
-      id: '/api/dify/test'
-      path: '/api/dify/test'
-      fullPath: '/api/dify/test'
-      preLoaderRoute: typeof ApiDifyTestRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/patients': {
+      id: '/app/patients'
+      path: '/patients'
+      fullPath: '/app/patients'
+      preLoaderRoute: typeof AppPatientsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/dify/reset-conversations': {
-      id: '/api/dify/reset-conversations'
-      path: '/api/dify/reset-conversations'
-      fullPath: '/api/dify/reset-conversations'
-      preLoaderRoute: typeof ApiDifyResetConversationsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/planos': {
+      id: '/app/planos'
+      path: '/planos'
+      fullPath: '/app/planos'
+      preLoaderRoute: typeof AppPlanosRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/dify/chat': {
-      id: '/api/dify/chat'
-      path: '/api/dify/chat'
-      fullPath: '/api/dify/chat'
-      preLoaderRoute: typeof ApiDifyChatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/politicas': {
+      id: '/app/politicas'
+      path: '/politicas'
+      fullPath: '/app/politicas'
+      preLoaderRoute: typeof AppPoliticasRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/dify/agent-test': {
-      id: '/api/dify/agent-test'
-      path: '/api/dify/agent-test'
-      fullPath: '/api/dify/agent-test'
-      preLoaderRoute: typeof ApiDifyAgentTestRouteImport
-      parentRoute: typeof rootRouteImport
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/audit/structured': {
-      id: '/api/audit/structured'
-      path: '/api/audit/structured'
-      fullPath: '/api/audit/structured'
-      preLoaderRoute: typeof ApiAuditStructuredRouteImport
+    '/app/trocar-senha': {
+      id: '/app/trocar-senha'
+      path: '/trocar-senha'
+      fullPath: '/app/trocar-senha'
+      preLoaderRoute: typeof AppTrocarSenhaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -1100,12 +876,236 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/api/audit/structured': {
+      id: '/api/audit/structured'
+      path: '/api/audit/structured'
+      fullPath: '/api/audit/structured'
+      preLoaderRoute: typeof ApiAuditStructuredRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/agent-test': {
+      id: '/api/dify/agent-test'
+      path: '/api/dify/agent-test'
+      fullPath: '/api/dify/agent-test'
+      preLoaderRoute: typeof ApiDifyAgentTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/chat': {
+      id: '/api/dify/chat'
+      path: '/api/dify/chat'
+      fullPath: '/api/dify/chat'
+      preLoaderRoute: typeof ApiDifyChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/reset-conversations': {
+      id: '/api/dify/reset-conversations'
+      path: '/api/dify/reset-conversations'
+      fullPath: '/api/dify/reset-conversations'
+      preLoaderRoute: typeof ApiDifyResetConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/test': {
+      id: '/api/dify/test'
+      path: '/api/dify/test'
+      fullPath: '/api/dify/test'
+      preLoaderRoute: typeof ApiDifyTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/upload': {
+      id: '/api/dify/upload'
+      path: '/api/dify/upload'
+      fullPath: '/api/dify/upload'
+      preLoaderRoute: typeof ApiDifyUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hubla-webhook': {
+      id: '/api/public/hubla-webhook'
+      path: '/api/public/hubla-webhook'
+      fullPath: '/api/public/hubla-webhook'
+      preLoaderRoute: typeof ApiPublicHublaWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/kiwify-webhook': {
+      id: '/api/public/kiwify-webhook'
+      path: '/api/public/kiwify-webhook'
+      fullPath: '/api/public/kiwify-webhook'
+      preLoaderRoute: typeof ApiPublicKiwifyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/stripe-webhook': {
+      id: '/api/public/stripe-webhook'
+      path: '/api/public/stripe-webhook'
+      fullPath: '/api/public/stripe-webhook'
+      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/subscription-expiry-emails': {
+      id: '/api/public/subscription-expiry-emails'
+      path: '/api/public/subscription-expiry-emails'
+      fullPath: '/api/public/subscription-expiry-emails'
+      preLoaderRoute: typeof ApiPublicSubscriptionExpiryEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/admin/administrators': {
+      id: '/app/admin/administrators'
+      path: '/admin/administrators'
+      fullPath: '/app/admin/administrators'
+      preLoaderRoute: typeof AppAdminAdministratorsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/agent-costs': {
+      id: '/app/admin/agent-costs'
+      path: '/admin/agent-costs'
+      fullPath: '/app/admin/agent-costs'
+      preLoaderRoute: typeof AppAdminAgentCostsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/analytics': {
+      id: '/app/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/app/admin/analytics'
+      preLoaderRoute: typeof AppAdminAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/credits-audit': {
+      id: '/app/admin/credits-audit'
+      path: '/admin/credits-audit'
+      fullPath: '/app/admin/credits-audit'
+      preLoaderRoute: typeof AppAdminCreditsAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/curadoria': {
+      id: '/app/admin/curadoria'
+      path: '/admin/curadoria'
+      fullPath: '/app/admin/curadoria'
+      preLoaderRoute: typeof AppAdminCuradoriaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/dashboard': {
+      id: '/app/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/app/admin/dashboard'
+      preLoaderRoute: typeof AppAdminDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/feedbacks': {
+      id: '/app/admin/feedbacks'
+      path: '/admin/feedbacks'
+      fullPath: '/app/admin/feedbacks'
+      preLoaderRoute: typeof AppAdminFeedbacksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/import-nutri': {
+      id: '/app/admin/import-nutri'
+      path: '/admin/import-nutri'
+      fullPath: '/app/admin/import-nutri'
+      preLoaderRoute: typeof AppAdminImportNutriRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/integrations': {
+      id: '/app/admin/integrations'
+      path: '/admin/integrations'
+      fullPath: '/app/admin/integrations'
+      preLoaderRoute: typeof AppAdminIntegrationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/nutritionists': {
+      id: '/app/admin/nutritionists'
+      path: '/admin/nutritionists'
+      fullPath: '/app/admin/nutritionists'
+      preLoaderRoute: typeof AppAdminNutritionistsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/plans': {
+      id: '/app/admin/plans'
+      path: '/admin/plans'
+      fullPath: '/app/admin/plans'
+      preLoaderRoute: typeof AppAdminPlansRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/playground': {
+      id: '/app/admin/playground'
+      path: '/admin/playground'
+      fullPath: '/app/admin/playground'
+      preLoaderRoute: typeof AppAdminPlaygroundRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/ranking': {
+      id: '/app/admin/ranking'
+      path: '/admin/ranking'
+      fullPath: '/app/admin/ranking'
+      preLoaderRoute: typeof AppAdminRankingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/system': {
+      id: '/app/admin/system'
+      path: '/admin/system'
+      fullPath: '/app/admin/system'
+      preLoaderRoute: typeof AppAdminSystemRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/users': {
+      id: '/app/admin/users'
+      path: '/admin/users'
+      fullPath: '/app/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/chat/$patientId': {
+      id: '/app/chat/$patientId'
+      path: '/chat/$patientId'
+      fullPath: '/app/chat/$patientId'
+      preLoaderRoute: typeof AppChatPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/checkout/sucesso': {
+      id: '/app/checkout/sucesso'
+      path: '/checkout/sucesso'
+      fullPath: '/app/checkout/sucesso'
+      preLoaderRoute: typeof AppCheckoutSucessoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria/': {
+      id: '/app/curadoria/'
+      path: '/curadoria'
+      fullPath: '/app/curadoria/'
+      preLoaderRoute: typeof AppCuradoriaIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria/baseline': {
+      id: '/app/curadoria/baseline'
+      path: '/curadoria/baseline'
+      fullPath: '/app/curadoria/baseline'
+      preLoaderRoute: typeof AppCuradoriaBaselineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/curadoria/changelog': {
+      id: '/app/curadoria/changelog'
+      path: '/curadoria/changelog'
+      fullPath: '/app/curadoria/changelog'
+      preLoaderRoute: typeof AppCuradoriaChangelogRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/evolution/$patientId': {
+      id: '/app/evolution/$patientId'
+      path: '/evolution/$patientId'
+      fullPath: '/app/evolution/$patientId'
+      preLoaderRoute: typeof AppEvolutionPatientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/general/$chatId': {
+      id: '/app/general/$chatId'
+      path: '/general/$chatId'
+      fullPath: '/app/general/$chatId'
+      preLoaderRoute: typeof AppGeneralChatIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/planos/historico': {
+      id: '/app/planos/historico'
+      path: '/historico'
+      fullPath: '/app/planos/historico'
+      preLoaderRoute: typeof AppPlanosHistoricoRouteImport
+      parentRoute: typeof AppPlanosRoute
     }
     '/app/admin/emails/': {
       id: '/app/admin/emails/'
