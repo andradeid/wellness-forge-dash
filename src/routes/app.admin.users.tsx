@@ -873,7 +873,16 @@ function UsersPage() {
       body: { user_id: blockTarget.id, blocked: next, reason },
     });
     setBlockSaving(false);
-    if (error || !data?.ok) { toast.error(data?.error ?? error?.message ?? "Falha ao atualizar status"); return; }
+    if (error || !data?.ok) {
+      // Em respostas não-2xx, a mensagem real vem no corpo da resposta
+      let msg: string | undefined = data?.error;
+      const ctx = (error as { context?: Response } | null)?.context;
+      if (!msg && ctx && typeof ctx.json === "function") {
+        try { msg = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
+      }
+      toast.error(msg ?? "Não foi possível atualizar o acesso. Tente novamente.");
+      return;
+    }
     toast.success(next ? "Usuária bloqueada (login impedido)" : "Acesso liberado com sucesso");
     setBlockTarget(null);
     setBlockReason("");
