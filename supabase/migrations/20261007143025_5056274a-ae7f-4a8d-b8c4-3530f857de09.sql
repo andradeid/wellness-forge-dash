@@ -1,0 +1,2 @@
+CREATE POLICY "Support and admin read profile_tags" ON public.profile_tags FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'support') OR public.has_role(auth.uid(),'admin'));
+GRANT SELECT ON public.profile_tags TO authenticated;
