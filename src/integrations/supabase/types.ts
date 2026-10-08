@@ -1137,6 +1137,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_write_audit: {
+        Row: {
+          actor_id: string
+          changes: Json
+          created_at: string
+          id: string
+          input: Json
+          report_numero: number | null
+          round_id: string | null
+          tool: string
+        }
+        Insert: {
+          actor_id: string
+          changes?: Json
+          created_at?: string
+          id?: string
+          input?: Json
+          report_numero?: number | null
+          round_id?: string | null
+          tool: string
+        }
+        Update: {
+          actor_id?: string
+          changes?: Json
+          created_at?: string
+          id?: string
+          input?: Json
+          report_numero?: number | null
+          round_id?: string | null
+          tool?: string
+        }
+        Relationships: []
+      }
       patient_chats: {
         Row: {
           agent_type: string | null
@@ -2096,6 +2129,42 @@ export type Database = {
       }
     }
     Functions: {
+      _mcp_check_keys: {
+        Args: { allowed: string[]; ctx: string; p: Json }
+        Returns: undefined
+      }
+      _mcp_check_sort: { Args: { p_round: string }; Returns: undefined }
+      _mcp_date: {
+        Args: { campo: string; ctx: string; obrigatorio: boolean; v: Json }
+        Returns: string
+      }
+      _mcp_enum: {
+        Args: { allowed: string[]; campo: string; ctx: string; v: Json }
+        Returns: string
+      }
+      _mcp_insert_item: {
+        Args: { ctx: string; it: Json; p_round: string }
+        Returns: string
+      }
+      _mcp_int: {
+        Args: { campo: string; ctx: string; v: Json }
+        Returns: number
+      }
+      _mcp_link: {
+        Args: {
+          ctx: string
+          p_actor: string
+          p_item: string
+          p_reports: Json
+          p_round: string
+        }
+        Returns: Json
+      }
+      _mcp_require_super_admin: { Args: never; Returns: string }
+      _mcp_text: {
+        Args: { campo: string; ctx: string; obrigatorio: boolean; v: Json }
+        Returns: string
+      }
       adjust_user_balance: {
         Args: {
           p_admin_id: string
@@ -2155,6 +2224,10 @@ export type Database = {
         Returns: boolean
       }
       log_subscription_expiries: { Args: never; Returns: number }
+      mcp_create_changelog_round: { Args: { p: Json }; Returns: Json }
+      mcp_link_reports: { Args: { p: Json }; Returns: Json }
+      mcp_update_changelog_round: { Args: { p: Json }; Returns: Json }
+      mcp_update_report_management: { Args: { p: Json }; Returns: Json }
       reconcile_subscription_blocks: { Args: never; Returns: number }
       refill_monthly_credits: { Args: never; Returns: number }
       refresh_recent_usage_stats: { Args: never; Returns: undefined }
