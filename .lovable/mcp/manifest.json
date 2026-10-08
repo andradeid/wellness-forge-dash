@@ -247,6 +247,367 @@
           ]
         },
         "outputSchema": null
+      },
+      {
+        "name": "create_changelog_round",
+        "title": "Criar rodada de changelog",
+        "description": "SOMENTE super_admin. Cria uma rodada e todos os itens (e ligações a reports) em UMA transação — se algo falhar, nada é gravado. Recusa rodada_data já existente, enums fora da lista, item_data ausente e sort_order que não seja 1..N. Não envia notificação.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "destructiveHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "titulo": {
+              "type": "string"
+            },
+            "rodada_data": {
+              "type": "string",
+              "description": "AAAA-MM-DD, única"
+            },
+            "rodada_data_fim": {
+              "type": "string"
+            },
+            "notas_curador": {
+              "type": "string"
+            },
+            "notas_admin": {
+              "type": "string"
+            },
+            "itens": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "descricao_legivel": {
+                    "type": "string"
+                  },
+                  "classificacao": {
+                    "type": "string",
+                    "description": "suporte | melhoria | infra"
+                  },
+                  "camada": {
+                    "type": "string",
+                    "description": "dify | lovable | banco | kb"
+                  },
+                  "descricao_tecnica": {
+                    "type": "string"
+                  },
+                  "item_data": {
+                    "type": "string",
+                    "description": "AAAA-MM-DD, obrigatório"
+                  },
+                  "sort_order": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "1..N sequencial dentro da rodada"
+                  },
+                  "reports": {
+                    "description": "Números sequenciais de reports a ligar.",
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                "required": [
+                  "descricao_legivel",
+                  "classificacao",
+                  "camada",
+                  "item_data",
+                  "sort_order"
+                ],
+                "additionalProperties": {}
+              }
+            }
+          },
+          "required": [
+            "titulo",
+            "rodada_data",
+            "itens"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_changelog_round",
+        "title": "Corrigir rodada de changelog",
+        "description": "SOMENTE super_admin. Corrige uma rodada pelo round_id (nunca por título): campos da rodada, campos de itens existentes, itens novos e, só se pedido explicitamente por id, itens a apagar (o conteúdo completo do item apagado fica na auditoria). Revalida enums e sort_order 1..N. Retorna antes/depois campo a campo. Tudo em uma transação.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "destructiveHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "round_id": {
+              "type": "string"
+            },
+            "rodada": {
+              "type": "object",
+              "properties": {
+                "titulo": {
+                  "type": "string"
+                },
+                "rodada_data": {
+                  "type": "string"
+                },
+                "rodada_data_fim": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "notas_curador": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "notas_admin": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": {}
+            },
+            "itens_alterar": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "descricao_legivel": {
+                    "type": "string"
+                  },
+                  "classificacao": {
+                    "type": "string"
+                  },
+                  "camada": {
+                    "type": "string"
+                  },
+                  "descricao_tecnica": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "item_data": {
+                    "type": "string"
+                  },
+                  "sort_order": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "additionalProperties": {}
+              }
+            },
+            "itens_novos": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "descricao_legivel": {
+                    "type": "string"
+                  },
+                  "classificacao": {
+                    "type": "string",
+                    "description": "suporte | melhoria | infra"
+                  },
+                  "camada": {
+                    "type": "string",
+                    "description": "dify | lovable | banco | kb"
+                  },
+                  "descricao_tecnica": {
+                    "type": "string"
+                  },
+                  "item_data": {
+                    "type": "string",
+                    "description": "AAAA-MM-DD, obrigatório"
+                  },
+                  "sort_order": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "1..N sequencial dentro da rodada"
+                  },
+                  "reports": {
+                    "description": "Números sequenciais de reports a ligar.",
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                "required": [
+                  "descricao_legivel",
+                  "classificacao",
+                  "camada",
+                  "item_data",
+                  "sort_order"
+                ],
+                "additionalProperties": {}
+              }
+            },
+            "itens_apagar": {
+              "description": "IDs de itens a apagar desta rodada.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "round_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "link_report_to_item",
+        "title": "Ligar ou remover ligação report ↔ item",
+        "description": "SOMENTE super_admin. acao='ligar' cria ligações item↔report (retorna 'ja_existia' se já houver); acao='remover' desfaz a associação (retorna 'nao_existia' se não houver). Remover não apaga report nem item. Recusa report inexistente dizendo o número. Várias ligações por chamada, em uma transação.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "destructiveHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "acao": {
+              "type": "string",
+              "description": "ligar | remover"
+            },
+            "ligacoes": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item_id": {
+                    "type": "string"
+                  },
+                  "report": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "item_id",
+                  "report"
+                ],
+                "additionalProperties": {}
+              }
+            }
+          },
+          "required": [
+            "acao",
+            "ligacoes"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_report_management",
+        "title": "Atualizar gestão de um report",
+        "description": "SOMENTE super_admin. Altera APENAS status, admin_final_classification (suporte | melhoria | requer_analise_humana | null), grupo_tematico e admin_notes de um report, pelo número sequencial. Nenhum outro campo é alcançável. Se status virar 'concluido' sem item de changelog ligado, grava e retorna aviso.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "destructiveHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "report": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "status": {
+              "description": "registrado | em_analise | aprovado_ajuste | classificado_melhoria | em_desenvolvimento | concluido",
+              "type": "string"
+            },
+            "admin_final_classification": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "grupo_tematico": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "admin_notes": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "report"
+          ]
+        },
+        "outputSchema": null
       }
     ]
   }
