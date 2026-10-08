@@ -51,7 +51,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
         fluid
       >
         {/* Patient */}
-        <section className="mb-5 rounded-md border border-slate-200 bg-slate-50/60 p-4">
+        <section className="mb-5 rounded-md border border-border bg-secondary/60 p-4 font-sans">
           <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Paciente</p>
           <p className="text-base font-semibold text-slate-900 mt-1">{patient.name}</p>
           <p className="text-xs text-slate-600 mt-1">
@@ -72,7 +72,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
         {visible.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhuma mensagem nesta conversa.</p>
         ) : (
-          <section className="space-y-3">
+          <section className="space-y-3 font-sans">
             {visible.map((m, idx) => {
               const isUser = m.role === "user";
               const text = isUser ? m.content : cleanText(m.content);
@@ -96,13 +96,13 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                   <div
                     className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] leading-relaxed border ${
                       isUser
-                        ? "bg-[#3d5a4a] text-white border-[#2f4a3c]"
-                        : "bg-white text-slate-800 border-slate-200"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card text-card-foreground border-border"
                     }`}
                   >
                     <div
                       className={`text-[9px] uppercase tracking-wider mb-1 ${
-                        isUser ? "text-white/70" : "text-slate-500"
+                        isUser ? "text-primary-foreground/75" : "text-muted-foreground"
                       }`}
                     >
                       {isUser
@@ -113,7 +113,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                           })()}`}
                     </div>
                     {m.attachments && m.attachments.length > 0 && (
-                      <div className={`text-[10px] mb-1 ${isUser ? "text-white/80" : "text-slate-500"}`}>
+                      <div className={`text-[10px] mb-1 ${isUser ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                         📎 {m.attachments.map((a) => a.name).join(", ")}
                       </div>
                     )}
@@ -121,7 +121,7 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                     {markers.length > 0 && (
                       <div className="mb-2 overflow-hidden rounded border border-slate-200 bg-white">
                         <table className="w-full text-[10px] text-slate-800">
-                          <thead className="bg-slate-50 text-slate-600">
+                          <thead className="bg-secondary text-secondary-foreground">
                             <tr>
                               <th className="text-left px-2 py-1 font-medium">Marcador</th>
                               <th className="text-left px-2 py-1 font-medium">Valor</th>
@@ -172,9 +172,9 @@ export const ChatConversationPDF = forwardRef<HTMLDivElement, Props>(
                               strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
                               em: ({ children }) => <em className="italic">{children}</em>,
                               code: ({ children }) => <code className="px-1 rounded bg-slate-100 text-[10px]">{children}</code>,
-                              blockquote: ({ children }) => <blockquote className="border-l-2 border-slate-300 pl-2 italic text-slate-700 my-1">{children}</blockquote>,
+                              blockquote: ({ children }) => <blockquote className="border-l-2 border-primary/40 pl-2 italic text-slate-700 my-1">{children}</blockquote>,
                               hr: () => <hr className="my-2 border-slate-200" />,
-                              a: ({ children, href }) => <a href={href} className="text-blue-700 underline">{children}</a>,
+                              a: ({ children, href }) => <a href={href} className="text-primary underline">{children}</a>,
                               table: ({ children }) => <table className="w-full border border-slate-200 my-1 text-[10px]">{children}</table>,
                               th: ({ children }) => <th className="border border-slate-200 px-1.5 py-0.5 bg-slate-50 text-left font-medium">{children}</th>,
                               td: ({ children }) => <td className="border border-slate-200 px-1.5 py-0.5 align-top">{children}</td>,
