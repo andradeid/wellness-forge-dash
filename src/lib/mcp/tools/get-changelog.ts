@@ -39,6 +39,7 @@ export default defineTool({
           )
         `)
         .eq("id", input.round_id)
+        .order("sort_order", { referencedTable: "changelog_items", ascending: true })
         .single();
 
       if (error) throw new Error(error.message);
