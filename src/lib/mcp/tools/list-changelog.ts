@@ -40,6 +40,7 @@ export default defineTool({
           )
         `)
         .order("rodada_data", { ascending: false })
+        .order("sort_order", { referencedTable: "changelog_items", ascending: true })
         .range(input.offset, input.offset + input.limit - 1);
 
       if (error) throw new Error(error.message);
