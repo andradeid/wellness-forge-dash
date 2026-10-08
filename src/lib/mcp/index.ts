@@ -6,6 +6,12 @@ import getBaselineTool from "./tools/get-baseline";
 import getConversationTool from "./tools/get-conversation";
 import listChangelogTool from "./tools/list-changelog";
 import getChangelogTool from "./tools/get-changelog";
+import {
+  createChangelogRoundTool,
+  updateChangelogRoundTool,
+  linkReportToItemTool,
+  updateReportManagementTool,
+} from "./tools/write-changelog";
 
 
 
@@ -19,7 +25,7 @@ export default defineMcp({
   title: "Lumma 2.0 NutriPro Dashboard",
   version: "1.0.0",
   instructions:
-    "Servidor MCP SOMENTE LEITURA do sistema de curadoria da Lumma (nutrição clínica funcional). Nenhuma tool cria, altera ou apaga dados. Comece sempre por `get_context`, que devolve o manual completo do sistema (classificações suporte/melhoria/requer_analise_humana, o que é a baseline e o dicionário de campos). Depois use `get_baseline` como fonte da verdade, `list_reports` e `get_report` para os relatos (com print em base64) e `get_conversation` para a conversa clínica original de um report. Acesso restrito a usuários Lumma com papel curator ou super_admin; a direção técnica interna só é exposta a super admins.",
+    "Servidor MCP do sistema de curadoria da Lumma (nutrição clínica funcional). Leitura para curator e super_admin; escrita restrita a super_admin em quatro tools (create_changelog_round, update_changelog_round, link_report_to_item, update_report_management). Baseline, relato do curador e campos de análise automática são intocáveis — veja get_context. Comece sempre por `get_context`, que devolve o manual completo do sistema (classificações suporte/melhoria/requer_analise_humana, o que é a baseline e o dicionário de campos). Depois use `get_baseline` como fonte da verdade, `list_reports` e `get_report` para os relatos (com print em base64) e `get_conversation` para a conversa clínica original de um report. Acesso restrito a usuários Lumma com papel curator ou super_admin; a direção técnica interna só é exposta a super admins.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
@@ -32,6 +38,10 @@ export default defineMcp({
     getConversationTool,
     listChangelogTool,
     getChangelogTool,
+    createChangelogRoundTool,
+    updateChangelogRoundTool,
+    linkReportToItemTool,
+    updateReportManagementTool,
   ],
 
 

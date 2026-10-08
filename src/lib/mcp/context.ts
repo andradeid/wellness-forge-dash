@@ -69,5 +69,26 @@ A baseline (\`get_baseline\`) é o retrato congelado do sistema na entrega do co
 
 ## Sobre este MCP
 
-Este servidor é **somente leitura**. Nenhuma tool cria, altera ou apaga dados de curadoria. O acesso exige login OAuth como usuário Lumma com papel \`curator\` ou \`super_admin\`. Curadores veem apenas os próprios reports e não recebem \`ai_technical_direction\`; super admins veem tudo. Visualizações de conversa original ficam registradas em trilha de auditoria.
+O acesso exige login OAuth como usuário Lumma com papel \`curator\` ou \`super_admin\`. Curadores veem apenas os próprios reports e não recebem \`ai_technical_direction\`; super admins veem tudo. Visualizações de conversa original ficam registradas em trilha de auditoria.
+
+### O que pode ser escrito (somente super_admin — curador não escreve nada)
+
+- \`create_changelog_round\`: cria uma rodada com todos os itens (e ligações a reports) numa única transação.
+- \`update_changelog_round\`: corrige uma rodada pelo id — campos da rodada e dos itens, itens novos e, só se pedido por id, itens apagados (o conteúdo integral do item apagado fica na auditoria).
+- \`link_report_to_item\`: liga ou remove a ligação entre item de changelog e report. Remover desfaz só a associação.
+- \`update_report_management\`: altera apenas \`status\`, \`admin_final_classification\`, \`grupo_tematico\` e \`admin_notes\` de um report.
+
+### O que continua intocável — nenhuma tool alcança, por nenhum caminho
+
+- **Baseline** (\`baseline_items\`): imutável. É a referência contratual de suporte versus melhoria.
+- **Relato do curador**: \`title\`, \`description\`, \`curator_classification\`, \`curator_dimension\`.
+- **Análise automática**: \`ai_classification\`, \`ai_confidence\`, \`ai_justification\`, \`ai_technical_direction\` e demais campos \`ai_*\`.
+- Estrutura de tabelas, políticas de acesso e triggers.
+
+### Garantias
+
+- Valores fora da lista são recusados com o campo e o valor. Nada é normalizado nem convertido.
+- Campos não previstos são recusados pelo nome, não ignorados.
+- Nenhuma escrita dispara notificação, e-mail ou publicação. Tornar visível à curadoria continua sendo ação humana.
+- Toda escrita fica registrada em \`mcp_write_audit\` (quem, quando, ferramenta, número do report, id da rodada, pedido e antes/depois), sem possibilidade de alteração ou exclusão.
 `;
