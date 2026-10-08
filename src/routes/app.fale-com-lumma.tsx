@@ -356,42 +356,9 @@ function FaleComLummaPage() {
   const [displayText, setDisplayText] = useState("");
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [showCards, setShowCards] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(() => {
-    const saved = localStorage.getItem("lumma_audio_enabled");
-    return saved !== null ? saved === "true" : true;
-  });
-  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
-  const [audioBlocked, setAudioBlocked] = useState(false);
-
   useEffect(() => {
-    // Som de saudação enviado pelo usuário
-    const playGreetingSound = () => {
-      // Verifica se o som já foi tocado nesta sessão (carregamento da página)
-      const sessionPlayed = sessionStorage.getItem("lumma_greeting_played");
-      if (!audioEnabled || sessionPlayed === "true") return;
-
-      const audio = new Audio("/audio/saudacao-lumma.mp3");
-      audio.volume = 0.5;
-      setCurrentAudio(audio);
-      audio.play()
-        .then(() => {
-          // Marca como tocado apenas se a reprodução foi bem-sucedida
-          sessionStorage.setItem("lumma_greeting_played", "true");
-        })
-        .catch(err => {
-          console.log("Autoplay blocked or audio error:", err);
-          if (err.name === "NotAllowedError") {
-            setAudioBlocked(true);
-          }
-        });
-    };
-
     let i = 0;
     const interval = setInterval(() => {
-      if (i === 0) {
-        // Pequeno delay para garantir que a página "respirou"
-        setTimeout(playGreetingSound, 200);
-      }
       setDisplayText(greeting.slice(0, i));
       i++;
       if (i > greeting.length) {
@@ -400,30 +367,7 @@ function FaleComLummaPage() {
       }
     }, 70);
     return () => clearInterval(interval);
-  }, [greeting, audioEnabled]);
-
-  const toggleAudio = (enabled: boolean) => {
-    setAudioEnabled(enabled);
-    localStorage.setItem("lumma_audio_enabled", String(enabled));
-    if (!enabled) {
-      setAudioBlocked(false);
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-      }
-    }
-  };
-
-  const handleManualPlay = () => {
-    setAudioBlocked(false);
-    const audio = new Audio("/audio/saudacao-lumma.mp3");
-    audio.volume = 0.5;
-    setCurrentAudio(audio);
-    audio.play().catch(console.error);
-    sessionStorage.setItem("lumma_greeting_played", "true");
-  };
-
-
+  }, [greeting]);
 
   return (
     <div className="relative h-full w-full overflow-hidden flex bg-gradient-to-br from-[#f3e8ff] via-[#e0f2fe] to-[#fce7f3]">
