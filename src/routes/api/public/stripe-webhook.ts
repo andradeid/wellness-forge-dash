@@ -312,7 +312,7 @@ async function resolveOrInviteUserByCustomer(
     const fullName = (customer as Stripe.Customer).name ?? null;
 
     const { createUserWithTempPassword } = await import("@/lib/user-provisioning.server");
-    const res = await createUserWithTempPassword(supabaseAdmin, { email, fullName });
+    const res = await createUserWithTempPassword(supabaseAdmin, { email, fullName, origin: "stripe" });
     return {
       userId: res.userId,
       welcomeNeeded: res.welcomeNeeded,
@@ -469,6 +469,14 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
     .from("subscriptions" as any)
     .upsert({ user_id: targetUserId, ...patch }, { onConflict: "user_id" });
   if (error) throw error;
+
+  const { fillSubscriptionOrigin } = await import("@/lib/subscription-origin");
+  // Evita expandir os tipos recursivos do SDK; o helper só usa update/eq/or.
+  await fillSubscriptionOrigin(
+    supabaseAdmin as unknown as import("@/lib/subscription-origin").SubscriptionOriginClient,
+    targetUserId,
+    "stripe",
+  );
 
   // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
   if (status === "active" || status === "trial") {

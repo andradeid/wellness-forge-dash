@@ -16,6 +16,8 @@
  * mesmo cliente.
  */
 
+import { fillSubscriptionOrigin, type SubscriptionOrigin } from "./subscription-origin";
+
 export const TEMP_PASSWORD = "Lumma2@102030";
 
 export type ProvisionResult = {
@@ -75,10 +77,11 @@ async function ensureUnbanned(
 
 export async function createUserWithTempPassword(
   supabaseAdmin: any,
-  args: { email: string; fullName?: string | null },
+  args: { email: string; fullName?: string | null; origin?: SubscriptionOrigin },
 ): Promise<ProvisionResult> {
   const email = args.email.trim().toLowerCase();
   const fullName = args.fullName?.trim() || null;
+  const origin = args.origin ?? "manual";
 
   // 1) Já existe em profiles? Nunca reenvia welcome nesse caso,
   //    mas garante que a conta não siga banida após pagar.
@@ -90,6 +93,7 @@ export async function createUserWithTempPassword(
   if ((prof as any)?.id) {
     const existingId = (prof as any).id as string;
     await ensureUnbanned(supabaseAdmin, existingId);
+    await fillSubscriptionOrigin(supabaseAdmin, existingId, origin);
     return {
       userId: existingId,
       isNew: false,
@@ -114,6 +118,7 @@ export async function createUserWithTempPassword(
 
   if (created?.user?.id) {
     const userId = created.user.id as string;
+    await fillSubscriptionOrigin(supabaseAdmin, userId, origin);
     await supabaseAdmin
       .from("profiles" as any)
       .update({ must_change_password: true })
@@ -156,6 +161,7 @@ export async function createUserWithTempPassword(
 
   const userId = authUser.id as string;
   await ensureUnbanned(supabaseAdmin, userId);
+  await fillSubscriptionOrigin(supabaseAdmin, userId, origin);
   const hasPassword =
     Boolean(authUser.last_sign_in_at) ||
     Boolean(authUser.encrypted_password) ||
