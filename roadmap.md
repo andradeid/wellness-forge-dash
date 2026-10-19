@@ -1,5 +1,10 @@
 # Roadmap
 
+## Origem das assinaturas
+- [ ] Preencher somente origens vazias nos seis fluxos solicitados, sem alterar Hubla
+- [ ] Validar preservação da origem e identificação da plataforma nas compras
+- [ ] Mostrar prévia, aplicar recuperação autorizada por migração e conferir contagens
+
 ## Registro de erros da IA (Dify)
 - [x] Tabela `dify_error_logs` + RLS/GRANT (leitura super_admin)
 - [x] Gravação no servidor (`api/dify.chat`) e nos hooks de chat
