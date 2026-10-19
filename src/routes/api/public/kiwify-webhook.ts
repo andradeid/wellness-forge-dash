@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fillSubscriptionOrigin } from "@/lib/subscription-origin";
 
 /**
  * Webhook público da Kiwify.
@@ -249,6 +250,7 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
   const provision = await createUserWithTempPassword(supabaseAdmin, {
     email: customer.email,
     fullName: customer.name,
+    origin: "kiwify",
   });
   const userId = provision.userId;
   if (!userId) {
@@ -296,6 +298,8 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
       },
       { onConflict: "user_id" },
     );
+
+  await fillSubscriptionOrigin(supabaseAdmin, userId, "kiwify");
 
   // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
   await (supabaseAdmin as any).rpc("disable_unlimited_on_purchase", {

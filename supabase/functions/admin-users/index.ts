@@ -98,6 +98,11 @@ Deno.serve(async (req) => {
       }
 
       const newUserId = invited.user.id;
+      // A origem existente é preservada pela condição avaliada no banco.
+      const { error: originError } = await admin.from("subscriptions")
+        .update({ origin: "manual" }).eq("user_id", newUserId)
+        .or('origin.is.null,origin.eq.""');
+      if (originError) throw new Error(`Falha ao registrar origem: ${originError.message}`);
       await admin.from("profiles").update({ must_change_password: true }).eq("id", newUserId);
 
       const profilePatch: Record<string, unknown> = {};

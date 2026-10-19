@@ -312,7 +312,7 @@ async function resolveOrInviteUserByCustomer(
     const fullName = (customer as Stripe.Customer).name ?? null;
 
     const { createUserWithTempPassword } = await import("@/lib/user-provisioning.server");
-    const res = await createUserWithTempPassword(supabaseAdmin, { email, fullName });
+    const res = await createUserWithTempPassword(supabaseAdmin, { email, fullName, origin: "stripe" });
     return {
       userId: res.userId,
       welcomeNeeded: res.welcomeNeeded,
@@ -471,6 +471,9 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   if (error) throw error;
 
   // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
+  const { fillSubscriptionOrigin } = await import("@/lib/subscription-origin");
+  await fillSubscriptionOrigin(supabaseAdmin, targetUserId, "stripe");
+
   if (status === "active" || status === "trial") {
     await (supabaseAdmin as any).rpc("disable_unlimited_on_purchase", {
       p_user_id: targetUserId,

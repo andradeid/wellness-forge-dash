@@ -74,6 +74,12 @@ Deno.serve(async (req) => {
 
       // update subscription
       await supabase.from("subscriptions").update({ plan_type: planType, status: "canceled" }).eq("user_id", userId);
+      const { error: originError } = await supabase.from("subscriptions")
+        .update({ origin: "importacao" }).eq("user_id", userId)
+        .or('origin.is.null,origin.eq.""');
+      if (originError) {
+        errors.push({ email, reason: `Falha ao registrar origem: ${originError.message}` });
+      }
 
       // tags
       const tagInserts = [
