@@ -470,10 +470,15 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
     .upsert({ user_id: targetUserId, ...patch }, { onConflict: "user_id" });
   if (error) throw error;
 
-  // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
   const { fillSubscriptionOrigin } = await import("@/lib/subscription-origin");
-  await fillSubscriptionOrigin(supabaseAdmin, targetUserId, "stripe");
+  // Evita expandir os tipos recursivos do SDK; o helper só usa update/eq/or.
+  await fillSubscriptionOrigin(
+    supabaseAdmin as unknown as import("@/lib/subscription-origin").SubscriptionOriginClient,
+    targetUserId,
+    "stripe",
+  );
 
+  // Decisão da curadoria: compra de plano pago desliga o ilimitado (registrado no histórico).
   if (status === "active" || status === "trial") {
     await (supabaseAdmin as any).rpc("disable_unlimited_on_purchase", {
       p_user_id: targetUserId,
