@@ -1,20 +1,17 @@
-# Corte definitivo do worker antigo do Dify
+# Relatório mensal — consultas somente leitura
 
-## Objetivo
-Parar de depender da rota `/api/dify/chat`, que está atendendo GET e POST de deployments diferentes, e criar um caminho novo e verificável para todo tráfego de chat.
+Nenhum código, migração ou escrita. Só SELECT, resultados agregados (sem nome/e-mail).
 
-## Implementação
-- Criar uma nova rota versionada para o chat do Dify e direcionar todos os quatro emissores atuais para ela: chat do paciente, chat geral, análise rápida e playground administrativo.
-- Manter a regra atual: duração somente com anexo efetivamente enviado; calorimetria em 15 segundos; tarefas sem limite próprio não herdam limite.
-- Gravar em toda ocorrência nova: versão das regras, versão da rota, host recebido, URL do endpoint, `provider_latency_ms`, `wall_ms`, quantidade de anexos e limite aplicado.
-- Fazer o endpoint de diagnóstico informar a mesma versão para GET e POST.
-- Publicar e validar o novo endereço diretamente, sem usar a rota antiga como prova.
+## Períodos (America/Sao_Paulo)
+P_AGO 01–16/08, P_SET 01–16/09, P_OUT 01–16/10/2026 (00:00 a 23:59:59).
 
-## Verificação
-- Um registro novo válido deverá conter `rules_version`, `route_version`, `request_host`, `provider_latency_ms` e `wall_ms`.
-- Nenhum `suspicious_fast` sem anexo poderá ser criado pela rota nova.
-- Calorimetria somente poderá gerar `suspicious_fast` com anexo e duração abaixo de 15 segundos.
-- Auditar as mudanças recentes e separar: banco já aplicado, navegador verificável e servidor dependente da nova publicação.
+## Fontes previstas (confirmadas na 1ª consulta)
+- Tipo de conta: `subscriptions.origin` — migradas = `migracao`, `migracao_lumma1`, `ajuste_manual_hubla`; pagantes = `kiwify`, `stripe`, `hubla`; demais (manual/interno/nulo) em linha "outros". Exclui staff (`user_roles` super_admin/admin/support) e `profiles.deleted_at`.
+- 1. Cadastradas: `profiles.created_at` ≤ fim do período.
+- 2/3/4. Uso, análises e créditos: `credit_transactions` (`type='debit'`, `agent_key`, `amount`).
+- 5. Usuárias/dia: `credit_transactions` debit, distinct `user_id` por dia BRT.
+- 6. Vendas: `payment_history` (Stripe, `kind`) + `integration_logs` (Kiwify/Hubla por `source`/`event`). Se não houver valor líquido, digo que não existe.
+- 7. Erros: `dify_error_logs` agrupado por `error_kind` (separando observações de erros reais) e `billed`.
 
-## Resultado esperado
-O tráfego novo deixa de alcançar o caminho de escrita antigo. A presença de `route_version` no banco passa a provar qual worker processou cada ocorrência, sem depender apenas do status “publicado”.
+## Saída
+Lista de tabelas/colunas usadas, depois uma tabela por item com os três períodos lado a lado. Itens sem dado no banco são declarados como inexistentes.
