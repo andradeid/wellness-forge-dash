@@ -1,4 +1,5 @@
-import { describe, expect, it } from "bun:test";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 import { fillSubscriptionOrigin, type SubscriptionOriginClient, type SubscriptionOrigin } from "./subscription-origin";
 import { createUserWithTempPassword } from "./user-provisioning.server";
 
@@ -7,13 +8,13 @@ function originClient(initial: string | null) {
   let failure: { message: string } | null = null;
   const client: SubscriptionOriginClient = {
     from(table) {
-      expect(table).toBe("subscriptions");
+      assert.equal(table, "subscriptions");
       return { update(patch) {
         return { eq(column, id) {
-          expect(column).toBe("user_id");
-          expect(id).toBe("test-user");
+          assert.equal(column, "user_id");
+          assert.equal(id, "test-user");
           return { async or(filter) {
-            expect(filter).toBe('origin.is.null,origin.eq.""');
+            assert.equal(filter, 'origin.is.null,origin.eq.""');
             if (!failure && (value === null || value === "")) value = patch.origin;
             return { error: failure };
           } };
@@ -29,19 +30,19 @@ describe("origem das assinaturas", () => {
     it(`preenche NULL com ${origin}`, async () => {
       const state = originClient(null);
       await fillSubscriptionOrigin(state.client, "test-user", origin);
-      expect(state.value()).toBe(origin);
+      assert.equal(state.value(), origin);
     });
   }
   it("preenche string vazia", async () => {
     const state = originClient("");
     await fillSubscriptionOrigin(state.client, "test-user", "stripe");
-    expect(state.value()).toBe("stripe");
+    assert.equal(state.value(), "stripe");
   });
   for (const origin of ["migracao_lumma1", "interno", "manual", "hubla", "sorteio", "importacao"]) {
     it(`preserva ${origin} na renovação Stripe`, async () => {
       const state = originClient(origin);
       await fillSubscriptionOrigin(state.client, "test-user", "stripe");
-      expect(state.value()).toBe(origin);
+      assert.equal(state.value(), origin);
     });
   }
   it("preserva a primeira origem em chamadas concorrentes", async () => {
@@ -50,13 +51,13 @@ describe("origem das assinaturas", () => {
       fillSubscriptionOrigin(state.client, "test-user", "kiwify"),
       fillSubscriptionOrigin(state.client, "test-user", "stripe"),
     ]);
-    expect(state.value()).toBe("kiwify");
+    assert.equal(state.value(), "kiwify");
   });
   it("reporta falha de gravação", async () => {
     const state = originClient(null);
     state.fail();
-    await expect(fillSubscriptionOrigin(state.client, "test-user", "manual")).rejects.toThrow("indisponível");
-    expect(state.value()).toBeNull();
+    await assert.rejects(fillSubscriptionOrigin(state.client, "test-user", "manual"), /indisponível/);
+    assert.equal(state.value(), null);
   });
 });
 
@@ -77,9 +78,9 @@ describe("provisionamento compartilhado", () => {
       const result = await createUserWithTempPassword(client, {
         email: "example@example.invalid", origin: supplied as SubscriptionOrigin | undefined,
       });
-      expect(result.userId).toBe("test-user");
-      expect(result.welcomeNeeded).toBe(false);
-      expect(state.value()).toBe(supplied ?? "manual");
+      assert.equal(result.userId, "test-user");
+      assert.equal(result.welcomeNeeded, false);
+      assert.equal(state.value(), supplied ?? "manual");
     });
   }
 });
