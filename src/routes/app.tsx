@@ -36,6 +36,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
   { prefix: "/app/admin/feedbacks", roles: ["super_admin"] },
   { prefix: "/app/admin/curadoria", roles: ["super_admin"] },
   { prefix: "/app/admin/system", roles: ["super_admin"] },
+  { prefix: "/app/admin/lumma-play", roles: ["super_admin"] },
   // Gestão de usuários: super_admin e suporte (CS)
   { prefix: "/app/admin/users", roles: ["super_admin", "support"] },
   // Admin + super_admin
@@ -259,7 +260,8 @@ function AppLayout() {
   const isGeneralChat = pathname.startsWith("/app/general/");
   const isEvolution = pathname.startsWith("/app/evolution/");
   const isFaleComLumma = pathname.startsWith("/app/fale-com-lumma");
-  const immersive = isChat || isGeneralChat || isEvolution || isFaleComLumma;
+  const isPlay = pathname === "/app/play" || pathname.startsWith("/app/play/");
+  const immersive = isChat || isGeneralChat || isEvolution || isFaleComLumma || isPlay;
 
   const showStagingBanner = false;
 

@@ -25,6 +25,7 @@ import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppFaleComLummaRouteImport } from './routes/app.fale-com-lumma'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppPlanosRouteImport } from './routes/app.planos'
+import { Route as AppPlayRouteImport } from './routes/app.play'
 import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTrocarSenhaRouteImport } from './routes/app.trocar-senha'
@@ -49,6 +50,7 @@ import { Route as AppAdminDashboardRouteImport } from './routes/app.admin.dashbo
 import { Route as AppAdminFeedbacksRouteImport } from './routes/app.admin.feedbacks'
 import { Route as AppAdminImportNutriRouteImport } from './routes/app.admin.import-nutri'
 import { Route as AppAdminIntegrationsRouteImport } from './routes/app.admin.integrations'
+import { Route as AppAdminLummaPlayRouteImport } from './routes/app.admin.lumma-play'
 import { Route as AppAdminNutritionistsRouteImport } from './routes/app.admin.nutritionists'
 import { Route as AppAdminPlansRouteImport } from './routes/app.admin.plans'
 import { Route as AppAdminPlaygroundRouteImport } from './routes/app.admin.playground'
@@ -146,6 +148,11 @@ const AppPatientsRoute = AppPatientsRouteImport.update({
 const AppPlanosRoute = AppPlanosRouteImport.update({
   id: '/planos',
   path: '/planos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlayRoute = AppPlayRouteImport.update({
+  id: '/play',
+  path: '/play',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPoliticasRoute = AppPoliticasRouteImport.update({
@@ -271,6 +278,11 @@ const AppAdminIntegrationsRoute = AppAdminIntegrationsRouteImport.update({
   path: '/admin/integrations',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminLummaPlayRoute = AppAdminLummaPlayRouteImport.update({
+  id: '/admin/lumma-play',
+  path: '/admin/lumma-play',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminNutritionistsRoute = AppAdminNutritionistsRouteImport.update({
   id: '/admin/nutritionists',
   path: '/admin/nutritionists',
@@ -368,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/planos': typeof AppPlanosRouteWithChildren
+  '/app/play': typeof AppPlayRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
@@ -393,6 +406,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
+  '/app/admin/lumma-play': typeof AppAdminLummaPlayRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
@@ -425,6 +439,7 @@ export interface FileRoutesByTo {
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/planos': typeof AppPlanosRouteWithChildren
+  '/app/play': typeof AppPlayRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
@@ -450,6 +465,7 @@ export interface FileRoutesByTo {
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
+  '/app/admin/lumma-play': typeof AppAdminLummaPlayRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
@@ -484,6 +500,7 @@ export interface FileRoutesById {
   '/app/fale-com-lumma': typeof AppFaleComLummaRoute
   '/app/patients': typeof AppPatientsRoute
   '/app/planos': typeof AppPlanosRouteWithChildren
+  '/app/play': typeof AppPlayRoute
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
@@ -509,6 +526,7 @@ export interface FileRoutesById {
   '/app/admin/feedbacks': typeof AppAdminFeedbacksRoute
   '/app/admin/import-nutri': typeof AppAdminImportNutriRoute
   '/app/admin/integrations': typeof AppAdminIntegrationsRoute
+  '/app/admin/lumma-play': typeof AppAdminLummaPlayRoute
   '/app/admin/nutritionists': typeof AppAdminNutritionistsRoute
   '/app/admin/plans': typeof AppAdminPlansRoute
   '/app/admin/playground': typeof AppAdminPlaygroundRoute
@@ -544,6 +562,7 @@ export interface FileRouteTypes {
     | '/app/fale-com-lumma'
     | '/app/patients'
     | '/app/planos'
+    | '/app/play'
     | '/app/politicas'
     | '/app/settings'
     | '/app/trocar-senha'
@@ -569,6 +588,7 @@ export interface FileRouteTypes {
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
     | '/app/admin/integrations'
+    | '/app/admin/lumma-play'
     | '/app/admin/nutritionists'
     | '/app/admin/plans'
     | '/app/admin/playground'
@@ -601,6 +621,7 @@ export interface FileRouteTypes {
     | '/app/fale-com-lumma'
     | '/app/patients'
     | '/app/planos'
+    | '/app/play'
     | '/app/politicas'
     | '/app/settings'
     | '/app/trocar-senha'
@@ -626,6 +647,7 @@ export interface FileRouteTypes {
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
     | '/app/admin/integrations'
+    | '/app/admin/lumma-play'
     | '/app/admin/nutritionists'
     | '/app/admin/plans'
     | '/app/admin/playground'
@@ -659,6 +681,7 @@ export interface FileRouteTypes {
     | '/app/fale-com-lumma'
     | '/app/patients'
     | '/app/planos'
+    | '/app/play'
     | '/app/politicas'
     | '/app/settings'
     | '/app/trocar-senha'
@@ -684,6 +707,7 @@ export interface FileRouteTypes {
     | '/app/admin/feedbacks'
     | '/app/admin/import-nutri'
     | '/app/admin/integrations'
+    | '/app/admin/lumma-play'
     | '/app/admin/nutritionists'
     | '/app/admin/plans'
     | '/app/admin/playground'
@@ -839,6 +863,13 @@ declare module '@tanstack/react-router' {
       path: '/planos'
       fullPath: '/app/planos'
       preLoaderRoute: typeof AppPlanosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/play': {
+      id: '/app/play'
+      path: '/play'
+      fullPath: '/app/play'
+      preLoaderRoute: typeof AppPlayRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/politicas': {
@@ -1009,6 +1040,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminIntegrationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/lumma-play': {
+      id: '/app/admin/lumma-play'
+      path: '/admin/lumma-play'
+      fullPath: '/app/admin/lumma-play'
+      preLoaderRoute: typeof AppAdminLummaPlayRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin/nutritionists': {
       id: '/app/admin/nutritionists'
       path: '/admin/nutritionists'
@@ -1142,6 +1180,7 @@ interface AppRouteChildren {
   AppFaleComLummaRoute: typeof AppFaleComLummaRoute
   AppPatientsRoute: typeof AppPatientsRoute
   AppPlanosRoute: typeof AppPlanosRouteWithChildren
+  AppPlayRoute: typeof AppPlayRoute
   AppPoliticasRoute: typeof AppPoliticasRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTrocarSenhaRoute: typeof AppTrocarSenhaRoute
@@ -1155,6 +1194,7 @@ interface AppRouteChildren {
   AppAdminFeedbacksRoute: typeof AppAdminFeedbacksRoute
   AppAdminImportNutriRoute: typeof AppAdminImportNutriRoute
   AppAdminIntegrationsRoute: typeof AppAdminIntegrationsRoute
+  AppAdminLummaPlayRoute: typeof AppAdminLummaPlayRoute
   AppAdminNutritionistsRoute: typeof AppAdminNutritionistsRoute
   AppAdminPlansRoute: typeof AppAdminPlansRoute
   AppAdminPlaygroundRoute: typeof AppAdminPlaygroundRoute
@@ -1178,6 +1218,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFaleComLummaRoute: AppFaleComLummaRoute,
   AppPatientsRoute: AppPatientsRoute,
   AppPlanosRoute: AppPlanosRouteWithChildren,
+  AppPlayRoute: AppPlayRoute,
   AppPoliticasRoute: AppPoliticasRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTrocarSenhaRoute: AppTrocarSenhaRoute,
@@ -1191,6 +1232,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminFeedbacksRoute: AppAdminFeedbacksRoute,
   AppAdminImportNutriRoute: AppAdminImportNutriRoute,
   AppAdminIntegrationsRoute: AppAdminIntegrationsRoute,
+  AppAdminLummaPlayRoute: AppAdminLummaPlayRoute,
   AppAdminNutritionistsRoute: AppAdminNutritionistsRoute,
   AppAdminPlansRoute: AppAdminPlansRoute,
   AppAdminPlaygroundRoute: AppAdminPlaygroundRoute,

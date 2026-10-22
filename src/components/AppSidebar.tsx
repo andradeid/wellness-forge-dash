@@ -29,6 +29,7 @@ import {
   MessageCircle,
   Mail,
   History as HistoryIcon,
+  Clapperboard,
 } from "lucide-react";
 
 const WHATSAPP_SUPPORT_URL = `https://wa.me/5519997285302?text=${encodeURIComponent("Oi! Você pode me ajudar com com a LUMMA 2.0?")}`;
@@ -56,6 +57,7 @@ const LOW_CREDIT_THRESHOLD = 20;
 import { supabase } from "@/integrations/supabase/client";
 import { topUpStore } from "@/lib/topup-store";
 import { cn } from "@/lib/utils";
+import { useLummaPlayAccess } from "@/lib/lumma-play";
 import lummaLockup from "@/assets/lumma-lockup.svg";
 
 const planLabel = (p?: string | null) =>
@@ -69,6 +71,8 @@ type NavItem = {
   superAdminOnly?: boolean;
   matchPrefix?: string;
   exact?: boolean;
+  /** Só aparece para quem pode ver o Lumma Play (decidido no banco). */
+  playOnly?: boolean;
 };
 
 type NavGroup = {
@@ -90,6 +94,7 @@ const nutriGroups: NavGroup[] = [
       { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
       { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
+      { title: "Lumma Play", url: "/app/play", icon: Clapperboard, badge: "NOVO", playOnly: true },
     ],
   },
   {
@@ -132,6 +137,8 @@ const adminGroups: NavGroup[] = [
       { title: "E-mails", url: "/app/admin/emails", icon: Mail, superAdminOnly: true, badge: "NOVO" },
       { title: "Campanhas de e-mail", url: "/app/admin/emails/campanhas", icon: Mail, superAdminOnly: true, badge: "NOVO" },
       { title: "Playground (Sandbox)", url: "/app/admin/playground", icon: FlaskRound, badge: "BETA", superAdminOnly: true },
+      { title: "Lumma Play", url: "/app/play", icon: Clapperboard, badge: "PRÉVIA", playOnly: true },
+      { title: "Lumma Play · conteúdo", url: "/app/admin/lumma-play", icon: Clapperboard, superAdminOnly: true, badge: "PRÉVIA" },
     ],
   },
   {
@@ -225,6 +232,7 @@ export function AppSidebar() {
   const lowCredits = !unlimited && !subExpired && balance < LOW_CREDIT_THRESHOLD;
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+  const canPlay = useLummaPlayAccess(!!user).data === true;
 
   const [open, setOpen] = useState<Record<string, boolean>>({
     visao: true,
@@ -327,7 +335,7 @@ export function AppSidebar() {
 
           .map((g) => {
           const visibleItems = g.items.filter(
-            (item) => !item.superAdminOnly || role === "super_admin",
+            (item) => (!item.superAdminOnly || role === "super_admin") && (!item.playOnly || canPlay),
           );
           if (visibleItems.length === 0) return null;
           return (
