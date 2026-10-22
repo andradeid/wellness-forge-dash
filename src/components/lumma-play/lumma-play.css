@@ -777,7 +777,7 @@
 }
 .lp-pl .frame {
   position: absolute;
-  inset: 0;
+  inset: 64px 0 0 0; /* abaixo da barra: nada da Lumma fica por cima dos botões do YouTube */
 }
 .lp-pl .frame iframe,
 .lp-pl .frame > div {
@@ -790,16 +790,19 @@
   top: 0;
   left: 0;
   right: 0;
-  padding: 18px 28px;
+  height: 64px;
+  padding: 0 28px;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent);
+  background: #000;
   z-index: 2;
-  transition: opacity 0.4s;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.lp-pl .bar.idle {
-  opacity: 0;
+.lp-pl .bar b {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .lp-pl .bar button {
   background: none;

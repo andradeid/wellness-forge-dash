@@ -259,7 +259,15 @@ export function LummaPlay() {
 
   const play = (ep: PlayEpisode) => {
     setDetail(null);
-    if (ep.video_id) setPlaying(ep);
+    if (!ep.video_id) return;
+    // Abre em tela cheia já no clique (o navegador só permite dentro do clique do usuário).
+    try {
+      const el = document.documentElement;
+      if (!document.fullscreenElement && el.requestFullscreen) void el.requestFullscreen().catch(() => {});
+    } catch {
+      /* iPhone não tem fullscreen de página: segue na tela normal */
+    }
+    setPlaying(ep);
   };
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });

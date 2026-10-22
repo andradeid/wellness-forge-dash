@@ -59,7 +59,6 @@ export function LummaPlayPlayer({
   const doneRef = useRef(false);
   const dismissed = useRef(false);
   const [showNext, setShowNext] = useState(false);
-  const [idle, setIdle] = useState(false);
 
   const eps = orderedEpisodes(cat);
   const next = eps[eps.indexOf(eps.find((e) => e.id === ep.id)!) + 1] ?? null;
@@ -146,25 +145,21 @@ export function LummaPlayPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ep.id]);
 
-  // Esc fecha; barra do topo some quando o mouse para.
+  // Ao fechar o player, sai da tela cheia que foi aberta no clique.
+  useEffect(
+    () => () => {
+      if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => {});
+    },
+    [],
+  );
+
+  // Esc fecha (na tela cheia, o 1º Esc só sai da tela cheia — comportamento do navegador).
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    let t = 0;
-    const move = () => {
-      setIdle(false);
-      window.clearTimeout(t);
-      t = window.setTimeout(() => setIdle(true), 2500);
-    };
     window.addEventListener("keydown", k);
-    window.addEventListener("mousemove", move);
-    move();
-    return () => {
-      window.removeEventListener("keydown", k);
-      window.removeEventListener("mousemove", move);
-      window.clearTimeout(t);
-    };
+    return () => window.removeEventListener("keydown", k);
   }, [onClose]);
 
   // Avança sozinho 8 s depois do cartão "Próximo episódio" aparecer no fim do vídeo.
@@ -183,7 +178,7 @@ export function LummaPlayPlayer({
           <p>Este episódio ainda está sendo publicado.</p>
         </div>
       )}
-      <div className={`bar ${idle ? "idle" : ""}`}>
+      <div className="bar">
         <button type="button" onClick={onClose} aria-label="Voltar">
           ←
         </button>
