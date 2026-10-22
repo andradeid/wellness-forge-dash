@@ -15,6 +15,7 @@ import {
 import { LummaPlayPlayer } from "./LummaPlayPlayer";
 
 const INTRO_KEY = "lumma-play:intro-visto";
+const INTRO_SOUND = "/lumma-play/intro.mp3"; // som da abertura (sintetizado; sincronizado com a animação)
 
 function firstName(full?: string | null) {
   return (
@@ -209,15 +210,18 @@ export function LummaPlay() {
   const { data: cat, isLoading, error } = useLummaPlayCatalog();
   const scroller = useRef<HTMLDivElement>(null);
   const [solid, setSolid] = useState(false);
-  const [intro, setIntro] = useState<"show" | "hide" | "off">(() => {
+  // Abertura: "wait" = preparando o som; "tap" = navegador bloqueou o som, pede um toque;
+  // "show" = som e animação começam juntos; "hide" = sumindo; "off" = já vista nesta sessão.
+  const [intro, setIntro] = useState<"wait" | "tap" | "show" | "hide" | "off">(() => {
     try {
       return typeof window !== "undefined" && window.sessionStorage.getItem(INTRO_KEY)
         ? "off"
-        : "show";
+        : "wait";
     } catch {
       return "off";
     }
   });
+  const audio = useRef<{ ctx: AudioContext; buf: AudioBuffer | null } | null>(null);
   const [detail, setDetail] = useState<PlayEpisode | null>(null);
   const [playing, setPlaying] = useState<PlayEpisode | null>(null);
 
@@ -237,6 +241,71 @@ export function LummaPlay() {
       window.clearTimeout(b);
     };
   }, [intro]);
+
+  // Prepara o som da abertura; a animação só começa quando o som puder tocar junto.
+  useEffect(() => {
+    if (intro !== "wait") return;
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AC: typeof AudioContext | undefined = window.AudioContext ?? (window as any).webkitAudioContext;
+    if (!AC) {
+      setIntro("show");
+      return;
+    }
+    const ctx = new AC();
+    const wait = <T,>(p: Promise<T>, ms: number, fb: T) =>
+      Promise.race([p, new Promise<T>((r) => window.setTimeout(() => r(fb), ms))]);
+    const buf = wait(
+      fetch(INTRO_SOUND)
+        .then((r) => r.arrayBuffer())
+        .then((b) => ctx.decodeAudioData(b))
+        .catch(() => null),
+      3000,
+      null,
+    );
+    const running = wait(
+      ctx
+        .resume()
+        .then(() => ctx.state === "running")
+        .catch(() => false),
+      700,
+      false,
+    );
+    Promise.all([buf, running]).then(([b, ok]) => {
+      if (cancelled) return;
+      audio.current = { ctx, buf: b };
+      if (!b) setIntro("show"); // som não carregou: abre sem som para não travar
+      else if (ok) startIntro();
+      else setIntro("tap");
+    });
+    return () => {
+      cancelled = true;
+      if (!audio.current) void ctx.close().catch(() => {});
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intro]);
+
+  function startIntro() {
+    const a = audio.current;
+    if (!a?.buf) return setIntro("show");
+    const src = a.ctx.createBufferSource();
+    const g = a.ctx.createGain();
+    g.gain.value = 0.6;
+    src.buffer = a.buf;
+    src.connect(g).connect(a.ctx.destination);
+    const lead = 0.06;
+    src.start(a.ctx.currentTime + lead);
+    src.onended = () => void a.ctx.close().catch(() => {});
+    window.setTimeout(() => setIntro("show"), lead * 1000);
+  }
+  const tapToEnter = () => {
+    const a = audio.current;
+    if (!a) return setIntro("show");
+    a.ctx
+      .resume()
+      .catch(() => {})
+      .finally(startIntro);
+  };
 
   const eps = useMemo(() => (cat ? orderedEpisodes(cat) : []), [cat]);
   const cont = cat ? nextToWatch(cat) : null;
@@ -282,16 +351,26 @@ export function LummaPlay() {
       onScroll={(e) => setSolid((e.currentTarget.scrollTop ?? 0) > 60)}
     >
       {intro !== "off" && (
-        <div className={`lp-intro ${intro === "hide" ? "hide" : ""}`} aria-hidden>
-          <div className="lp-orb">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="lp-word">
-            Lumma<small>PLAY</small>
-          </div>
+        <div className={`lp-intro ${intro === "hide" ? "hide" : ""}`} aria-hidden={intro !== "tap"}>
+          {(intro === "show" || intro === "hide") && (
+            <>
+              <div className="lp-orb">
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="lp-word">
+                Lumma<small>PLAY</small>
+              </div>
+            </>
+          )}
+          {intro === "tap" && (
+            <button type="button" className="lp-enter" onClick={tapToEnter} autoFocus>
+              <i>▶</i>
+              <span>Entrar no Lumma Play</span>
+            </button>
+          )}
         </div>
       )}
 

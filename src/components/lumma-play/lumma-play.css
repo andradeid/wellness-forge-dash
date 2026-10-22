@@ -34,6 +34,34 @@
   gap: 18px;
   transition: opacity 0.8s ease;
 }
+.lp-enter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: none;
+  border: 0;
+  color: #fff;
+  font: 600 18px "Plus Jakarta Sans", sans-serif;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  animation: lp-rise 0.6s ease both;
+}
+.lp-enter i {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.2s;
+}
+.lp-enter:hover i {
+  background: #fff;
+  color: #2a1238;
+  transform: scale(1.06);
+}
 .lp-intro.hide {
   opacity: 0;
   pointer-events: none;
