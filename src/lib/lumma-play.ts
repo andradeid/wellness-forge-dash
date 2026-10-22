@@ -175,7 +175,7 @@ export function parseYouTubeId(input: string | null | undefined): string | null 
 export function episodeThumb(ep: PlayEpisode): string {
   if (ep.thumbnail_url) return ep.thumbnail_url;
   if (ep.video_provider === "youtube" && ep.video_id)
-    return `https://i.ytimg.com/vi/${ep.video_id}/hqdefault.jpg`;
+    return `https://i.ytimg.com/vi/${ep.video_id}/maxresdefault.jpg`;
   return "/lumma-play/hero-2.jpg";
 }
 
