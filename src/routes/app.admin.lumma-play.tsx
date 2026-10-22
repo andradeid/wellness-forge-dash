@@ -86,12 +86,31 @@ function useAdminData(enabled: boolean) {
   });
 }
 
+/** Reduz a capa para no máx. 1280 px de largura em JPEG (carrega rápido nas fileiras). */
+async function reduzirImagem(file: File): Promise<Blob> {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 1280 / bmp.width);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bmp.width * scale);
+  canvas.height = Math.round(bmp.height * scale);
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  return await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("falha ao gerar a imagem"))),
+      "image/jpeg",
+      0.85,
+    ),
+  );
+}
+
 function EpisodeRow({ ep, onSaved }: { ep: PlayEpisode; onSaved: () => void }) {
   const [title, setTitle] = useState(ep.title);
   const [description, setDescription] = useState(ep.description);
   const [link, setLink] = useState(ep.video_id ? `https://youtu.be/${ep.video_id}` : "");
   const [duration, setDuration] = useState(String(ep.duration_seconds));
   const [active, setActive] = useState(ep.is_active);
+  const [thumb, setThumb] = useState<string | null>(ep.thumbnail_url);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const parsed = parseYouTubeId(link);
   const dirty =
@@ -99,7 +118,8 @@ function EpisodeRow({ ep, onSaved }: { ep: PlayEpisode; onSaved: () => void }) {
     description !== ep.description ||
     (parsed ?? null) !== (ep.video_id ?? null) ||
     Number(duration) !== ep.duration_seconds ||
-    active !== ep.is_active;
+    active !== ep.is_active ||
+    (thumb ?? null) !== (ep.thumbnail_url ?? null);
 
   const salvar = async () => {
     if (link.trim() && !parsed) {
@@ -116,6 +136,7 @@ function EpisodeRow({ ep, onSaved }: { ep: PlayEpisode; onSaved: () => void }) {
         video_id: parsed,
         duration_seconds: Math.max(0, Math.round(Number(duration) || 0)),
         is_active: active,
+        thumbnail_url: thumb,
         updated_at: new Date().toISOString(),
       })
       .eq("id", ep.id);
@@ -128,15 +149,65 @@ function EpisodeRow({ ep, onSaved }: { ep: PlayEpisode; onSaved: () => void }) {
     onSaved();
   };
 
+  const enviarCapa = async (file: File | undefined) => {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      toast.error("Use uma imagem JPG, PNG ou WEBP");
+      return;
+    }
+    setUploading(true);
+    try {
+      const blob = await reduzirImagem(file);
+      const path = `capas/ep${String(ep.number).padStart(2, "0")}-${Date.now()}.jpg`;
+      const { error } = await supabase.storage
+        .from("lumma-play")
+        .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("lumma-play").getPublicUrl(path);
+      setThumb(data.publicUrl);
+      toast.success("Capa enviada. Clique em Salvar para aplicar.");
+    } catch (e) {
+      toast.error("Não foi possível enviar a capa", { description: (e as Error).message });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 gap-3 border-b py-4 last:border-0 md:grid-cols-[150px_1fr_260px]">
-      <div
-        className="relative aspect-video overflow-hidden rounded-md bg-muted bg-cover bg-center"
-        style={{ backgroundImage: `url(${episodeThumb({ ...ep, video_id: parsed })})` }}
-      >
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white">
-          EP. {ep.number}
-        </span>
+    <div className="grid grid-cols-1 gap-3 border-b py-4 last:border-0 md:grid-cols-[180px_1fr_260px]">
+      <div className="space-y-1.5">
+        <div
+          className="relative aspect-video overflow-hidden rounded-md bg-muted bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${episodeThumb({ ...ep, video_id: parsed, thumbnail_url: thumb })})`,
+          }}
+        >
+          <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            EP. {ep.number}
+          </span>
+        </div>
+        <label className="block cursor-pointer rounded-md border border-dashed px-2 py-1.5 text-center text-xs text-muted-foreground hover:bg-muted">
+          {uploading ? "Enviando…" : "Trocar capa"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              void enviarCapa(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {thumb && parsed && (
+          <button
+            type="button"
+            className="w-full text-[11px] text-muted-foreground underline"
+            onClick={() => setThumb(null)}
+          >
+            Usar a capa do YouTube
+          </button>
+        )}
       </div>
       <div className="space-y-2">
         <Input value={title} onChange={(e) => setTitle(e.target.value)} className="font-medium" />
@@ -357,7 +428,8 @@ function AdminLummaPlayPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">{t.title}</CardTitle>
             <CardDescription>
-              Cole o link do YouTube (não listado) de cada episódio e salve.
+              Cole o link do YouTube (não listado) de cada episódio. A capa pode ser trocada por uma
+              imagem sua (16:9, ex. 1280×720); sem capa própria, usa a do YouTube.
             </CardDescription>
           </CardHeader>
           <CardContent>
