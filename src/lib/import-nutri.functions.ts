@@ -137,7 +137,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
       else {
         subsUpserts++;
         try {
-          await fillSubscriptionOrigin(supabaseAdmin, userId, "importacao");
+          await fillSubscriptionOrigin(supabaseAdmin as unknown as SubscriptionOriginClient, userId, "importacao");
         } catch (error) {
           updateErrors.push({ email, error: error instanceof Error ? error.message : String(error) });
         }
