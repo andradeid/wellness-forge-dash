@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { fillSubscriptionOrigin } from "./subscription-origin";
+import { fillSubscriptionOrigin, type SubscriptionOriginClient } from "./subscription-origin";
 
 const TAG_ILIMITADO = "b11d5d6e-284a-415a-85fe-99f384313140";
 const TAG_MIGRADO = "828a8849-3db5-4cca-b586-3a082cb84753";
@@ -137,7 +137,7 @@ export const runNutriImport = createServerFn({ method: "POST" })
       else {
         subsUpserts++;
         try {
-          await fillSubscriptionOrigin(supabaseAdmin, userId, "importacao");
+          await fillSubscriptionOrigin(supabaseAdmin as unknown as SubscriptionOriginClient, userId, "importacao");
         } catch (error) {
           updateErrors.push({ email, error: error instanceof Error ? error.message : String(error) });
         }

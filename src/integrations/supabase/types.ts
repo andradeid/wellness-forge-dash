@@ -1137,6 +1137,169 @@ export type Database = {
         }
         Relationships: []
       }
+      lumma_play_access: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lumma_play_episodes: {
+        Row: {
+          created_at: string
+          description: string
+          duration_seconds: number
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          number: number
+          sort_order: number
+          thumbnail_url: string | null
+          title: string
+          track_id: string
+          updated_at: string
+          video_id: string | null
+          video_provider: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          duration_seconds?: number
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          number: number
+          sort_order?: number
+          thumbnail_url?: string | null
+          title: string
+          track_id: string
+          updated_at?: string
+          video_id?: string | null
+          video_provider?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          duration_seconds?: number
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          number?: number
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string
+          track_id?: string
+          updated_at?: string
+          video_id?: string | null
+          video_provider?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lumma_play_episodes_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "lumma_play_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lumma_play_progress: {
+        Row: {
+          completed: boolean
+          episode_id: string
+          position_seconds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          episode_id: string
+          position_seconds?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          episode_id?: string
+          position_seconds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lumma_play_progress_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "lumma_play_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lumma_play_settings: {
+        Row: {
+          access_mode: string
+          id: number
+          series_description: string
+          series_title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          access_mode?: string
+          id?: number
+          series_description?: string
+          series_title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          access_mode?: string
+          id?: number
+          series_description?: string
+          series_title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      lumma_play_tracks: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mcp_write_audit: {
         Row: {
           actor_id: string
@@ -2224,6 +2387,7 @@ export type Database = {
         Returns: boolean
       }
       log_subscription_expiries: { Args: never; Returns: number }
+      lumma_play_can_view: { Args: never; Returns: boolean }
       mcp_create_changelog_round: { Args: { p: Json }; Returns: Json }
       mcp_link_reports: { Args: { p: Json }; Returns: Json }
       mcp_update_changelog_round: { Args: { p: Json }; Returns: Json }
