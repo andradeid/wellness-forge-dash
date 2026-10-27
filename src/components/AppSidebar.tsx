@@ -93,7 +93,7 @@ const nutriGroups: NavGroup[] = [
     items: [
       { title: "Dashboard", url: "/app/dashboard", icon: LayoutGrid },
       { title: "Pacientes", url: "/app/patients", icon: Users, exact: true },
-      { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat", badge: "NOVO" },
+      { title: "Chat / Consulta", url: "/app/chats", icon: MessageSquare, matchPrefix: "/app/chat" },
       { title: "Lumma Play", url: "/app/play", icon: Clapperboard, badge: "NOVO", playOnly: true },
     ],
   },
