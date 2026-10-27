@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { fillSubscriptionOrigin } from "./subscription-origin";
+import { fillSubscriptionOrigin, type SubscriptionOriginClient } from "./subscription-origin";
 
 const TAG_ILIMITADO = "b11d5d6e-284a-415a-85fe-99f384313140";
 const TAG_MIGRADO = "828a8849-3db5-4cca-b586-3a082cb84753";
