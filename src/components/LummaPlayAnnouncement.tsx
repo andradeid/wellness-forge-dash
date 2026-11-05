@@ -10,32 +10,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+
+import {
+  setLummaPlayNeverShow,
+  shouldShowLummaPlayAnnouncement,
+} from "@/lib/lumma-play-announcement";
 
 /**
- * Aviso de novidade do Lumma Play. Abre uma vez por sessão do navegador
- * (sessionStorage), para que todos vejam ao entrar sem repetir a cada página.
+ * Aviso de novidade do Lumma Play.
+ * Abre sempre que o usuário entra, até que ele marque "Não mostrar novamente"
+ * (gravado no navegador, então vale para todos os próximos acessos).
  */
-const KEY = "lumma-play-announcement-seen";
-
 export function LummaPlayAnnouncement() {
   const [open, setOpen] = useState(false);
+  const [hideForever, setHideForever] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(KEY) !== "1") setOpen(true);
-    } catch {
-      setOpen(true);
-    }
+    if (shouldShowLummaPlayAnnouncement()) setOpen(true);
   }, []);
 
-  const close = () => {
-    try {
-      sessionStorage.setItem(KEY, "1");
-    } catch {
-      /* navegador sem storage: apenas fecha */
-    }
-    setOpen(false);
+  const close = () => setOpen(false);
+
+  const toggleHideForever = (checked: boolean) => {
+    setHideForever(checked);
+    setLummaPlayNeverShow(checked);
   };
 
   return (
@@ -58,9 +58,17 @@ export function LummaPlayAnnouncement() {
               consultório.
             </DialogDescription>
           </DialogHeader>
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <Checkbox
+              id="lumma-play-never"
+              checked={hideForever}
+              onCheckedChange={(v) => toggleHideForever(v === true)}
+            />
+            <span>Não mostrar novamente</span>
+          </label>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="ghost" className="rounded-full" onClick={close}>
-              Ver depois
+              Agora não
             </Button>
             <Button
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-primary-foreground hover:opacity-90"
