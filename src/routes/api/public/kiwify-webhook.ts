@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { fillSubscriptionOrigin } from "@/lib/subscription-origin";
+import { KIWIFY_PRODUCTS, kiwifyValidityLabel } from "@/lib/kiwify-products";
 
 /**
  * Webhook público da Kiwify.
@@ -11,6 +12,8 @@ import { fillSubscriptionOrigin } from "@/lib/subscription-origin";
  * Mapeamento de produtos Kiwify → planos Lumma:
  *   - a19b7600-851a-11f1-ac2c-dbf6162aa415 → Starter Anual
  *   - 59a89e30-851b-11f1-be44-db22545a0013 → Pro Anual
+ *   - c1df6360-d3b5-11f1-aaf7-2ffa08014d49 → Pro com validade de 2 anos
+ * A lista completa, com a validade de cada produto, fica em src/lib/kiwify-products.ts.
  *
  * Eventos tratados:
  *   - order_approved / compra_aprovada  → cria user c/ senha temporária + assinatura ativa + créditos + histórico
@@ -19,14 +22,6 @@ import { fillSubscriptionOrigin } from "@/lib/subscription-origin";
  *   - subscription_canceled / subscription_late → status atualizado
  *   - subscription_renewed              → estende current_period_end + refill de créditos
  */
-
-const PRODUCT_MAP: Record<string, { slug: "starter" | "pro"; cycle: "yearly" }> = {
-  "a19b7600-851a-11f1-ac2c-dbf6162aa415": { slug: "starter", cycle: "yearly" },
-  "59a89e30-851b-11f1-be44-db22545a0013": { slug: "pro", cycle: "yearly" },
-  // Upgrade - Lumma 2.0 - Pro Anual (quem já é Starter e migra para Pro)
-  "53f6ae60-89d9-11f1-be8a-11fc729f7dc2": { slug: "pro", cycle: "yearly" },
-};
-
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -234,7 +229,7 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
     console.warn("[kiwify-webhook] order_approved sem product_id");
     return;
   }
-  const mapped = PRODUCT_MAP[productId];
+  const mapped = KIWIFY_PRODUCTS[productId];
   if (!mapped) {
     console.warn(`[kiwify-webhook] product_id ${productId} não mapeado — ignorando`);
     return;
@@ -281,10 +276,10 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
     .maybeSingle();
   const monthlyCredits = (plan as any)?.monthly_credits ?? 0;
 
-  // Assinatura anual: current_period_end = agora + 1 ano
+  // Validade concedida na compra: agora + `years` anos (1 por padrão, 2 no Pro Black Friday)
   const now = new Date();
   const periodEnd = new Date(now);
-  periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+  periodEnd.setFullYear(periodEnd.getFullYear() + mapped.years);
 
   await supabaseAdmin
     .from("subscriptions" as any)
@@ -339,7 +334,7 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
   await supabaseAdmin.from("payment_history" as any).insert({
     user_id: userId,
     kind: "subscription",
-    description: `${(plan as any)?.name ?? mapped.slug} (Anual) — Kiwify`,
+    description: `${(plan as any)?.name ?? mapped.slug} (${kiwifyValidityLabel(mapped.years)}) — Kiwify`,
     amount_cents: amountCents,
     currency: (payload?.currency ?? "BRL").toUpperCase(),
     status: "paid",
