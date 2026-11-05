@@ -388,11 +388,31 @@ async function handleRefundOrChargeback(
     return;
   }
 
-  // Cancela assinatura
-  await supabaseAdmin
-    .from("subscriptions" as any)
-    .update({ status: "canceled" })
-    .eq("user_id", userId);
+  // Só cancela se o pedido estornado for a compra que sustenta a assinatura
+  // atual (último pagamento aprovado). Estorno de compra antiga não derruba
+  // uma compra mais nova que continua válida.
+  const refundedOrderId = (payload?.order_id ?? null) as string | null;
+  const { data: lastPaid } = await supabaseAdmin
+    .from("payment_history" as any)
+    .select("metadata")
+    .eq("user_id", userId)
+    .eq("status", "paid")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const currentOrderId = ((lastPaid as any)?.metadata?.kiwify_order_id ?? null) as string | null;
+  const shouldCancel = !refundedOrderId || !currentOrderId || currentOrderId === refundedOrderId;
+
+  if (shouldCancel) {
+    await supabaseAdmin
+      .from("subscriptions" as any)
+      .update({ status: "canceled" })
+      .eq("user_id", userId);
+  } else {
+    console.warn(
+      `[kiwify-webhook] ${kind} do pedido ${refundedOrderId} não é a compra vigente (${currentOrderId}); assinatura mantida.`,
+    );
+  }
 
   const amountCents = extractAmountCents(payload);
   await supabaseAdmin.from("payment_history" as any).insert({
