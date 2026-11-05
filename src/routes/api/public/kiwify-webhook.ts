@@ -365,6 +365,22 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
     } catch (err: any) {
       console.error("[kiwify-webhook] falha ao enviar welcome:", err?.message);
     }
+  } else {
+    // Cliente que já tinha conta: confirma a compra por e-mail.
+    try {
+      const { sendSubscriptionActivatedEmail } = await import("@/lib/emails.server");
+      await sendSubscriptionActivatedEmail({
+        userId,
+        planName: (plan as any)?.name ?? mapped.slug,
+        credits: monthlyCredits,
+        amountCents,
+        currency: (payload?.currency ?? "BRL").toUpperCase(),
+        billingCycle: mapped.cycle,
+        nextRenewalIso: periodEnd.toISOString(),
+      });
+    } catch (err: any) {
+      console.error("[kiwify-webhook] falha ao enviar confirmação:", err?.message);
+    }
   }
 }
 
