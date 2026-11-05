@@ -10,6 +10,7 @@ import { PaywallDialog } from "@/components/PaywallDialog";
 import { SubscriptionExpiredBanner } from "@/components/SubscriptionExpiredBanner";
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
 import { TopUpDialog } from "@/components/TopUpDialog";
+import { LummaPlayAnnouncement } from "@/components/LummaPlayAnnouncement";
 import { useTopUpState, topUpStore } from "@/lib/topup-store";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -313,6 +314,7 @@ function AppLayout() {
           </div>
         </div>
         <Toaster />
+        {pathname !== "/app/play" && <LummaPlayAnnouncement />}
         <PaywallDialog
           open={paywall.open}
           onOpenChange={(v) => (v ? null : paywallStore.close())}
