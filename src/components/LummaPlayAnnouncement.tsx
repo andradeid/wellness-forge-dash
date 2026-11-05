@@ -12,40 +12,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import {
+  setLummaPlayNeverShow,
+  shouldShowLummaPlayAnnouncement,
+} from "@/lib/lumma-play-announcement";
+
 /**
  * Aviso de novidade do Lumma Play.
  * Abre sempre que o usuário entra, até que ele marque "Não mostrar novamente"
- * (gravado em localStorage, então vale para todos os próximos acessos).
+ * (gravado no navegador, então vale para todos os próximos acessos).
  */
-const NEVER_KEY = "lumma-play-announcement-never";
-
-function readNever(): boolean {
-  try {
-    return localStorage.getItem(NEVER_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
 export function LummaPlayAnnouncement() {
   const [open, setOpen] = useState(false);
   const [hideForever, setHideForever] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!readNever()) setOpen(true);
+    if (shouldShowLummaPlayAnnouncement()) setOpen(true);
   }, []);
 
   const close = () => setOpen(false);
 
   const toggleHideForever = (checked: boolean) => {
     setHideForever(checked);
-    try {
-      if (checked) localStorage.setItem(NEVER_KEY, "1");
-      else localStorage.removeItem(NEVER_KEY);
-    } catch {
-      /* navegador sem storage: a preferência não é persistida */
-    }
+    setLummaPlayNeverShow(checked);
   };
 
   return (
