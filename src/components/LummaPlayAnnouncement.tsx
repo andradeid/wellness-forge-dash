@@ -10,32 +10,42 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /**
- * Aviso de novidade do Lumma Play. Abre uma vez por sessão do navegador
- * (sessionStorage), para que todos vejam ao entrar sem repetir a cada página.
+ * Aviso de novidade do Lumma Play.
+ * Abre sempre que o usuário entra, até que ele marque "Não mostrar novamente"
+ * (gravado em localStorage, então vale para todos os próximos acessos).
  */
-const KEY = "lumma-play-announcement-seen";
+const NEVER_KEY = "lumma-play-announcement-never";
+
+function readNever(): boolean {
+  try {
+    return localStorage.getItem(NEVER_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export function LummaPlayAnnouncement() {
   const [open, setOpen] = useState(false);
+  const [hideForever, setHideForever] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(KEY) !== "1") setOpen(true);
-    } catch {
-      setOpen(true);
-    }
+    if (!readNever()) setOpen(true);
   }, []);
 
-  const close = () => {
+  const close = () => setOpen(false);
+
+  const toggleHideForever = (checked: boolean) => {
+    setHideForever(checked);
     try {
-      sessionStorage.setItem(KEY, "1");
+      if (checked) localStorage.setItem(NEVER_KEY, "1");
+      else localStorage.removeItem(NEVER_KEY);
     } catch {
-      /* navegador sem storage: apenas fecha */
+      /* navegador sem storage: a preferência não é persistida */
     }
-    setOpen(false);
   };
 
   return (
@@ -58,9 +68,17 @@ export function LummaPlayAnnouncement() {
               consultório.
             </DialogDescription>
           </DialogHeader>
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <Checkbox
+              id="lumma-play-never"
+              checked={hideForever}
+              onCheckedChange={(v) => toggleHideForever(v === true)}
+            />
+            <span>Não mostrar novamente</span>
+          </label>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="ghost" className="rounded-full" onClick={close}>
-              Ver depois
+              Agora não
             </Button>
             <Button
               className="rounded-full bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-primary-foreground hover:opacity-90"
