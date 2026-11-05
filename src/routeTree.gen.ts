@@ -35,6 +35,7 @@ import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.struc
 import { Route as ApiDifyAgentTestRouteImport } from './routes/api/dify.agent-test'
 import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
+import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiPublicHublaWebhookRouteImport } from './routes/api/public/hubla-webhook'
 import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
@@ -201,6 +202,11 @@ const ApiDifyResetConversationsRoute =
     path: '/api/dify/reset-conversations',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiDifyTestRoute = ApiDifyTestRouteImport.update({
+  id: '/api/dify/test',
+  path: '/api/dify/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
   id: '/api/dify/upload',
   path: '/api/dify/upload',
@@ -385,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
+  '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
@@ -443,6 +450,7 @@ export interface FileRoutesByTo {
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
+  '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
@@ -503,6 +511,7 @@ export interface FileRoutesById {
   '/api/dify/agent-test': typeof ApiDifyAgentTestRoute
   '/api/dify/chat': typeof ApiDifyChatRoute
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
+  '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
@@ -564,6 +573,7 @@ export interface FileRouteTypes {
     | '/api/dify/agent-test'
     | '/api/dify/chat'
     | '/api/dify/reset-conversations'
+    | '/api/dify/test'
     | '/api/dify/upload'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
@@ -622,6 +632,7 @@ export interface FileRouteTypes {
     | '/api/dify/agent-test'
     | '/api/dify/chat'
     | '/api/dify/reset-conversations'
+    | '/api/dify/test'
     | '/api/dify/upload'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
@@ -681,6 +692,7 @@ export interface FileRouteTypes {
     | '/api/dify/agent-test'
     | '/api/dify/chat'
     | '/api/dify/reset-conversations'
+    | '/api/dify/test'
     | '/api/dify/upload'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
@@ -731,6 +743,7 @@ export interface RootRouteChildren {
   ApiDifyAgentTestRoute: typeof ApiDifyAgentTestRoute
   ApiDifyChatRoute: typeof ApiDifyChatRoute
   ApiDifyResetConversationsRoute: typeof ApiDifyResetConversationsRoute
+  ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
   ApiPublicHublaWebhookRoute: typeof ApiPublicHublaWebhookRoute
   ApiPublicKiwifyWebhookRoute: typeof ApiPublicKiwifyWebhookRoute
@@ -920,6 +933,13 @@ declare module '@tanstack/react-router' {
       path: '/api/dify/reset-conversations'
       fullPath: '/api/dify/reset-conversations'
       preLoaderRoute: typeof ApiDifyResetConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dify/test': {
+      id: '/api/dify/test'
+      path: '/api/dify/test'
+      fullPath: '/api/dify/test'
+      preLoaderRoute: typeof ApiDifyTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/dify/upload': {
@@ -1250,6 +1270,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDifyAgentTestRoute: ApiDifyAgentTestRoute,
   ApiDifyChatRoute: ApiDifyChatRoute,
   ApiDifyResetConversationsRoute: ApiDifyResetConversationsRoute,
+  ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
   ApiPublicHublaWebhookRoute: ApiPublicHublaWebhookRoute,
   ApiPublicKiwifyWebhookRoute: ApiPublicKiwifyWebhookRoute,
