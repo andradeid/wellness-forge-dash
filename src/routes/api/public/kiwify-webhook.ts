@@ -375,7 +375,7 @@ async function handleOrderApproved(supabaseAdmin: any, payload: any, eventKey: s
         credits: monthlyCredits,
         amountCents,
         currency: (payload?.currency ?? "BRL").toUpperCase(),
-        billingCycle: mapped.cycle === "monthly" ? "monthly" : "yearly",
+        billingCycle: mapped.cycle,
         nextRenewalIso: periodEnd.toISOString(),
       });
     } catch (err: any) {
