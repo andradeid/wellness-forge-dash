@@ -5,7 +5,7 @@ import { KIWIFY_PRODUCTS, kiwifyValidityLabel } from "./kiwify-products";
 describe("catálogo de produtos Kiwify", () => {
   it("libera Pro com validade de 2 anos para o produto da Black Friday", () => {
     assert.deepEqual(KIWIFY_PRODUCTS["c1df6360-d3b5-11f1-aaf7-2ffa08014d49"], {
-      slug: "pro",
+      slug: "starter",
       cycle: "yearly",
       years: 2,
     });
