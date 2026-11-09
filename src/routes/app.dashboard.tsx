@@ -45,6 +45,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatMarkerValue } from "@/lib/exam-markers";
 
 export const Route = createFileRoute("/app/dashboard")({
   head: () => ({
@@ -707,7 +708,7 @@ function DashboardPage() {
                             severityBadge,
                           )}
                         >
-                          {p.top.marker_value_raw}
+                          {formatMarkerValue(p.top.marker_value_raw, p.top.marker_name)}
                           {p.top.marker_unit ? ` ${p.top.marker_unit}` : ""} ·{" "}
                           {p.top.classification}
                         </span>
@@ -1202,7 +1203,7 @@ function DashboardPage() {
                        </td>
                        <td className="px-3 py-2">{r.marker_name}</td>
                        <td className="px-3 py-2 whitespace-nowrap">
-                         {r.marker_value_raw ?? "—"}
+                         {formatMarkerValue(r.marker_value_raw, r.marker_name) || "—"}
                          {r.marker_unit ? ` ${r.marker_unit}` : ""}
                        </td>
                        <td className="px-3 py-2">{r.classification ?? "—"}</td>

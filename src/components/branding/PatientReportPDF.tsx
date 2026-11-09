@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { formatMarkerValue } from "@/lib/exam-markers";
 import { format, differenceInYears } from "date-fns";
 import { BrandingDocumentPreview, type BrandingDocData } from "./BrandingDocumentPreview";
 
@@ -102,7 +103,7 @@ export const PatientReportPDF = forwardRef<HTMLDivElement, Props>(
                         {m.marker_name}
                       </td>
                       <td className="px-3 py-2 tabular-nums">
-                        {m.marker_value_raw ?? m.marker_value ?? "—"}
+                        {formatMarkerValue(m.marker_value_raw ?? m.marker_value, m.marker_name) || "—"}
                         {m.marker_unit ? (
                           <span className="text-slate-500"> {m.marker_unit}</span>
                         ) : null}

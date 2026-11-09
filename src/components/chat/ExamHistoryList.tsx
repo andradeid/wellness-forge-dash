@@ -26,6 +26,7 @@ export interface ExamItem {
   mime_type: string | null;
   created_at: string;
   exam_date?: string | null;
+  chat_id?: string | null;
 }
 
 interface Props {
@@ -100,11 +101,34 @@ export function ExamHistoryList({ exams, onChanged }: Props) {
         .from("patient_exam_results")
         .delete()
         .eq("exam_id", pendingDelete.id);
-      const { error } = await (supabase as any)
+      // Curadoria #72: marcadores antigos gravados sem vínculo com o exame
+      // (respostas de acompanhamento) ficavam no gráfico. Quando este é o
+      // único exame da conversa, eles são deste exame e saem junto.
+      if (pendingDelete.chat_id) {
+        const { count } = await (supabase as any)
+          .from("patient_exams")
+          .select("id", { count: "exact", head: true })
+          .eq("chat_id", pendingDelete.chat_id);
+        if (count === 1) {
+          await (supabase as any)
+            .from("patient_exam_results")
+            .delete()
+            .eq("chat_id", pendingDelete.chat_id)
+            .is("exam_id", null)
+            .gte("created_at", pendingDelete.created_at);
+        }
+      }
+      const { data: removed, error } = await (supabase as any)
         .from("patient_exams")
         .delete()
-        .eq("id", pendingDelete.id);
+        .eq("id", pendingDelete.id)
+        .select("id");
       if (error) throw error;
+      // Sem permissão o banco não devolve erro, só não apaga: avisa em vez de
+      // mostrar "Exame excluído" com o exame ainda na lista.
+      if (!Array.isArray(removed) || removed.length === 0) {
+        throw new Error("O exame não pôde ser excluído com esta conta.");
+      }
       if (pendingDelete.file_path) {
         await supabase.storage.from("exams").remove([pendingDelete.file_path]);
       }

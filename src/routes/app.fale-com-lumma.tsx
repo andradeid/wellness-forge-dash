@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus, Menu, Camera, LayoutDashboard } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, Plus, Search, MessageSquare, ArrowLeft, Loader2, UserPlus, Users, ClipboardList, Microscope, Pill, Pin, Edit2, Check, X, Trash2, Droplet, TestTube, Scale, Activity, Dna, Stethoscope, Apple, Utensils, BookOpen, ChevronDown, Sparkles, Volume2, VolumeX, User, UserMinus, Menu, Camera, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,6 +61,29 @@ function FaleComLummaPage() {
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  // Excluir Perguntas Clínicas / Pesquisa Científica direto da página inicial (curadoria #20).
+  const [deleteTarget, setDeleteTarget] = useState<ChatItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const handleDeleteGeneralChat = async () => {
+    if (!deleteTarget || deleteTarget.patient_id) return;
+    setIsDeleting(true);
+    try {
+      await supabase.from("general_chat_messages").delete().eq("chat_id", deleteTarget.id);
+      const { error } = await supabase.from("general_chats").delete().eq("id", deleteTarget.id);
+      if (error) throw error;
+      toast.success("Conversa excluída.");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("lumma:chat-deleted", { detail: { id: deleteTarget.id } }));
+      }
+      setDeleteTarget(null);
+      await refreshHistory();
+    } catch (err) {
+      console.error("Erro ao excluir conversa:", err);
+      toast.error("Não foi possível excluir a conversa.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const [editTitle, setEditTitle] = useState("");
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
@@ -531,6 +554,19 @@ function FaleComLummaPage() {
                           >
                             <Pin className={cn("h-3 w-3", c.pinned_at ? "text-white fill-white" : "text-white/70")} />
                           </button>
+                          {!c.patient_id && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(c);
+                              }}
+                              title="Excluir conversa"
+                              aria-label="Excluir conversa"
+                              className="opacity-0 group-hover/item:opacity-100 p-1 hover:bg-white/20 rounded transition-opacity shrink-0 mt-0.5"
+                            >
+                              <Trash2 className="h-3 w-3 text-white/70" />
+                            </button>
+                          )}
                         </div>
                       )}
                       {c.agent_type && (
@@ -807,12 +843,12 @@ function FaleComLummaPage() {
                     { trigger: "bioimpedancia", icon: Activity, title: "Bioimpedância", color: "#e89bcf" },
                     { trigger: "calorimetria", icon: Stethoscope, title: "Calorimetria", color: "#e89bcf" },
                     { trigger: "genetica", icon: Dna, title: "Genética", color: "#e89bcf" },
-                    { trigger: "microbioma", icon: Microscope, title: "Microbioma", color: "#e89bcf" },
+                    { trigger: "microbioma", icon: Microscope, title: "Exames – Saúde Intestinal", color: "#e89bcf" },
                     { trigger: "estimativa_refeicao_foto", icon: Utensils, title: "Refeição por Foto", color: "#e8a04c" },
                     { trigger: "composicao_corporal_foto", icon: Activity, title: "Composição por Foto", color: "#4ade80" },
                     { trigger: "nutricao_visual", icon: Camera, title: "Nutrição Visual", color: "#facc15" },
                     { trigger: "casos_clinicos", icon: ClipboardList, title: "Casos Clínicos & Sintomas", color: "#e8a04c" },
-                    { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Receitas", color: "#e8a04c" },
+                    { trigger: "plano_alimentar", icon: Apple, title: "Plano Alimentar & Formulações", color: "#e8a04c" },
                     { trigger: "pesquisa_cientifica", icon: Search, title: "Pesquisa Científica", color: "#e8a04c" },
                     { trigger: "perguntas_clinicas", icon: MessageSquare, title: "Perguntas Clínicas", color: "#e8a04c" },
                   ];
@@ -951,6 +987,26 @@ function FaleComLummaPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmação: excluir conversa sem paciente (curadoria #20) */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o && !isDeleting) setDeleteTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Excluir conversa?</DialogTitle>
+            <DialogDescription>
+              "{deleteTarget?.title || "Conversa"}" e todas as mensagens dela serão apagadas. Não dá para desfazer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteGeneralChat} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal: Perfil da conversa (Perguntas Clínicas sem paciente) */}
       <Dialog open={profilePickerOpen} onOpenChange={(o) => !profilePickerLoading && setProfilePickerOpen(o)}>

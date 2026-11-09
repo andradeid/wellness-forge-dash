@@ -40,7 +40,7 @@ function GeneralChatPage() {
   const agentType = agentTypeSearch ?? "research";
   const navigate = useNavigate();
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
-  const { messages, sendMessage, thinking } = useGeneralChat(chatId, agentType, selectedTaskKey);
+  const { messages, sendMessage, thinking, stopGeneration } = useGeneralChat(chatId, agentType, selectedTaskKey);
   const [query, setQuery] = useState("");
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const { role, user } = useAuth();
@@ -101,14 +101,14 @@ function GeneralChatPage() {
   // Chat SEM paciente (modo legado, não-super): apenas tarefas gerais.
   const AGENT_OPTIONS = [
     { id: "reasoning", title: "Casos Clínicos & Sintomas", icon: ClipboardList, color: "#e8a04c", line: 1 },
-    { id: "production", title: "Plano Alimentar & Receitas", icon: Apple, color: "#e8a04c", line: 1 },
+    { id: "production", title: "Plano Alimentar & Formulações", icon: Apple, color: "#e8a04c", line: 1 },
     { id: "research", title: "Pesquisa Científica", icon: BookOpen, color: "#e8a04c", line: 1 },
   ];
 
   const getActiveAgentLabel = (id: string | undefined) => {
     const agent = AGENT_OPTIONS.find(a => a.id === id);
     if (!agent) return "Pergunta Clínica";
-    if (agent.id === "production") return "Elaborando Plano & Receitas";
+    if (agent.id === "production") return "Elaborando Plano & Formulações";
     return agent.title;
   };
 
@@ -468,6 +468,8 @@ function GeneralChatPage() {
                 sendMessage(text);
               }}
               disabled={thinking || (isSuperAgent && !selectedTaskKey)}
+              generating={thinking}
+              onStop={stopGeneration}
             />
             <TooltipProvider delayDuration={150}>
               <Tooltip>

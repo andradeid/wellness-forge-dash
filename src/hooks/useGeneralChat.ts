@@ -26,6 +26,9 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
   const researchSavedRef = useRef<boolean>(false);
   const currentFullTextRef = useRef<string>("");
   const sendingRef = useRef(false);
+  // Botão "Parar" (curadoria #16).
+  const streamAbortRef = useRef<AbortController | null>(null);
+  const stoppedByUserRef = useRef(false);
   const thinkingRef = useRef(false);
   /** Uma única retentativa automática por envio quando o Dify devolve o fallback de roteamento. */
   const routingRetryUsedRef = useRef(false);
@@ -72,6 +75,8 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
     if (!opts?._isRetry) routingRetryUsedRef.current = false;
     sendingRef.current = true;
     thinkingRef.current = true;
+    stoppedByUserRef.current = false;
+    streamAbortRef.current = new AbortController();
     setThinking(true);
 
     const abortSend = () => {
@@ -204,6 +209,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch("/api/dify/chat", {
         method: "POST",
+        signal: streamAbortRef.current?.signal,
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
           "Content-Type": "application/json",
@@ -385,6 +391,28 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
       }
 
     } catch (e: any) {
+      if (stoppedByUserRef.current) {
+        // Parada pela nutricionista: guarda o que chegou, sem erro e sem débito.
+        const partial = currentFullTextRef.current.trim();
+        if (partial) {
+          researchSavedRef.current = true;
+          const content = partial + "\n\n⏹️ *Resposta interrompida por você.*";
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastIdx = updated.length - 1;
+            if (updated[lastIdx]?.role === "assistant") updated[lastIdx] = { ...updated[lastIdx], content };
+            return updated;
+          });
+          try { await saveAssistantToSupabase(content); } catch { /* best-effort */ }
+        } else {
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            return last?.role === "assistant" && !last.content ? prev.slice(0, -1) : prev;
+          });
+        }
+        toast.info("Resposta interrompida. Ela não foi cobrada.", { duration: 5000 });
+        return;
+      }
       console.error("Chat error:", e);
       const raw = String(e?.message || "");
       if (isProviderConcurrencyError(raw)) {
@@ -445,5 +473,11 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
 
   useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
 
-  return { messages, sendMessage, thinking };
+  const stopGeneration = useCallback(() => {
+    if (!streamAbortRef.current) return;
+    stoppedByUserRef.current = true;
+    try { streamAbortRef.current.abort(); } catch { /* noop */ }
+  }, []);
+
+  return { messages, sendMessage, thinking, stopGeneration };
 }

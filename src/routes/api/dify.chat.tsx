@@ -95,6 +95,10 @@ export interface StreamOutcome {
   providerLatencyMs: number | null;
   /** A resposta trouxe o array `markers` com ao menos um objeto. */
   sawMarkers: boolean;
+  /** task_id da execução (usado para pedir ao Dify que pare a geração). */
+  taskId: string | null;
+  /** A nutricionista parou a resposta (botão Parar) antes do fim. */
+  clientCancelled: boolean;
 }
 
 function wrapStreamWithRelease(
@@ -110,6 +114,8 @@ function wrapStreamWithRelease(
   let workflowRunId: string | null = null;
   let providerLatencyMs: number | null = null;
   let sawMarkers = false;
+  let taskId: string | null = null;
+  let clientCancelled = false;
   let safetyTimer: ReturnType<typeof setTimeout> | null = null;
   const release = () => {
     if (released) return;
@@ -119,7 +125,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone({ streamError, bytes, messageId, conversationId, workflowRunId, providerLatencyMs, sawMarkers });
+      onDone({ streamError, bytes, messageId, conversationId, workflowRunId, providerLatencyMs, sawMarkers, taskId, clientCancelled });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -160,6 +166,10 @@ function wrapStreamWithRelease(
     if (!conversationId) {
       const c = sniffBuf.match(/"conversation_id"\s*:\s*"([^"]+)"/);
       if (c?.[1]) conversationId = c[1];
+    }
+    if (!taskId) {
+      const t = sniffBuf.match(/"task_id"\s*:\s*"([^"]+)"/);
+      if (t?.[1]) taskId = t[1];
     }
     if (!workflowRunId) {
       const w = sniffBuf.match(/"workflow_run_id"\s*:\s*"([^"]+)"/);
@@ -203,7 +213,8 @@ function wrapStreamWithRelease(
       }
     },
     cancel() {
-      // Cliente desconectou (fechou aba, cancelou fetch).
+      // Cliente desconectou (fechou aba, cancelou fetch, botão Parar).
+      clientCancelled = true;
       reader.cancel().catch(() => {});
       release();
     },
@@ -329,6 +340,19 @@ export const Route = createFileRoute("/api/dify/chat")({
          *    é falha estrutural, independente de duração.
          */
         const onStreamFinished = async (outcome: StreamOutcome, wasRetry = false) => {
+          // Parada pela nutricionista (ou aba fechada) antes do fim: pede ao
+          // Dify para interromper a geração e não registra como falha da IA.
+          if (outcome.clientCancelled) {
+            if (outcome.taskId && apiKey && baseUrl) {
+              fetch(`${baseUrl}/chat-messages/${encodeURIComponent(outcome.taskId)}/stop`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ user: displayUser }),
+              }).catch(() => {});
+            }
+            console.info("[dify-proxy] stream_cancelled_by_client", { task: outcome.taskId });
+            return;
+          }
           const wallMs = Date.now() - startedAt;
           const durationMs = outcome.providerLatencyMs ?? wallMs;
           const base = {

@@ -400,6 +400,9 @@ export function useDifyChat(
   // input só re-renderiza depois dos awaits (auth/crédito), e nesse intervalo
   // o usuário consegue disparar 2× o mesmo envio → 429 "Aguarde a análise…".
   const sendingRef = useRef(false);
+  // Botão "Parar" (curadoria #16): cancela a leitura da resposta em andamento.
+  const streamAbortRef = useRef<AbortController | null>(null);
+  const stoppedByUserRef = useRef(false);
   const metaRef = useRef<{
     nutritionist_name: string;
     nutritionist_email: string;
@@ -657,6 +660,8 @@ export function useDifyChat(
     if (sendingRef.current || thinkingRef.current) return;
     sendingRef.current = true;
     thinkingRef.current = true;
+    stoppedByUserRef.current = false;
+    streamAbortRef.current = new AbortController();
     setError(null);
     setThinking(true);
     setThinkingMode(files.length > 0 ? "analysis" : "simple");
@@ -1302,6 +1307,7 @@ export function useDifyChat(
 
         fetch("/api/dify/chat", {
           method: "POST",
+          signal: streamAbortRef.current?.signal,
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -2015,14 +2021,57 @@ export function useDifyChat(
                   }
 
                   if (markers && markers.length > 0 && isExamLike) {
+                    // Curadoria #72: numa resposta de acompanhamento (sem
+                    // arquivo novo) os marcadores pertencem ao último exame
+                    // desta conversa. Sem esse vínculo eles viravam pontos
+                    // soltos na Evolução que não saíam ao excluir o exame.
+                    // Marcador repetido do mesmo exame substitui o anterior.
+                    let examIdForMarkers: string | null = lastExamId;
+                    let measuredAt: string | undefined;
+                    try {
+                      // Laudo novo colado como texto é outro exame: não vincula.
+                      if (!examIdForMarkers && chatId && !messageCarriesReport(text, 0)) {
+                        const { data: lastExam } = await (supabase as any)
+                          .from("patient_exams")
+                          .select("id")
+                          .eq("chat_id", chatId)
+                          .order("created_at", { ascending: false })
+                          .limit(1)
+                          .maybeSingle();
+                        examIdForMarkers = (lastExam?.id as string) ?? null;
+                      }
+                      if (examIdForMarkers) {
+                        const { data: prevRows } = await (supabase as any)
+                          .from("patient_exam_results")
+                          .select("id, marker_name, measured_at")
+                          .eq("exam_id", examIdForMarkers);
+                        if (Array.isArray(prevRows) && prevRows.length > 0) {
+                          measuredAt = prevRows[0].measured_at as string;
+                          const keyOf = (n: unknown) =>
+                            String(n ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9%]/g, "");
+                          const incoming = new Set(
+                            (markers as unknown as Array<Record<string, unknown>>).map((m) => keyOf(m.name ?? m.parameter ?? m.parametro)),
+                          );
+                          const replaced = prevRows
+                            .filter((r: any) => incoming.has(keyOf(r.marker_name)))
+                            .map((r: any) => r.id as string);
+                          if (replaced.length > 0) {
+                            await (supabase as any).from("patient_exam_results").delete().in("id", replaced);
+                          }
+                        }
+                      }
+                    } catch (linkErr) {
+                      console.warn("[markers] vínculo com o exame falhou; segue sem vínculo", linkErr);
+                    }
                     await processAndPersistMarkers({
                       userId: user.id,
                       patientId,
-                      examId: lastExamId,
+                      examId: examIdForMarkers,
                       chatId,
                       rawMarkers: markers as unknown as RawMarker[],
                       source: "chat",
                       agentType,
+                      ...(measuredAt ? { measuredAt } : {}),
                     });
                   }
 
@@ -2119,6 +2168,27 @@ export function useDifyChat(
         });
       }
     } catch (e: any) {
+      // Parada pedida pela nutricionista: guarda o que já chegou, sem erro e
+      // sem débito (o débito só acontece no message_end).
+      if (stoppedByUserRef.current) {
+        if (!assistantSavedRef.current && currentFullTextRef.current.trim()) {
+          assistantSavedRef.current = true;
+          try {
+            await saveAssistantToSupabase(
+              currentFullTextRef.current.trimEnd() + "\n\n⏹️ *Resposta interrompida por você.*",
+              conversationIdRef.current || undefined,
+            );
+          } catch {}
+        } else if (!currentFullTextRef.current.trim()) {
+          // Nada chegou ainda: tira a bolha vazia "pensando".
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            return last && last.role === "assistant" && !last.content?.trim() ? prev.slice(0, -1) : prev;
+          });
+        }
+        toast.info("Resposta interrompida. Ela não foi cobrada.", { duration: 5000 });
+        return;
+      }
       // Se o stream caiu com erro mas chegou conteúdo, preserva o parcial.
       if (!assistantSavedRef.current && currentFullTextRef.current.trim() && agentType !== 'research') {
         assistantSavedRef.current = true;
@@ -2143,6 +2213,12 @@ export function useDifyChat(
       sendingRef.current = false;
     }
   }, [chatId, patientId, readOnly, agentType, examContext, messages, getCost, consume, refetchCredits]);
+
+  const stopGeneration = useCallback(() => {
+    if (!streamAbortRef.current) return;
+    stoppedByUserRef.current = true;
+    try { streamAbortRef.current.abort(); } catch {}
+  }, []);
 
   const resetChat = useCallback(async (opts?: { agentType?: string | null; selectedTask?: string | null }) => {
     if (readOnly) return;
@@ -2317,5 +2393,5 @@ export function useDifyChat(
     void sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
   }, []);
 
-  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest };
+  return { chatId, messages, thinking, thinkingMode, error, uploadProgress, removeUploadItem, sendMessage, sendHandoff, resetChat, setContext, agentType, setAgentType: switchAgent, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest, stopGeneration };
 }

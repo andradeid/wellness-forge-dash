@@ -78,7 +78,7 @@ const CARD_TRIGGER_OPTIONS = [
   { value: "composicao_metabolismo", label: "Composição e Metabolismo" },
   { value: "genetica_microbioma", label: "Genética e Microbioma" },
   { value: "casos_clinicos", label: "Casos Clínicos & Sintomas" },
-  { value: "plano_alimentar", label: "Plano Alimentar & Receitas" },
+  { value: "plano_alimentar", label: "Plano Alimentar & Formulações" },
   { value: "pesquisa_cientifica", label: "Pesquisa Científica" },
   { value: "estimativa_refeicao_foto", label: "Refeição por Foto" },
   { value: "composicao_corporal_foto", label: "Composição por Foto" },

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { AlertCircle, ArrowUp, CheckCircle2, Loader2, Paperclip, X } from "lucide-react";
+import { AlertCircle, ArrowUp, CheckCircle2, Loader2, Paperclip, Square, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +46,8 @@ export function ChatInput({
   uploadProgress = [],
   onRemoveAttachment,
   toolbarSlot,
+  generating = false,
+  onStop,
 }: {
   onSubmit: (text: string, files: File[]) => Promise<void> | void;
   disabled?: boolean;
@@ -53,6 +55,9 @@ export function ChatInput({
   uploadProgress?: AttachmentProgressItem[];
   onRemoveAttachment?: (name: string) => void;
   toolbarSlot?: React.ReactNode;
+  /** Resposta da Lumma em andamento: troca o botão Enviar por Parar (curadoria #16). */
+  generating?: boolean;
+  onStop?: () => void;
 }) {
 
   const [text, setText] = useState("");
@@ -247,15 +252,27 @@ export function ChatInput({
         </Button>
         <div className="flex items-center gap-2 min-w-0">
           {toolbarSlot && <div className="min-w-0">{toolbarSlot}</div>}
-          <Button
-            type="button"
-            onClick={send}
-            disabled={!canSend || !hasModule}
-            aria-label="Enviar"
-            className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50 shrink-0"
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
+          {generating && onStop ? (
+            <Button
+              type="button"
+              onClick={onStop}
+              aria-label="Parar resposta"
+              title="Parar resposta"
+              className="rounded-full h-9 w-9 p-0 bg-slate-700 text-white hover:bg-slate-800 shadow-sm shrink-0"
+            >
+              <Square className="h-3.5 w-3.5 fill-current" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={send}
+              disabled={!canSend || !hasModule}
+              aria-label="Enviar"
+              className="rounded-full h-9 w-9 p-0 bg-gradient-to-br from-[#fbcfe8] to-[#fda4af] text-white hover:opacity-90 shadow-sm disabled:opacity-50 shrink-0"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 

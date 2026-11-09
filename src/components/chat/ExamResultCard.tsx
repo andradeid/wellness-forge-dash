@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import {
   classificationVisualState,
-  normalizeCategory,
+  categoryWithNameFallback,
+  formatMarkerValue,
   type ClassificationVisualState,
 } from "@/lib/exam-markers";
 
@@ -136,7 +137,7 @@ export function ExamResultCard({ markers, streaming = false }: { markers: Marker
 
   // Group markers by category (normalização defensiva: trim/lower/sem acento)
   const groups = markers.reduce((acc, m) => {
-    const cat = normalizeCategory(m.category);
+    const cat = categoryWithNameFallback(m.name, m.category);
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(m);
     return acc;
@@ -258,7 +259,7 @@ export function ExamResultCard({ markers, streaming = false }: { markers: Marker
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-semibold tabular-nums">
-                            {m.value}{" "}
+                            {formatMarkerValue(m.value, m.name)}{" "}
                             {m.unit && (
                               <span className="text-muted-foreground font-normal">
                                 {m.unit}

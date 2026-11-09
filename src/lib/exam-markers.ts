@@ -96,6 +96,47 @@ export function normalizeCategory(raw: string | null | undefined): string {
   return k || "outros";
 }
 
+/**
+ * Minerais e eletrólitos que às vezes chegam da IA com categoria "outros"
+ * (curadoria #38): sódio, potássio, cloro, magnésio, cálcio, fósforo, zinco,
+ * cobre, selênio. Só corrige quando a categoria veio vazia ou "outros" —
+ * nunca troca uma categoria que a IA já definiu.
+ */
+const MINERAL_NAME_RX =
+  /^(sodio|potassio|cloro|cloreto|magnesio|calcio|fosforo|zinco|cobre|selenio|manganes|cromo|iodo)(\b|_|$)/;
+
+/**
+ * Exibição de valores (curadoria #75/#76): inteiros grandes ganham ponto de
+ * milhar ("276000" → "276.000"). Só mexe em texto que é um inteiro puro com
+ * 4+ dígitos; qualquer outro formato ("<34", "1,25", "Negativo") passa igual.
+ * Densidade urinária (1005–1040) fica sem ponto para não virar "1.005".
+ */
+export function formatMarkerValue(raw: unknown, name?: string | null): string {
+  if (raw === null || raw === undefined) return "";
+  const s = String(raw).trim();
+  if (!/^-?\d{4,}$/.test(s)) return s;
+  if (/densidade/i.test(name ?? "")) return s;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return s;
+  return n.toLocaleString("pt-BR");
+}
+
+/** Número com vírgula decimal, ponto de milhar e no máximo 2 casas ("-40.000", "-0,2"). */
+export function formatNumberBR(n: number): string {
+  return n.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+export function categoryWithNameFallback(
+  name: string | null | undefined,
+  rawCategory: string | null | undefined,
+): string {
+  const cat = normalizeCategory(rawCategory);
+  if (cat !== "outros") return cat;
+  const key = normalizeKey(name).replace(/[^a-z0-9_]/g, "");
+  if (MINERAL_NAME_RX.test(key)) return "vitaminas_minerais";
+  return cat;
+}
+
 export function classificationVisualState(raw: string | null | undefined): ClassificationVisualState {
   if (!raw) return "desconhecido";
   const k = normalizeKey(raw);
@@ -119,7 +160,7 @@ export function normalizeMarker(raw: RawMarker): NormalizedMarker {
   const reference = pickStr(raw, "reference", "reference_value", "valor_referencia");
   const classification = pickStr(raw, "classification", "classificacao");
   const analysis = pickStr(raw, "analysis", "analise");
-  const category = normalizeCategory(pickStr(raw, "category", "categoria"));
+  const category = categoryWithNameFallback(name, pickStr(raw, "category", "categoria"));
   return {
     name,
     value: valueStr,

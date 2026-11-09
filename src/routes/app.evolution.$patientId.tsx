@@ -27,6 +27,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMarkerValue, formatNumberBR } from "@/lib/exam-markers";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,15 +96,58 @@ const toneClass: Record<ToneKey, string> = {
   neutro: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
-function parseReferenceRange(ref: string | null): { min: number; max: number } | null {
+function parseReferenceRange(
+  ref: string | null,
+  markerName?: string | null,
+  sampleValue?: number | null,
+): { min: number; max: number } | null {
   if (!ref) return null;
-  const cleaned = ref.replace(/\s+/g, "").replace(",", ".");
-  const m = cleaned.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
-  if (!m) return null;
-  const min = parseFloat(m[1]);
-  const max = parseFloat(m[2]);
-  if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) return null;
-  return { min, max };
+  // "150.000 a 450.000" usa ponto de milhar (plaquetas). Só tratamos o ponto
+  // como milhar quando o próprio valor do marcador é ≥ 1.000 — assim "0.450 a
+  // 4.500" e a densidade urinária ("1.005 a 1.030") continuam decimais.
+  if (sampleValue != null && Math.abs(sampleValue) >= 1000 && !/densidade/i.test(markerName ?? "")) {
+    ref = ref.replace(/(\d)\.(\d{3})(?![\d,])/g, "$1$2");
+  }
+  const cleaned = ref.replace(/,/g, ".");
+  // "1,0 - 2,5", "1,0-2,5", "1,0 a 2,5", "1,0 até 2,5", "1,0 – 2,5"
+  const m = cleaned.match(/(\d+(?:\.\d+)?)\s*(?:-|–|—|a|à|até|ate|to)\s*(\d+(?:\.\d+)?)/i);
+  if (m) {
+    const min = parseFloat(m[1]);
+    const max = parseFloat(m[2]);
+    if (Number.isFinite(min) && Number.isFinite(max) && min < max) return { min, max };
+  }
+  // Limite de um lado só (curadoria #74): "< 15", "≤ 2,5", "até 200", "> 30", "acima de 50".
+  const low = ref.toLowerCase().replace(/\s+/g, " ").replace(/,/g, ".");
+  const upper = low.match(/(?:<|≤|=<|ate|até|abaixo de|inferior a|menor que)\s*=?\s*(-?\d+(?:\.\d+)?)/);
+  if (upper) return { min: -Infinity, max: parseFloat(upper[1]) };
+  const lower = low.match(/(?:>|≥|>=|acima de|superior a|maior que)\s*=?\s*(-?\d+(?:\.\d+)?)/);
+  if (lower) return { min: parseFloat(lower[1]), max: Infinity };
+  return null;
+}
+
+/** Distância até a faixa de referência (0 = dentro). */
+function distanceToRange(v: number, r: { min: number; max: number }): number {
+  if (v < r.min) return r.min - v;
+  if (v > r.max) return v - r.max;
+  return 0;
+}
+
+/**
+ * Tom da variação entre duas coletas (curadoria #74): vermelho quando o valor
+ * se afasta da faixa (ou sai dela), verde quando se aproxima (ou volta), neutro
+ * quando continua dentro ou quando não há faixa numérica para comparar.
+ */
+function variationTone(
+  previous: number,
+  latest: number,
+  range: { min: number; max: number } | null,
+): "piora" | "melhora" | "neutro" {
+  if (!range) return "neutro";
+  const before = distanceToRange(previous, range);
+  const after = distanceToRange(latest, range);
+  if (after > before + 1e-9) return "piora";
+  if (after < before - 1e-9) return "melhora";
+  return "neutro";
 }
 
 /**
@@ -132,6 +176,7 @@ function unitGroupKey(unit: string | null | undefined): string {
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/µ|μ/g, "u")
+    .replace(/mm³|mm3/g, "ul") // 1 mm³ = 1 µL (plaquetas, leucócitos)
     .replace(/mc(?=[a-z])/g, "u")
     .replace(/iu/g, "ui")
     .replace(/[^a-z0-9%/]/g, "")
@@ -401,7 +446,14 @@ function ChartCard({
   active: { name: string; points: ResultRow[]; latest: ResultRow } | null;
 }) {
   if (!active) return null;
-  const range = parseReferenceRange(active.latest.reference_value);
+  const range = parseReferenceRange(
+    active.latest.reference_value,
+    active.latest.marker_name,
+    active.latest.marker_value,
+  );
+  // Faixas de um lado só ("< 15") servem para a cor da variação, mas não
+  // desenham as bandas do gráfico (precisam de mínimo e máximo).
+  const chartRange = range && Number.isFinite(range.min) && Number.isFinite(range.max) ? range : null;
   const data = active.points
     .filter((p) => p.marker_value != null)
     .map((p) => ({
@@ -412,8 +464,8 @@ function ChartCard({
     }));
 
   const yValues = data.map((d) => d.value);
-  const minY = Math.min(...yValues, range?.min ?? Infinity);
-  const maxY = Math.max(...yValues, range?.max ?? -Infinity);
+  const minY = Math.min(...yValues, chartRange?.min ?? Infinity);
+  const maxY = Math.max(...yValues, chartRange?.max ?? -Infinity);
   const pad = (maxY - minY || maxY || 1) * 0.2;
 
   // Trend & UX color: down-when-good (above range) → green; up-when-good (below range) → green; otherwise contextual.
@@ -424,29 +476,22 @@ function ChartCard({
     const latest = data[data.length - 1].value;
     const previous = data[data.length - 2].value;
     const diff = latest - previous;
-    deltaText = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} desde a medição anterior`;
+    deltaText = `${diff > 0 ? "+" : ""}${formatNumberBR(diff)} desde a medição anterior`;
     TrendIcon = diff > 0 ? TrendingUp : diff < 0 ? TrendingDown : Minus;
-    if (range) {
-      const wasAbove = previous > range.max;
-      const wasBelow = previous < range.min;
-      const movedTowardsRange =
-        (wasAbove && diff < 0) || (wasBelow && diff > 0);
-      const movedAwayFromRange =
-        (wasAbove && diff > 0) || (wasBelow && diff < 0);
-      if (movedTowardsRange) trendColor = "#10b981"; // green: improving
-      else if (movedAwayFromRange) trendColor = "#ef4444"; // red: worsening
-    }
+    const tone = variationTone(previous, latest, range);
+    if (tone === "melhora") trendColor = "#10b981"; // verde: aproximou da faixa
+    else if (tone === "piora") trendColor = "#ef4444"; // vermelho: afastou da faixa
   }
 
   const tone = classify(active.latest.classification);
 
   // Functional bands derived from reference range
-  const bands = range
+  const bands = chartRange
     ? {
-        otimoMin: range.min,
-        otimoMax: range.max,
-        atencaoLow: range.min - (range.max - range.min) * 0.15,
-        atencaoHigh: range.max + (range.max - range.min) * 0.15,
+        otimoMin: chartRange.min,
+        otimoMax: chartRange.max,
+        atencaoLow: chartRange.min - (chartRange.max - chartRange.min) * 0.15,
+        atencaoHigh: chartRange.max + (chartRange.max - chartRange.min) * 0.15,
       }
     : null;
 
@@ -481,7 +526,7 @@ function ChartCard({
 
         <div className="text-right">
           <div className="text-3xl font-semibold">
-            {active.latest.marker_value_raw ?? active.latest.marker_value}
+            {formatMarkerValue(active.latest.marker_value_raw ?? active.latest.marker_value, active.latest.marker_name)}
             <span className="text-sm font-normal text-muted-foreground ml-1">
               {active.latest.marker_unit ?? ""}
             </span>
@@ -682,11 +727,23 @@ function ComparativeTable({
                       diff = p.marker_value - older.marker_value;
                     }
                     const tone = classify(p.classification);
+                    const vTone =
+                      diff !== null && older?.marker_value != null && p.marker_value != null
+                        ? variationTone(
+                            older.marker_value,
+                            p.marker_value,
+                            parseReferenceRange(
+                              p.reference_value ?? g.latest.reference_value,
+                              p.marker_name,
+                              p.marker_value,
+                            ),
+                          )
+                        : "neutro";
                     return (
                       <TableCell key={d}>
                         <div className="flex items-center gap-2">
                           <span className="font-medium tabular-nums">
-                            {p.marker_value_raw ?? p.marker_value}
+                            {formatMarkerValue(p.marker_value_raw ?? p.marker_value, p.marker_name)}
                             {p.marker_unit ? (
                               <span className="text-muted-foreground text-xs ml-0.5">
                                 {p.marker_unit}
@@ -703,7 +760,11 @@ function ComparativeTable({
                             <span
                               className={cn(
                                 "inline-flex items-center text-[10px]",
-                                diff > 0 ? "text-rose-600" : "text-emerald-600",
+                                vTone === "piora"
+                                  ? "text-rose-600"
+                                  : vTone === "melhora"
+                                    ? "text-emerald-600"
+                                    : "text-muted-foreground",
                               )}
                             >
                               {diff > 0 ? (
@@ -712,7 +773,7 @@ function ComparativeTable({
                                 <TrendingDown className="h-3 w-3" />
                               )}
                               {diff > 0 ? "+" : ""}
-                              {diff.toFixed(2)}
+                              {formatNumberBR(diff)}
                             </span>
                           )}
                         </div>

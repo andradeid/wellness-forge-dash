@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, ClipboardList, Eye, MessageSquare, Stethoscope, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles, Utensils, Activity, Camera, Microscope } from "lucide-react";
+import { AlertCircle, ArrowLeft, ClipboardList, Eye, MessageSquare, Stethoscope, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles, Utensils, Activity, Camera, Microscope, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -37,6 +37,7 @@ import { format, differenceInYears } from "date-fns";
 import lummaSymbol from "@/assets/lumma-symbol.svg";
 import { useAgentConfig } from "@/hooks/useAgentConfig";
 import { getAgentIcon } from "@/lib/agent-icons";
+import { EditPatientSheet, type EditablePatient } from "@/components/EditPatientSheet";
 
 export const Route = createFileRoute("/app/chat/$patientId")({
   validateSearch: (
@@ -73,13 +74,13 @@ const CARD_ICONS: Record<string, any> = {
 
 const CARD_LABELS: Record<string, string> = {
   exames_de_sangue: "Exames de Sangue",
-  plano_alimentar: "Plano Alimentar & Receitas",
+  plano_alimentar: "Plano Alimentar & Formulações",
   casos_clinicos: "Casos Clínicos & Sintomas",
   pesquisa_cientifica: "Pesquisa Científica",
   bioimpedancia: "Bioimpedância",
   calorimetria: "Calorimetria",
   genetica: "Genética",
-  microbioma: "Microbioma",
+  microbioma: "Exames – Saúde Intestinal",
   estimativa_refeicao_foto: "Refeição por Foto",
   composicao_corporal_foto: "Composição por Foto",
   nutricao_visual: "Nutrição Visual",
@@ -129,7 +130,7 @@ function ChatPage() {
   const conversationRef = useRef<HTMLDivElement>(null);
   const { data: branding } = useBrandingProfile(userId);
   const { agents, tasks: superAgentTasks, cards: superAgentCards, getAgentForCard, resolveAnaliseCompleta, loading: loadingAgents } = useAgentConfig();
-  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest } = useDifyChat(patientId, {
+  const { messages, thinking, thinkingMode, sendMessage, sendHandoff, chatId, error, uploadProgress, removeUploadItem, resetChat, setContext, agentType, setAgentType, examContext, activeAgents, setSelectedTask, selectedTask, canRetry, retryLastRequest, stopGeneration } = useDifyChat(patientId, {
     readOnly,
     forceChatId: forceChatId ?? null,
     initialAgentType: initialAgent ?? (initialModule ? getAgentForCard(initialModule, "", undefined)?.agent_id : undefined),
@@ -450,16 +451,36 @@ function ChatPage() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  const loadPatient = async () => {
+    const { data } = await (supabase as any)
+      .from("patients")
+      .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type, menstrual_cycle_phase")
+      .eq("id", patientId)
+      .maybeSingle();
+    setPatient(data as PatientCtx | null);
+  };
   useEffect(() => {
-    (async () => {
-      const { data } = await (supabase as any)
-        .from("patients")
-        .select("id, name, birth_date, gender, avatar_url, is_pregnant, gestational_weeks, pregnancy_type, menstrual_cycle_phase")
-        .eq("id", patientId)
-        .maybeSingle();
-      setPatient(data as PatientCtx | null);
-    })();
+    void loadPatient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
+
+  // "Perfil do Paciente" na barra superior (curadoria #21): abre o mesmo
+  // cadastro da lista de pacientes, sem sair da conversa.
+  const [profileTarget, setProfileTarget] = useState<EditablePatient | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const openPatientProfile = async () => {
+    const { data, error: pErr } = await (supabase as any)
+      .from("patients")
+      .select("id, name, email, phone, birth_date, gender, notes, avatar_url, menstrual_cycle_phase, is_pregnant, gestational_weeks, pregnancy_type")
+      .eq("id", patientId)
+      .maybeSingle();
+    if (pErr || !data) {
+      toast.error("Não foi possível abrir o perfil do paciente.");
+      return;
+    }
+    setProfileTarget(data as EditablePatient);
+    setProfileOpen(true);
+  };
 
   // Auto-popular filtros do banco
   useEffect(() => {
@@ -516,7 +537,7 @@ function ChatPage() {
   const reloadExams = useCallback(async () => {
     const { data } = await (supabase as any)
       .from("patient_exams")
-      .select("id, file_name, file_path, mime_type, created_at, exam_date")
+      .select("id, file_name, file_path, mime_type, created_at, exam_date, chat_id")
       .eq("patient_id", patientId)
       .order("exam_date", { ascending: false })
       .limit(20);
@@ -780,6 +801,18 @@ function ChatPage() {
               <Stethoscope className="h-4 w-4" />
               <span className="hidden lg:inline">Laudo clínico</span>
             </Button>
+            {isNutriLike && (
+              <Button
+                onClick={openPatientProfile}
+                variant="ghost"
+                size="sm"
+                title="Perfil do Paciente"
+                className="h-9 w-9 sm:h-9 sm:w-auto rounded-lg sm:gap-1.5 p-0 sm:px-3"
+              >
+                <UserRound className="h-4 w-4" />
+                <span className="hidden lg:inline">Perfil do Paciente</span>
+              </Button>
+            )}
             <Link
               to="/app/evolution/$patientId"
               params={{ patientId }}
@@ -794,6 +827,12 @@ function ChatPage() {
           )}
           </header>
         )}
+        <EditPatientSheet
+          patient={profileTarget}
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          onSaved={() => { void loadPatient(); }}
+        />
 
         <main className="relative flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -1149,6 +1188,8 @@ function ChatPage() {
                           <ChatInput
                             onSubmit={wrappedSend}
                             disabled={thinking || !chatId || blocked}
+                            generating={thinking}
+                            onStop={stopGeneration}
                             hasModule={!!agentType && !needsTask}
                             uploadProgress={uploadProgress}
                             onRemoveAttachment={removeUploadItem}
