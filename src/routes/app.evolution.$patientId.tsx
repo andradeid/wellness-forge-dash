@@ -119,16 +119,24 @@ function markerGroupKey(name: string | null | undefined): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-/** Unidade normalizada: "mg/dL" = "mg/dl"; "µUI/mL" = "uUI/ml" = "mcUI/mL". */
+/** "Unidades" que não são unidade (relações e índices): tratadas como vazias. */
+const DIMENSIONLESS_UNITS = new Set(["adimensional", "ratio", "razao", "indice", "index", "relacao"]);
+
+/**
+ * Unidade normalizada: "mg/dL" = "mg/dl"; "µUI/mL" = "uUI/ml" = "mcUI/mL";
+ * "mm/h" = "mm" (VHS); "razão"/"ratio"/"adimensional"/"índice" = sem unidade.
+ */
 function unitGroupKey(unit: string | null | undefined): string {
-  return (unit ?? "")
+  const u = (unit ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/µ|μ/g, "u")
     .replace(/mc(?=[a-z])/g, "u")
     .replace(/iu/g, "ui")
-    .replace(/[^a-z0-9%/]/g, "");
+    .replace(/[^a-z0-9%/]/g, "")
+    .replace(/^mm\/h$/, "mm");
+  return DIMENSIONLESS_UNITS.has(u) ? "" : u;
 }
 
 function EvolutionPage() {
