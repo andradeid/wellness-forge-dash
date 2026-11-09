@@ -13,6 +13,7 @@ import {
   type RawMarker,
 } from "@/lib/exam-markers";
 import { parseIncrementalMarkers, isSafeForProgressiveRender } from "@/lib/streaming-markers";
+import { salvageMarkersArray } from "@/lib/marker-salvage";
 
 import { useCreditsActions, useMyCredits } from "@/hooks/useCredits";
 import { paywallStore } from "@/lib/paywall-store";
@@ -310,6 +311,9 @@ function tryExtractMarkers(text: string, opts?: { allowHeuristic?: boolean }): M
       }
     }
   }
+  // 2b) JSON com algum marcador quebrado: aproveita os objetos válidos.
+  const salvaged = salvageMarkersArray(text);
+  if (salvaged) return salvaged as unknown as Marker[];
   // 3) Fallback heurístico — somente sobre o trecho ANTES da seção de formulações,
   // pra nunca engolir receitas se os estágios 1/2 falharem.
   // Pode ser desabilitado para respostas em prosa (Super Agentes) para evitar
