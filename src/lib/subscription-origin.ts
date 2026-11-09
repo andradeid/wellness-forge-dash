@@ -1,4 +1,4 @@
-export type SubscriptionOrigin = "kiwify" | "stripe" | "manual" | "importacao";
+export type SubscriptionOrigin = "kiwify" | "tmb" | "stripe" | "manual" | "importacao";
 
 export interface SubscriptionOriginClient {
   from(table: "subscriptions"): {

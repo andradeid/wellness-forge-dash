@@ -174,7 +174,7 @@ function statusLabel(r: Pick<UserRow, "status" | "is_blocked" | "auth_banned" | 
 }
 
 function originLabel(origin: string | null | undefined) {
-  return ({ migracao: "Migração", kiwify: "Kiwify", stripe: "Stripe", manual: "Manual" } as Record<string, string>)[origin ?? ""] ?? (origin || "—");
+  return ({ migracao: "Migração", kiwify: "Kiwify", tmb: "TMB", stripe: "Stripe", manual: "Manual" } as Record<string, string>)[origin ?? ""] ?? (origin || "—");
 }
 
 

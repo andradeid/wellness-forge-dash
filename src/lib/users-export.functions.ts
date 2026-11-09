@@ -92,6 +92,7 @@ const ORIGIN_LABEL: Record<string, string> = {
   migracao_lumma1: "Migração (Lumma 1)",
   ajuste_manual_hubla: "Migração (Hubla)",
   kiwify: "Kiwify",
+  tmb: "TMB",
   stripe: "Stripe",
   manual: "Manual",
   interno: "Interno",

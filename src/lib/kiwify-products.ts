@@ -26,7 +26,7 @@ export const KIWIFY_PRODUCTS: Record<string, KiwifyProduct> = {
   "59a89e30-851b-11f1-be44-db22545a0013": { slug: "pro", cycle: "yearly", years: 1 },
   // Upgrade - Lumma 2.0 - Pro Anual (quem já é Starter e migra para Pro)
   "53f6ae60-89d9-11f1-be8a-11fc729f7dc2": { slug: "pro", cycle: "yearly", years: 1 },
-  // A Nova Nutricionista – Black Friday – WAID (Pro, validade de 2 anos)
+  // A Nova Nutricionista – Black Friday – WAID (Starter, validade de 2 anos)
   "c1df6360-d3b5-11f1-aaf7-2ffa08014d49": { slug: "starter", cycle: "yearly", years: 2 },
 };
 

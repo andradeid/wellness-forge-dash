@@ -12,7 +12,7 @@ import { KIWIFY_PRODUCTS, kiwifyValidityLabel } from "@/lib/kiwify-products";
  * Mapeamento de produtos Kiwify → planos Lumma:
  *   - a19b7600-851a-11f1-ac2c-dbf6162aa415 → Starter Anual
  *   - 59a89e30-851b-11f1-be44-db22545a0013 → Pro Anual
- *   - c1df6360-d3b5-11f1-aaf7-2ffa08014d49 → Pro com validade de 2 anos
+ *   - c1df6360-d3b5-11f1-aaf7-2ffa08014d49 → Starter com validade de 2 anos (A Nova Nutricionista)
  * A lista completa, com a validade de cada produto, fica em src/lib/kiwify-products.ts.
  *
  * Eventos tratados:
