@@ -33,7 +33,8 @@ export const TMB_PRODUCTS: Record<string, TmbProduct> = {
     slug: "starter",
     cycle: "yearly",
     years: 2,
-    match: /nova\s+nutricionista/i,
+    // Só a Black Friday: "A Nova Nutricionista - Black Vitalício" é outro produto, sem regra definida.
+    match: /nova\s+nutricionista(?![^]*vital[ií]cio)/i,
   },
 };
 

@@ -22,6 +22,7 @@ describe("TMB — catálogo", () => {
     assert.equal(resolveTmbProduct(null, o)?.key, "nova-nutricionista");
     assert.equal(resolveTmbProduct("outro-produto", o), null);
     assert.equal(resolveTmbProduct(null, { lancamento: "Curso de Bolo", titulo: null }), null);
+    assert.equal(resolveTmbProduct(null, { lancamento: "A Nova Nutricionista - Black Vitalício", titulo: null }), null);
   });
 });
 
