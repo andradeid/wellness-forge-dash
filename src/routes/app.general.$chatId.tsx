@@ -460,12 +460,12 @@ function GeneralChatPage() {
             </div>
 
             <ChatInput
-              onSubmit={(text) => {
+              onSubmit={(text, files) => {
                 if (isSuperAgent && !selectedTaskKey) {
                   // Sinal visual mínimo: sem toast dep aqui — o placeholder do popover já orienta.
                   return;
                 }
-                sendMessage(text);
+                sendMessage(text, files && files.length ? { files } : undefined);
               }}
               disabled={thinking || (isSuperAgent && !selectedTaskKey)}
               generating={thinking}

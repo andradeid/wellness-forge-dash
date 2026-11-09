@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { taskConsumesFiles } from "@/lib/dify-file-policy";
+import { downscaleImageFile } from "@/lib/image-downscale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
@@ -94,7 +96,7 @@ export function useGeneralChat(
     };
   }, [chatId]);
 
-  const sendMessage = useCallback(async (text: string, opts?: { _isRetry?: boolean }) => {
+  const sendMessage = useCallback(async (text: string, opts?: { _isRetry?: boolean; files?: File[] }) => {
     if (!chatId || !user) return;
     if (sendingRef.current || thinkingRef.current) return;
     if (!opts?._isRetry) routingRetryUsedRef.current = false;
@@ -157,18 +159,74 @@ export function useGeneralChat(
       researchTimeoutRef.current = null;
     }
     
+    // Anexos (curadoria #43/#65): antes a conversa geral descartava o arquivo
+    // em silêncio. Agora sobe para o Dify quando a tarefa lê anexos
+    // (Pesquisa Científica e tarefas de exame em Perguntas Clínicas).
+    const pendingFiles = (opts?.files ?? []).filter(Boolean);
+    const difyFiles: Array<{ type: "image" | "document"; transfer_method: "local_file"; upload_file_id: string }> = [];
+    if (pendingFiles.length > 0) {
+      const consumer = isSuper && selectedTaskKey ? selectedTaskKey : agentType;
+      if (!taskConsumesFiles(consumer)) {
+        toast.warning("Esta tarefa não lê arquivos anexados.", {
+          description: "Escolha Pesquisa Científica ou uma tarefa de exame para enviar o arquivo.",
+          duration: 7000,
+        });
+        abortSend();
+        return;
+      }
+      const { data: { session: upSession } } = await supabase.auth.getSession();
+      for (const original of pendingFiles) {
+        const toastId = `gupload-${original.name}-${Date.now()}`;
+        toast.loading(`Enviando ${original.name}...`, { id: toastId });
+        let file = original;
+        if (file.type.startsWith("image/")) {
+          try { file = (await downscaleImageFile(file)).file; } catch { /* segue com o original */ }
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("agent_type", agentType);
+        if (isSuper && selectedTaskKey) fd.append("selected_task", selectedTaskKey);
+        const res = await fetch("/api/dify/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${upSession?.access_token}` },
+          body: fd,
+        }).catch(() => null);
+        const json = res && res.ok ? ((await res.json().catch(() => ({}))) as { id?: string }) : {};
+        if (!json.id) {
+          const tooBig = res?.status === 413;
+          toast.error(tooBig ? `${original.name} é grande demais para análise.` : `Não consegui enviar ${original.name}.`, {
+            id: toastId,
+            description: tooBig ? "Envie um arquivo menor." : "Tente de novo em alguns instantes.",
+            duration: 8000,
+          });
+          abortSend();
+          return;
+        }
+        toast.success(`${original.name} enviado`, { id: toastId, duration: 2500 });
+        difyFiles.push({
+          type: file.type.startsWith("image/") ? "image" : "document",
+          transfer_method: "local_file",
+          upload_file_id: json.id,
+        });
+      }
+    }
+    const attachNote = pendingFiles.length
+      ? pendingFiles.map((f) => `📎 ${f.name}`).join("\n") + (text.trim() ? "\n\n" : "")
+      : "";
+    const displayText = attachNote + text;
+
     const userMsgId = crypto.randomUUID();
     const userMsg: ChatMessage = {
       id: userMsgId,
       role: "user",
-      content: text,
+      content: displayText,
       created_at: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
 
     // Save user message immediately to ensure it's in history even if streaming fails
     const { data: userInserted } = await supabase.from("general_chat_messages").insert([
-      { chat_id: chatId, role: "user", content: text, agent_type: agentType }
+      { chat_id: chatId, role: "user", content: displayText, agent_type: agentType }
     ]).select("id").single();
 
     const assistantId = crypto.randomUUID();
@@ -240,8 +298,9 @@ export function useGeneralChat(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: text,
+          query: text.trim() || (difyFiles.length ? "Analise o arquivo anexado." : text),
           agent_type: agentType,
+          ...(difyFiles.length ? { files: difyFiles, file_meta: pendingFiles.map((f) => ({ name: f.name, type: f.type })) } : {}),
           conversation_id: conversationIdRef.current || undefined,
           ...(isSuper && selectedTaskKey ? { selected_task: selectedTaskKey } : {}),
           ...(profileMeta(chatProfile) ? { meta: { ...profileMeta(chatProfile), chat_id: chatId } } : {}),

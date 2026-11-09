@@ -10,6 +10,8 @@ const FILE_CONSUMING_TASKS = new Set([
   "microbioma",
   "estimativa_refeicao_foto",
   "composicao_corporal_foto",
+  // Pesquisa Científica: o app aceita PDF e imagem do artigo (curadoria #43/#65).
+  "research",
   // Identificadores legados ainda presentes em conversas antigas.
   "exam",
   "exam_masculino",
