@@ -175,6 +175,8 @@ function LoginPage() {
   const loginInProgressRef = useRef(false);
   /** Invalida signOut assíncronos atrasados (corrida com novo login). */
   const orphanCleanupGenRef = useRef(0);
+  /** A checagem de sessão órfã roda uma única vez, com a sessão restaurada ao abrir a página. */
+  const initialOrphanCheckDoneRef = useRef(false);
 
   // Aviso quando o usuário foi derrubado por outro dispositivo
   useEffect(() => {
@@ -188,7 +190,15 @@ function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (loading || !session || submitting || pendingUserId) return;
+    if (loading) return;
+    // Só limpa a sessão restaurada quando ESTA aba abriu o /login. Uma sessão
+    // que chega depois veio de um login feito em outra aba (storage
+    // compartilhado) e ainda pode estar gravando o assento: derrubá-la aqui
+    // fazia o login da outra aba "entrar e voltar" (nutricionistas com duas
+    // abas abertas e super admin).
+    if (initialOrphanCheckDoneRef.current) return;
+    initialOrphanCheckDoneRef.current = true;
+    if (!session || submitting || pendingUserId) return;
     if (loginInProgressRef.current) return;
     if (getLocalSessionToken()) return;
     clearLocalSessionToken();
