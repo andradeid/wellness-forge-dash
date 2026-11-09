@@ -37,6 +37,12 @@ import {
   sanitizeStreamingText,
   type AgentErrorInfo,
 } from "@/lib/dify-error-messages";
+import {
+  genericFailText,
+  isStaleConversationError,
+  isTruncatedFinish,
+  TRUNCATED_NOTE,
+} from "@/lib/dify-stream-guards";
 
 /** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
 function friendlyExamUploadError(raw: string | undefined | null, fileName: string): string {
@@ -820,7 +826,10 @@ export function useDifyChat(
     let lastExamId: string | null = null;
     const resetUploadUI = () => setUploadProgress([]);
 
+    // Status HTTP da última recusa do /api/dify/upload (413 = arquivo grande demais).
+    let lastUploadStatus = 0;
     const uploadToDify = async (file: File): Promise<string | null> => {
+      lastUploadStatus = 0;
       try {
         const fd = new FormData();
         fd.append("file", file);
@@ -838,6 +847,7 @@ export function useDifyChat(
           body: fd,
         });
         if (!res.ok) {
+          lastUploadStatus = res.status;
           console.warn("[dify.upload] falhou, cairá em fallback remote_url", {
             status: res.status,
             agent_type: agentType,
@@ -917,6 +927,19 @@ export function useDifyChat(
           transfer_method: "local_file",
           upload_file_id: difyFileId,
         };
+      } else if (lastUploadStatus === 413) {
+        // O Dify recusou pelo tamanho. O link (remote_url) também seria
+        // recusado — e a execução ficava presa até o corte de 5 min.
+        const isImage = uploadFile.type.startsWith("image/");
+        const friendly = isImage
+          ? `A foto é grande demais para análise (${formatBytes(uploadFile.size)}). Envie uma foto menor ou um print da imagem.`
+          : `O arquivo é grande demais para análise (${formatBytes(uploadFile.size)}). Envie um arquivo menor.`;
+        updateFileProgress(file, "erro", 100, "Arquivo grande demais");
+        toast.error("Arquivo grande demais", { id: toastId, description: friendly, duration: 10000 });
+        setError(friendly);
+        setThinking(false);
+        resetUploadUI();
+        return;
       } else {
         // 1c) Fallback: signed URL 7 dias como remote_url fresh.
         updateFileProgress(file, "processando", 65, "Gerando link seguro para a Lumma");
@@ -1393,7 +1416,69 @@ export function useDifyChat(
       let sseBuffer = "";
       // message_id do Dify (evento message_end) — usado só no registro de falhas.
       let difyMessageId: string | null = null;
-      
+      // Nó LLM que parou pelo limite de saída (finish_reason length/MAX_TOKENS).
+      // O Dify encerra como sucesso; a resposta fica incompleta.
+      let truncatedNode: string | null = null;
+      // Erro informado no workflow_finished (quando o fluxo falha sem event:error).
+      let workflowError = "";
+      // Conversa do Dify que não pode mais ser retomada: reabre e reenvia 1x.
+      const reopenConversationAndRetry = async (reason: string): Promise<boolean> => {
+        if (retryUsedRef.current || !lastRequestRef.current || agentType === "research") return false;
+        console.warn("[dify] conversa não pode ser retomada — abrindo nova e reenviando", {
+          agent_type: agentType,
+          selected_task: selectedTask ?? null,
+          reason: reason.slice(0, 200),
+        });
+        retryUsedRef.current = true;
+        assistantSavedRef.current = true;
+        conversationIdRef.current = "";
+        if (agentType && conversationMapRef.current[agentType]) {
+          const { [agentType]: _dead, ...rest } = conversationMapRef.current;
+          conversationMapRef.current = rest;
+          setActiveAgents(Object.keys(rest));
+        }
+        if (chatId) {
+          try {
+            await (supabase as any)
+              .from("patient_chats")
+              .update({ dify_conversation_id: null, dify_conversations: conversationMapRef.current })
+              .eq("id", chatId);
+          } catch { /* segue: a conversa nova é aberta mesmo assim */ }
+        }
+        void logDifyFailure({
+          data: {
+            chatId,
+            conversationId: null,
+            patientId: metaRef.current?.patient_id ?? null,
+            patientProfile: (metaRef.current as any)?.patient_profile ?? null,
+            selectedTask: selectedTask ?? null,
+            agentType: agentType ?? null,
+            messageId: difyMessageId,
+            errorKind: "no_execution",
+            rawError: `conversa reaberta automaticamente: ${reason}`.slice(0, 4000),
+            durationMs: Math.round(performance.now() - startedAt),
+            attachmentCount: attachments.length,
+            attachmentName: attachments[0]?.name ?? null,
+            attachmentMime: attachments[0]?.mime_type ?? null,
+            billed: false,
+          },
+        }).catch(() => {});
+        const req = lastRequestRef.current;
+        setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsg.id));
+        if (userInserted?.id) {
+          try {
+            await (supabase as any).from("chat_messages").delete().eq("id", userInserted.id);
+          } catch { /* duplicata é preferível a perder a mensagem */ }
+        }
+        setThinking(false);
+        thinkingRef.current = false;
+        toast.info("A conversa ficou longa demais. Abrindo uma nova e reenviando sua pergunta…", { duration: 6000 });
+        setTimeout(() => {
+          sendMessageRef.current?.(req.text, req.files, { ...(req.opts ?? {}), _isRetry: true });
+        }, 400);
+        return true;
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -1410,7 +1495,26 @@ export function useDifyChat(
           try {
             const data = JSON.parse(jsonStr);
             if (!difyMessageId && typeof data.message_id === "string") difyMessageId = data.message_id;
-            
+
+            // Corte pelo limite de saída de um nó LLM: o fluxo segue e termina
+            // "com sucesso", mas a resposta está incompleta.
+            if (
+              !truncatedNode &&
+              data.event === "node_finished" &&
+              data.data?.node_type === "llm" &&
+              isTruncatedFinish(data.data?.outputs?.finish_reason)
+            ) {
+              truncatedNode = String(data.data?.title || data.data?.node_id || "llm");
+              console.warn("[dify] nó LLM cortado pelo limite de saída", {
+                node: truncatedNode,
+                agent_type: agentType,
+                selected_task: selectedTask ?? null,
+              });
+            }
+            if (data.event === "workflow_finished" && typeof data.data?.error === "string" && data.data.error) {
+              workflowError = data.data.error;
+            }
+
             if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
               let text = "";
               if (data.event === "text_chunk") {
@@ -1508,10 +1612,14 @@ export function useDifyChat(
                 raw: rawErr.slice(0, 240),
               });
 
+              if (isStaleConversationError(rawErr) && !fullText.trim()) {
+                if (await reopenConversationAndRetry(rawErr)) return;
+              }
+
               const isConcurrency = isProviderConcurrencyError(rawErr);
               const errorText = isConcurrency
                 ? CONCURRENCY_USER_MESSAGE
-                : "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+                : genericFailText(attachments.length > 0);
               const errorReason = isConcurrency ? "provider_concurrency" : "stream_error";
 
               if (!assistantSavedRef.current && agentType !== "research") {
@@ -1619,6 +1727,9 @@ export function useDifyChat(
                       conversation_id: data.conversation_id ?? null,
                       chat_id: chatId,
                     });
+                    if (isStaleConversationError(workflowError || data.data?.error)) {
+                      if (await reopenConversationAndRetry(String(workflowError || data.data?.error))) return;
+                    }
                     if (data.conversation_id) {
                       conversationIdRef.current = data.conversation_id;
                       if (agentType) {
@@ -1636,7 +1747,7 @@ export function useDifyChat(
                     // Persiste mensagem assistant amigável para não deixar a
                     // pergunta do usuário órfã no histórico. NÃO debita crédito
                     // (o débito só acontece no branch de sucesso abaixo).
-                    const errorText = "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+                    const errorText = genericFailText(attachments.length > 0);
                     const processingMs = Math.round(performance.now() - startedAt);
                     const errorStructured = { processing_ms: processingMs, error: true, error_reason: "empty_answer" };
                     const { data: errIns } = await (supabase as any)
@@ -1818,6 +1929,40 @@ export function useDifyChat(
                     );
                   }
 
+                  // Resposta cortada pelo limite de saída de um nó LLM: o Dify
+                  // encerrou como sucesso, mas o texto está incompleto. Mostra o
+                  // aviso na própria bolha e NÃO cobra crédito (débito abaixo).
+                  const truncated = !!truncatedNode && !agentError;
+                  if (truncated) {
+                    fullText = fullText.trimEnd() + TRUNCATED_NOTE;
+                    setMessages((prev) =>
+                      prev.map((m) => (m.id === assistantId ? { ...m, content: fullText } : m)),
+                    );
+                    void logDifyFailure({
+                      data: {
+                        chatId,
+                        conversationId: conversationIdRef.current || null,
+                        patientId: metaRef.current?.patient_id ?? null,
+                        patientProfile: (metaRef.current as any)?.patient_profile ?? null,
+                        selectedTask: selectedTask ?? null,
+                        agentType: agentType ?? null,
+                        messageId: difyMessageId,
+                        errorKind: "truncated_output",
+                        rawError: `nó LLM cortado pelo limite de saída: ${truncatedNode}`,
+                        durationMs: processingMs,
+                        attachmentCount: attachments.length,
+                        attachmentName: attachments[0]?.name ?? null,
+                        attachmentMime: attachments[0]?.mime_type ?? null,
+                        wasRetry: retryUsedRef.current,
+                        billed: false,
+                      },
+                    }).catch(() => {});
+                    toast.warning("A resposta foi interrompida antes do fim", {
+                      description: "Ela não foi cobrada. Envie novamente para gerar a análise completa.",
+                      duration: 10000,
+                    });
+                  }
+
                   const structured: Record<string, unknown> = agentError
                     ? {
                         processing_ms: processingMs,
@@ -1828,6 +1973,10 @@ export function useDifyChat(
                         : { processing_ms: processingMs });
                   if (firstContentMsRef.current !== null) {
                     structured.first_content_ms = firstContentMsRef.current;
+                  }
+                  if (truncated) {
+                    structured.partial = true;
+                    structured.truncated_node = truncatedNode;
                   }
                   if (!agentError && formulacoes) structured.formulacoes_sugeridas = formulacoes;
                   if (!agentError && mealEstimation) structured.meal_estimation = mealEstimation;
@@ -1857,7 +2006,7 @@ export function useDifyChat(
                   }
 
                   // Débito de créditos APÓS resposta completa
-                  if (billingKey && fullText.trim() && !agentError) {
+                  if (billingKey && fullText.trim() && !agentError && !truncated) {
                     try {
                       await consume(billingKey, text.slice(0, 200));
                     } catch (e) {
@@ -1923,7 +2072,7 @@ export function useDifyChat(
         // debita crédito (débito só acontece no branch de sucesso).
         assistantSavedRef.current = true;
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
-        const errorText = "⚠️ Não consegui processar sua solicitação desta vez. Tente enviar novamente — se anexou um exame, reenvie o arquivo.";
+        const errorText = genericFailText(attachments.length > 0);
         const processingMs = Math.round(performance.now() - startedAt);
         const errorStructured = { processing_ms: processingMs, error: true, error_reason: "stream_closed_no_answer" };
         try {

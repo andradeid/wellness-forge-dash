@@ -42,6 +42,7 @@ const KIND_LABEL: Record<string, string> = {
   suspicious_fast: "Resposta rápida demais",
   no_execution: "Execução inexistente",
   missing_markers: "Sem marcadores na resposta",
+  truncated_output: "Resposta cortada (limite de saída)",
   unknown: "Não classificado",
 };
 

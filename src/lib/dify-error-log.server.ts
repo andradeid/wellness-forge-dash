@@ -24,6 +24,7 @@ export type DifyErrorKind =
   | "suspicious_fast"
   | "no_execution"
   | "missing_markers"
+  | "truncated_output"
   | "unknown";
 
 

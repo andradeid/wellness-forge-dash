@@ -29,6 +29,7 @@ const schema = z.object({
       "suspicious_fast",
       "no_execution",
       "missing_markers",
+      "truncated_output",
       "unknown",
     ])
     .optional()

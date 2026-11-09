@@ -40,7 +40,8 @@ export async function downscaleImageFile(file: File): Promise<DownscaleResult> {
   if (!DOWNSCALABLE_MIME.has((file.type || "").toLowerCase())) return unchanged;
 
   try {
-    const bitmap = await createImageBitmap(file);
+    const bitmap = await decodeImage(file);
+    if (!bitmap) return unchanged;
     const { width, height } = bitmap;
     const largest = Math.max(width, height);
 
@@ -65,7 +66,7 @@ export async function downscaleImageFile(file: File): Promise<DownscaleResult> {
     // Fundo branco: JPEG não tem alfa; sem isso PNG transparente vira preto.
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, targetW, targetH);
-    ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+    ctx.drawImage(bitmap.source, 0, 0, targetW, targetH);
     bitmap.close?.();
 
     const blob = await new Promise<Blob | null>((resolve) => {
@@ -82,6 +83,40 @@ export async function downscaleImageFile(file: File): Promise<DownscaleResult> {
   } catch (e) {
     console.warn("[image-downscale] falhou, enviando original:", e);
     return unchanged;
+  }
+}
+
+type Decoded = { width: number; height: number; source: CanvasImageSource; close?: () => void };
+
+/**
+ * Decodifica a imagem. `createImageBitmap` falha em fotos muito grandes em
+ * alguns celulares (ex.: 48 MP no iPhone, ~16 MB); nesse caso tenta pelo
+ * elemento <img>, que o navegador decodifica de forma reduzida.
+ */
+async function decodeImage(file: File): Promise<Decoded | null> {
+  try {
+    const bmp = await createImageBitmap(file);
+    return { width: bmp.width, height: bmp.height, source: bmp, close: () => bmp.close?.() };
+  } catch (e) {
+    console.warn("[image-downscale] createImageBitmap falhou, tentando <img>:", e);
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    await img.decode();
+    if (!img.naturalWidth || !img.naturalHeight) return null;
+    return {
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+      source: img,
+      close: () => URL.revokeObjectURL(url),
+    };
+  } catch (e) {
+    console.warn("[image-downscale] <img> também falhou:", e);
+    URL.revokeObjectURL(url);
+    return null;
   }
 }
 

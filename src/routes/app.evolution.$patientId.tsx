@@ -106,6 +106,31 @@ function parseReferenceRange(ref: string | null): { min: number; max: number } |
   return { min, max };
 }
 
+/**
+ * Chave da série: sem maiúscula, acento, espaço e pontuação. O "%" é mantido
+ * ("% Água corporal total" em % ≠ "Água corporal total" em litros).
+ */
+function markerGroupKey(name: string | null | undefined): string {
+  return (name ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/%/g, "pct")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Unidade normalizada: "mg/dL" = "mg/dl"; "µUI/mL" = "uUI/ml" = "mcUI/mL". */
+function unitGroupKey(unit: string | null | undefined): string {
+  return (unit ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/µ|μ/g, "u")
+    .replace(/mc(?=[a-z])/g, "u")
+    .replace(/iu/g, "ui")
+    .replace(/[^a-z0-9%/]/g, "");
+}
+
 function EvolutionPage() {
   const { patientId } = Route.useParams();
   const [patient, setPatient] = useState<PatientCtx | null>(null);
@@ -156,20 +181,47 @@ function EvolutionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
-  // Group by marker name
+  // Agrupa pelo nome do marcador ignorando maiúscula, acento, espaço e
+  // pontuação: "Vitamina D (25-OH)" e "vitamina d 25 oh" são a mesma série.
+  // O nome exibido é o do exame mais recente.
   const groups = useMemo(() => {
     if (!rows) return [];
-    const map = new Map<string, ResultRow[]>();
+    // 1) por nome normalizado; 2) dentro do nome, por unidade normalizada
+    //    (mg/L e mg/dL não podem dividir o mesmo gráfico). Pontos sem
+    //    unidade vão para a série com mais pontos daquele marcador.
+    const byName = new Map<string, ResultRow[]>();
     for (const r of rows) {
-      const key = r.marker_name.trim();
+      const key = markerGroupKey(r.marker_name);
       if (!key) continue;
-      const arr = map.get(key) ?? [];
+      const arr = byName.get(key) ?? [];
       arr.push(r);
-      map.set(key, arr);
+      byName.set(key, arr);
     }
-    const out = Array.from(map.entries()).map(([name, points]) => {
+    const series: { points: ResultRow[]; showUnit: boolean }[] = [];
+    for (const all of byName.values()) {
+      const byUnit = new Map<string, ResultRow[]>();
+      const noUnit: ResultRow[] = [];
+      for (const r of all) {
+        const u = unitGroupKey(r.marker_unit);
+        if (!u) { noUnit.push(r); continue; }
+        const arr = byUnit.get(u) ?? [];
+        arr.push(r);
+        byUnit.set(u, arr);
+      }
+      const parts = Array.from(byUnit.values()).sort((a, b) => b.length - a.length);
+      if (parts.length === 0) parts.push([]);
+      parts[0].push(...noUnit);
+      const filled = parts.filter((p) => p.length > 0);
+      // Mesmo marcador em unidades diferentes: o nome leva a unidade para
+      // as duas séries ficarem distintas na lista.
+      for (const p of filled) series.push({ points: p, showUnit: filled.length > 1 });
+    }
+    const out = series.map(({ points, showUnit }) => {
       points.sort((a, b) => a.measured_at.localeCompare(b.measured_at));
-      return { name, points, latest: points[points.length - 1] };
+      const latest = points[points.length - 1];
+      const unit = points.find((p) => p.marker_unit?.trim())?.marker_unit?.trim();
+      const name = latest.marker_name.trim() + (showUnit && unit ? ` (${unit})` : "");
+      return { name, points, latest };
     });
     out.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     return out;
