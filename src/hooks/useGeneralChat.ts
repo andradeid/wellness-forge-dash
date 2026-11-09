@@ -16,7 +16,32 @@ import {
   isTaskRoutingFallback,
 } from "@/lib/dify-error-messages";
 
-export function useGeneralChat(chatId: string, agentType: string, selectedTaskKey?: string | null) {
+/**
+ * Perfil escolhido em Perguntas Clínicas → mesmos campos que a conversa com
+ * paciente envia ao Dify (curadoria #113: a gestante era tratada como adulta
+ * porque o perfil não chegava ao agente).
+ */
+function profileMeta(profile?: string | null): Record<string, string> | null {
+  switch (profile) {
+    case "adulto_masculino":
+      return { patient_profile: "adulto_masculino", patient_sex: "masculino" };
+    case "adulto_feminino":
+      return { patient_profile: "adulto_feminino", patient_sex: "feminino" };
+    case "gestante_mono":
+      return { patient_profile: "gestante", patient_sex: "feminino", gestante_tipo: "Monofetal" };
+    case "gestante_gemelar":
+      return { patient_profile: "gestante", patient_sex: "feminino", gestante_tipo: "Gemelar" };
+    default:
+      return null;
+  }
+}
+
+export function useGeneralChat(
+  chatId: string,
+  agentType: string,
+  selectedTaskKey?: string | null,
+  chatProfile?: string | null,
+) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
@@ -219,6 +244,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
           agent_type: agentType,
           conversation_id: conversationIdRef.current || undefined,
           ...(isSuper && selectedTaskKey ? { selected_task: selectedTaskKey } : {}),
+          ...(profileMeta(chatProfile) ? { meta: { ...profileMeta(chatProfile), chat_id: chatId } } : {}),
         }),
       });
 
@@ -469,7 +495,7 @@ export function useGeneralChat(chatId: string, agentType: string, selectedTaskKe
     } finally {
       sendingRef.current = false;
     }
-  }, [chatId, user, agentType, selectedTaskKey, getCost, consume, refetchCredits]);
+  }, [chatId, user, agentType, selectedTaskKey, chatProfile, getCost, consume, refetchCredits]);
 
   useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
 

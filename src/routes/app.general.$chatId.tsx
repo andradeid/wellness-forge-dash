@@ -40,12 +40,12 @@ function GeneralChatPage() {
   const agentType = agentTypeSearch ?? "research";
   const navigate = useNavigate();
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
-  const { messages, sendMessage, thinking, stopGeneration } = useGeneralChat(chatId, agentType, selectedTaskKey);
+  const [chatProfile, setChatProfile] = useState<string | null>(null);
+  const { messages, sendMessage, thinking, stopGeneration } = useGeneralChat(chatId, agentType, selectedTaskKey, chatProfile);
   const [query, setQuery] = useState("");
   const { chats, loading: loadingChats, refresh: refreshHistory } = useChatHistory(200);
   const { role, user } = useAuth();
   const { tasks: superAgentTasks, agents } = useAgentConfig();
-  const [chatProfile, setChatProfile] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
