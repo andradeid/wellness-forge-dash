@@ -200,6 +200,16 @@ function LoginPage() {
       if (loginInProgressRef.current) return;
       if (getLocalSessionToken()) return;
       try {
+        // Super admin entra sem assento (sem token local) por desenho. Sem esta
+        // checagem, outra aba aberta em /login derrubava o login dele assim que
+        // a sessão chegava pelo storage compartilhado ("entra e volta").
+        const sessionUserId = session?.user?.id;
+        if (sessionUserId) {
+          const sessionRole = await fetchRoleForNavigation(sessionUserId).catch(() => null);
+          if (sessionRole === "super_admin") return;
+          if (gen !== orphanCleanupGenRef.current || loginInProgressRef.current) return;
+          if (getLocalSessionToken()) return;
+        }
         await supabase.auth.signOut();
       } catch (error) {
         if (gen !== orphanCleanupGenRef.current || loginInProgressRef.current) return;
