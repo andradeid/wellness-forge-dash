@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { taskConsumesFiles } from "@/lib/dify-file-policy";
 import { downscaleImageFile } from "@/lib/image-downscale";
+import { extractDocumentText } from "@/lib/document-text.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
@@ -164,6 +165,7 @@ export function useGeneralChat(
     // (Pesquisa Científica e tarefas de exame em Perguntas Clínicas).
     const pendingFiles = (opts?.files ?? []).filter(Boolean);
     const difyFiles: Array<{ type: "image" | "document"; transfer_method: "local_file"; upload_file_id: string }> = [];
+    const extractedDocs: Array<{ name: string; text: string }> = [];
     if (pendingFiles.length > 0) {
       const consumer = isSuper && selectedTaskKey ? selectedTaskKey : agentType;
       if (!taskConsumesFiles(consumer)) {
@@ -176,6 +178,32 @@ export function useGeneralChat(
       }
       const { data: { session: upSession } } = await supabase.auth.getSession();
       for (const original of pendingFiles) {
+        // Pesquisa Científica: o agente não lê o conteúdo de PDF/DOCX anexado.
+        // O texto é extraído no servidor e vai na própria pergunta.
+        const isDoc = /pdf|wordprocessingml/.test(original.type) || /\.(pdf|docx)$/i.test(original.name);
+        if (agentType === "research" && isDoc) {
+          const toastId = `gextract-${original.name}-${Date.now()}`;
+          toast.loading(`Lendo ${original.name}...`, { id: toastId });
+          try {
+            const buf = new Uint8Array(await original.arrayBuffer());
+            let bin = "";
+            for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + 0x8000)));
+            const out = await extractDocumentText({ data: { base64: btoa(bin), mimeType: original.type, name: original.name } });
+            if (!out?.text) throw new Error(out?.error || "empty");
+            extractedDocs.push({ name: original.name, text: out.text });
+            toast.success(`${original.name} lido`, { id: toastId, duration: 2500 });
+          } catch (e) {
+            const tooBig = String((e as Error)?.message) === "too_big";
+            toast.error(tooBig ? `${original.name} é grande demais.` : `Não consegui ler o texto de ${original.name}.`, {
+              id: toastId,
+              description: tooBig ? "Envie um arquivo de até 15 MB." : "Se for um PDF escaneado, envie o DOI, o link ou o PMID do artigo.",
+              duration: 9000,
+            });
+            abortSend();
+            return;
+          }
+          continue;
+        }
         const toastId = `gupload-${original.name}-${Date.now()}`;
         toast.loading(`Enviando ${original.name}...`, { id: toastId });
         let file = original;
@@ -298,7 +326,11 @@ export function useGeneralChat(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: text.trim() || (difyFiles.length ? "Analise o arquivo anexado." : text),
+          query: extractedDocs.length
+            ? extractedDocs
+                .map((d) => `ARTIGO ANEXADO PELA NUTRICIONISTA (arquivo "${d.name}"). Texto extraído do arquivo:\n<<<\n${d.text}\n>>>`)
+                .join("\n\n") + `\n\nPedido: ${text.trim() || "Resuma o artigo anexado."}`
+            : text.trim() || (difyFiles.length ? "Analise o arquivo anexado." : text),
           agent_type: agentType,
           ...(difyFiles.length ? { files: difyFiles, file_meta: pendingFiles.map((f) => ({ name: f.name, type: f.type })) } : {}),
           conversation_id: conversationIdRef.current || undefined,
