@@ -31,15 +31,18 @@ async function findAuthUserByEmail(
   supabaseAdmin: any,
   email: string,
 ): Promise<any | null> {
-  // Paginação defensiva; para de varrer assim que acha.
-  for (let page = 1; page <= 20; page++) {
+  // Paginação defensiva; para de varrer assim que acha. Uma página com erro
+  // (ex.: banned_until inválido num usuário) não interrompe a busca nas demais.
+  let failures = 0;
+  for (let page = 1; page <= 60; page++) {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({
       page,
       perPage: 200,
     });
     if (error) {
-      console.warn("[provisioning] listUsers falhou:", error.message);
-      return null;
+      console.warn(`[provisioning] listUsers falhou na página ${page}:`, error.message);
+      if (++failures >= 3) return null;
+      continue;
     }
     const users = data?.users ?? [];
     const found = users.find(
