@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { disabledRealtimeOptions } from "@/integrations/supabase/disabled-realtime";
 import { taskConsumesFiles, taskRequiresImage } from "@/lib/dify-file-policy";
+import { createMarkersDetector } from "@/lib/dify-sse-markers";
 import {
   getDifyAgentConfig,
   invalidateDifyConfigCache,
@@ -135,10 +136,15 @@ function wrapStreamWithRelease(
   const decoder = new TextDecoder("utf-8", { fatal: false });
   let sniffBuf = "";
   const FINAL_EVENTS = /"event"\s*:\s*"(message_end|error|tts_message_end|workflow_finished)"/;
+  // Monta o texto da resposta a partir dos eventos `message` para saber se
+  // vieram marcadores (nos bytes brutos o padrão chega quebrado entre eventos).
+  const feedMarkers = createMarkersDetector();
   const scanForFinal = (chunk: Uint8Array) => {
     if (released) return;
     bytes += chunk.byteLength;
-    sniffBuf += decoder.decode(chunk, { stream: true });
+    const piece = decoder.decode(chunk, { stream: true });
+    sniffBuf += piece;
+    if (!sawMarkers && feedMarkers(piece)) sawMarkers = true;
     // Log observabilidade: sinaliza quando o Dify emite `error` no meio do stream.
     if (!streamError && /"event"\s*:\s*"error"/.test(sniffBuf)) {
       console.warn("[dify-proxy] upstream event:error detected in stream");
