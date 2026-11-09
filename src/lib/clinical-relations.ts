@@ -81,7 +81,7 @@ function isRatioName(k: string): boolean {
   return /\/|:|relacao|razao|indice|homa|castelli/.test(k);
 }
 
-type Base = { value: number; unit: string; name: string };
+type Base = { value: number; unit: string; name: string; /** Unidade como veio do laudo, para exibir. */ rawUnit?: string };
 
 function find(
   markers: RelationMarker[],
@@ -99,7 +99,7 @@ function find(
     if (!test(k, u)) continue;
     const n = exactNumber(m.value);
     if (n === null) continue;
-    return { value: n, unit: u, name: String(m.name) };
+    return { value: n, unit: u, name: String(m.name), rawUnit: m.unit ? String(m.unit).trim() : "" };
   }
   return null;
 }
@@ -261,7 +261,7 @@ function fmt(n: number, decimals: number): string {
 
 function describeInputs(inputs: Base[]): string {
   return inputs
-    .map((i) => `${i.name} ${i.value.toLocaleString("pt-BR", { maximumFractionDigits: 3 })}${i.unit ? ` ${i.unit}` : ""}`)
+    .map((i) => `${i.name} ${i.value.toLocaleString("pt-BR", { maximumFractionDigits: 3 })}${(i.rawUnit ?? i.unit) ? ` ${i.rawUnit ?? i.unit}` : ""}`)
     .join(" e ");
 }
 
