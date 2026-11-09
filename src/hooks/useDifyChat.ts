@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ChatMessage } from "@/components/chat/ChatMessageList";
 import type { AttachmentProgressItem, AttachmentProgressStage } from "@/components/chat/ChatInput";
 import type { Marker } from "@/components/chat/ExamResultCard";
+import { applyClinicalRelations } from "@/lib/clinical-relations";
 import {
   processAndPersistMarkers,
   logStructuredAudit,
@@ -1833,6 +1834,14 @@ export function useDifyChat(
                   // pelo provedor), preserva o que já foi renderizado no parcial.
                   if ((!markers || markers.length === 0) && streamMarkersRef.current.length > 0) {
                     markers = streamMarkersRef.current;
+                  }
+                  // Relações clínicas recalculadas no código (curadoria #57/#96/#99/#110/#50).
+                  if (markers && markers.length > 0 && isExamLike) {
+                    try {
+                      markers = applyClinicalRelations(markers, (metaRef.current as any)?.patient_profile ?? null);
+                    } catch (relErr) {
+                      console.warn("[relações] cálculo falhou; mantém o que a IA mandou", relErr);
+                    }
                   }
 
 

@@ -28,6 +28,8 @@ export interface Marker {
   classification?: string;
   analysis?: string;
   category?: string;
+  /** Relação clínica calculada pela tela (fórmula da Base Funcional). */
+  derived?: boolean;
 }
 
 const stateStyles: Record<ClassificationVisualState, { badge: string; icon: ReactNode; label?: string }> = {
@@ -142,6 +144,12 @@ export function ExamResultCard({ markers, streaming = false }: { markers: Marker
     acc[cat].push(m);
     return acc;
   }, {} as Record<string, Marker[]>);
+  // Dentro de cada perfil, as relações calculadas vêm depois dos marcadores
+  // medidos (curadoria #50).
+  for (const cat of Object.keys(groups)) {
+    const list = groups[cat];
+    groups[cat] = [...list.filter((m) => !m.derived), ...list.filter((m) => m.derived)];
+  }
 
   // Ordem clínica explícita (briefing curadoria)
   const CATEGORY_ORDER = [
