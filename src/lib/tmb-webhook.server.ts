@@ -99,7 +99,11 @@ export async function handleTmbWebhook(request: Request, deps?: { supabaseAdmin?
       }
       const msg = await grantAccess(sb, order, resolved.key, resolved.product, eventKey, safePayload, deps?.emails);
       await log(sb, "efetivado", msg.ok ? "success" : "error", msg.text, safePayload);
-      if (!msg.ok) return new Response(msg.text, { status: 500 });
+      if (!msg.ok) {
+        // Libera o pedido para a TMB poder reenviar depois da correção.
+        await sb.from("stripe_webhook_events" as any).delete().eq("id", eventKey);
+        return new Response(msg.text, { status: 500 });
+      }
     } else if (order.status === "cancelado") {
       const text = await cancelAccess(sb, order, eventKey);
       await log(sb, "cancelado", "success", text, safePayload);
