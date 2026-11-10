@@ -11,6 +11,7 @@ import { SubscriptionExpiredBanner } from "@/components/SubscriptionExpiredBanne
 import { usePaywallState, paywallStore } from "@/lib/paywall-store";
 import { TopUpDialog } from "@/components/TopUpDialog";
 import { LummaPlayAnnouncement } from "@/components/LummaPlayAnnouncement";
+import { BlackFridayPopup } from "@/components/BlackFridayPopup";
 import { useTopUpState, topUpStore } from "@/lib/topup-store";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -93,6 +94,8 @@ function AppLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [sessionAllowed, setSessionAllowed] = useState(false);
+  /** Avisos de entrada em sequência: primeiro a campanha, depois o treinamento. */
+  const [entryPopupsReady, setEntryPopupsReady] = useState(false);
   const [validationTimedOut, setValidationTimedOut] = useState(false);
   const paywall = usePaywallState();
   const topup = useTopUpState();
@@ -314,7 +317,8 @@ function AppLayout() {
           </div>
         </div>
         <Toaster />
-        {pathname !== "/app/play" && <LummaPlayAnnouncement />}
+        <BlackFridayPopup onDone={() => setEntryPopupsReady(true)} />
+        {pathname !== "/app/play" && <LummaPlayAnnouncement ready={entryPopupsReady} />}
         <PaywallDialog
           open={paywall.open}
           onOpenChange={(v) => (v ? null : paywallStore.close())}

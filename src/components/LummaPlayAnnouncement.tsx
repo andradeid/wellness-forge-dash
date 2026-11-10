@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { PlayCircle } from "lucide-react";
 import {
@@ -22,14 +22,18 @@ import {
  * Abre sempre que o usuário entra, até que ele marque "Não mostrar novamente"
  * (gravado no navegador, então vale para todos os próximos acessos).
  */
-export function LummaPlayAnnouncement() {
+export function LummaPlayAnnouncement({ ready = true }: { ready?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [hideForever, setHideForever] = useState(false);
   const navigate = useNavigate();
 
+  // Abre depois da campanha da Black Friday (quando houver), nunca junto.
+  const shownRef = useRef(false);
   useEffect(() => {
+    if (!ready || shownRef.current) return;
+    shownRef.current = true;
     if (shouldShowLummaPlayAnnouncement()) setOpen(true);
-  }, []);
+  }, [ready]);
 
   const close = () => setOpen(false);
 
