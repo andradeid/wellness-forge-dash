@@ -709,7 +709,7 @@ export function QuickAnalysisDialog({ onCreated, moduleContext }: { onCreated?: 
                   <>
                     <Upload className="h-8 w-8 text-muted-foreground" />
                     <span className="text-sm">Clique para selecionar um PDF ou imagem</span>
-                    <span className="text-xs text-muted-foreground">Até 20MB</span>
+                    <span className="text-xs text-muted-foreground">PDF até 15MB · foto até 20MB</span>
                   </>
                 )}
                 <Input

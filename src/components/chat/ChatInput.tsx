@@ -21,7 +21,12 @@ export interface AttachmentProgressItem {
   message?: string;
 }
 
+/** Fotos podem ter até 20MB: a tela reduz a imagem antes de enviar. */
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
+/** PDF e demais documentos vão sem redução e o servidor de IA aceita até 15MB. */
+const MAX_DOC_SIZE = 15 * 1024 * 1024;
+const isImageFile = (f: File) => /^image\//i.test(f.type) || /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(f.name);
+const sizeLimitFor = (f: File) => (isImageFile(f) ? MAX_FILE_SIZE : MAX_DOC_SIZE);
 const MAX_FILES = 10;
 const ALLOWED_MIME = /^(application\/(pdf|x-pdf|acrobat|vnd\.pdf|octet-stream)|text\/pdf|image\/(png|jpe?g|webp))$/i;
 const ALLOWED_EXT = /\.(pdf|png|jpe?g|webp)$/i;
@@ -81,14 +86,19 @@ export function ChatInput({
     if (!picked.length) return;
     const valid: File[] = [];
     let oversized = 0;
+    let oversizedDoc = 0;
     let unknown = 0;
     for (const f of picked) {
-      if (f.size > MAX_FILE_SIZE) { oversized += 1; continue; }
+      if (f.size > sizeLimitFor(f)) {
+        if (isImageFile(f)) oversized += 1; else oversizedDoc += 1;
+        continue;
+      }
       const ok = ALLOWED_MIME.test(f.type) || ALLOWED_EXT.test(f.name);
       if (!ok) unknown += 1;
       valid.push(f);
     }
-    if (oversized) toast.error("Arquivo acima do limite de 20MB.");
+    if (oversized) toast.error("Foto acima do limite de 20MB.");
+    if (oversizedDoc) toast.error("PDF acima do limite de 15MB. Envie um arquivo menor ou as páginas em partes.");
     if (unknown) toast.warning("Tipo de arquivo não reconhecido — envie PDF, PNG, JPG ou WEBP se necessário.");
     if (!valid.length) return;
     setFiles((prev) => {
@@ -115,7 +125,7 @@ export function ChatInput({
     },
     multiple: true,
     maxSize: MAX_FILE_SIZE,
-    onDropRejected: () => toast.error("Não consegui anexar este arquivo. Use PDF, PNG, JPG ou WEBP até 20MB."),
+    onDropRejected: () => toast.error("Não consegui anexar este arquivo. Use PDF até 15MB ou foto (PNG, JPG, WEBP) até 20MB."),
   });
 
   const openPicker = () => fileInputRef.current?.click();
