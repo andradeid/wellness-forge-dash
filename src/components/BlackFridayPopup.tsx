@@ -96,7 +96,7 @@ export function BlackFridayPopup({ onDone }: { onDone: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-300"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 animate-in fade-in duration-300"
       role="dialog"
       aria-modal="true"
       aria-label="A Nova Nutricionista – Black Friday"
