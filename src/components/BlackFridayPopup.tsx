@@ -8,18 +8,20 @@ import {
   boughtBlackFriday,
   campaignActive,
   hasLongAccess,
-  markSeen,
-  seenThisSession,
+  neverShow,
+  setNeverShow,
 } from "@/lib/black-friday-popup";
 
 /**
  * Popup da Black Friday ("A Nova Nutricionista") em tela escura, antes do
- * aviso de treinamento. Chama onDone quando fecha — ou na hora, se não
+ * aviso de treinamento. Abre em todo acesso, como o treinamento, até a
+ * nutricionista marcar "Não mostrar novamente". Chama onDone quando fecha — ou na hora, se não
  * for exibido — para o próximo aviso abrir.
  */
 export function BlackFridayPopup({ onDone }: { onDone: () => void }) {
   const { user, role, loading } = useAuth();
   const [open, setOpen] = useState(false);
+  const [hideForever, setHideForever] = useState(false);
   const decidedRef = useRef(false);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
@@ -36,7 +38,7 @@ export function BlackFridayPopup({ onDone }: { onDone: () => void }) {
       setOpen(true);
       return;
     }
-    if (role !== "nutri" || !campaignActive() || seenThisSession()) {
+    if (role !== "nutri" || !campaignActive() || neverShow()) {
       doneRef.current();
       return;
     }
@@ -72,7 +74,6 @@ export function BlackFridayPopup({ onDone }: { onDone: () => void }) {
   }, [loading, user, role]);
 
   const close = () => {
-    markSeen();
     setOpen(false);
     doneRef.current();
   };
@@ -116,7 +117,6 @@ export function BlackFridayPopup({ onDone }: { onDone: () => void }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => {
-            markSeen();
             setOpen(false);
             doneRef.current();
           }}
@@ -128,13 +128,27 @@ export function BlackFridayPopup({ onDone }: { onDone: () => void }) {
             className="block h-auto w-full max-h-[85vh] object-contain"
           />
         </a>
-        <button
-          type="button"
-          onClick={close}
-          className="mx-auto mt-3 block text-sm text-white/70 underline-offset-4 hover:text-white hover:underline"
-        >
-          Agora não
-        </button>
+        <div className="mt-3 flex items-center justify-center gap-6 text-sm text-white/70">
+          <label className="flex cursor-pointer items-center gap-2 hover:text-white">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-white"
+              checked={hideForever}
+              onChange={(e) => {
+                setHideForever(e.target.checked);
+                setNeverShow(e.target.checked);
+              }}
+            />
+            Não mostrar novamente
+          </label>
+          <button
+            type="button"
+            onClick={close}
+            className="underline-offset-4 hover:text-white hover:underline"
+          >
+            Agora não
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,8 @@
  *
  * Regras:
  * - só para nutricionistas, só durante a campanha (CAMPAIGN_END, inclusive);
- * - uma vez por sessão do navegador (fechou, só volta no próximo acesso);
+ * - abre em todo acesso, como o aviso de treinamento, até a nutricionista marcar
+ *   "Não mostrar novamente";
  * - não aparece para quem já comprou o produto (TMB ou Kiwify) nem para quem já tem
  *   acesso longo (validade a mais de 13 meses — caso das compras liberadas à mão).
  * Para encerrar antes, mude CAMPAIGN_END para uma data passada.
@@ -13,7 +14,7 @@ export const BLACK_FRIDAY_URL =
 export const BLACK_FRIDAY_IMAGE = "/black-friday/nova-nutricionista.jpg";
 /** Último dia da campanha (horário de Brasília). */
 export const CAMPAIGN_END = "2026-11-30";
-export const SEEN_KEY = "lumma-black-friday-2026-seen";
+export const SEEN_KEY = "lumma-black-friday-2026-never";
 
 /** Produto da Kiwify "A Nova Nutricionista – Black Friday". */
 const KIWIFY_BLACK_PRODUCT = "c1df6360-d3b5-11f1-aaf7-2ffa08014d49";
@@ -24,27 +25,29 @@ export function campaignActive(now: Date = new Date()): boolean {
   return now.getTime() <= end.getTime();
 }
 
-function session(): Storage | null {
+function store(): Storage | null {
   try {
-    return typeof sessionStorage === "undefined" ? null : sessionStorage;
+    return typeof localStorage === "undefined" ? null : localStorage;
   } catch {
     return null;
   }
 }
 
-export function seenThisSession(): boolean {
+/** Igual ao aviso de treinamento: abre em todo acesso até marcar "Não mostrar novamente". */
+export function neverShow(): boolean {
   try {
-    return session()?.getItem(SEEN_KEY) === "1";
+    return store()?.getItem(SEEN_KEY) === "never";
   } catch {
     return false;
   }
 }
 
-export function markSeen(): void {
+export function setNeverShow(never: boolean): void {
   try {
-    session()?.setItem(SEEN_KEY, "1");
+    if (never) store()?.setItem(SEEN_KEY, "never");
+    else store()?.removeItem(SEEN_KEY);
   } catch {
-    /* sem storage: volta a aparecer no próximo carregamento */
+    /* sem storage: a preferência não persiste */
   }
 }
 
@@ -59,12 +62,15 @@ export function boughtBlackFriday(
   });
 }
 
-/** Validade a mais de 13 meses = já tem a Black (2 anos) ou plano equivalente. */
+/**
+ * Acesso de cerca de 2 anos (validade entre 13 meses e o ano 2099) = já tem a Black,
+ * inclusive quem foi liberado à mão. Contas vitalícias/ilimitadas (2100+) continuam vendo.
+ */
 export function hasLongAccess(currentPeriodEnd: string | null | undefined, now: Date = new Date()): boolean {
   if (!currentPeriodEnd) return false;
   const end = new Date(currentPeriodEnd);
   if (isNaN(end.getTime())) return false;
   const limit = new Date(now);
   limit.setMonth(limit.getMonth() + 13);
-  return end.getTime() > limit.getTime();
+  return end.getTime() > limit.getTime() && end.getUTCFullYear() < 2100;
 }

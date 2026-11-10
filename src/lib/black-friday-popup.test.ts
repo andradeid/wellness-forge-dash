@@ -19,5 +19,6 @@ describe("popup Black Friday", () => {
     assert.equal(hasLongAccess("2028-11-08T23:59:59Z", now), true);
     assert.equal(hasLongAccess("2027-10-26T00:00:00Z", now), false);
     assert.equal(hasLongAccess(null, now), false);
+    assert.equal(hasLongAccess("2127-06-22T00:00:00Z", now), false);
   });
 });
