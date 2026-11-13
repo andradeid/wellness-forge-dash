@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent, type KeyboardEvent } from "react";
 import { useDropzone } from "react-dropzone";
 import { AlertCircle, ArrowUp, CheckCircle2, Loader2, Paperclip, Square, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { filesFromClipboard, namePastedFiles } from "@/lib/clipboard-files";
 
 export interface PendingFile {
   file: File;
@@ -136,6 +137,16 @@ export function ChatInput({
     e.target.value = "";
   };
 
+  // Colar imagem/PDF direto da área de transferência (Ctrl+V, Cmd+V ou "Colar" no celular).
+  const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    if (disabled || !hasModule) return;
+    const pasted = filesFromClipboard(e.clipboardData);
+    if (!pasted.length) return; // texto: o navegador cola normalmente
+    e.preventDefault();
+    const taken = [...files.map((f) => f.file.name), ...uploadProgress.map((p) => p.name)];
+    addFiles(namePastedFiles(pasted, taken));
+  };
+
   const submittingRef = useRef(false);
 
   const send = async () => {
@@ -243,8 +254,9 @@ export function ChatInput({
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
+        onPaste={onPaste}
         rows={1}
-        placeholder={hasModule ? "Pergunte à Lumma sobre o paciente ou anexe um exame..." : "Selecione uma tarefa acima para começar"}
+        placeholder={hasModule ? "Pergunte à Lumma sobre o paciente, anexe ou cole (Ctrl+V) um exame..." : "Selecione uma tarefa acima para começar"}
         className="min-h-[44px] sm:min-h-[36px] max-h-80 resize-none overflow-y-auto border-0 bg-transparent px-1 py-1.5 sm:py-1 shadow-none focus-visible:ring-0 text-base sm:text-[15px]"
         disabled={disabled || !hasModule}
       />
