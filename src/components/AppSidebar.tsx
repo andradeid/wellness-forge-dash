@@ -32,7 +32,8 @@ import {
   Clapperboard,
 } from "lucide-react";
 
-const WHATSAPP_SUPPORT_URL = `https://wa.me/5519997285302?text=${encodeURIComponent("Oi! Você pode me ajudar com com a LUMMA 2.0?")}`;
+// O link real (com o e-mail da nutricionista) é montado na renderização: supportWhatsAppUrl("sistema", email).
+const WHATSAPP_SUPPORT_URL = SUPPORT_WHATSAPP_URL;
 import { useEffect, useState } from "react";
 import {
   Sidebar,
@@ -51,6 +52,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreditsBadge } from "@/components/CreditsBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { SUPPORT_WHATSAPP_URL, supportWhatsAppUrl } from "@/lib/support-links";
 import { useMyCredits } from "@/hooks/useCredits";
 
 const LOW_CREDIT_THRESHOLD = 20;
@@ -399,7 +401,11 @@ export function AppSidebar() {
                             {content}
                           </a>
                         ) : isExternal ? (
-                          <a href={item.url} target="_blank" rel="noopener noreferrer">
+                          <a
+                            href={item.url === WHATSAPP_SUPPORT_URL ? supportWhatsAppUrl("sistema", user?.email) : item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             {content}
                           </a>
                         ) : (

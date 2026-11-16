@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { SUPPORT_WHATSAPP_NUMBER } from "@/lib/support-links";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Coins, Info, Sparkles, TrendingUp, HelpCircle, Loader2 } from "lucide-react";
@@ -42,8 +43,7 @@ interface AgentCost {
   cost_credits: number;
 }
 
-const SUPPORT_WHATSAPP =
-  (import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined) ?? "5511999999999";
+const SUPPORT_WHATSAPP = SUPPORT_WHATSAPP_NUMBER;
 
 const formatBRL = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -144,6 +144,7 @@ export function TopUpDialog({ open, onOpenChange }: Props) {
 
   const buildWhatsAppLink = (subject: string, lines: string[]) => {
     const message = [
+      "_Mensagem enviada pelo sistema Lumma_",
       `Olá, ${subject} no LUMMA.`,
       "",
       ...lines,

@@ -16,6 +16,7 @@ import { Route as ManutencaoRouteImport } from './routes/manutencao'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SuporteRouteImport } from './routes/suporte'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -102,6 +103,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuporteRoute = SuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
@@ -378,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/suporte': typeof SuporteRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -438,6 +445,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/suporte': typeof SuporteRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -500,6 +508,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/suporte': typeof SuporteRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -563,6 +572,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/suporte'
     | '/unauthorized'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -623,6 +633,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/suporte'
     | '/unauthorized'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -684,6 +695,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/suporte'
     | '/unauthorized'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -746,6 +758,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SuporteRoute: typeof SuporteRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -813,6 +826,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suporte': {
+      id: '/suporte'
+      path: '/suporte'
+      fullPath: '/suporte'
+      preLoaderRoute: typeof SuporteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/unauthorized': {
@@ -1280,6 +1300,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SuporteRoute: SuporteRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:

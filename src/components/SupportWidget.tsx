@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-
-const WHATSAPP_NUMBER = "5519997285302";
-const WHATSAPP_MESSAGE = "Oi! Você pode me ajudar com com a LUMMA 2.0?";
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+import { useAuth } from "@/hooks/useAuth";
+import { supportWhatsAppUrl } from "@/lib/support-links";
 
 export function SupportWidget() {
   const [mounted, setMounted] = useState(false);
+  const { user } = useAuth();
+  const WHATSAPP_URL = supportWhatsAppUrl("sistema", user?.email);
 
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;

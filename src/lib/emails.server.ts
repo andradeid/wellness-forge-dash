@@ -4,6 +4,8 @@
  * Só é importado por código server-side (webhooks, server functions).
  */
 
+import { supportWhatsAppUrl } from "@/lib/support-links";
+
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const FROM = "Lumma <no-reply@lumma.ia.br>";
 const DASHBOARD_URL = "https://lumma.ia.br/app";
@@ -280,7 +282,7 @@ export async function sendSubscriptionExpiredEmail(args: {
     plan_name: args.planName,
     expired_at: expiredAt,
     renew_url: `${DASHBOARD_URL}/planos`,
-    support_url: "https://wa.me/5519997285302",
+    support_url: supportWhatsAppUrl("email", email),
   };
 
   return sendEmail({
