@@ -8,18 +8,24 @@
  * - não aparece para quem já comprou o produto (TMB ou Kiwify) nem para quem já tem
  *   acesso longo (validade a mais de 13 meses — caso das compras liberadas à mão).
  * Para encerrar antes, mude CAMPAIGN_END para uma data passada.
+ *
+ * DESLIGADO em 17/11/2026 a pedido da gestão (CAMPAIGN_ENABLED = false).
+ * Para voltar a mostrar, troque para true — o resto continua igual.
  */
 export const BLACK_FRIDAY_URL =
   "https://lp.institutoapp.com.br/nova-nutricionista?utm_source=LUMMA&utm_medium=LUMMA&utm_campaign=LUMMA&utm_content=LUMMA";
 export const BLACK_FRIDAY_IMAGE = "/black-friday/nova-nutricionista.jpg";
 /** Último dia da campanha (horário de Brasília). */
 export const CAMPAIGN_END = "2026-11-30";
+/** Chave geral do popup. false = não aparece para ninguém. */
+export const CAMPAIGN_ENABLED = false;
 export const SEEN_KEY = "lumma-black-friday-2026-never";
 
 /** Produto da Kiwify "A Nova Nutricionista – Black Friday". */
 const KIWIFY_BLACK_PRODUCT = "c1df6360-d3b5-11f1-aaf7-2ffa08014d49";
 
-export function campaignActive(now: Date = new Date()): boolean {
+export function campaignActive(now: Date = new Date(), enabled: boolean = CAMPAIGN_ENABLED): boolean {
+  if (!enabled) return false;
   // Fim do dia em Brasília (UTC−3).
   const end = new Date(`${CAMPAIGN_END}T23:59:59-03:00`);
   return now.getTime() <= end.getTime();

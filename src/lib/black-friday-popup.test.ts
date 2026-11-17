@@ -4,8 +4,10 @@ import { boughtBlackFriday, campaignActive, hasLongAccess } from "./black-friday
 
 describe("popup Black Friday", () => {
   it("fica ativa até o fim de 30/11 em Brasília", () => {
-    assert.equal(campaignActive(new Date("2026-11-30T23:00:00-03:00")), true);
-    assert.equal(campaignActive(new Date("2026-12-01T00:01:00-03:00")), false);
+    assert.equal(campaignActive(new Date("2026-11-30T23:00:00-03:00"), true), true);
+    assert.equal(campaignActive(new Date("2026-12-01T00:01:00-03:00"), true), false);
+    // desligado pela chave geral: não aparece nem dentro do período
+    assert.equal(campaignActive(new Date("2026-11-20T12:00:00-03:00")), false);
   });
   it("não aparece para quem já comprou pela TMB ou Kiwify", () => {
     assert.equal(boughtBlackFriday([{ status: "paid", metadata: { tmb_produto: "nova-nutricionista" } }]), true);
