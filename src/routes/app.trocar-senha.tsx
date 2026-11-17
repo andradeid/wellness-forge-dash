@@ -43,7 +43,14 @@ function TrocarSenhaPage() {
       if (userErr || !userData.user) throw userErr ?? new Error("Sessão inválida");
 
       const { error: updErr } = await supabase.auth.updateUser({ password });
-      if (updErr) throw updErr;
+      // Senha igual à atual: acontece quando ela já criou essa senha pelo link de
+      // "Esqueci a senha" e o aviso de senha temporária continuou ligado. A senha
+      // já é dela (não é mais a temporária): só desliga o aviso e segue.
+      const samePassword =
+        !!updErr &&
+        ((updErr as { code?: string }).code === "same_password" ||
+          /different from the old|same password/i.test(updErr.message ?? ""));
+      if (updErr && !samePassword) throw updErr;
 
       const { error: profErr } = await supabase
         .from("profiles")
@@ -51,13 +58,13 @@ function TrocarSenhaPage() {
         .eq("id", userData.user.id);
       if (profErr) throw profErr;
 
-      toast.success("Senha atualizada! Bem-vinda à LUMMA.");
+      toast.success(samePassword ? "Senha confirmada! Bem-vinda à LUMMA." : "Senha atualizada! Bem-vinda à LUMMA.");
       await navigate({ to: "/app", replace: true });
     } catch (err) {
       console.error("[trocar-senha] erro", err);
       const msg = err instanceof Error ? err.message : String(err);
       toast.error(
-        msg.toLowerCase().includes("same")
+        /same|different from the old/i.test(msg)
           ? "A nova senha precisa ser diferente da atual."
           : "Não foi possível atualizar sua senha. Tente novamente."
       );

@@ -218,6 +218,14 @@ function ResetPasswordPage() {
       toast.error(error.message || "Não foi possível atualizar a senha.");
       return;
     }
+    // Quem cria a senha pelo link já tem senha própria: desliga o aviso de
+    // "senha temporária", senão o app pede para trocar de novo no primeiro acesso.
+    if (sessionData.session?.user?.id) {
+      await supabase
+        .from("profiles")
+        .update({ must_change_password: false })
+        .eq("id", sessionData.session.user.id);
+    }
     toast.success("Senha atualizada com sucesso.");
     await supabase.auth.signOut();
     setTimeout(() => navigate({ to: "/login" }), 500);
