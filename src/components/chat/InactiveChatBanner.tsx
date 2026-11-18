@@ -2,26 +2,36 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { chatBannerKind } from "@/lib/chat-banner";
 
 type Props = {
   chatId: string | null | undefined;
   onNewChat: () => void;
   /** Limite em horas para considerar a conversa inativa. Default: 24h. */
   thresholdHours?: number;
+  /** Mensagens carregadas na tela (cresce enquanto a nutri conversa). */
+  messageCount?: number;
 };
 
 /**
- * Banner que avisa quando a conversa está inativa há mais de N horas.
+ * Banner que avisa quando a conversa está longa (60+ mensagens) ou inativa há mais de N horas.
  * Não rotaciona `conversation_id` automaticamente — apenas sugere ao nutri
  * iniciar uma nova conversa, preservando o contexto clínico da atual.
  */
-export function InactiveChatBanner({ chatId, onNewChat, thresholdHours = 24 }: Props) {
+export function InactiveChatBanner({
+  chatId,
+  onNewChat,
+  thresholdHours = 24,
+  messageCount = 0,
+}: Props) {
   const [lastAt, setLastAt] = useState<Date | null>(null);
+  const [savedCount, setSavedCount] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     setDismissed(false);
     setLastAt(null);
+    setSavedCount(0);
     if (!chatId) return;
     let cancelled = false;
     (async () => {
@@ -32,27 +42,32 @@ export function InactiveChatBanner({ chatId, onNewChat, thresholdHours = 24 }: P
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+      const { count } = await (supabase as any)
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("chat_id", chatId);
       if (cancelled) return;
       const ts = (data as { created_at?: string } | null)?.created_at;
       if (ts) setLastAt(new Date(ts));
+      if (typeof count === "number") setSavedCount(count);
     })();
     return () => {
       cancelled = true;
     };
   }, [chatId]);
 
-  if (!chatId || dismissed || !lastAt) return null;
+  const total = Math.max(savedCount, messageCount);
+  const kind = chatBannerKind({ messageCount: total, lastAt, thresholdHours });
+  if (!chatId || dismissed || !kind) return null;
 
-  const diffMs = Date.now() - lastAt.getTime();
-  const diffH = diffMs / 36e5;
-  if (diffH < thresholdHours) return null;
+  const diffH = lastAt ? (Date.now() - lastAt.getTime()) / 36e5 : 0;
 
   const label =
     diffH >= 48
       ? `${Math.floor(diffH / 24)} dias`
       : diffH >= 24
-      ? "mais de 24 horas"
-      : `${Math.floor(diffH)} horas`;
+        ? "mais de 24 horas"
+        : `${Math.floor(diffH)} horas`;
 
   return (
     <div className="mx-auto mt-3 w-full max-w-3xl px-3 sm:px-0">
@@ -62,12 +77,14 @@ export function InactiveChatBanner({ chatId, onNewChat, thresholdHours = 24 }: P
         </div>
         <div className="flex-1 min-w-0 text-sm">
           <p className="font-semibold text-amber-900">
-            Esta conversa está inativa há {label}.
+            {kind === "longa"
+              ? `Esta conversa já tem ${total} mensagens.`
+              : `Esta conversa está inativa há ${label}.`}
           </p>
           <p className="text-amber-800/90 mt-0.5">
-            Conversas muito longas ou paradas podem fazer a Lumma responder de forma incompleta.
-            Se notar respostas vazias ou fora de contexto, considere iniciar uma nova conversa —
-            o histórico atual continuará salvo.
+            {kind === "longa"
+              ? "Conversas muito longas falham com mais frequência e a Lumma pode não conseguir responder. Para um exame novo ou uma nova análise, inicie uma nova conversa — esta conversa e os exames do paciente continuam salvos."
+              : "Conversas muito longas ou paradas podem fazer a Lumma responder de forma incompleta. Se notar respostas vazias ou fora de contexto, considere iniciar uma nova conversa — o histórico atual continuará salvo."}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Button
