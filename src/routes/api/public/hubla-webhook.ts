@@ -24,6 +24,42 @@ async function log(sb: any, event: string, status: string, message: string | nul
   });
 }
 
+/** Aplica a carência da renovação; devolve a mensagem de log ou null se não mexeu. */
+async function applyGrace(sb: any, ev: any): Promise<string | null> {
+  const invoice = ev?.invoice ?? {};
+  const email = String(invoice.payer?.email ?? ev?.user?.email ?? "").trim().toLowerCase();
+  const hasSubscription = Boolean(invoice.subscriptionId ?? ev?.subscriptions?.[0]?.id);
+  if (!email || !hasSubscription || String(invoice.status ?? "") !== "unpaid") return null;
+
+  const { data: prof } = await sb.from("profiles").select("id").ilike("email", email).limit(1);
+  const userId = prof?.[0]?.id as string | undefined;
+  if (!userId) return null;
+
+  const { data: sub } = await sb
+    .from("subscriptions")
+    .select("status, current_period_end, origin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!sub || !String(sub.origin ?? "").includes("hubla")) return null;
+
+  const { computeHublaGraceEnd } = await import("@/lib/hubla-grace");
+  const newEnd = computeHublaGraceEnd({
+    invoiceStatus: invoice.status,
+    dueDate: invoice.dueDate,
+    hasSubscription,
+    subStatus: sub.status,
+    currentPeriodEnd: sub.current_period_end,
+  });
+  if (!newEnd) return null;
+
+  const { error } = await sb
+    .from("subscriptions")
+    .update({ current_period_end: newEnd, status: "active" })
+    .eq("user_id", userId);
+  if (error) throw new Error(`carência: ${error.message}`);
+  return `Carência até o vencimento: ${email} ${sub.current_period_end} → ${newEnd} (fatura ${invoice.id ?? "?"})`;
+}
+
 export const Route = createFileRoute("/api/public/hubla-webhook")({
   server: {
     handlers: {
@@ -52,6 +88,12 @@ export const Route = createFileRoute("/api/public/hubla-webhook")({
         const sb = supabaseAdmin as any;
 
         try {
+          if (type === "invoice.status_updated") {
+            // Carência: fatura de renovação gerada e ainda não paga → acesso até o vencimento.
+            const msg = await applyGrace(sb, ev);
+            await log(sb, type, msg ? "grace" : "ignored", msg ?? "Evento registrado sem alteração na assinatura", body);
+            return new Response("ok", { status: 200 });
+          }
           if (type !== "invoice.payment_succeeded") {
             await log(sb, type, "ignored", "Evento registrado sem alteração na assinatura", body);
             return new Response("ok", { status: 200 });
