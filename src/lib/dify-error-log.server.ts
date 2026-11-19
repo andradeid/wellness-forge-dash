@@ -76,6 +76,8 @@ export function classifyRawDifyError(
   if (/fetch failed|econnreset|connection (reset|refused|closed)|network/.test(msg)) return "connection";
   if (/signed ?url|failed to (download|fetch) (the )?file|file not found|unsupported file|download.*file/.test(msg))
     return "file_read";
+  // PDF que o Extrator não abre (com senha, corrompido).
+  if (/failed to extract text from pdf|pdfium|incorrect password/.test(msg)) return "file_read";
   if (/concurrent|overload|high demand|too many requests|resource[_ ]exhausted|quota/.test(msg))
     return "high_demand";
   if (/selected_task|not.*routed|unknown task/.test(msg)) return "task_routing";

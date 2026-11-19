@@ -67,7 +67,7 @@ async function releaseStreamSlot(userId: string) {
  * Versão das regras de classificação de falhas do Dify.
  * Gravada em `metadata.rules_version` de todo registro novo.
  */
-export const RULES_VERSION = "2026-09-15.v4";
+export const RULES_VERSION = "2026-11-19.v5";
 
 /**
  * Tempo máximo de espera pela execução do Dify.
@@ -83,6 +83,12 @@ export const UPSTREAM_TIMEOUT_MS = 300_000;
 export interface StreamOutcome {
   /** Trecho bruto do evento SSE `error` emitido pelo Dify, se houver. */
   streamError: string | null;
+  /**
+   * Erro de um nó que falhou (node_finished/workflow_finished com status
+   * "failed"), quando o Dify NÃO emite `event:error` — ex.: "Extrator PDF"
+   * com PDF protegido por senha. Antes ficava registrado como no_execution.
+   */
+  workflowError: string | null;
   /** Bytes entregues ao cliente — resposta muito curta indica falha silenciosa. */
   bytes: number;
   /** message_id devolvido pelo Dify (para cruzar com a análise). */
@@ -108,6 +114,7 @@ function wrapStreamWithRelease(
 ): ReadableStream<Uint8Array> {
   let released = false;
   let streamError: string | null = null;
+  let workflowError: string | null = null;
   let bytes = 0;
   let messageId: string | null = null;
   let conversationId: string | null = null;
@@ -125,7 +132,7 @@ function wrapStreamWithRelease(
       safetyTimer = null;
     }
     try {
-      onDone({ streamError, bytes, messageId, conversationId, workflowRunId, providerLatencyMs, sawMarkers, taskId, clientCancelled });
+      onDone({ streamError, workflowError, bytes, messageId, conversationId, workflowRunId, providerLatencyMs, sawMarkers, taskId, clientCancelled });
     } catch (e) {
       console.warn("[rate-limit] onDone threw:", e);
     }
@@ -157,6 +164,19 @@ function wrapStreamWithRelease(
       // Guarda o trecho bruto do evento para o registro de erros da IA.
       const idx = sniffBuf.search(/\{[^{}]*"event"\s*:\s*"error"/);
       streamError = (idx >= 0 ? sniffBuf.slice(idx) : sniffBuf).slice(0, 4000);
+    }
+    // Nó/fluxo que terminou com status "failed" (sem event:error).
+    if (!workflowError) {
+      const f = sniffBuf.match(
+        /"event"\s*:\s*"(?:node_finished|workflow_finished)"[^\n]*?"status"\s*:\s*"failed"[^\n]*?"error"\s*:\s*"((?:[^"\\]|\\.)+)"/,
+      );
+      if (f?.[1]) {
+        try {
+          workflowError = JSON.parse(`"${f[1]}"`).slice(0, 4000);
+        } catch {
+          workflowError = f[1].slice(0, 4000);
+        }
+      }
     }
     // Identificadores e latência real da execução (message_end).
     if (!messageId) {
@@ -396,6 +416,17 @@ export const Route = createFileRoute("/api/dify/chat")({
               durationMs,
               messageId: outcome.messageId,
               metadata: base,
+            });
+            return;
+          }
+
+          // Nó do fluxo falhou sem event:error (ex.: PDF com senha no Extrator PDF).
+          if (outcome.workflowError) {
+            await logDify({
+              rawError: outcome.workflowError,
+              durationMs,
+              messageId: outcome.messageId,
+              metadata: { ...base, note: "Um nó do fluxo do Dify terminou com erro." },
             });
             return;
           }

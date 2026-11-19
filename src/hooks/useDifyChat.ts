@@ -44,6 +44,9 @@ import {
   isStaleConversationError,
   isTruncatedFinish,
   TRUNCATED_NOTE,
+  fileProblemFromError,
+  fileProblemText,
+  FILE_PROBLEM_TOAST,
 } from "@/lib/dify-stream-guards";
 
 /** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
@@ -1525,6 +1528,16 @@ export function useDifyChat(
             if (data.event === "workflow_finished" && typeof data.data?.error === "string" && data.data.error) {
               workflowError = data.data.error;
             }
+            // Nó que falhou (ex.: "Extrator PDF" com PDF protegido por senha).
+            if (
+              !workflowError &&
+              data.event === "node_finished" &&
+              data.data?.status === "failed" &&
+              typeof data.data?.error === "string" &&
+              data.data.error
+            ) {
+              workflowError = data.data.error;
+            }
 
             if (data.event === "message" || data.event === "agent_message" || data.event === "agent_thought" || data.event === "text_chunk") {
               let text = "";
@@ -1628,10 +1641,13 @@ export function useDifyChat(
               }
 
               const isConcurrency = isProviderConcurrencyError(rawErr);
+              const fileProblem = isConcurrency ? null : fileProblemFromError(rawErr || workflowError);
               const errorText = isConcurrency
                 ? CONCURRENCY_USER_MESSAGE
-                : genericFailText(attachments.length > 0);
-              const errorReason = isConcurrency ? "provider_concurrency" : "stream_error";
+                : fileProblem
+                  ? fileProblemText(fileProblem)
+                  : genericFailText(attachments.length > 0);
+              const errorReason = isConcurrency ? "provider_concurrency" : (fileProblem ?? "stream_error");
 
               if (!assistantSavedRef.current && agentType !== "research") {
                 assistantSavedRef.current = true;
@@ -1705,6 +1721,11 @@ export function useDifyChat(
                   description: CONCURRENCY_TOAST_DESCRIPTION,
                   duration: 10000,
                 });
+              } else if (fileProblem) {
+                toast.error(FILE_PROBLEM_TOAST[fileProblem].title, {
+                  description: FILE_PROBLEM_TOAST[fileProblem].description,
+                  duration: 12000,
+                });
               } else {
                 toast.error("A Lumma não conseguiu responder desta vez", {
                   description: "Tente enviar novamente em alguns instantes.",
@@ -1758,9 +1779,18 @@ export function useDifyChat(
                     // Persiste mensagem assistant amigável para não deixar a
                     // pergunta do usuário órfã no histórico. NÃO debita crédito
                     // (o débito só acontece no branch de sucesso abaixo).
-                    const errorText = genericFailText(attachments.length > 0);
+                    // Arquivo que o Dify não abre (PDF com senha etc.): reenviar o
+                    // mesmo arquivo não resolve — a mensagem diz o que fazer.
+                    const fileProblem = fileProblemFromError(workflowError || data.data?.error);
+                    const errorText = fileProblem
+                      ? fileProblemText(fileProblem)
+                      : genericFailText(attachments.length > 0);
                     const processingMs = Math.round(performance.now() - startedAt);
-                    const errorStructured = { processing_ms: processingMs, error: true, error_reason: "empty_answer" };
+                    const errorStructured = {
+                      processing_ms: processingMs,
+                      error: true,
+                      error_reason: fileProblem ?? "empty_answer",
+                    };
                     const { data: errIns } = await (supabase as any)
                       .from("chat_messages")
                       .insert({
@@ -1781,6 +1811,13 @@ export function useDifyChat(
                           : m,
                       ),
                     );
+                    if (fileProblem) {
+                      toast.error(FILE_PROBLEM_TOAST[fileProblem].title, {
+                        description: FILE_PROBLEM_TOAST[fileProblem].description,
+                        duration: 12000,
+                      });
+                      continue;
+                    }
                     const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
                     toast.error("A Lumma não conseguiu responder desta vez", {
                       description: canRetry
@@ -2134,9 +2171,14 @@ export function useDifyChat(
         // debita crédito (débito só acontece no branch de sucesso).
         assistantSavedRef.current = true;
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
-        const errorText = genericFailText(attachments.length > 0);
+        const fileProblem = fileProblemFromError(workflowError);
+        const errorText = fileProblem ? fileProblemText(fileProblem) : genericFailText(attachments.length > 0);
         const processingMs = Math.round(performance.now() - startedAt);
-        const errorStructured = { processing_ms: processingMs, error: true, error_reason: "stream_closed_no_answer" };
+        const errorStructured = {
+          processing_ms: processingMs,
+          error: true,
+          error_reason: fileProblem ?? "stream_closed_no_answer",
+        };
         try {
           const { data: errIns } = await (supabase as any)
             .from("chat_messages")
@@ -2162,7 +2204,12 @@ export function useDifyChat(
           console.warn("[dify] falha ao persistir assistant de erro:", persistErr);
         }
         const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
-        toast.error("A Lumma não conseguiu responder desta vez", {
+        if (fileProblem) {
+          toast.error(FILE_PROBLEM_TOAST[fileProblem].title, {
+            description: FILE_PROBLEM_TOAST[fileProblem].description,
+            duration: 12000,
+          });
+        } else toast.error("A Lumma não conseguiu responder desta vez", {
           description: canRetry
             ? "Houve uma falha no processamento da tarefa. Você pode tentar novamente."
             : "Houve uma falha no processamento da tarefa. Por favor, envie sua mensagem novamente.",
