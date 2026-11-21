@@ -22,3 +22,22 @@ describe("PDF que o Dify não consegue abrir", () => {
     assert.equal(fileProblemFromError(null), null);
   });
 });
+
+import { isProviderCreditExhausted, isProviderConcurrencyError } from "./dify-error-messages";
+
+describe("provedor de IA sem crédito", () => {
+  it("caso real 20/11: OpenAI sem crédito", () => {
+    const raw =
+      "[models] Rate Limit Error, Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}";
+    assert.equal(isProviderCreditExhausted(raw), true);
+  });
+  it("Anthropic sem crédito", () => {
+    assert.equal(isProviderCreditExhausted("Your credit balance is too low to access the Anthropic API"), true);
+  });
+  it("pico de uso não é falta de crédito", () => {
+    assert.equal(isProviderCreditExhausted("503 Too many concurrent requests"), false);
+    assert.equal(isProviderConcurrencyError("503 Too many concurrent requests"), true);
+    assert.equal(isProviderCreditExhausted("Rate limit reached for requests per min (RPM)"), false);
+    assert.equal(isProviderCreditExhausted(null), false);
+  });
+});

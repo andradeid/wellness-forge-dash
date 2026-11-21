@@ -15,6 +15,10 @@ export interface SystemSettings {
   maintenance_title: string;
   maintenance_subtitle: string;
   maintenance_footer: string;
+  /** Preenchido quando a manutenção foi ligada sozinha (IA sem crédito). */
+  maintenance_auto_reason?: string | null;
+  maintenance_auto_at?: string | null;
+  maintenance_auto_released_at?: string | null;
   updated_at: string;
   updated_by: string | null;
 }

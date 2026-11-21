@@ -25,6 +25,7 @@ export type DifyErrorKind =
   | "no_execution"
   | "missing_markers"
   | "truncated_output"
+  | "provider_credits"
   | "unknown";
 
 
@@ -71,6 +72,9 @@ export function classifyRawDifyError(
   httpStatus?: number | null,
 ): DifyErrorKind {
   const msg = (raw ?? "").toLowerCase();
+  // Conta do provedor de IA sem crédito (antes de 429/quota, que viram pico).
+  if (/insufficient_quota|credit_balance_exhausted|no credits remaining|credit balance is too low/.test(msg))
+    return "provider_credits";
   if (httpStatus === 429) return "rate_limit";
   if (/timeout|timed out|deadline exceeded|abort/.test(msg) || httpStatus === 504) return "timeout";
   if (/fetch failed|econnreset|connection (reset|refused|closed)|network/.test(msg)) return "connection";
@@ -134,6 +138,7 @@ export async function recordDifyErrorLog(input: DifyErrorLogInput): Promise<void
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const raw = typeof input.rawError === "string" ? input.rawError.slice(0, MAX_RAW_BYTES) : null;
     const count = Math.max(0, Number(input.attachmentCount ?? 0) || 0);
+    const kind = input.errorKind ?? classifyRawDifyError(raw, input.httpStatus);
 
     const { error } = await (supabaseAdmin as any).from("dify_error_logs").insert({
       user_id: asUuid(input.userId),
@@ -144,7 +149,7 @@ export async function recordDifyErrorLog(input: DifyErrorLogInput): Promise<void
       patient_profile: trim(input.patientProfile, 60),
       selected_task: trim(input.selectedTask, 60),
       agent_type: trim(input.agentType, 60),
-      error_kind: input.errorKind ?? classifyRawDifyError(raw, input.httpStatus),
+      error_kind: kind,
       http_status: typeof input.httpStatus === "number" ? input.httpStatus : null,
       raw_error: raw,
       duration_ms:
@@ -161,6 +166,12 @@ export async function recordDifyErrorLog(input: DifyErrorLogInput): Promise<void
       metadata: input.metadata ?? {},
     });
     if (error) console.warn("[dify-error-log] insert falhou:", error.message);
+
+    // Trava de segurança: provedor de IA sem crédito → manutenção + alerta.
+    if (!error && (kind === "provider_credits" || classifyRawDifyError(raw, null) === "provider_credits")) {
+      const { tripAiMaintenanceIfNeeded } = await import("@/lib/ai-maintenance.server");
+      await tripAiMaintenanceIfNeeded();
+    }
   } catch (e) {
     console.warn("[dify-error-log] gravação falhou (ignorado):", e);
   }

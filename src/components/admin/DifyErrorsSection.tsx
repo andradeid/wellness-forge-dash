@@ -43,6 +43,7 @@ const KIND_LABEL: Record<string, string> = {
   no_execution: "Execução inexistente",
   missing_markers: "Sem marcadores na resposta",
   truncated_output: "Resposta cortada (limite de saída)",
+  provider_credits: "IA sem crédito (provedor)",
   unknown: "Não classificado",
 };
 

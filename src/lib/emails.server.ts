@@ -88,6 +88,30 @@ async function resolveUserEmail(
   return { email, name };
 }
 
+/**
+ * Alerta interno para a equipe (super_admin). Destinatários extras podem vir
+ * de ADMIN_ALERT_EMAILS (separados por vírgula).
+ */
+export async function sendAdminAlertEmail(args: { subject: string; html: string }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const to = new Set<string>();
+  for (const e of (process.env.ADMIN_ALERT_EMAILS ?? "").split(",")) {
+    const v = e.trim().toLowerCase();
+    if (v) to.add(v);
+  }
+  const { data: roles } = await (supabaseAdmin as any)
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "super_admin");
+  for (const r of roles ?? []) {
+    const { email } = await resolveUserEmail(r.user_id);
+    if (email) to.add(email.toLowerCase());
+  }
+  const results = [];
+  for (const addr of to) results.push(await sendEmail({ to: addr, subject: args.subject, html: args.html }));
+  return { sent: results.filter((r) => r.ok).length, total: to.size };
+}
+
 /** Email pós-compra de pacote avulso. */
 export async function sendPackPurchaseEmail(args: {
   userId: string;

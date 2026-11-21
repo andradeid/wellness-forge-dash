@@ -218,11 +218,37 @@ function AdminSystemPage() {
                 <Switch
                   checked={form.maintenance_enabled}
                   onCheckedChange={(v) => {
-                    patch({ maintenance_enabled: v });
-                    void save({ maintenance_enabled: v }, v ? "Manutenção ativada" : "Manutenção desativada");
+                    // Desligar também limpa o registro da trava automática.
+                    const fields: Partial<SystemSettings> = v
+                      ? { maintenance_enabled: true }
+                      : {
+                          maintenance_enabled: false,
+                          maintenance_auto_reason: null,
+                          maintenance_auto_at: null,
+                          // falhas anteriores a esta liberação não religam a trava
+                          maintenance_auto_released_at: new Date().toISOString(),
+                        };
+                    patch(fields);
+                    void save(fields, v ? "Manutenção ativada" : "Manutenção desativada");
                   }}
                 />
               </div>
+
+              {form.maintenance_enabled && form.maintenance_auto_reason && (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+                  <p className="font-medium">Ligada automaticamente pela trava de segurança</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {form.maintenance_auto_reason}
+                    {form.maintenance_auto_at
+                      ? ` — ${new Date(form.maintenance_auto_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+                      : ""}
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    Recarregue o crédito do provedor de IA (platform.openai.com → Billing), teste uma análise
+                    com a conta Master Admin e depois desligue aqui.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div className="space-y-2">

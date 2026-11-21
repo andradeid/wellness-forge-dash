@@ -11,6 +11,25 @@ export const CONCURRENCY_TOAST_TITLE = "Sistema em pico de uso";
 export const CONCURRENCY_TOAST_DESCRIPTION =
   "Volte em alguns instantes e envie novamente. Isso costuma passar rápido.";
 
+/**
+ * Provedor de IA sem crédito/cota na conta (OpenAI "insufficient_quota",
+ * Anthropic "credit balance is too low"). Não é pico: nada funciona até a
+ * equipe recarregar, então "tente novamente" só gera mais falhas.
+ */
+export function isProviderCreditExhausted(raw: string | undefined | null): boolean {
+  return /insufficient_quota|credit_balance_exhausted|no credits remaining|credit balance is too low/i.test(
+    raw ?? "",
+  );
+}
+
+export const PROVIDER_CREDITS_USER_MESSAGE =
+  "⚠️ A Lumma está com uma instabilidade temporária na inteligência artificial e a equipe já foi avisada. Esta tentativa não foi cobrada — tente novamente mais tarde.";
+
+export const PROVIDER_CREDITS_TOAST_TITLE = "Instabilidade temporária na IA";
+
+export const PROVIDER_CREDITS_TOAST_DESCRIPTION =
+  "A equipe já foi avisada. Suas tentativas não foram cobradas.";
+
 /** Detecta 503 / concurrent / overload do provedor LLM (ex.: Gemini). */
 export function isProviderConcurrencyError(raw: string | undefined | null): boolean {
   const msg = (raw ?? "").toLowerCase();

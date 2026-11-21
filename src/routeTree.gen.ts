@@ -38,6 +38,7 @@ import { Route as ApiDifyChatRouteImport } from './routes/api/dify.chat'
 import { Route as ApiDifyResetConversationsRouteImport } from './routes/api/dify.reset-conversations'
 import { Route as ApiDifyTestRouteImport } from './routes/api/dify.test'
 import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
+import { Route as ApiPublicAiHealthcheckRouteImport } from './routes/api/public/ai-healthcheck'
 import { Route as ApiPublicHublaWebhookRouteImport } from './routes/api/public/hubla-webhook'
 import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
@@ -217,6 +218,11 @@ const ApiDifyTestRoute = ApiDifyTestRouteImport.update({
 const ApiDifyUploadRoute = ApiDifyUploadRouteImport.update({
   id: '/api/dify/upload',
   path: '/api/dify/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiHealthcheckRoute = ApiPublicAiHealthcheckRouteImport.update({
+  id: '/api/public/ai-healthcheck',
+  path: '/api/public/ai-healthcheck',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHublaWebhookRoute = ApiPublicHublaWebhookRouteImport.update({
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/ai-healthcheck': typeof ApiPublicAiHealthcheckRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
@@ -467,6 +474,7 @@ export interface FileRoutesByTo {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/ai-healthcheck': typeof ApiPublicAiHealthcheckRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/api/dify/reset-conversations': typeof ApiDifyResetConversationsRoute
   '/api/dify/test': typeof ApiDifyTestRoute
   '/api/dify/upload': typeof ApiDifyUploadRoute
+  '/api/public/ai-healthcheck': typeof ApiPublicAiHealthcheckRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
@@ -594,6 +603,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/ai-healthcheck'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
@@ -655,6 +665,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/ai-healthcheck'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
@@ -717,6 +728,7 @@ export interface FileRouteTypes {
     | '/api/dify/reset-conversations'
     | '/api/dify/test'
     | '/api/dify/upload'
+    | '/api/public/ai-healthcheck'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
     | '/api/public/stripe-webhook'
@@ -770,6 +782,7 @@ export interface RootRouteChildren {
   ApiDifyResetConversationsRoute: typeof ApiDifyResetConversationsRoute
   ApiDifyTestRoute: typeof ApiDifyTestRoute
   ApiDifyUploadRoute: typeof ApiDifyUploadRoute
+  ApiPublicAiHealthcheckRoute: typeof ApiPublicAiHealthcheckRoute
   ApiPublicHublaWebhookRoute: typeof ApiPublicHublaWebhookRoute
   ApiPublicKiwifyWebhookRoute: typeof ApiPublicKiwifyWebhookRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
@@ -980,6 +993,13 @@ declare module '@tanstack/react-router' {
       path: '/api/dify/upload'
       fullPath: '/api/dify/upload'
       preLoaderRoute: typeof ApiDifyUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-healthcheck': {
+      id: '/api/public/ai-healthcheck'
+      path: '/api/public/ai-healthcheck'
+      fullPath: '/api/public/ai-healthcheck'
+      preLoaderRoute: typeof ApiPublicAiHealthcheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hubla-webhook': {
@@ -1313,6 +1333,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDifyResetConversationsRoute: ApiDifyResetConversationsRoute,
   ApiDifyTestRoute: ApiDifyTestRoute,
   ApiDifyUploadRoute: ApiDifyUploadRoute,
+  ApiPublicAiHealthcheckRoute: ApiPublicAiHealthcheckRoute,
   ApiPublicHublaWebhookRoute: ApiPublicHublaWebhookRoute,
   ApiPublicKiwifyWebhookRoute: ApiPublicKiwifyWebhookRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,

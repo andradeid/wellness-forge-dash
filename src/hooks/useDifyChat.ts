@@ -35,6 +35,10 @@ import {
   classifyAgentError,
   extractDifyStreamErrorMessage,
   isProviderConcurrencyError,
+  isProviderCreditExhausted,
+  PROVIDER_CREDITS_TOAST_DESCRIPTION,
+  PROVIDER_CREDITS_TOAST_TITLE,
+  PROVIDER_CREDITS_USER_MESSAGE,
   isTaskRoutingFallback,
   sanitizeStreamingText,
   type AgentErrorInfo,
@@ -1640,14 +1644,23 @@ export function useDifyChat(
                 if (await reopenConversationAndRetry(rawErr)) return;
               }
 
-              const isConcurrency = isProviderConcurrencyError(rawErr);
-              const fileProblem = isConcurrency ? null : fileProblemFromError(rawErr || workflowError);
-              const errorText = isConcurrency
-                ? CONCURRENCY_USER_MESSAGE
-                : fileProblem
-                  ? fileProblemText(fileProblem)
-                  : genericFailText(attachments.length > 0);
-              const errorReason = isConcurrency ? "provider_concurrency" : (fileProblem ?? "stream_error");
+              // Provedor de IA sem crédito: não é pico nem arquivo — a equipe é
+              // avisada e a Lumma entra em manutenção (ai-maintenance.server).
+              const noCredits = isProviderCreditExhausted(rawErr || workflowError);
+              const isConcurrency = !noCredits && isProviderConcurrencyError(rawErr);
+              const fileProblem = isConcurrency || noCredits ? null : fileProblemFromError(rawErr || workflowError);
+              const errorText = noCredits
+                ? PROVIDER_CREDITS_USER_MESSAGE
+                : isConcurrency
+                  ? CONCURRENCY_USER_MESSAGE
+                  : fileProblem
+                    ? fileProblemText(fileProblem)
+                    : genericFailText(attachments.length > 0);
+              const errorReason = noCredits
+                ? "provider_credits"
+                : isConcurrency
+                  ? "provider_concurrency"
+                  : (fileProblem ?? "stream_error");
 
               if (!assistantSavedRef.current && agentType !== "research") {
                 assistantSavedRef.current = true;
@@ -1716,7 +1729,12 @@ export function useDifyChat(
               }
 
               setError(errorText);
-              if (isConcurrency) {
+              if (noCredits) {
+                toast.error(PROVIDER_CREDITS_TOAST_TITLE, {
+                  description: PROVIDER_CREDITS_TOAST_DESCRIPTION,
+                  duration: 12000,
+                });
+              } else if (isConcurrency) {
                 toast.warning(CONCURRENCY_TOAST_TITLE, {
                   description: CONCURRENCY_TOAST_DESCRIPTION,
                   duration: 10000,
@@ -1781,15 +1799,18 @@ export function useDifyChat(
                     // (o débito só acontece no branch de sucesso abaixo).
                     // Arquivo que o Dify não abre (PDF com senha etc.): reenviar o
                     // mesmo arquivo não resolve — a mensagem diz o que fazer.
-                    const fileProblem = fileProblemFromError(workflowError || data.data?.error);
-                    const errorText = fileProblem
-                      ? fileProblemText(fileProblem)
-                      : genericFailText(attachments.length > 0);
+                    const noCredits = isProviderCreditExhausted(workflowError || data.data?.error);
+                    const fileProblem = noCredits ? null : fileProblemFromError(workflowError || data.data?.error);
+                    const errorText = noCredits
+                      ? PROVIDER_CREDITS_USER_MESSAGE
+                      : fileProblem
+                        ? fileProblemText(fileProblem)
+                        : genericFailText(attachments.length > 0);
                     const processingMs = Math.round(performance.now() - startedAt);
                     const errorStructured = {
                       processing_ms: processingMs,
                       error: true,
-                      error_reason: fileProblem ?? "empty_answer",
+                      error_reason: noCredits ? "provider_credits" : (fileProblem ?? "empty_answer"),
                     };
                     const { data: errIns } = await (supabase as any)
                       .from("chat_messages")
@@ -1811,6 +1832,13 @@ export function useDifyChat(
                           : m,
                       ),
                     );
+                    if (noCredits) {
+                      toast.error(PROVIDER_CREDITS_TOAST_TITLE, {
+                        description: PROVIDER_CREDITS_TOAST_DESCRIPTION,
+                        duration: 12000,
+                      });
+                      continue;
+                    }
                     if (fileProblem) {
                       toast.error(FILE_PROBLEM_TOAST[fileProblem].title, {
                         description: FILE_PROBLEM_TOAST[fileProblem].description,
@@ -2171,13 +2199,18 @@ export function useDifyChat(
         // debita crédito (débito só acontece no branch de sucesso).
         assistantSavedRef.current = true;
         console.warn('[dify] stream encerrado sem answer — nenhum conteúdo recebido');
-        const fileProblem = fileProblemFromError(workflowError);
-        const errorText = fileProblem ? fileProblemText(fileProblem) : genericFailText(attachments.length > 0);
+        const noCredits = isProviderCreditExhausted(workflowError);
+        const fileProblem = noCredits ? null : fileProblemFromError(workflowError);
+        const errorText = noCredits
+          ? PROVIDER_CREDITS_USER_MESSAGE
+          : fileProblem
+            ? fileProblemText(fileProblem)
+            : genericFailText(attachments.length > 0);
         const processingMs = Math.round(performance.now() - startedAt);
         const errorStructured = {
           processing_ms: processingMs,
           error: true,
-          error_reason: fileProblem ?? "stream_closed_no_answer",
+          error_reason: noCredits ? "provider_credits" : (fileProblem ?? "stream_closed_no_answer"),
         };
         try {
           const { data: errIns } = await (supabase as any)
@@ -2204,7 +2237,12 @@ export function useDifyChat(
           console.warn("[dify] falha ao persistir assistant de erro:", persistErr);
         }
         const canRetry = !retryUsedRef.current && !!lastRequestRef.current;
-        if (fileProblem) {
+        if (noCredits) {
+          toast.error(PROVIDER_CREDITS_TOAST_TITLE, {
+            description: PROVIDER_CREDITS_TOAST_DESCRIPTION,
+            duration: 12000,
+          });
+        } else if (fileProblem) {
           toast.error(FILE_PROBLEM_TOAST[fileProblem].title, {
             description: FILE_PROBLEM_TOAST[fileProblem].description,
             duration: 12000,
