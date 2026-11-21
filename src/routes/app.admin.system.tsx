@@ -234,6 +234,27 @@ function AdminSystemPage() {
                 />
               </div>
 
+              <div className="space-y-2 rounded-lg border p-4">
+                <Label>E-mails para alertas da IA</Label>
+                <p className="text-xs text-muted-foreground">
+                  Recebem o aviso quando a IA fica sem crédito (manutenção automática) e quando ela volta.
+                  O Master Admin recebe sempre. Um e-mail por linha.
+                </p>
+                <Textarea
+                  rows={3}
+                  placeholder={"financeiro@exemplo.com\nsuporte@exemplo.com"}
+                  value={form.alert_emails ?? ""}
+                  onChange={(e) => patch({ alert_emails: e.target.value })}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void save({ alert_emails: form.alert_emails ?? "" }, "E-mails de alerta salvos")}
+                >
+                  Salvar e-mails
+                </Button>
+              </div>
+
               {form.maintenance_enabled && form.maintenance_auto_reason && (
                 <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
                   <p className="font-medium">Ligada automaticamente pela trava de segurança</p>

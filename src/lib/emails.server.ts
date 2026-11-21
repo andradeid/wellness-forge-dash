@@ -89,15 +89,23 @@ async function resolveUserEmail(
 }
 
 /**
- * Alerta interno para a equipe (super_admin). Destinatários extras podem vir
- * de ADMIN_ALERT_EMAILS (separados por vírgula).
+ * Alerta interno para a equipe. Destinatários: todos os Master Admin (super_admin)
+ * + os e-mails do campo "E-mails para alertas" em Admin → Sistema → Manutenção
+ * (system_settings.alert_emails) + ADMIN_ALERT_EMAILS do servidor, se houver.
  */
 export async function sendAdminAlertEmail(args: { subject: string; html: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const to = new Set<string>();
-  for (const e of (process.env.ADMIN_ALERT_EMAILS ?? "").split(",")) {
+  const { data: st } = await (supabaseAdmin as any)
+    .from("system_settings")
+    .select("alert_emails")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const extra = `${st?.alert_emails ?? ""},${process.env.ADMIN_ALERT_EMAILS ?? ""}`;
+  for (const e of extra.split(/[,;\s]+/)) {
     const v = e.trim().toLowerCase();
-    if (v) to.add(v);
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) to.add(v);
   }
   const { data: roles } = await (supabaseAdmin as any)
     .from("user_roles")

@@ -19,6 +19,8 @@ export interface SystemSettings {
   maintenance_auto_reason?: string | null;
   maintenance_auto_at?: string | null;
   maintenance_auto_released_at?: string | null;
+  /** E-mails extras que recebem os alertas da trava de IA. */
+  alert_emails?: string | null;
   updated_at: string;
   updated_by: string | null;
 }
