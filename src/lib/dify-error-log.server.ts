@@ -73,7 +73,7 @@ export function classifyRawDifyError(
 ): DifyErrorKind {
   const msg = (raw ?? "").toLowerCase();
   // Conta do provedor de IA sem crédito (antes de 429/quota, que viram pico).
-  if (/insufficient_quota|credit_balance_exhausted|no credits remaining|credit balance is too low/.test(msg))
+  if (/insufficient_quota|credit_balance_exhausted|no credits remaining|credit balance is too low|billing_disabled|billing to be enabled|billing account/.test(msg))
     return "provider_credits";
   if (httpStatus === 429) return "rate_limit";
   if (/timeout|timed out|deadline exceeded|abort/.test(msg) || httpStatus === 504) return "timeout";
@@ -170,7 +170,7 @@ export async function recordDifyErrorLog(input: DifyErrorLogInput): Promise<void
     // Trava de segurança: provedor de IA sem crédito → manutenção + alerta.
     if (!error && (kind === "provider_credits" || classifyRawDifyError(raw, null) === "provider_credits")) {
       const { tripAiMaintenanceIfNeeded } = await import("@/lib/ai-maintenance.server");
-      await tripAiMaintenanceIfNeeded();
+      await tripAiMaintenanceIfNeeded(raw);
     }
   } catch (e) {
     console.warn("[dify-error-log] gravação falhou (ignorado):", e);

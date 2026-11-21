@@ -21,6 +21,8 @@ export interface SystemSettings {
   maintenance_auto_released_at?: string | null;
   /** E-mails extras que recebem os alertas da trava de IA. */
   alert_emails?: string | null;
+  /** WhatsApp (um por linha) que recebem os alertas pelo número do suporte (SIVA). */
+  alert_whatsapp?: string | null;
   updated_at: string;
   updated_by: string | null;
 }

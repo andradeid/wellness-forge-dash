@@ -17,10 +17,27 @@ export const CONCURRENCY_TOAST_DESCRIPTION =
  * equipe recarregar, então "tente novamente" só gera mais falhas.
  */
 export function isProviderCreditExhausted(raw: string | undefined | null): boolean {
-  return /insufficient_quota|credit_balance_exhausted|no credits remaining|credit balance is too low/i.test(
+  return /insufficient_quota|credit_balance_exhausted|no credits remaining|credit balance is too low|billing_disabled|billing to be enabled|billing account/i.test(
     raw ?? "",
   );
 }
+
+export type AiProvider = "OpenAI" | "Anthropic" | "Gemini";
+
+/** Qual provedor gerou o erro, pelo texto (para o alerta dizer onde recarregar). */
+export function detectAiProvider(raw: string | undefined | null): AiProvider | null {
+  const s = raw ?? "";
+  if (/\[gemini\]|generativelanguage|googleapis|vertex|google ai/i.test(s)) return "Gemini";
+  if (/anthropic|claude|credit balance is too low/i.test(s)) return "Anthropic";
+  if (/openai|insufficient_quota|credit_balance_exhausted|no credits remaining/i.test(s)) return "OpenAI";
+  return null;
+}
+
+export const AI_PROVIDER_BILLING_URL: Record<AiProvider, string> = {
+  OpenAI: "platform.openai.com → Settings → Billing",
+  Anthropic: "console.anthropic.com → Settings → Billing",
+  Gemini: "aistudio.google.com / console.cloud.google.com → Faturamento",
+};
 
 export const PROVIDER_CREDITS_USER_MESSAGE =
   "⚠️ A Lumma está com uma instabilidade temporária na inteligência artificial e a equipe já foi avisada. Esta tentativa não foi cobrada — tente novamente mais tarde.";

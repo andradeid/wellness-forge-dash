@@ -255,6 +255,26 @@ function AdminSystemPage() {
                 </Button>
               </div>
 
+              <div className="space-y-2 rounded-lg border p-4">
+                <Label>WhatsApp para alertas da IA</Label>
+                <p className="text-xs text-muted-foreground">
+                  Recebem os mesmos avisos pelo número do suporte da Lumma (SIVA). Um número por linha, com DDD.
+                </p>
+                <Textarea
+                  rows={2}
+                  placeholder={"61 99999-9999"}
+                  value={form.alert_whatsapp ?? ""}
+                  onChange={(e) => patch({ alert_whatsapp: e.target.value })}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void save({ alert_whatsapp: form.alert_whatsapp ?? "" }, "WhatsApp de alerta salvos")}
+                >
+                  Salvar WhatsApp
+                </Button>
+              </div>
+
               {form.maintenance_enabled && form.maintenance_auto_reason && (
                 <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
                   <p className="font-medium">Ligada automaticamente pela trava de segurança</p>
