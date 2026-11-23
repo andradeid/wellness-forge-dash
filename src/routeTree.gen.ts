@@ -41,6 +41,7 @@ import { Route as ApiDifyUploadRouteImport } from './routes/api/dify.upload'
 import { Route as ApiPublicAiHealthcheckRouteImport } from './routes/api/public/ai-healthcheck'
 import { Route as ApiPublicHublaWebhookRouteImport } from './routes/api/public/hubla-webhook'
 import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/kiwify-webhook'
+import { Route as ApiPublicRagHealthcheckRouteImport } from './routes/api/public/rag-healthcheck'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicSubscriptionExpiryEmailsRouteImport } from './routes/api/public/subscription-expiry-emails'
 import { Route as ApiPublicTmbWebhookRouteImport } from './routes/api/public/tmb-webhook'
@@ -235,6 +236,11 @@ const ApiPublicKiwifyWebhookRoute = ApiPublicKiwifyWebhookRouteImport.update({
   path: '/api/public/kiwify-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRagHealthcheckRoute = ApiPublicRagHealthcheckRouteImport.update({
+  id: '/api/public/rag-healthcheck',
+  path: '/api/public/rag-healthcheck',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   id: '/api/public/stripe-webhook',
   path: '/api/public/stripe-webhook',
@@ -415,6 +421,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-healthcheck': typeof ApiPublicAiHealthcheckRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
+  '/api/public/rag-healthcheck': typeof ApiPublicRagHealthcheckRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
   '/api/public/tmb-webhook': typeof ApiPublicTmbWebhookRoute
@@ -477,6 +484,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-healthcheck': typeof ApiPublicAiHealthcheckRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
+  '/api/public/rag-healthcheck': typeof ApiPublicRagHealthcheckRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
   '/api/public/tmb-webhook': typeof ApiPublicTmbWebhookRoute
@@ -541,6 +549,7 @@ export interface FileRoutesById {
   '/api/public/ai-healthcheck': typeof ApiPublicAiHealthcheckRoute
   '/api/public/hubla-webhook': typeof ApiPublicHublaWebhookRoute
   '/api/public/kiwify-webhook': typeof ApiPublicKiwifyWebhookRoute
+  '/api/public/rag-healthcheck': typeof ApiPublicRagHealthcheckRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
   '/api/public/tmb-webhook': typeof ApiPublicTmbWebhookRoute
@@ -606,6 +615,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-healthcheck'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
+    | '/api/public/rag-healthcheck'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
     | '/api/public/tmb-webhook'
@@ -668,6 +678,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-healthcheck'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
+    | '/api/public/rag-healthcheck'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
     | '/api/public/tmb-webhook'
@@ -731,6 +742,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-healthcheck'
     | '/api/public/hubla-webhook'
     | '/api/public/kiwify-webhook'
+    | '/api/public/rag-healthcheck'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
     | '/api/public/tmb-webhook'
@@ -785,6 +797,7 @@ export interface RootRouteChildren {
   ApiPublicAiHealthcheckRoute: typeof ApiPublicAiHealthcheckRoute
   ApiPublicHublaWebhookRoute: typeof ApiPublicHublaWebhookRoute
   ApiPublicKiwifyWebhookRoute: typeof ApiPublicKiwifyWebhookRoute
+  ApiPublicRagHealthcheckRoute: typeof ApiPublicRagHealthcheckRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicSubscriptionExpiryEmailsRoute: typeof ApiPublicSubscriptionExpiryEmailsRoute
   ApiPublicTmbWebhookRoute: typeof ApiPublicTmbWebhookRoute
@@ -1014,6 +1027,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/kiwify-webhook'
       fullPath: '/api/public/kiwify-webhook'
       preLoaderRoute: typeof ApiPublicKiwifyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rag-healthcheck': {
+      id: '/api/public/rag-healthcheck'
+      path: '/api/public/rag-healthcheck'
+      fullPath: '/api/public/rag-healthcheck'
+      preLoaderRoute: typeof ApiPublicRagHealthcheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/stripe-webhook': {
@@ -1336,6 +1356,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiHealthcheckRoute: ApiPublicAiHealthcheckRoute,
   ApiPublicHublaWebhookRoute: ApiPublicHublaWebhookRoute,
   ApiPublicKiwifyWebhookRoute: ApiPublicKiwifyWebhookRoute,
+  ApiPublicRagHealthcheckRoute: ApiPublicRagHealthcheckRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicSubscriptionExpiryEmailsRoute:
     ApiPublicSubscriptionExpiryEmailsRoute,
