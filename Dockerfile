@@ -7,7 +7,8 @@ COPY .env* ./
 RUN npm install
 
 COPY . .
-RUN npm run build
+# Build do Vite passa de 2 GB de heap; sem isso o Node estoura a memória (deploy 23/11/2026).
+RUN NODE_OPTIONS=--max-old-space-size=6144 npm run build
 
 FROM node:22-alpine AS production
 RUN apk add --no-cache curl
