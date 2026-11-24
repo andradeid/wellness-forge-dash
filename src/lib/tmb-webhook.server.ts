@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "crypto";
+import { tokenMatches } from "@/lib/webhook-tokens.server";
 import { fillSubscriptionOrigin } from "@/lib/subscription-origin";
 import {
   parseTmbOrder,
@@ -13,7 +13,8 @@ import {
 /**
  * Webhook de Vendas da TMB (Tem Mais no Boleto).
  * URL cadastrada no produto da TMB: /api/public/tmb-webhook?produto=nova-nutricionista
- * Autenticação: na TMB, Chave = x-tmb-token e Valor = TMB_WEBHOOK_TOKEN.
+ * Autenticação: na TMB, Chave = x-tmb-token e Valor = TMB_WEBHOOK_TOKEN (aceita mais de um, separados por
+ *               vírgula: conta nova e conta antiga da TMB).
  *
  * Efetivado → cria a conta (ou usa a existente), ativa o plano do produto pela
  *             validade do catálogo (src/lib/tmb.ts), credita a cota do mês,
@@ -23,11 +24,6 @@ import {
  * Todo evento recebido vai para integration_logs (source "tmb"), sem CPF nem endereço.
  */
 
-function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  return ba.length === bb.length && timingSafeEqual(ba, bb);
-}
 
 async function log(sb: any, event: string, status: string, message: string | null, payload: unknown) {
   try {
@@ -51,7 +47,7 @@ export async function handleTmbWebhook(request: Request, deps?: { supabaseAdmin?
   const bearer = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   const supplied =
     request.headers.get("x-tmb-token") ?? (bearer || null) ?? url.searchParams.get("token") ?? "";
-  if (!supplied || !safeEqual(supplied, expected)) {
+  if (!tokenMatches(supplied, expected)) {
     return new Response("Unauthorized", { status: 401 });
   }
 

@@ -1,18 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { timingSafeEqual } from "crypto";
+import { tokenMatches } from "@/lib/webhook-tokens.server";
 import type { HublaInvoiceInfo } from "@/lib/hubla-renewal.server";
 
 /**
  * Webhook público da Hubla (payload v2.0.0).
  * Só processa renovações de alunas já cadastradas; nunca cria conta.
- * Auth: header x-hubla-token === HUBLA_WEBHOOK_TOKEN.
+ * Auth: header x-hubla-token igual a HUBLA_WEBHOOK_TOKEN (aceita mais de um, separados por vírgula: conta nova e antiga).
  */
 
-function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  return ba.length === bb.length && timingSafeEqual(ba, bb);
-}
 
 async function log(sb: any, event: string, status: string, message: string | null, payload: unknown) {
   await sb.from("integration_logs").insert({
@@ -67,7 +62,7 @@ export const Route = createFileRoute("/api/public/hubla-webhook")({
         const expected = process.env.HUBLA_WEBHOOK_TOKEN;
         if (!expected) return new Response("HUBLA_WEBHOOK_TOKEN não configurado", { status: 500 });
         const supplied = request.headers.get("x-hubla-token") ?? "";
-        if (!supplied || !safeEqual(supplied, expected)) {
+        if (!tokenMatches(supplied, expected)) {
           return new Response("Unauthorized", { status: 401 });
         }
 

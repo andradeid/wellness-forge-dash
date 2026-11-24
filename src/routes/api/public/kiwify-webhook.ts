@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { fillSubscriptionOrigin } from "@/lib/subscription-origin";
+import { tokenMatches } from "@/lib/webhook-tokens.server";
 import { KIWIFY_PRODUCTS, kiwifyValidityLabel } from "@/lib/kiwify-products";
 
 /**
  * Webhook público da Kiwify.
  * URL: /api/public/kiwify-webhook?token=<KIWIFY_WEBHOOK_TOKEN>
  *
- * Segurança: valida `token` (query ou body) contra KIWIFY_WEBHOOK_TOKEN.
+ * Segurança: valida `token` (query ou body) contra KIWIFY_WEBHOOK_TOKEN (aceita mais de um, separados por vírgula:
+ * conta nova e conta antiga da Kiwify).
  * Idempotência: reusa a tabela `stripe_webhook_events` com id "kiwify:<order_id>:<event>".
  *
  * Mapeamento de produtos Kiwify → planos Lumma:
@@ -76,7 +78,7 @@ async function handleKiwifyWebhook(request: Request) {
     payload?.webhook_token ?? payload?.token ?? payload?.Token ?? rawPayload?.token ?? null;
 
   const suppliedToken = tokenQuery ?? tokenHeader ?? tokenBody;
-  if (suppliedToken !== expectedToken) {
+  if (!tokenMatches(suppliedToken, expectedToken)) {
     console.warn("[kiwify-webhook] token inválido");
     return new Response("Unauthorized", { status: 401 });
   }

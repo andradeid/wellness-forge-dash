@@ -14,8 +14,10 @@ function getOrigin(): string {
 }
 
 /**
- * Garante um customer válido no modo atual da chave Stripe (live/test).
+ * Garante um customer válido na conta Stripe PRINCIPAL (onde entram as compras novas).
  * IDs salvos em test mode quebram após troca para sk_live_ — recria nesses casos.
+ * Se o customer salvo é da conta ANTIGA (assinatura que ficou lá), não mexe no que está salvo — os avisos
+ * da conta antiga continuam achando a cliente por ele — e usa/cria um customer na principal só para a compra.
  */
 async function getOrCreateStripeCustomer(opts: {
   stripe: Stripe;
@@ -31,6 +33,7 @@ async function getOrCreateStripeCustomer(opts: {
     .maybeSingle();
 
   let customerId = (sub as any)?.stripe_customer_id as string | null;
+  let keepSaved = false;
 
   if (customerId) {
     try {
@@ -43,12 +46,21 @@ async function getOrCreateStripeCustomer(opts: {
         /similar object exists in test mode/i.test(msg) ||
         /similar object exists in live mode/i.test(msg);
       if (!wrongMode) throw err;
+      const { findCustomerAccount } = await import("./stripe.server");
+      keepSaved = (await findCustomerAccount(customerId)) === "antiga";
       console.warn(
-        "[stripe] customer inválido no modo atual; recriando",
+        keepSaved ? "[stripe] customer é da conta antiga; usando um da conta principal" : "[stripe] customer inválido no modo atual; recriando",
         { userId, customerId, reason: msg.slice(0, 160) },
       );
       customerId = null;
     }
+  }
+
+  if (keepSaved) {
+    // Reaproveita o customer da principal criado numa compra anterior desta cliente, se houver.
+    const found = await stripe.customers.search({ query: `metadata['user_id']:'${userId}'`, limit: 1 }).catch(() => null);
+    const reuse = found?.data?.find((c) => !(c as any).deleted);
+    if (reuse) return reuse.id;
   }
 
   const { data: profile } = await supabase
@@ -64,10 +76,12 @@ async function getOrCreateStripeCustomer(opts: {
   });
   customerId = customer.id;
 
-  await supabase.from("subscriptions" as any).upsert(
-    { user_id: userId, stripe_customer_id: customerId },
-    { onConflict: "user_id" },
-  );
+  if (!keepSaved) {
+    await supabase.from("subscriptions" as any).upsert(
+      { user_id: userId, stripe_customer_id: customerId },
+      { onConflict: "user_id" },
+    );
+  }
 
   return customerId!;
 }
@@ -217,7 +231,25 @@ export const createPackCheckout = createServerFn({ method: "POST" })
 export const createBillingPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { getStripe } = await import("./stripe.server");
+    const { getStripe, findCustomerAccount, hasOldStripeAccount } = await import("./stripe.server");
+
+    // Assinatura que ficou na conta antiga é gerenciada (cartão, cancelamento) no portal da conta antiga.
+    if (hasOldStripeAccount()) {
+      const { data: sub } = await context.supabase
+        .from("subscriptions" as any)
+        .select("stripe_customer_id")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      const saved = (sub as any)?.stripe_customer_id as string | null;
+      if (saved && (await findCustomerAccount(saved)) === "antiga") {
+        const portal = await getStripe("antiga").billingPortal.sessions.create({
+          customer: saved,
+          return_url: `${getOrigin()}/app/planos`,
+        });
+        return { url: portal.url };
+      }
+    }
+
     const stripe = getStripe();
 
     const customerId = await getOrCreateStripeCustomer({

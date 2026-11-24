@@ -30,12 +30,10 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 });
 
 async function handleStripeWebhook(request: Request) {
-        const secret = process.env.STRIPE_WEBHOOK_SECRET;
-        if (!secret) {
+        const { getStripeAccounts, verifyStripeWebhook } = await import("@/lib/stripe.server");
+        if (!getStripeAccounts().some((a) => a.webhookSecret)) {
           return new Response("Webhook secret não configurada", { status: 500 });
         }
-
-
 
         const signature = request.headers.get("stripe-signature");
         if (!signature) {
@@ -44,24 +42,15 @@ async function handleStripeWebhook(request: Request) {
 
         const rawBody = await request.text();
 
-        const { getStripe } = await import("@/lib/stripe.server");
-        const stripe = getStripe();
-
-        let event: Stripe.Event;
-        try {
-          // Cloudflare Workers exige SubtleCryptoProvider explícito
-          const cryptoProvider = Stripe.createSubtleCryptoProvider();
-          event = await stripe.webhooks.constructEventAsync(
-            rawBody,
-            signature,
-            secret,
-            undefined,
-            cryptoProvider,
-          );
-        } catch (err: any) {
-          console.error("[stripe-webhook] signature error:", err?.message);
-          return new Response(`Signature verification failed: ${err?.message}`, { status: 400 });
+        // Confere com a conta principal e, se configurada, com a conta antiga (assinaturas que ficaram nela).
+        // O cliente Stripe usado daqui em diante é o da conta que mandou o aviso.
+        const verified = await verifyStripeWebhook(rawBody, signature);
+        if (!verified) {
+          console.error("[stripe-webhook] signature error: nenhuma conta Stripe conferiu a assinatura");
+          return new Response("Signature verification failed", { status: 400 });
         }
+        const { event, stripe } = verified;
+        if (verified.account !== "principal") console.log(`[stripe-webhook] evento da conta ${verified.account}: ${event.type} ${event.id}`);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
