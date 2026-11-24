@@ -30,6 +30,8 @@ import { Route as AppPlayRouteImport } from './routes/app.play'
 import { Route as AppPoliticasRouteImport } from './routes/app.politicas'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTrocarSenhaRouteImport } from './routes/app.trocar-senha'
+import { Route as PlanosIndexRouteImport } from './routes/planos.index'
+import { Route as PlanosObrigadoRouteImport } from './routes/planos.obrigado'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiAuditStructuredRouteImport } from './routes/api/audit.structured'
@@ -178,6 +180,16 @@ const AppTrocarSenhaRoute = AppTrocarSenhaRouteImport.update({
   id: '/trocar-senha',
   path: '/trocar-senha',
   getParentRoute: () => AppRoute,
+} as any)
+const PlanosIndexRoute = PlanosIndexRouteImport.update({
+  id: '/planos/',
+  path: '/planos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanosObrigadoRoute = PlanosObrigadoRouteImport.update({
+  id: '/planos/obrigado',
+  path: '/planos/obrigado',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
@@ -409,7 +421,9 @@ export interface FileRoutesByFullPath {
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
+  '/planos/obrigado': typeof PlanosObrigadoRoute
   '/app/': typeof AppIndexRoute
+  '/planos/': typeof PlanosIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
@@ -472,7 +486,9 @@ export interface FileRoutesByTo {
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
+  '/planos/obrigado': typeof PlanosObrigadoRoute
   '/app': typeof AppIndexRoute
+  '/planos': typeof PlanosIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
@@ -537,7 +553,9 @@ export interface FileRoutesById {
   '/app/politicas': typeof AppPoliticasRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/trocar-senha': typeof AppTrocarSenhaRoute
+  '/planos/obrigado': typeof PlanosObrigadoRoute
   '/app/': typeof AppIndexRoute
+  '/planos/': typeof PlanosIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/audit/structured': typeof ApiAuditStructuredRoute
@@ -603,7 +621,9 @@ export interface FileRouteTypes {
     | '/app/politicas'
     | '/app/settings'
     | '/app/trocar-senha'
+    | '/planos/obrigado'
     | '/app/'
+    | '/planos/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
@@ -666,7 +686,9 @@ export interface FileRouteTypes {
     | '/app/politicas'
     | '/app/settings'
     | '/app/trocar-senha'
+    | '/planos/obrigado'
     | '/app'
+    | '/planos'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
@@ -730,7 +752,9 @@ export interface FileRouteTypes {
     | '/app/politicas'
     | '/app/settings'
     | '/app/trocar-senha'
+    | '/planos/obrigado'
     | '/app/'
+    | '/planos/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/audit/structured'
@@ -786,6 +810,8 @@ export interface RootRouteChildren {
   UnauthorizedRoute: typeof UnauthorizedRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  PlanosObrigadoRoute: typeof PlanosObrigadoRoute
+  PlanosIndexRoute: typeof PlanosIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiAuditStructuredRoute: typeof ApiAuditStructuredRoute
@@ -951,6 +977,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/trocar-senha'
       preLoaderRoute: typeof AppTrocarSenhaRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/planos/': {
+      id: '/planos/'
+      path: '/planos'
+      fullPath: '/planos/'
+      preLoaderRoute: typeof PlanosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planos/obrigado': {
+      id: '/planos/obrigado'
+      path: '/planos/obrigado'
+      fullPath: '/planos/obrigado'
+      preLoaderRoute: typeof PlanosObrigadoRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
@@ -1345,6 +1385,8 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  PlanosObrigadoRoute: PlanosObrigadoRoute,
+  PlanosIndexRoute: PlanosIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiAuditStructuredRoute: ApiAuditStructuredRoute,

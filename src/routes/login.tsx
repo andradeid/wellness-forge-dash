@@ -483,7 +483,14 @@ function LoginPage() {
               </form>
 
 
-              <div className="mt-6 text-center">
+              <div className="mt-5 rounded-lg border border-border/60 bg-muted/40 px-3 py-2.5 text-center text-sm text-muted-foreground">
+                Ainda não é cliente?{" "}
+                <Link to="/planos" className="font-medium text-foreground underline-offset-2 hover:underline">
+                  Conheça os planos e assine
+                </Link>
+              </div>
+
+              <div className="mt-4 text-center">
                 <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                   ← Voltar para a home
                 </Link>

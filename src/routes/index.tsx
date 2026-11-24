@@ -104,14 +104,24 @@ function Teaser() {
             <img src={lummaSymbol} alt="LUMMA" className="h-7 w-7" />
             <span className="font-semibold tracking-[0.2em] text-sm text-white/80">LUMMA</span>
           </div>
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
-          >
-            <Link to="/login">Entrar</Link>
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+            >
+              <Link to="/planos">Planos</Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+            >
+              <Link to="/login">Entrar</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -138,6 +148,23 @@ function Teaser() {
             calibrado. Prepare-se para uma experiência de precisão absoluta e
             gestão inteligente.
           </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              asChild
+              className="rounded-full border-0 text-white h-11 px-7 text-base hover:opacity-90"
+              style={{ backgroundImage: "linear-gradient(135deg, #e8a04c, #e89bcf 55%, #7c3aed)" }}
+            >
+              <Link to="/planos">Ver planos e assinar</Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className="rounded-full h-11 px-6 text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <Link to="/login">Já sou cliente</Link>
+            </Button>
+          </div>
         </section>
 
         {/* Feature cards */}
