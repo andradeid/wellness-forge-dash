@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { analyzedFileNames } from "@/lib/analyzed-files";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, ArrowLeft, ClipboardList, Eye, MessageSquare, Stethoscope, Menu, Plus, ShieldCheck, TrendingUp, ChevronDown, Droplet, Scale, Dna, Apple, BookOpen, Search, Sparkles, Utensils, Activity, Camera, Microscope, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -339,16 +340,8 @@ function ChatPage() {
     { text: string; files: File[]; names: string[] } | null
   >(null);
 
-  const alreadySentFileNames = useMemo(() => {
-    const set = new Set<string>();
-    for (const m of messages) {
-      if (m.role !== "user") continue;
-      for (const a of (m.attachments ?? []) as Array<{ name?: string }>) {
-        if (a?.name) set.add(a.name.trim().toLowerCase());
-      }
-    }
-    return set;
-  }, [messages]);
+  // Só avisa "já analisado" quando a análise anterior deu certo (falha não cobra créditos).
+  const alreadySentFileNames = useMemo(() => analyzedFileNames(messages as any), [messages]);
 
   const doSend = useCallback(
     async (text: string, files: File[]) => {
