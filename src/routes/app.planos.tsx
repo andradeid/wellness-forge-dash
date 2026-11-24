@@ -353,18 +353,6 @@ function PlanosCreditosPage() {
           <div className="inline-flex items-center bg-muted rounded-full p-1">
             <button
               type="button"
-              onClick={() => setCycle("monthly")}
-              className={cn(
-                "px-4 py-1.5 text-sm rounded-full transition-all",
-                cycle === "monthly"
-                  ? "bg-white text-foreground shadow-sm font-medium"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Mensal
-            </button>
-            <button
-              type="button"
               onClick={() => setCycle("yearly")}
               className={cn(
                 "px-4 py-1.5 text-sm rounded-full transition-all inline-flex items-center gap-1.5",
@@ -377,6 +365,18 @@ function PlanosCreditosPage() {
               <Badge className="bg-gradient-to-r from-[#e8a04c] to-[#e89bcf] text-white border-0 text-[10px] px-1.5 py-0 rounded-full">
                 economize
               </Badge>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCycle("monthly")}
+              className={cn(
+                "px-4 py-1.5 text-sm rounded-full transition-all",
+                cycle === "monthly"
+                  ? "bg-white text-foreground shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Mensal
             </button>
           </div>
         </div>
