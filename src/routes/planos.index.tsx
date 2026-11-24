@@ -123,7 +123,7 @@ function PlanosPublicos() {
 
           {hasYearly && (
             <div className="mt-8 inline-flex items-center rounded-full border border-white/15 bg-white/[0.05] p-1 text-sm">
-              {(["monthly", "yearly"] as const).map((c) => (
+              {(["yearly", "monthly"] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
