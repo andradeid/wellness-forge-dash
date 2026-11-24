@@ -46,15 +46,19 @@ export const TRUNCATED_NOTE =
  *    Caso real (nov/2026): laudo de laboratório protegido por senha →
  *    "PDFium: Incorrect password error".
  */
-export type FileProblem = "pdf_password" | "pdf_unreadable";
+export type FileProblem = "pdf_password" | "pdf_unreadable" | "mixed_files";
 
 const PDF_PASSWORD_RX = /incorrect password|password (is )?required|password[- ]protected|encrypted (pdf|document|file)/i;
 const PDF_UNREADABLE_RX = /failed to extract text from pdf|pdfium|failed to load document/i;
+// PDF e foto na mesma mensagem: o fluxo de exame manda tudo para o "Extrator PDF",
+// que não lê imagem. Casos reais 19-23/11/2026 (2 PDFs + 2 fotos .jpeg).
+const MIXED_FILES_RX = /unsupported extension type/i;
 
 export function fileProblemFromError(raw: string | null | undefined): FileProblem | null {
   if (!raw) return null;
   if (PDF_PASSWORD_RX.test(raw)) return "pdf_password";
   if (PDF_UNREADABLE_RX.test(raw)) return "pdf_unreadable";
+  if (MIXED_FILES_RX.test(raw)) return "mixed_files";
   return null;
 }
 
@@ -69,6 +73,12 @@ export const PDF_UNREADABLE_TEXT =
   "Baixe o exame de novo no site do laboratório e envie, ou envie fotos ou prints das páginas do exame.\n\n" +
   "*Esta tentativa não foi cobrada.*";
 
+export const MIXED_FILES_TEXT =
+  "📎 Esta análise não lê PDF e foto na mesma mensagem.\n\n" +
+  "Envie **só os PDFs** em uma mensagem e, se precisar, **só as fotos** em outra (ou tudo como foto). " +
+  "Assim a Lumma lê cada arquivo do jeito certo.\n\n" +
+  "*Esta tentativa não foi cobrada.*";
+
 export const FILE_PROBLEM_TOAST: Record<FileProblem, { title: string; description: string }> = {
   pdf_password: {
     title: "PDF protegido por senha",
@@ -78,8 +88,23 @@ export const FILE_PROBLEM_TOAST: Record<FileProblem, { title: string; descriptio
     title: "Não consegui abrir este PDF",
     description: "Baixe o exame de novo ou envie fotos/prints das páginas.",
   },
+  mixed_files: {
+    title: "PDF e foto na mesma mensagem",
+    description: "Envie os PDFs numa mensagem e as fotos em outra.",
+  },
 };
 
+const isDocFile = (mime: string | null | undefined, name: string | null | undefined) =>
+  /pdf/i.test(mime ?? "") || /\.pdf$/i.test(name ?? "");
+const isImageFile = (mime: string | null | undefined, name: string | null | undefined) =>
+  /^image\//i.test(mime ?? "") || /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(name ?? "");
+
+/** true quando a mensagem mistura PDF e imagem (o fluxo de exame não lê as duas juntas). */
+export function hasMixedPdfAndImage(files: Array<{ type?: string | null; name?: string | null }>): boolean {
+  return files.some((f) => isDocFile(f.type, f.name)) && files.some((f) => isImageFile(f.type, f.name));
+}
+
 export function fileProblemText(p: FileProblem): string {
+  if (p === "mixed_files") return MIXED_FILES_TEXT;
   return p === "pdf_password" ? PDF_PASSWORD_TEXT : PDF_UNREADABLE_TEXT;
 }

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { fileProblemFromError, fileProblemText, PDF_PASSWORD_TEXT } from "./dify-stream-guards";
+import { fileProblemFromError, fileProblemText, hasMixedPdfAndImage, PDF_PASSWORD_TEXT } from "./dify-stream-guards";
 
 describe("PDF que o Dify não consegue abrir", () => {
   it("caso real: PDF com senha", () => {
@@ -39,5 +39,20 @@ describe("provedor de IA sem crédito", () => {
     assert.equal(isProviderConcurrencyError("503 Too many concurrent requests"), true);
     assert.equal(isProviderCreditExhausted("Rate limit reached for requests per min (RPM)"), false);
     assert.equal(isProviderCreditExhausted(null), false);
+  });
+});
+
+describe("PDF e foto na mesma mensagem", () => {
+  it("erro real do Dify vira mensagem de arquivos misturados", () => {
+    assert.equal(fileProblemFromError("Unsupported Extension Type: .jpeg"), "mixed_files");
+    assert.match(fileProblemText("mixed_files"), /PDF e foto/);
+  });
+  it("detecta a mistura antes de enviar", () => {
+    const pdf = { type: "application/pdf", name: "exame.pdf" };
+    const jpg = { type: "image/jpeg", name: "pagina.jpeg" };
+    assert.equal(hasMixedPdfAndImage([pdf, pdf, jpg, jpg]), true);
+    assert.equal(hasMixedPdfAndImage([pdf, pdf]), false);
+    assert.equal(hasMixedPdfAndImage([jpg, { type: "", name: "foto.PNG" }]), false);
+    assert.equal(hasMixedPdfAndImage([{ type: "", name: "laudo.PDF" }, { type: "", name: "x.jpg" }]), true);
   });
 });

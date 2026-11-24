@@ -51,6 +51,7 @@ import {
   fileProblemFromError,
   fileProblemText,
   FILE_PROBLEM_TOAST,
+  hasMixedPdfAndImage,
 } from "@/lib/dify-stream-guards";
 
 /** Mensagem amigável para falha de upload (ex.: Failed to fetch no celular). */
@@ -736,6 +737,20 @@ export function useDifyChat(
         abortSend();
         return;
       }
+    }
+
+    // PDF + foto na mesma mensagem: o fluxo de exame do Dify manda tudo para o
+    // "Extrator PDF", que falha com "Unsupported Extension Type: .jpeg" (casos
+    // reais 19-23/11/2026). Barramos antes de enviar, com instrução clara.
+    // Pesquisa Científica extrai o texto no servidor e não passa por esse nó.
+    const taskKey = (selectedTask ?? agentType ?? "").trim();
+    if (taskKey !== "research" && !taskRequiresImage(taskKey) && hasMixedPdfAndImage(filesForTask)) {
+      toast.error(FILE_PROBLEM_TOAST.mixed_files.title, {
+        description: "Esta análise não lê PDF e foto juntos. Envie os PDFs numa mensagem e as fotos em outra (ou tudo como foto).",
+        duration: 10000,
+      });
+      abortSend();
+      return;
     }
 
     // Gate de sessão única: aborta se outro dispositivo assumiu o login
