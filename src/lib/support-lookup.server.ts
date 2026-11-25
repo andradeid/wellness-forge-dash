@@ -14,25 +14,23 @@ export const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function lookupAccount(input: { email: string; whatsapp?: string | null; conversa?: string | null; origem?: string | null }): Promise<LookupResponse> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const email = input.email.trim().toLowerCase();
-  const safe = email.replace(/[\\%_]/g, (m) => `\\${m}`);
 
-  const { data: profs, error } = await supabaseAdmin
-    .from("profiles" as any)
-    .select("id, email, phone, is_blocked, deleted_at, must_change_password")
-    .ilike("email", safe)
-    .limit(2);
+  // Pelo e-mail de LOGIN (o do "Esqueceu a senha"), não pelo e-mail do perfil, que pode ter sido trocado.
+  const { data: found, error } = await supabaseAdmin.rpc("support_find_user_by_email" as any, { p_email: email });
   if (error) throw error;
+  const hit = ((found as any[]) ?? [])[0] as { user_id: string; last_sign_in_at: string | null } | undefined;
 
   let acc: LookupAccount | null = null;
-  const prof = ((profs as any[]) ?? []).find((p) => String(p.email ?? "").toLowerCase() === email) ?? null;
-  if (prof) {
-    const [authUser, sub, credits] = await Promise.all([
-      supabaseAdmin.auth.admin.getUserById(prof.id),
+  if (hit) {
+    const [prof, sub, credits] = await Promise.all([
+      supabaseAdmin.from("profiles" as any)
+        .select("phone, is_blocked, deleted_at, must_change_password").eq("id", hit.user_id).maybeSingle(),
       supabaseAdmin.from("subscriptions" as any)
-        .select("status, plan_type, origin, current_period_end, unlimited_credits").eq("user_id", prof.id).maybeSingle(),
+        .select("status, plan_type, origin, current_period_end, unlimited_credits").eq("user_id", hit.user_id).maybeSingle(),
       supabaseAdmin.from("user_credits" as any)
-        .select("balance, monthly_quota, pack_balance, quota_reset_at").eq("user_id", prof.id).maybeSingle(),
+        .select("balance, monthly_quota, pack_balance, quota_reset_at").eq("user_id", hit.user_id).maybeSingle(),
     ]);
+    const pf = (prof.data as any) ?? {};
     const s = (sub.data as any) ?? null;
     let planName: string | null = null;
     if (s?.plan_type) {
@@ -42,11 +40,11 @@ export async function lookupAccount(input: { email: string; whatsapp?: string | 
     const cr = (credits.data as any) ?? null;
     acc = {
       email,
-      phone: prof.phone ?? null,
-      isBlocked: !!prof.is_blocked,
-      deleted: !!prof.deleted_at,
-      lastSignInAt: authUser.data?.user?.last_sign_in_at ?? null,
-      mustChangePassword: prof.must_change_password ?? null,
+      phone: pf.phone ?? null,
+      isBlocked: !!pf.is_blocked,
+      deleted: !!pf.deleted_at,
+      lastSignInAt: hit.last_sign_in_at ?? null,
+      mustChangePassword: pf.must_change_password ?? null,
       subscription: s
         ? { status: s.status, planType: s.plan_type, origin: s.origin, currentPeriodEnd: s.current_period_end, unlimitedCredits: s.unlimited_credits }
         : null,
