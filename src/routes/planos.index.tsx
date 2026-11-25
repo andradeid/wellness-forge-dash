@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import lummaSymbol from "@/assets/lumma-symbol.svg";
 import {
   createPublicSubscriptionCheckout,
   getPublicPlans,
+  isPublicPlansEnabled,
   type PublicPlan,
 } from "@/lib/public-plans.functions";
 
@@ -23,6 +24,10 @@ export const Route = createFileRoute("/planos/")({
       { property: "og:type", content: "website" },
     ],
   }),
+  // Desligada (system_settings.public_plans_enabled = false): quem abrir /planos vai para o login.
+  beforeLoad: async () => {
+    if (!(await isPublicPlansEnabled())) throw redirect({ to: "/login" });
+  },
   loader: () => getPublicPlans(),
   component: PlanosPublicos,
 });

@@ -23,6 +23,8 @@ export interface SystemSettings {
   alert_emails?: string | null;
   /** WhatsApp (um por linha) que recebem os alertas pelo número do suporte (SIVA). */
   alert_whatsapp?: string | null;
+  /** Página pública /planos e os botões "Planos" no site e no login (desligada até aprovação). */
+  public_plans_enabled?: boolean;
   updated_at: string;
   updated_by: string | null;
 }

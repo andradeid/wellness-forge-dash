@@ -28,6 +28,20 @@ export type PublicPlan = {
 };
 
 /** Só campos públicos dos planos ativos pagos (lidos no servidor, sem depender de RLS). */
+/** Página pública de planos ligada? (system_settings.public_plans_enabled — desligada até a Ana aprovar). */
+async function plansEnabled(): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await (supabaseAdmin as any)
+    .from("system_settings")
+    .select("public_plans_enabled")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return !!data?.public_plans_enabled;
+}
+
+export const isPublicPlansEnabled = createServerFn({ method: "GET" }).handler(async (): Promise<boolean> => plansEnabled());
+
 export const getPublicPlans = createServerFn({ method: "GET" }).handler(async (): Promise<PublicPlan[]> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await (supabaseAdmin as any)
@@ -52,6 +66,7 @@ export const createPublicSubscriptionCheckout = createServerFn({ method: "POST" 
     z.object({ planSlug: z.enum(["starter", "pro"]), cycle: z.enum(["monthly", "yearly"]) }).parse(d),
   )
   .handler(async ({ data }) => {
+    if (!(await plansEnabled())) throw new Error("Assinatura pelo site indisponível no momento. Fale com o suporte.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: plan, error } = await (supabaseAdmin as any)
       .from("subscription_plans")
