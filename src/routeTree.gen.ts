@@ -46,6 +46,7 @@ import { Route as ApiPublicKiwifyWebhookRouteImport } from './routes/api/public/
 import { Route as ApiPublicRagHealthcheckRouteImport } from './routes/api/public/rag-healthcheck'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicSubscriptionExpiryEmailsRouteImport } from './routes/api/public/subscription-expiry-emails'
+import { Route as ApiPublicSupportLookupRouteImport } from './routes/api/public/support-lookup'
 import { Route as ApiPublicTmbWebhookRouteImport } from './routes/api/public/tmb-webhook'
 import { Route as AppAdminAdministratorsRouteImport } from './routes/app.admin.administrators'
 import { Route as AppAdminAgentCostsRouteImport } from './routes/app.admin.agent-costs'
@@ -264,6 +265,11 @@ const ApiPublicSubscriptionExpiryEmailsRoute =
     path: '/api/public/subscription-expiry-emails',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicSupportLookupRoute = ApiPublicSupportLookupRouteImport.update({
+  id: '/api/public/support-lookup',
+  path: '/api/public/support-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTmbWebhookRoute = ApiPublicTmbWebhookRouteImport.update({
   id: '/api/public/tmb-webhook',
   path: '/api/public/tmb-webhook',
@@ -438,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/api/public/rag-healthcheck': typeof ApiPublicRagHealthcheckRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
+  '/api/public/support-lookup': typeof ApiPublicSupportLookupRoute
   '/api/public/tmb-webhook': typeof ApiPublicTmbWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
@@ -503,6 +510,7 @@ export interface FileRoutesByTo {
   '/api/public/rag-healthcheck': typeof ApiPublicRagHealthcheckRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
+  '/api/public/support-lookup': typeof ApiPublicSupportLookupRoute
   '/api/public/tmb-webhook': typeof ApiPublicTmbWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
@@ -570,6 +578,7 @@ export interface FileRoutesById {
   '/api/public/rag-healthcheck': typeof ApiPublicRagHealthcheckRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/subscription-expiry-emails': typeof ApiPublicSubscriptionExpiryEmailsRoute
+  '/api/public/support-lookup': typeof ApiPublicSupportLookupRoute
   '/api/public/tmb-webhook': typeof ApiPublicTmbWebhookRoute
   '/app/admin/administrators': typeof AppAdminAdministratorsRoute
   '/app/admin/agent-costs': typeof AppAdminAgentCostsRoute
@@ -638,6 +647,7 @@ export interface FileRouteTypes {
     | '/api/public/rag-healthcheck'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
+    | '/api/public/support-lookup'
     | '/api/public/tmb-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
@@ -703,6 +713,7 @@ export interface FileRouteTypes {
     | '/api/public/rag-healthcheck'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
+    | '/api/public/support-lookup'
     | '/api/public/tmb-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
@@ -769,6 +780,7 @@ export interface FileRouteTypes {
     | '/api/public/rag-healthcheck'
     | '/api/public/stripe-webhook'
     | '/api/public/subscription-expiry-emails'
+    | '/api/public/support-lookup'
     | '/api/public/tmb-webhook'
     | '/app/admin/administrators'
     | '/app/admin/agent-costs'
@@ -826,6 +838,7 @@ export interface RootRouteChildren {
   ApiPublicRagHealthcheckRoute: typeof ApiPublicRagHealthcheckRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicSubscriptionExpiryEmailsRoute: typeof ApiPublicSubscriptionExpiryEmailsRoute
+  ApiPublicSupportLookupRoute: typeof ApiPublicSupportLookupRoute
   ApiPublicTmbWebhookRoute: typeof ApiPublicTmbWebhookRoute
 }
 
@@ -1088,6 +1101,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/subscription-expiry-emails'
       fullPath: '/api/public/subscription-expiry-emails'
       preLoaderRoute: typeof ApiPublicSubscriptionExpiryEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/support-lookup': {
+      id: '/api/public/support-lookup'
+      path: '/api/public/support-lookup'
+      fullPath: '/api/public/support-lookup'
+      preLoaderRoute: typeof ApiPublicSupportLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/tmb-webhook': {
@@ -1402,6 +1422,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicSubscriptionExpiryEmailsRoute:
     ApiPublicSubscriptionExpiryEmailsRoute,
+  ApiPublicSupportLookupRoute: ApiPublicSupportLookupRoute,
   ApiPublicTmbWebhookRoute: ApiPublicTmbWebhookRoute,
 }
 export const routeTree = rootRouteImport
