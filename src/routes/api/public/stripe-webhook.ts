@@ -440,6 +440,42 @@ async function syncSubscription(supabaseAdmin: Admin, sub: Stripe.Subscription, 
   const periodEndTs = (((sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end) as number | null) ?? null;
   const trialEndTs = sub.trial_end as number | null;
 
+  // Compra fora da Stripe (Kiwify/TMB/Hubla/manual) com validade maior: o aviso
+  // da Stripe não encurta nem cancela esse acesso; só grava os ids da Stripe.
+  {
+    const { shouldKeepExternalPlan, isExternalPaymentEventId } = await import("@/lib/external-plan-guard");
+    const { data: cur } = await supabaseAdmin
+      .from("subscriptions" as any)
+      .select("status, current_period_end")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+    const { data: pays } = await supabaseAdmin
+      .from("payment_history" as any)
+      .select("created_at, stripe_event_id")
+      .eq("user_id", targetUserId)
+      .eq("kind", "subscription")
+      .eq("status", "paid")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const external = ((pays as any[]) ?? []).find((p) => isExternalPaymentEventId(p.stripe_event_id));
+    const keepExternal = shouldKeepExternalPlan({
+      localStatus: (cur as any)?.status ?? null,
+      localPeriodEnd: (cur as any)?.current_period_end ?? null,
+      stripePeriodEnd: periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null,
+      stripeStartedAt: sub.start_date ? new Date(sub.start_date * 1000).toISOString() : null,
+      externalPaidAt: external?.created_at ?? null,
+    });
+    if (keepExternal) {
+      console.info("[stripe-webhook] acesso comprado fora da Stripe mantido", { user: targetUserId, sub: sub.id, stripe_status: sub.status });
+      const { error: idErr } = await supabaseAdmin
+        .from("subscriptions" as any)
+        .update({ stripe_customer_id: customerId, stripe_subscription_id: sub.id, stripe_price_id: priceId })
+        .eq("user_id", targetUserId);
+      if (idErr) throw idErr;
+      return;
+    }
+  }
+
   const patch: Record<string, any> = {
     stripe_customer_id: customerId,
     stripe_subscription_id: sub.id,
