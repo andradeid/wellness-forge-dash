@@ -33,6 +33,14 @@ describe("catálogo de produtos Kiwify", () => {
     });
   });
 
+  it("libera Starter por 2 anos para A Nova Nutricionista da conta do Centro de Ensino", () => {
+    assert.deepEqual(KIWIFY_PRODUCTS["2b4422f0-e423-11f1-b18c-1b15b1dfbf05"], {
+      slug: "starter",
+      cycle: "yearly",
+      years: 2,
+    });
+  });
+
   it("não reconhece um produto fora do catálogo", () => {
     assert.equal(KIWIFY_PRODUCTS["00000000-0000-0000-0000-000000000000"], undefined);
   });

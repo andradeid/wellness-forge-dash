@@ -32,6 +32,8 @@ export const KIWIFY_PRODUCTS: Record<string, KiwifyProduct> = {
   "e868caf0-eb32-11f1-adcf-23a632811098": { slug: "starter", cycle: "yearly", years: 1 },
   // Lumma 2.0 Pro Anual — produto novo (Kiwify do Centro de Ensino em Nutrição APP, nov/2026)
   "03d00560-eb33-11f1-9ff7-2fcc74286a9e": { slug: "pro", cycle: "yearly", years: 1 },
+  // A Nova Nutricionista — conta do Centro de Ensino (Starter, validade de 2 anos; confirmado pela Ana em 28/11/2026)
+  "2b4422f0-e423-11f1-b18c-1b15b1dfbf05": { slug: "starter", cycle: "yearly", years: 2 },
 };
 
 /** Rótulo de validade em português para o histórico de pagamentos. */
