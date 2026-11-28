@@ -17,6 +17,14 @@ describe("catálogo de produtos Kiwify", () => {
     assert.equal(KIWIFY_PRODUCTS["53f6ae60-89d9-11f1-be8a-11fc729f7dc2"].years, 1);
   });
 
+  it("libera Starter anual para o produto novo da conta do Centro de Ensino", () => {
+    assert.deepEqual(KIWIFY_PRODUCTS["e868caf0-eb32-11f1-adcf-23a632811098"], {
+      slug: "starter",
+      cycle: "yearly",
+      years: 1,
+    });
+  });
+
   it("não reconhece um produto fora do catálogo", () => {
     assert.equal(KIWIFY_PRODUCTS["00000000-0000-0000-0000-000000000000"], undefined);
   });
