@@ -25,6 +25,14 @@ describe("catálogo de produtos Kiwify", () => {
     });
   });
 
+  it("libera Pro anual para o produto novo da conta do Centro de Ensino", () => {
+    assert.deepEqual(KIWIFY_PRODUCTS["03d00560-eb33-11f1-9ff7-2fcc74286a9e"], {
+      slug: "pro",
+      cycle: "yearly",
+      years: 1,
+    });
+  });
+
   it("não reconhece um produto fora do catálogo", () => {
     assert.equal(KIWIFY_PRODUCTS["00000000-0000-0000-0000-000000000000"], undefined);
   });

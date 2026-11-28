@@ -30,6 +30,8 @@ export const KIWIFY_PRODUCTS: Record<string, KiwifyProduct> = {
   "c1df6360-d3b5-11f1-aaf7-2ffa08014d49": { slug: "starter", cycle: "yearly", years: 2 },
   // Lumma 2.0 Starter Anual — produto novo (Kiwify do Centro de Ensino em Nutrição APP, nov/2026)
   "e868caf0-eb32-11f1-adcf-23a632811098": { slug: "starter", cycle: "yearly", years: 1 },
+  // Lumma 2.0 Pro Anual — produto novo (Kiwify do Centro de Ensino em Nutrição APP, nov/2026)
+  "03d00560-eb33-11f1-9ff7-2fcc74286a9e": { slug: "pro", cycle: "yearly", years: 1 },
 };
 
 /** Rótulo de validade em português para o histórico de pagamentos. */
